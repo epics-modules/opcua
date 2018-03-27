@@ -1,0 +1,8 @@
+driver(drvOpcUa)
+
+variable(devOpcua_AutoConnectInterval, double)
+variable(devOpcua_DefaultPublishInterval, double)
+variable(devOpcua_DefaultSamplingInterval, double)
+variable(devOpcua_DefaultQueueSize)
+variable(devOpcua_DefaultDiscardOldest)
+variable(devOpcua_DefaultUseServerTime)
