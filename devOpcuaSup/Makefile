@@ -8,17 +8,21 @@ include $(TOP)/configure/CONFIG
 #==================================================
 # build a support library
 
-LIBRARY_IOC += devOpcua
+LIBRARY_IOC += opcua
 
 # xxxRecord.h will be created from xxxRecord.dbd
 #DBDINC += xxxRecord
-# install devOpcua.dbd into <top>/dbd
+# install opcua.dbd into <top>/dbd
 DBD += opcua.dbd
 
 # specify all source files to be compiled and added to the library
-#devOpcua_SRCS += xxx
+opcua_SRCS += devOpcua.cpp
+opcua_SRCS += RecordConnector.cpp
+opcua_SRCS += Session.cpp
+opcua_SRCS += Subscription.cpp
+opcua_SRCS += Item.cpp
 
-devOpcua_LIBS += $(EPICS_BASE_IOC_LIBS)
+opcua_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #==================================================
 # link to Unified Automation SDK
