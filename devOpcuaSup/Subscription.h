@@ -11,8 +11,8 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-#ifndef OPCUASUBSCRIPTION_H
-#define OPCUASUBSCRIPTION_H
+#ifndef DEVOPCUA_SUBSCRIPTION_H
+#define DEVOPCUA_SUBSCRIPTION_H
 
 #include <uabase.h>
 #include <uaclientsdk.h>
@@ -29,4 +29,4 @@ public:
 
 } // namespace DevOpcua
 
-#endif // OPCUASUBSCRIPTION_H
+#endif // DEVOPCUA_SUBSCRIPTION_H

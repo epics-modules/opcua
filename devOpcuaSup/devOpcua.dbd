@@ -1,0 +1,9 @@
+variable(opcua_ConnectTimeout, double)
+variable(opcua_MaxOperationsPerServiceCall)
+variable(opcua_DefaultPublishInterval, double)
+variable(opcua_DefaultSamplingInterval, double)
+variable(opcua_DefaultQueueSize)
+variable(opcua_DefaultDiscardOldest)
+variable(opcua_DefaultUseServerTime)
+
+registrar(opcuaIocshRegister)

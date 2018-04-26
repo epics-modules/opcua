@@ -11,9 +11,19 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+#include <epicsExport.h>
+
 #include "Subscription.h"
 
 namespace DevOpcua {
+
+// Configurable default for publishing interval
+
+static double opcua_DefaultPublishInterval = 100.0;  // ms
+
+extern "C" {
+epicsExportAddress(double, opcua_DefaultPublishInterval);
+}
 
 using namespace UaClientSdk;
 

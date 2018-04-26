@@ -8,11 +8,10 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
- *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-#ifndef OPCUAITEM_H
-#define OPCUAITEM_H
+#ifndef DEVOPCUA_ITEM_H
+#define DEVOPCUA_ITEM_H
 
 #include <uabase.h>
 #include <uaclientsdk.h>
@@ -29,4 +28,4 @@ public:
 
 } // namespace DevOpcua
 
-#endif // OPCUAITEM_H
+#endif // DEVOPCUA_ITEM_H

@@ -15,17 +15,28 @@ LIBRARY_IOC += opcua
 # install opcua.dbd into <top>/dbd
 DBD += opcua.dbd
 
-# specify all source files to be compiled and added to the library
+opcua_DBD += devOpcua.dbd
+
+# Generic sources and interfaces
 opcua_SRCS += devOpcua.cpp
-opcua_SRCS += RecordConnector.cpp
+opcua_SRCS += iocshIntegration.cpp
 opcua_SRCS += Session.cpp
 opcua_SRCS += Subscription.cpp
 opcua_SRCS += Item.cpp
+opcua_SRCS += DataElement.cpp
+opcua_SRCS += RecordConnector.cpp
 
 opcua_LIBS += $(EPICS_BASE_IOC_LIBS)
 
+ifdef UASDK
 #==================================================
-# link to Unified Automation SDK
+# Implementation using Unified Automation SDK
+
+opcua_SRCS += SessionUaSdk.cpp
+opcua_SRCS += ItemUaSdk.cpp
+opcua_SRCS += iocshIntegrationUaSdk.cpp
+
+opcua_DBD += opcuaUaSdk.dbd
 
 UASDK_LIBS = uabase uaclient uapki uastack xmlparser
 USR_INCLUDES += $(foreach module, $(UASDK_LIBS), -I$(UASDK)/include/$(module))
@@ -53,12 +64,14 @@ EXTLIB_INSTALLS += $(addprefix $(INSTALL_LIB)/, \
     endif
 endif
 
-#===========================
+#==================================================
+endif # ifdef UASDK
 
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
 
+ifdef UASDK
 #==================================================
 # Unified Automation SDK libraries - INSTALL mode
 
@@ -73,3 +86,6 @@ $(INSTALL_LIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX) : $(UASDK_DIR)/$(SHRLIB_PREFIX)
         $(ECHO) "Installing shared library $@ from Unified Automation SDK"
         $(INSTALL) -d -m 555 $< $(@D)
 endif
+
+#==================================================
+endif #ifdef UASDK

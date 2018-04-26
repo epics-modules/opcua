@@ -11,22 +11,13 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-#include <epicsExport.h>
-
-#include "RecordConnector.h"
+#include "DataElement.h"
 
 namespace DevOpcua {
 
-// Configurable default for timestamp selection
+DataElement::DataElement()
+{
 
-static int opcua_DefaultUseServerTime = 1;           // use server timestamp
-
-extern "C"{
-epicsExportAddress(int, opcua_DefaultUseServerTime);
 }
-
-RecordConnector::RecordConnector(dbCommon* prec)
-    : prec(prec)
-{}
 
 } // namespace DevOpcua
