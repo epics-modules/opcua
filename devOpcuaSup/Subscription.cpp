@@ -8,28 +8,20 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
- *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
 #include <epicsExport.h>
+#include <errlog.h>
 
+#include "Session.h"
 #include "Subscription.h"
 
 namespace DevOpcua {
 
-// Configurable default for publishing interval
+//TODO: Subscription::findSubscription() and Subscription::subscriptionExists()
+// are currently implemented in the (only) implementation SubscriptionUaSdk.
+// This should be made dynamic (the subscription class should manage its implementations).
 
-static double opcua_DefaultPublishInterval = 100.0;  // ms
-
-extern "C" {
-epicsExportAddress(double, opcua_DefaultPublishInterval);
-}
-
-using namespace UaClientSdk;
-
-Subscription::Subscription()
-{
-
-}
+Subscription::~Subscription() {}
 
 } // namespace DevOpcua

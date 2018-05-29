@@ -19,17 +19,18 @@
 #include <epicsTypes.h>
 #include <initHooks.h>
 
+#include "Subscription.h"
+
 namespace DevOpcua {
 
 /**
- * @brief The Session class manages a session with an OPC UA Server.
+ * @brief The Session interface to the client side OPC UA session.
  *
- * Main class for connecting with any OPC UA Server.
- * The class manages the connection to an OPC Unified Architecture server
- * and the application session established with the server.
+ * Main interface for connecting with any OPC UA Server.
+ * The implementation manages the connection to an OPC Unified Architecture
+ * server and the application session established with it.
  *
  * The connect call establishes and maintains a Session with a Server.
- * After a successful connect, the connection is monitored by the low level driver.
  *
  * The disconnect call disconnects the Session, deleting all Subscriptions
  * and freeing all related resources on both server and client.
@@ -38,14 +39,6 @@ namespace DevOpcua {
 class Session
 {
 public:
-    /**
-     * @brief Create an OPC UA session.
-     *
-     * @param name               session name (used in EPICS record configuration)
-     * @param debug              initial debug verbosity level
-     * @param autoConnect        automatic session (re)connect
-     */
-    Session(const std::string &name, const int debug, const bool autoConnect);
     virtual ~Session() {}
 
     /**
@@ -53,13 +46,13 @@ public:
      *
      * Try connecting the session to the OPC UA server.
      *
-     * Non-blocking. Connection status changes will be reported through the
-     * UaClientSdk::UaSessionCallback interface.
+     * Non-blocking. Connection status changes shall be reported through a
+     * callback interface.
      *
      * If the server is not available at the time of calling,
-     * the client library will continue trying to connect.
+     * the client library shall continue trying to connect.
      *
-     * @return long status. 0 = OK
+     * @return long status (0 = OK)
      */
     virtual long connect() = 0;
 
@@ -68,63 +61,51 @@ public:
      *
      * Disconnect the session from the OPC UA server.
      *
-     * This will delete all subscriptions related to the session on both client
+     * This shall delete all subscriptions related to the session on both client
      * and server side, and free all connected resources.
-     * The disconnect will complete and the status is changed to disconnected even
+     * The disconnect shall complete and the status change to disconnected even
      * if the underlying service fails and a bad status is returned.
      *
-     * The call will block until all outstanding service calls and active
+     * The call shall block until all outstanding service calls and active
      * client-side callbacks have been completed.
      * Those are not allowed to block, else client deadlocks will appear.
      *
-     * Connection status changes will be reported through the
-     * UaClientSdk::UaSessionCallback interface.
+     * Connection status changes shall be reported through a callback
+     * interface.
      *
-     * @return long status. 0 = OK
+     * @return long status (0 = OK)
      */
     virtual long disconnect() = 0;
 
     /**
      * @brief Return connection status of the underlying OPC UA Session.
      *
-     * Return the session's connection status.
-     *
-     * @return bool connection status.
+     * @return bool connection status
      */
     virtual bool isConnected() const = 0;
 
     /**
+     * @brief Get session name.
+     *
+     * @return const std::string & name
+     */
+    virtual const std::string & getName() const = 0;
+
+    /**
      * @brief Print configuration and status on stdout.
      *
-     * @param level  verbosity level (0 = one line; 1 = one line per session)
+     * The verbosity level controls the amount of information:
+     * 0 = one line
+     * 1 = session line, then one line per subscription
+     *
+     * @param level  verbosity level
      */
     virtual void show(int level) const = 0;
 
     /**
-     * @brief Print configuration and status of all sessions on stdout.
-     *
-     * @param level  verbosity level (0 = one line; 1 = one line per session)
-     */
-    static void showAll(int level);
-
-    /**
-     * @brief Set the verbosity level for Session debugging.
-     *
-     * @param level  new verbosity level
-     */
-    void setDebug(int level) { debug = level; }
-
-    /**
-     * @brief Set the debug verbosity level for all sessions.
-     *
-     * @param level  new verbosity level
-     */
-    static void setDebugAll(int level);
-
-    /**
      * @brief Find a session by name.
      *
-     * @param name session name
+     * @param name  session name to search for
      *
      * @return Session & session
      */
@@ -133,37 +114,16 @@ public:
     /**
      * @brief Check if a session with the specified name exists.
      *
-     * @param name session name
+     * @param name  session name to search for
      *
      * @return bool
      */
     static bool sessionExists(const std::string &name);
 
-    /**
-     * @brief EPICS IOC Database initHook function.
-     *
-     * Hook function called when the EPICS IOC is being initialized.
-     * Connects all sessions with autoConnect=true.
-     *
-     * @param state  initialization state
-     */
-    static void initHook(initHookState state);
-
-    /**
-     * @brief EPICS IOC Database atExit function.
-     *
-     * Hook function called when the EPICS IOC is exiting.
-     * Disconnects all sessions.
-     */
-    static void atExit(void *junk);
+    int debug;  /**< debug verbosity level */
 
 protected:
-    const std::string name; /**< session name */
-    int debug;              /**< debug verbosity level */
-    bool autoConnect;       /**< auto (re)connect flag */
-
-private:
-    static std::map<std::string, Session*> sessions;
+    Session() {}
 };
 
 } // namespace DevOpcua

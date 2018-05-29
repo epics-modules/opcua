@@ -11,23 +11,46 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-#include <string.h>
+//#include <string.h>
 #include <iostream>
+#include <string>
+#include <map>
 
 #include <uaclientsdk.h>
 #include <uasession.h>
 
-#include <epicsTypes.h>
+#include <epicsExport.h>
+#include <epicsExit.h>
 #include <epicsThread.h>
+#include <initHooks.h>
 #include <errlog.h>
 
+#include "Session.h"
 #include "SessionUaSdk.h"
+#include "SubscriptionUaSdk.h"
 
 namespace DevOpcua {
 
 using namespace UaClientSdk;
 
+static epicsThreadOnceId session_uasdk_ihooks_once = EPICS_THREAD_ONCE_INIT;
+static epicsThreadOnceId session_uasdk_atexit_once = EPICS_THREAD_ONCE_INIT;
+
 std::map<std::string, SessionUaSdk*> SessionUaSdk::sessions;
+
+static
+void session_uasdk_ihooks_register (void *junk)
+{
+    (void)junk;
+    (void) initHookRegister(SessionUaSdk::initHook);
+}
+
+static
+void session_uasdk_atexit_register (void *junk)
+{
+    (void)junk;
+    epicsAtExit(SessionUaSdk::atExit, NULL);
+}
 
 inline const char *
 serverStatusString (UaClient::ServerStatus type)
@@ -46,9 +69,9 @@ serverStatusString (UaClient::ServerStatus type)
 SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUrl,
                             bool autoConnect, int debug, epicsUInt32 batchNodes,
                             const char *clientCertificate, const char *clientPrivateKey)
-    : Session(name, debug, autoConnect)
-    , pSession(new UaSession())
+    : name(name)
     , serverURL(serverUrl.c_str())
+    , puasession(new UaSession())
     , serverConnectionStatus(UaClient::Disconnected)
 {
     int status = -1;
@@ -73,12 +96,52 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     if ((clientCertificate && strlen(clientCertificate))
             || (clientPrivateKey && strlen(clientPrivateKey)))
         errlogPrintf("OPC UA security not supported yet\n");
+
+    sessions[name] = this;
+    epicsThreadOnce(&DevOpcua::session_uasdk_ihooks_once, &DevOpcua::session_uasdk_ihooks_register, NULL);
+}
+
+const std::string &
+SessionUaSdk::getName() const
+{
+    return name;
+}
+
+SessionUaSdk &
+SessionUaSdk::findSession (const std::string &name)
+{
+    std::map<std::string, SessionUaSdk*>::iterator it = sessions.find(name);
+    if (it == sessions.end()) {
+        throw std::runtime_error("no such session");
+    }
+    return *(it->second);
+}
+
+bool
+SessionUaSdk::sessionExists (const std::string &name)
+{
+    std::map<std::string, SessionUaSdk*>::iterator it = sessions.find(name);
+    return !(it == sessions.end());
+}
+
+//TODO: move Session::findSession() and Session::sessionExists()
+// back to Session.cpp after adding implementation management there
+Session &
+Session::findSession (const std::string &name)
+{
+    return static_cast<Session &>(SessionUaSdk::findSession(name));
+}
+
+bool
+Session::sessionExists (const std::string &name)
+{
+    return SessionUaSdk::sessionExists(name);
 }
 
 long
 SessionUaSdk::connect ()
 {
-    if (!pSession) {
+    if (!puasession) {
         std::cerr << "OPC UA session " << name.c_str()
                   << ": invalid session, cannot connect" << std::endl;
         return -1;
@@ -88,7 +151,7 @@ SessionUaSdk::connect ()
                              << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
     } else {
-        UaStatus result = pSession->connect(serverURL, connectInfo, securityInfo, this);
+        UaStatus result = puasession->connect(serverURL, connectInfo, securityInfo, this);
 
         if (result.isGood()) {
             if (debug) std::cerr << "OPC UA session " << name.c_str()
@@ -108,7 +171,7 @@ SessionUaSdk::disconnect ()
     if (isConnected()) {
         ServiceSettings serviceSettings;
 
-        UaStatus result = pSession->disconnect(serviceSettings, OpcUa_True); // delete subscriptions
+        UaStatus result = puasession->disconnect(serviceSettings, OpcUa_True); // delete subscriptions
 
         if (result.isGood()) {
             if (debug) std::cerr << "OPC UA session " << name.c_str()
@@ -129,8 +192,8 @@ SessionUaSdk::disconnect ()
 bool
 SessionUaSdk::isConnected () const
 {
-    if (pSession)
-        return !!pSession->isConnected();
+    if (puasession)
+        return !!puasession->isConnected();
     else
         return false;
 }
@@ -138,11 +201,22 @@ SessionUaSdk::isConnected () const
 void
 SessionUaSdk::show (int level) const
 {
-    errlogPrintf("name=%s url=%s cert=%s key=%s debug=%d batch=%u autoconnect=%c state=%s\n",
-                 name.c_str(), serverURL.toUtf8(), "[unsupported]", "[unsupported]",
-                 debug, connectInfo.nMaxOperationsPerServiceCall,
-                 connectInfo.bAutomaticReconnect ? 'Y' : 'N',
-                 serverStatusString(serverConnectionStatus));
+    std::cerr << "session="      << name
+              << " url="         << serverURL.toUtf8()
+              << " status="      << serverStatusString(serverConnectionStatus)
+              << " cert="        << "[none]"
+              << " key="         << "[none]"
+              << " debug="       << debug
+              << " batch="       << puasession->maxOperationsPerServiceCall()
+              << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "Y" : "N")
+              << std::endl;
+
+    if (level >= 1) {
+        std::map<std::string, SubscriptionUaSdk*>::const_iterator it;
+        for (it = subscriptions.begin(); it != subscriptions.end(); it++) {
+            it->second->show(level-1);
+        }
+    }
 }
 
 void SessionUaSdk::connectionStatusChanged(
@@ -191,14 +265,59 @@ void SessionUaSdk::connectionStatusChanged(
     serverConnectionStatus = serverStatus;
 }
 
+void
+SessionUaSdk::showAll (int level)
+{
+    std::cout << "OPC UA: "
+              << sessions.size() << " session(s) configured"
+              << std::endl;
+    if (level >= 1) {
+        std::map<std::string, SessionUaSdk*>::iterator it;
+        for (it = sessions.begin(); it != sessions.end(); it++) {
+            it->second->show(level-1);
+        }
+    }
+}
+
 SessionUaSdk::~SessionUaSdk ()
 {
-    if (pSession) {
+    if (puasession) {
         if (isConnected()) {
             ServiceSettings serviceSettings;
-            pSession->disconnect(serviceSettings, OpcUa_True);
+            puasession->disconnect(serviceSettings, OpcUa_True);
         }
-        delete pSession;
+        delete puasession;
+    }
+}
+
+void
+SessionUaSdk::initHook (initHookState state)
+{
+    switch (state) {
+    case initHookAfterDatabaseRunning:
+    {
+        std::map<std::string, SessionUaSdk*>::iterator it;
+        errlogPrintf("OPC UA: Autoconnecting sessions\n");
+        for (it = sessions.begin(); it != sessions.end(); it++) {
+            if (it->second->autoConnect)
+                it->second->connect();
+        }
+        epicsThreadOnce(&DevOpcua::session_uasdk_atexit_once, &DevOpcua::session_uasdk_atexit_register, NULL);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void
+SessionUaSdk::atExit (void *junk)
+{
+    (void)junk;
+    std::map<std::string, SessionUaSdk*>::iterator it;
+    errlogPrintf("OPC UA: Disconnecting sessions\n");
+    for (it = sessions.begin(); it != sessions.end(); it++) {
+        it->second->disconnect();
     }
 }
 

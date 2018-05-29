@@ -63,22 +63,9 @@ Session::Session (const std::string &name, const int debug, const bool autoConne
     epicsThreadOnce(&DevOpcua::session_ihooks_once, &DevOpcua::session_ihooks_register, NULL);
 }
 
-Session &
-Session::findSession (const std::string &name)
-{
-    std::map<std::string, Session*>::iterator it = Session::sessions.find(name);
-    if (it == Session::sessions.end()) {
-        throw std::runtime_error("no such session");
-    }
-    return *(it->second);
-}
-
-bool
-Session::sessionExists (const std::string &name)
-{
-    std::map<std::string, Session*>::iterator it = Session::sessions.find(name);
-    return !(it == Session::sessions.end());
-}
+//TODO: Session::findSession() and Session::sessionExists() are currently implemented
+// in the (only) implementation SessionUaSdk.
+// This should be made dynamic (the session class should manage its implementations).
 
 void
 Session::showAll (int level)
@@ -96,37 +83,6 @@ Session::setDebugAll (int level)
     std::map<std::string, Session*>::iterator it;
     for (it = sessions.begin(); it != sessions.end(); it++) {
         it->second->setDebug(level);
-    }
-}
-
-void
-Session::initHook (initHookState state)
-{
-    switch (state) {
-    case initHookAfterDatabaseRunning:
-    {
-        std::map<std::string, Session*>::iterator it;
-        errlogPrintf("OPC UA: Autoconnecting sessions\n");
-        for (it = sessions.begin(); it != sessions.end(); it++) {
-            if (it->second->autoConnect)
-                it->second->connect();
-        }
-        epicsThreadOnce(&DevOpcua::session_atexit_once, &DevOpcua::session_atexit_register, NULL);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-void
-Session::atExit (void *junk)
-{
-    (void)junk;
-    std::map<std::string, Session*>::iterator it;
-    errlogPrintf("OPC UA: Disconnecting sessions\n");
-    for (it = sessions.begin(); it != sessions.end(); it++) {
-        it->second->disconnect();
     }
 }
 

@@ -14,16 +14,21 @@
 #ifndef DEVOPCUA_SESSIONUASDK_H
 #define DEVOPCUA_SESSIONUASDK_H
 
+#include <algorithm>
+
 #include <uabase.h>
 #include <uaclientsdk.h>
 
 #include <epicsTypes.h>
+#include <initHooks.h>
 
 #include "Session.h"
 
 namespace DevOpcua {
 
 using namespace UaClientSdk;
+
+class SubscriptionUaSdk;
 
 /**
  * @brief Session class for the Unified Automation OPC UA Client SDK.
@@ -44,6 +49,7 @@ using namespace UaClientSdk;
 class SessionUaSdk : public UaSessionCallback, public Session
 {
     UA_DISABLE_COPY(SessionUaSdk);
+    friend class SubscriptionUaSdk;
 
 public:
     /**
@@ -67,18 +73,71 @@ public:
     long disconnect();
     bool isConnected() const;
 
+    /**
+     * @brief Print configuration and status of all sessions on stdout.
+     *
+     * The verbosity level controls the amount of information:
+     * 0 = one summary
+     * 1 = one line per session
+     * 2 = one session line, then one line per subscription
+     *
+     * @param level  verbosity level
+     */
+    static void showAll(int level);
+
+    /**
+     * @brief Find a session by name.
+     *
+     * @param name session name
+     *
+     * @return SessionUaSdk & session
+     */
+    static SessionUaSdk & findSession(const std::string &name);
+
+    /**
+     * @brief Check if a session with the specified name exists.
+     *
+     * @param name  session name to search for
+     *
+     * @return bool
+     */
+    static bool sessionExists(const std::string &name);
+
+    const std::string & getName() const;
     void show(int level) const;
 
-    // UaSessionCallback
+    /**
+     * @brief EPICS IOC Database initHook function.
+     *
+     * Hook function called when the EPICS IOC is being initialized.
+     * Connects all sessions with autoConnect=true.
+     *
+     * @param state  initialization state
+     */
+    static void initHook(initHookState state);
+
+    /**
+     * @brief EPICS IOC Database atExit function.
+     *
+     * Hook function called when the EPICS IOC is exiting.
+     * Disconnects all sessions.
+     */
+    static void atExit(void *junk);
+
+    // UaSessionCallback interface
     virtual void connectionStatusChanged(OpcUa_UInt32 clientConnectionId,
                                          UaClient::ServerStatus serverStatus);
 private:
-    static std::map<std::string, SessionUaSdk*> sessions; /**< session management */
-    UaSession* pSession;
-    SessionConnectInfo connectInfo;
-    SessionSecurityInfo securityInfo;
-    UaString serverURL;
-    UaClient::ServerStatus serverConnectionStatus;
+    static std::map<std::string, SessionUaSdk*> sessions;     /**< session management */
+
+    const std::string name;                                   /**< unique session name */
+    UaString serverURL;                                       /**< server URL */
+    bool autoConnect;                                         /**< auto (re)connect flag */
+    std::map<std::string, SubscriptionUaSdk*> subscriptions;  /**< subscriptions on this session */
+    UaSession* puasession;                                    /**< pointer to low level session */
+    SessionConnectInfo connectInfo;                           /**< connection metadata */
+    SessionSecurityInfo securityInfo;                         /**< security metadata */
+    UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
 };
 
 } // namespace DevOpcua
