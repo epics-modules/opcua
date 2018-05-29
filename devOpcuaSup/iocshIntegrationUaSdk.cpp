@@ -24,19 +24,7 @@
 #include "Session.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
-
-namespace DevOpcua {
-
-// Configurable defaults
-// - publishing interval [ms]
-
-static double opcua_DefaultPublishInterval = 100.0;  // ms
-
-extern "C" {
-epicsExportAddress(double, opcua_DefaultPublishInterval);
-}
-
-} // namespace DevOpcua
+#include "iocshVariables.h"
 
 namespace {
 

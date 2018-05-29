@@ -25,15 +25,26 @@
 namespace DevOpcua {
 
 // Configurable defaults
-// - connect timeout / reconnect attempt interval [s]
-// - batch size for operations (0 = no limit, don't batch)
 
-static double opcua_ConnectTimeout = 5.0;
-static int opcua_MaxOperationsPerServiceCall = 0;
+double opcua_ConnectTimeout = 5.0;               // [s]
+int opcua_MaxOperationsPerServiceCall = 0;       // no limit (do not batch)
+
+double opcua_DefaultPublishInterval = 100.0;     // [ms]
+double opcua_DefaultSamplingInterval = -1.0;     // use publish interval [ms]
+
+int opcua_DefaultQueueSize = 1;                  // no queueing
+int opcua_DefaultDiscardOldest = 1;              // discard oldest value in case of overrun
+
+int opcua_DefaultUseServerTime = 1;              // use server timestamp
 
 extern "C" {
 epicsExportAddress(double, opcua_ConnectTimeout);
 epicsExportAddress(int, opcua_MaxOperationsPerServiceCall);
+epicsExportAddress(double, opcua_DefaultPublishInterval);
+epicsExportAddress(double, opcua_DefaultSamplingInterval);
+epicsExportAddress(int, opcua_DefaultQueueSize);
+epicsExportAddress(int, opcua_DefaultDiscardOldest);
+epicsExportAddress(int, opcua_DefaultUseServerTime);
 }
 
 } // namespace DevOpcua
