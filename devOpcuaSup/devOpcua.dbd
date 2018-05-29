@@ -1,3 +1,6 @@
+device(longin,  INST_IO, devLiOpcua, "OPCUA")
+device(longout, INST_IO, devLoOpcua, "OPCUA")
+
 variable(opcua_ConnectTimeout, double)
 variable(opcua_MaxOperationsPerServiceCall)
 variable(opcua_DefaultPublishInterval, double)

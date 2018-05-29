@@ -8,7 +8,6 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
- *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
 #include <iostream>
@@ -50,12 +49,40 @@ namespace {
 
 using namespace DevOpcua;
 
-#define TRY if (!prec->dpvt) return 0; RecordConnector *pvt = static_cast<RecordConnector*>(prec->dpvt); (void)pvt; try
-#define CATCH() catch(std::exception& e) { std::cerr<<prec->name << " Error : " << e.what() << "\n"; (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM); return 0; }
+#define TRY \
+    if (!prec->dpvt) return 0; \
+    RecordConnector *pvt = static_cast<RecordConnector*>(prec->dpvt); \
+    (void)pvt; \
+    try
+#define CATCH() catch(std::exception& e) { \
+    std::cerr << prec->name << " Error : " << e.what() << std::endl; \
+    (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM); \
+    return 0; }
+
+// Device Support Extension: link parsing and setup
+
+long opcua_add_record (dbCommon *prec)
+{
+    return 0;
+}
+
+long opcua_del_record (dbCommon *prec)
+{
+    //TODO: support changing OPCUA links
+    return -1;
+}
+
+dsxt opcua_dsxt = { opcua_add_record, opcua_del_record };
 
 // initialization
 
-long opcua_init_record(dbCommon *prec)
+long opcua_init (int pass)
+{
+    if (pass == 0) devExtend(&opcua_dsxt);
+    return 0;
+}
+
+long opcua_init_record (dbCommon *prec)
 {
     try {
         DBEntry ent(prec);
@@ -64,7 +91,7 @@ long opcua_init_record(dbCommon *prec)
         prec->dpvt = pvt.release();
         return 0;
     } catch(std::exception& e) {
-        std::cerr << prec->name << " Error in init_record " << e.what() << "\n";
+        std::cerr << prec->name << ": error in init_record " << e.what() << "\n";
         return S_db_errArg;
     }
 }
@@ -72,7 +99,7 @@ long opcua_init_record(dbCommon *prec)
 // integer to/from VAL
 
 template<typename REC>
-long opcua_read_int_val(REC *prec)
+long opcua_read_int_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
@@ -85,7 +112,7 @@ long opcua_read_int_val(REC *prec)
 }
 
 template<typename REC>
-long opcua_write_int_val(REC *prec)
+long opcua_write_int_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
@@ -100,8 +127,8 @@ long opcua_write_int_val(REC *prec)
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-  {6, NULL, NULL, opcua_init_record, NULL, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
-    epicsExportAddress(dset, NAME)
+  {6, NULL, opcua_init, opcua_init_record, NULL, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
+    extern "C" { epicsExportAddress(dset, NAME); }
 
-SUP(devOpcuaLi, longin,  int_val, read);
-SUP(devOpcuaLo, longout, int_val, write);
+SUP(devLiOpcua, longin,  int_val, read)
+SUP(devLoOpcua, longout, int_val, write)
