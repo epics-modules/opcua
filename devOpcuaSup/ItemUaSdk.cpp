@@ -11,6 +11,8 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+#include <uaclientsdk.h>
+
 #include "ItemUaSdk.h"
 
 namespace DevOpcua {
@@ -20,6 +22,15 @@ using namespace UaClientSdk;
 ItemUaSdk::ItemUaSdk()
 {
 
+}
+
+ItemUaSdk::~ItemUaSdk()
+{}
+
+bool
+ItemUaSdk::monitored() const
+{
+    return !!psubscription;
 }
 
 } // namespace DevOpcua

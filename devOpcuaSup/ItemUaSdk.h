@@ -14,16 +14,27 @@
 #ifndef DEVOPCUA_ITEMUASDK_H
 #define DEVOPCUA_ITEMUASDK_H
 
+#include <uaclientsdk.h>
+
 #include "Item.h"
 
 namespace DevOpcua {
 
 using namespace UaClientSdk;
 
+class SubscriptionUaSdk;
+class SessionUaSdk;
+
 class ItemUaSdk : public Item
 {
 public:
     ItemUaSdk();
+    ~ItemUaSdk();
+
+    bool monitored() const;
+private:
+    SubscriptionUaSdk *psubscription;
+    SessionUaSdk *psession;
 };
 
 } // namespace DevOpcua

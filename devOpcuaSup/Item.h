@@ -13,17 +13,21 @@
 #ifndef DEVOPCUA_ITEM_H
 #define DEVOPCUA_ITEM_H
 
-#include <uabase.h>
-#include <uaclientsdk.h>
-
 namespace DevOpcua {
 
-using namespace UaClientSdk;
+/**
+ * @brief The Item interface for an OPC UA item.
+ *
+ * The interface provides all item related configuration and functionality.
+ */
 
 class Item
 {
 public:
     Item();
+    virtual ~Item() {}
+
+    virtual bool monitored() const = 0;
 };
 
 } // namespace DevOpcua
