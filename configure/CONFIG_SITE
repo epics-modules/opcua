@@ -45,6 +45,8 @@ CHECK_RELEASE = YES
 UASDK_DEPLOY_MODE = PROVIDED
 UASDK_DIR = $(UASDK)/lib
 
+USR_CXXFLAGS_Linux += -std=c++11
+
 # These allow developers to override the CONFIG_SITE variable
 # settings without having to modify the configure/CONFIG_SITE
 # file itself.
