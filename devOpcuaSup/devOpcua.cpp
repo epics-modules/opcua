@@ -8,6 +8,7 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
+ *  and code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
  */
 
 #include <iostream>
@@ -44,6 +45,7 @@
 
 #include "devOpcua.h"
 #include "RecordConnector.h"
+#include "linkParser.h"
 
 namespace {
 
@@ -63,7 +65,16 @@ using namespace DevOpcua;
 
 long opcua_add_record (dbCommon *prec)
 {
-    return 0;
+    try {
+        DBEntry ent(prec);
+        std::unique_ptr<RecordConnector> pvt (new RecordConnector(prec));
+        pvt->plinkinfo = parseLink(prec, ent);
+        prec->dpvt = pvt.release();
+        return 0;
+    } catch(std::exception& e) {
+        std::cerr << prec->name << " Error in add_record : " << e.what() << std::endl;
+        return S_dbLib_badLink;
+    }
 }
 
 long opcua_del_record (dbCommon *prec)
@@ -80,20 +91,6 @@ long opcua_init (int pass)
 {
     if (pass == 0) devExtend(&opcua_dsxt);
     return 0;
-}
-
-long opcua_init_record (dbCommon *prec)
-{
-    try {
-        DBEntry ent(prec);
-        std::unique_ptr<RecordConnector> pvt (new RecordConnector(prec));
-
-        prec->dpvt = pvt.release();
-        return 0;
-    } catch(std::exception& e) {
-        std::cerr << prec->name << ": error in init_record " << e.what() << "\n";
-        return S_db_errArg;
-    }
 }
 
 // integer to/from VAL
@@ -127,7 +124,7 @@ long opcua_write_int_val (REC *prec)
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-  {6, NULL, opcua_init, opcua_init_record, NULL, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
+  {6, NULL, opcua_init, NULL, NULL, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
 SUP(devLiOpcua, longin,  int_val, read)

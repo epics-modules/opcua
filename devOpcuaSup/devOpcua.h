@@ -8,6 +8,7 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
+ *  and code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
  */
 
 #ifndef DEVOPCUA_H
@@ -70,8 +71,11 @@ public:
             throw std::logic_error(SB() << entry.precnode->recordname << " has no INP/OUT?!?!");
         if (entry.pflddes->field_type != DBF_INLINK &&
            entry.pflddes->field_type != DBF_OUTLINK)
-            throw std::logic_error(SB() << entry.precnode->recordname << " not devlink or IN/OUT?!?!");
+            throw std::logic_error(SB() << entry.precnode->recordname << " not devlink or INP/OUT?!?!");
         return (DBLINK*)entry.pfield;
+    }
+    bool isOutput() const {
+        return !dbFindField(pentry(), "OUT");
     }
     const char *info(const char *name, const char *def) const
     {

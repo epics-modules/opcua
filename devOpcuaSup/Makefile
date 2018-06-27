@@ -24,6 +24,7 @@ opcua_SRCS += Subscription.cpp
 opcua_SRCS += Item.cpp
 opcua_SRCS += DataElement.cpp
 opcua_SRCS += RecordConnector.cpp
+opcua_SRCS += linkParser.cpp
 
 opcua_LIBS += $(EPICS_BASE_IOC_LIBS)
 
