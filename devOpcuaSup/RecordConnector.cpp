@@ -8,24 +8,20 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
- *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+
+#include <link.h>
 #include <epicsExport.h>
 
 #include "RecordConnector.h"
 
 namespace DevOpcua {
 
-// Configurable default for timestamp selection
-
-static int opcua_DefaultUseServerTime = 1;           // use server timestamp
-
-extern "C"{
-epicsExportAddress(int, opcua_DefaultUseServerTime);
-}
-
-RecordConnector::RecordConnector(dbCommon* prec)
+RecordConnector::RecordConnector (dbCommon *prec)
     : prec(prec)
 {}
 

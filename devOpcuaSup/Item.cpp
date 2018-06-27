@@ -16,20 +16,6 @@
 
 namespace DevOpcua {
 
-// Configurable defaults for sampling interval, queue size, discard policy
-
-static double opcua_DefaultSamplingInterval = -1.0;  // ms (-1 = use publishing interval)
-static int opcua_DefaultQueueSize = 1;               // no queueing
-static int opcua_DefaultDiscardOldest = 1;           // discard oldest value in case of overrun
-
-extern "C" {
-epicsExportAddress(double, opcua_DefaultSamplingInterval);
-epicsExportAddress(int, opcua_DefaultQueueSize);
-epicsExportAddress(int, opcua_DefaultDiscardOldest);
-}
-
-using namespace UaClientSdk;
-
 Item::Item()
 {
 
