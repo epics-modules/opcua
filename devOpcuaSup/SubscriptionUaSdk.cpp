@@ -136,6 +136,12 @@ SubscriptionUaSdk::create ()
     }
 }
 
+void
+SubscriptionUaSdk::clear ()
+{
+    puasubscription = NULL;
+}
+
 
 // UaSubscriptionCallback interface
 

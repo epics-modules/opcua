@@ -79,6 +79,11 @@ public:
      */
     void create();
 
+    /**
+     * @brief Clear connection to driver level.
+     */
+    void clear();
+
     // UaSubscriptionCallback interface
     void subscriptionStatusChanged(
             OpcUa_UInt32      clientSubscriptionHandle,

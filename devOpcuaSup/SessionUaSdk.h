@@ -15,6 +15,7 @@
 #define DEVOPCUA_SESSIONUASDK_H
 
 #include <algorithm>
+#include <vector>
 
 #include <uabase.h>
 #include <uaclientsdk.h>
@@ -29,6 +30,7 @@ namespace DevOpcua {
 using namespace UaClientSdk;
 
 class SubscriptionUaSdk;
+class ItemUaSdk;
 
 /**
  * @brief Session class for the Unified Automation OPC UA Client SDK.
@@ -134,6 +136,7 @@ private:
     UaString serverURL;                                       /**< server URL */
     bool autoConnect;                                         /**< auto (re)connect flag */
     std::map<std::string, SubscriptionUaSdk*> subscriptions;  /**< subscriptions on this session */
+    std::vector<ItemUaSdk*> items;                            /**< items on this session */
     UaSession* puasession;                                    /**< pointer to low level session */
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */

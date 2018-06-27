@@ -161,6 +161,7 @@ SessionUaSdk::connect ()
                       << ": connect service failed with status "
                       << result.toString().toUtf8() << std::endl;
         }
+        // asynchronous: remaining actions are done at the status-change callback
         return !result.isGood();
     }
 }
@@ -180,6 +181,11 @@ SessionUaSdk::disconnect ()
             std::cerr << "OPC UA session " << name.c_str()
                       << ": disconnect service failed with status "
                       << result.toString().toUtf8() << std::endl;
+        }
+        // Detach all subscriptions of this session from driver
+        std::map<std::string, SubscriptionUaSdk*>::iterator it;
+        for (it = subscriptions.begin(); it != subscriptions.end(); it++) {
+            it->second->clear();
         }
         return !result.isGood();
     } else {
@@ -234,8 +240,10 @@ void SessionUaSdk::connectionStatusChanged(
         // "The monitoring of the connection to the server detected an error
         // and is trying to reconnect to the server."
     case UaClient::ConnectionErrorApiReconnect:
+        break;
         // "The server sent a shut-down event and the client API tries a reconnect."
     case UaClient::ServerShutdown:
+        break;
         // "The connection to the server is deactivated by the user of the client API."
     case UaClient::Disconnected:
         // TODO: set all records to invalid, and remove the OPC side type info
@@ -272,7 +280,7 @@ SessionUaSdk::showAll (int level)
               << sessions.size() << " session(s) configured"
               << std::endl;
     if (level >= 1) {
-        std::map<std::string, SessionUaSdk*>::iterator it;
+        std::map<std::string, SessionUaSdk*>::const_iterator it;
         for (it = sessions.begin(); it != sessions.end(); it++) {
             it->second->show(level-1);
         }
