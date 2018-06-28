@@ -112,7 +112,7 @@ SessionUaSdk::getName() const
 SessionUaSdk &
 SessionUaSdk::findSession (const std::string &name)
 {
-    std::map<std::string, SessionUaSdk*>::iterator it = sessions.find(name);
+    auto it = sessions.find(name);
     if (it == sessions.end()) {
         throw std::runtime_error("no such session");
     }
@@ -122,7 +122,7 @@ SessionUaSdk::findSession (const std::string &name)
 bool
 SessionUaSdk::sessionExists (const std::string &name)
 {
-    std::map<std::string, SessionUaSdk*>::iterator it = sessions.find(name);
+    auto it = sessions.find(name);
     return !(it == sessions.end());
 }
 
@@ -185,9 +185,8 @@ SessionUaSdk::disconnect ()
                       << result.toString().toUtf8() << std::endl;
         }
         // Detach all subscriptions of this session from driver
-        std::map<std::string, SubscriptionUaSdk*>::iterator it;
-        for (it = subscriptions.begin(); it != subscriptions.end(); it++) {
-            it->second->clear();
+        for (auto &it : subscriptions) {
+            it.second->clear();
         }
         return !result.isGood();
     } else {
@@ -220,16 +219,15 @@ SessionUaSdk::show (int level) const
               << std::endl;
 
     if (level >= 1) {
-        std::map<std::string, SubscriptionUaSdk*>::const_iterator it;
-        for (it = subscriptions.begin(); it != subscriptions.end(); it++) {
-            it->second->show(level-1);
+        for (auto &it : subscriptions) {
+            it.second->show(level-1);
         }
     }
 
     if (level >= 2) {
         if (items.size() > 0) {
             std::cerr << "subscription=[none]" << std::endl;
-            for (auto& it : items) {
+            for (auto &it : items) {
                 if (!it->monitored()) it->show(level-1);
             }
         }
@@ -305,9 +303,8 @@ SessionUaSdk::showAll (int level)
               << sessions.size() << " session(s) configured"
               << std::endl;
     if (level >= 1) {
-        std::map<std::string, SessionUaSdk*>::const_iterator it;
-        for (it = sessions.begin(); it != sessions.end(); it++) {
-            it->second->show(level-1);
+        for (auto &it : sessions) {
+            it.second->show(level-1);
         }
     }
 }
@@ -329,11 +326,10 @@ SessionUaSdk::initHook (initHookState state)
     switch (state) {
     case initHookAfterDatabaseRunning:
     {
-        std::map<std::string, SessionUaSdk*>::iterator it;
         errlogPrintf("OPC UA: Autoconnecting sessions\n");
-        for (it = sessions.begin(); it != sessions.end(); it++) {
-            if (it->second->autoConnect)
-                it->second->connect();
+        for (auto &it : sessions) {
+            if (it.second->autoConnect)
+                it.second->connect();
         }
         epicsThreadOnce(&DevOpcua::session_uasdk_atexit_once, &DevOpcua::session_uasdk_atexit_register, NULL);
         break;
@@ -347,10 +343,9 @@ void
 SessionUaSdk::atExit (void *junk)
 {
     (void)junk;
-    std::map<std::string, SessionUaSdk*>::iterator it;
     errlogPrintf("OPC UA: Disconnecting sessions\n");
-    for (it = sessions.begin(); it != sessions.end(); it++) {
-        it->second->disconnect();
+    for (auto &it : sessions) {
+        it.second->disconnect();
     }
 }
 

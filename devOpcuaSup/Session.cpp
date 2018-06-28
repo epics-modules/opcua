@@ -71,18 +71,16 @@ void
 Session::showAll (int level)
 {
     errlogPrintf("OPC UA: %lu session(s) configured\n", (long) sessions.size());
-    std::map<std::string, Session*>::iterator it;
-    for (it = sessions.begin(); it != sessions.end(); it++) {
-        it->second->show(level);
+    for (auto &it : sessions) {
+        it.second->show(level-1);
     }
 }
 
 void
 Session::setDebugAll (int level)
 {
-    std::map<std::string, Session*>::iterator it;
-    for (it = sessions.begin(); it != sessions.end(); it++) {
-        it->second->setDebug(level);
+    for (auto &it : sessions) {
+        it.second->setDebug(level);
     }
 }
 

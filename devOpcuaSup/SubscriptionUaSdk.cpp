@@ -72,7 +72,7 @@ SubscriptionUaSdk::show (int level) const
               << std::endl;
 
     if (level >= 1) {
-        for (auto& it : items) {
+        for (auto &it : items) {
             it->show(level-1);
         }
     }
@@ -81,7 +81,7 @@ SubscriptionUaSdk::show (int level) const
 SubscriptionUaSdk &
 SubscriptionUaSdk::findSubscription (const std::string &name)
 {
-    std::map<std::string, SubscriptionUaSdk*>::iterator it = subscriptions.find(name);
+    auto it = subscriptions.find(name);
     if (it == subscriptions.end()) {
         throw std::runtime_error("no such subscription");
     }
@@ -91,7 +91,7 @@ SubscriptionUaSdk::findSubscription (const std::string &name)
 bool
 SubscriptionUaSdk::subscriptionExists (const std::string &name)
 {
-    std::map<std::string, SubscriptionUaSdk*>::iterator it = subscriptions.find(name);
+    auto it = subscriptions.find(name);
     return !(it == subscriptions.end());
 }
 
@@ -116,9 +116,8 @@ SubscriptionUaSdk::showAll (int level)
               << subscriptions.size() << " subscription(s) configured"
               << std::endl;
     if (level >= 1) {
-        std::map<std::string, SubscriptionUaSdk*>::iterator it;
-        for (it = subscriptions.begin(); it != subscriptions.end(); it++) {
-            it->second->show(level-1);
+        for (auto &it : subscriptions) {
+            it.second->show(level-1);
         }
     }
 }
