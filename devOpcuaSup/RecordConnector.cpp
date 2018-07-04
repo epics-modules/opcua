@@ -18,6 +18,7 @@
 #include <epicsExport.h>
 
 #include "RecordConnector.h"
+#include "Session.h"
 
 namespace DevOpcua {
 

@@ -24,8 +24,19 @@ namespace DevOpcua {
 class Item
 {
 public:
-    Item();
+    Item() {}
     virtual ~Item() {}
+
+    /**
+     * @brief Print configuration and status on stdout.
+     *
+     * The verbosity level controls the amount of information:
+     * 0 = one line
+     * 1 = item line, then one line per record connector
+     *
+     * @param level  verbosity level
+     */
+    virtual void show(int level) const = 0;
 
     virtual bool monitored() const = 0;
 };

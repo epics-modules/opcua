@@ -109,6 +109,20 @@ public:
     void show(int level) const;
 
     /**
+     * @brief Add an item to the session.
+     *
+     * @param item  item to add
+     */
+    virtual void addItemUaSdk(ItemUaSdk *item);
+
+    /**
+     * @brief Remove an item from the session.
+     *
+     * @param item  item to remove
+     */
+    virtual void removeItemUaSdk(ItemUaSdk *item);
+
+    /**
      * @brief EPICS IOC Database initHook function.
      *
      * Hook function called when the EPICS IOC is being initialized.
@@ -136,7 +150,7 @@ private:
     UaString serverURL;                                       /**< server URL */
     bool autoConnect;                                         /**< auto (re)connect flag */
     std::map<std::string, SubscriptionUaSdk*> subscriptions;  /**< subscriptions on this session */
-    std::vector<ItemUaSdk*> items;                            /**< items on this session */
+    std::vector<ItemUaSdk *> items;                           /**< items on this session */
     UaSession* puasession;                                    /**< pointer to low level session */
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */

@@ -16,9 +16,4 @@
 
 namespace DevOpcua {
 
-Item::Item()
-{
-
-}
-
 } // namespace DevOpcua

@@ -22,6 +22,7 @@
 #include <epicsExport.h>
 
 #include "SubscriptionUaSdk.h"
+#include "ItemUaSdk.h"
 
 namespace DevOpcua {
 
@@ -69,6 +70,12 @@ SubscriptionUaSdk::show (int level) const
               << "(" << (enable ? "Y" : "N") << ")"
               << " debug="       << debug
               << std::endl;
+
+    if (level >= 1) {
+        for (auto& it : items) {
+            it->show(level-1);
+        }
+    }
 }
 
 SubscriptionUaSdk &
@@ -116,6 +123,19 @@ SubscriptionUaSdk::showAll (int level)
     }
 }
 
+Session &
+SubscriptionUaSdk::getSession() const
+{
+    return static_cast<Session &>(*psessionuasdk);
+}
+
+
+SessionUaSdk &
+SubscriptionUaSdk::getSessionUaSdk() const
+{
+    return *psessionuasdk;
+}
+
 void
 SubscriptionUaSdk::create ()
 {
@@ -140,6 +160,20 @@ void
 SubscriptionUaSdk::clear ()
 {
     puasubscription = NULL;
+}
+
+void
+SubscriptionUaSdk::addItemUaSdk(ItemUaSdk *item)
+{
+    items.push_back(item);
+}
+
+void
+SubscriptionUaSdk::removeItemUaSdk(ItemUaSdk *item)
+{
+    auto it = std::find(items.begin(), items.end(), item);
+    if (it != items.end())
+        items.erase(it);
 }
 
 

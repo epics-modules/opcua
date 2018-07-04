@@ -20,6 +20,7 @@
 
 #include "devOpcua.h"
 #include "DataElement.h"
+#include "Item.h"
 
 namespace DevOpcua {
 
@@ -63,8 +64,11 @@ public:
     template<typename VAL> VAL read() const;
     template<typename VAL> void write(VAL val);
 
+    void createItem() const;
+
     epicsMutex lock;
     std::unique_ptr<linkInfo> plinkinfo;
+    std::unique_ptr<Item> pitem;
 private:
     DataElement *pdataelement;
     dbCommon *prec;

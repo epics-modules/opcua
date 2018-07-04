@@ -75,6 +75,28 @@ public:
     static bool subscriptionExists(const std::string &name);
 
     /**
+     * @brief Get the session that this subscription is running on.
+     *
+     * @return Session
+     */
+    virtual Session &getSession() const;
+    virtual SessionUaSdk &getSessionUaSdk() const;
+
+    /**
+     * @brief Add an item to the subscription.
+     *
+     * @param item  item to add
+     */
+    virtual void addItemUaSdk(ItemUaSdk *item);
+
+    /**
+     * @brief Remove an item from the subscription.
+     *
+     * @param item  item to remove
+     */
+    virtual void removeItemUaSdk(ItemUaSdk *item);
+
+    /**
      * @brief Create subscription on the server.
      */
     void create();
@@ -103,8 +125,9 @@ private:
     static std::map<std::string, SubscriptionUaSdk*> subscriptions;
 
     const std::string name;                     /**< unique subscription name */
-    UaSubscription *puasubscription;
-    SessionUaSdk *psessionuasdk;
+    UaSubscription *puasubscription;            /**< pointer to low level subscription */
+    SessionUaSdk *psessionuasdk;                /**< pointer to session */
+    std::vector<ItemUaSdk *> items;             /**< items on this subscription */
     SubscriptionSettings subscriptionSettings;
     bool enable;
 };

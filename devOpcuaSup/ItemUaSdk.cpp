@@ -11,26 +11,71 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-#include <uaclientsdk.h>
+#include <memory>
 
+#include <uaclientsdk.h>
+#include <uanodeid.h>
+
+#include "RecordConnector.h"
 #include "ItemUaSdk.h"
+#include "SubscriptionUaSdk.h"
+#include "SessionUaSdk.h"
 
 namespace DevOpcua {
 
 using namespace UaClientSdk;
 
-ItemUaSdk::ItemUaSdk()
+ItemUaSdk::ItemUaSdk (const linkInfo & info)
+    : linkinfo(info)
+    , subscription(NULL)
+    , session(NULL)
 {
+    if (info.identifierIsNumeric) {
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(info.identifierNumber, info.namespaceIndex));
+    } else {
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(info.identifierString.c_str(), info.namespaceIndex));
+    }
 
+    if (linkinfo.subscription != "") {
+        subscription = &SubscriptionUaSdk::findSubscription(linkinfo.subscription);
+        subscription->addItemUaSdk(this);
+        session = &subscription->getSessionUaSdk();
+    } else {
+        session = &SessionUaSdk::findSession(linkinfo.session);
+    }
+    session->addItemUaSdk(this);
 }
 
-ItemUaSdk::~ItemUaSdk()
-{}
+ItemUaSdk::~ItemUaSdk ()
+{
+    subscription->removeItemUaSdk(this);
+    session->removeItemUaSdk(this);
+}
 
 bool
-ItemUaSdk::monitored() const
+ItemUaSdk::monitored () const
 {
-    return !!psubscription;
+    return !!subscription;
+}
+
+void
+ItemUaSdk::show (int level) const
+{
+    std::cerr << "item"
+              << " ns="     << linkinfo.namespaceIndex;
+    if (linkinfo.identifierIsNumeric)
+        std::cerr << ";i=" << linkinfo.identifierNumber;
+    else
+        std::cerr << ";s=" << linkinfo.identifierString;
+    std::cerr << " context=" << linkinfo.subscription
+              << "@" << session->getName()
+              << " sampling=" << linkinfo.samplingInterval
+              << " qsize=" << linkinfo.queueSize
+              << " discard=" << (linkinfo.discardOldest ? "old" : "new")
+              << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source");
+    if (linkinfo.isOutput)
+        std::cerr << " output=y readback=" << (linkinfo.doOutputReadback ? "y" : "n");
+    std::cerr << std::endl;
 }
 
 } // namespace DevOpcua

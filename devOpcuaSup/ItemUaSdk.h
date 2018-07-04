@@ -14,6 +14,8 @@
 #ifndef DEVOPCUA_ITEMUASDK_H
 #define DEVOPCUA_ITEMUASDK_H
 
+#include <memory>
+
 #include <uaclientsdk.h>
 
 #include "Item.h"
@@ -24,17 +26,21 @@ using namespace UaClientSdk;
 
 class SubscriptionUaSdk;
 class SessionUaSdk;
+struct linkInfo;
 
 class ItemUaSdk : public Item
 {
 public:
-    ItemUaSdk();
+    ItemUaSdk(const linkInfo &info);
     ~ItemUaSdk();
 
+    void show(int level) const;
     bool monitored() const;
 private:
-    SubscriptionUaSdk *psubscription;
-    SessionUaSdk *psession;
+    const linkInfo &linkinfo;
+    SubscriptionUaSdk *subscription;
+    SessionUaSdk *session;
+    std::unique_ptr<UaNodeId> nodeid;
 };
 
 } // namespace DevOpcua

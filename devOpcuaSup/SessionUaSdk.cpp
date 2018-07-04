@@ -11,10 +11,11 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-//#include <string.h>
 #include <iostream>
 #include <string>
 #include <map>
+#include <algorithm>
+#include <vector>
 
 #include <uaclientsdk.h>
 #include <uasession.h>
@@ -28,6 +29,7 @@
 #include "Session.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
+#include "ItemUaSdk.h"
 
 namespace DevOpcua {
 
@@ -223,9 +225,32 @@ SessionUaSdk::show (int level) const
             it->second->show(level-1);
         }
     }
+
+    if (level >= 2) {
+        if (items.size() > 0) {
+            std::cerr << "subscription=[none]" << std::endl;
+            for (auto& it : items) {
+                if (!it->monitored()) it->show(level-1);
+            }
+        }
+    }
 }
 
-void SessionUaSdk::connectionStatusChanged(
+void
+SessionUaSdk::addItemUaSdk (ItemUaSdk *item)
+{
+    items.push_back(item);
+}
+
+void
+SessionUaSdk::removeItemUaSdk (ItemUaSdk *item)
+{
+    auto it = std::find(items.begin(), items.end(), item);
+    if (it != items.end())
+        items.erase(it);
+}
+
+void SessionUaSdk::connectionStatusChanged (
     OpcUa_UInt32             clientConnectionId,
     UaClient::ServerStatus   serverStatus)
 {

@@ -42,6 +42,13 @@ public:
     virtual void show(int level) const = 0;
 
     /**
+     * @brief Get the session that this subscription is running on.
+     *
+     * @return Session
+     */
+    virtual Session & getSession() const = 0;
+
+    /**
      * @brief Find a subscription by name.
      *
      * @param name subscription name
@@ -59,7 +66,7 @@ public:
      */
     static bool subscriptionExists(const std::string &name);
 
-    const std::string name; /**< session name */
+    const std::string name; /**< subscription name */
     int debug;              /**< debug verbosity level */
 
 protected:

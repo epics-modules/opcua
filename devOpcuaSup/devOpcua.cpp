@@ -46,6 +46,7 @@
 #include "devOpcua.h"
 #include "RecordConnector.h"
 #include "linkParser.h"
+#include "ItemUaSdk.h"
 
 namespace {
 
@@ -69,6 +70,9 @@ long opcua_add_record (dbCommon *prec)
         DBEntry ent(prec);
         std::unique_ptr<RecordConnector> pvt (new RecordConnector(prec));
         pvt->plinkinfo = parseLink(prec, ent);
+        //TODO: Switch to implementation selection
+        std::unique_ptr<ItemUaSdk> item (new ItemUaSdk(*pvt->plinkinfo));
+        pvt->pitem = std::move(item);
         prec->dpvt = pvt.release();
         return 0;
     } catch(std::exception& e) {
