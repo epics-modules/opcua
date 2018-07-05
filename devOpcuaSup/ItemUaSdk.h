@@ -19,6 +19,7 @@
 #include <uaclientsdk.h>
 
 #include "Item.h"
+#include "DataElementUaSdk.h"
 
 namespace DevOpcua {
 
@@ -28,7 +29,7 @@ class SubscriptionUaSdk;
 class SessionUaSdk;
 struct linkInfo;
 
-class ItemUaSdk : public Item
+class ItemUaSdk : public Item, public DataElementUaSdk
 {
 public:
     ItemUaSdk(const linkInfo &info);

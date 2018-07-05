@@ -65,6 +65,10 @@ public:
     template<typename VAL> void write(VAL val);
 
     void createItem() const;
+    void setDataElement(DataElement *data) { pdataelement = data; }
+    void clearDataElement() { pdataelement = NULL; }
+
+    const char * getRecordName() { return prec->name; }
 
     epicsMutex lock;
     std::unique_ptr<linkInfo> plinkinfo;

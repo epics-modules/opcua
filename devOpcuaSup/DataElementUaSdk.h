@@ -11,26 +11,19 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+#ifndef DEVOPCUA_DATAELEMENTUASDK_H
+#define DEVOPCUA_DATAELEMENTUASDK_H
+
 #include "DataElement.h"
-#include "RecordConnector.h"
 
 namespace DevOpcua {
 
-DataElement::DataElement (const std::string &name)
-    : name(name)
-{}
-
-DataElement::~DataElement ()
+class DataElementUaSdk : public DataElement
 {
-    if (pconnector)
-        pconnector->clearDataElement();
-}
-
-void
-DataElement::setRecordConnector (RecordConnector *connector)
-{
-    pconnector = connector;
-    connector->setDataElement(this);
-}
+public:
+    DataElementUaSdk(const std::string &name = "");
+};
 
 } // namespace DevOpcua
+
+#endif // DEVOPCUA_DATAELEMENTUASDK_H

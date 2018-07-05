@@ -68,8 +68,10 @@ ItemUaSdk::show (int level) const
     else
         std::cerr << ";s=" << linkinfo.identifierString;
     std::cerr << " context=" << linkinfo.subscription
-              << "@" << session->getName()
-              << " sampling=" << linkinfo.samplingInterval
+              << "@" << session->getName();
+    if (pconnector)
+        std::cerr << " record=" << pconnector->getRecordName();
+    std::cerr << " sampling=" << linkinfo.samplingInterval
               << " qsize=" << linkinfo.queueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source");

@@ -72,6 +72,7 @@ long opcua_add_record (dbCommon *prec)
         pvt->plinkinfo = parseLink(prec, ent);
         //TODO: Switch to implementation selection
         std::unique_ptr<ItemUaSdk> item (new ItemUaSdk(*pvt->plinkinfo));
+        item->setRecordConnector(pvt.get());
         pvt->pitem = std::move(item);
         prec->dpvt = pvt.release();
         return 0;

@@ -8,18 +8,30 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
- *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
 #ifndef DEVOPCUA_DATAELEMENT_H
 #define DEVOPCUA_DATAELEMENT_H
 
+#include <vector>
+#include <memory>
+
 namespace DevOpcua {
+
+class RecordConnector;
 
 class DataElement
 {
 public:
-    DataElement();
+    DataElement(const std::string &name = "");
+    virtual ~DataElement();
+
+    void setRecordConnector(RecordConnector *connector);
+
+protected:
+    std::string name;                                    /**< element name */
+    std::vector<std::unique_ptr<DataElement>> elements;  /**< children (if node) */
+    RecordConnector *pconnector;                         /**< connector (if leaf) */
 };
 
 } // namespace DevOpcua
