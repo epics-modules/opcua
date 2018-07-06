@@ -1,3 +1,4 @@
+# EPICS installation dirs
 /cfg/
 /bin/
 /lib/
@@ -7,6 +8,18 @@
 /include/
 /templates/
 /configure/*.local
+
+# EPICS installation dirs in *Top
+/*Top/cfg/
+/*Top/bin/
+/*Top/lib/
+/*Top/db/
+/*Top/dbd/
+/*Top/html/
+/*Top/include/
+/*Top/templates/
+/*Top/configure/*.local
+
 O.*/
 /QtC-*
 *.orig
