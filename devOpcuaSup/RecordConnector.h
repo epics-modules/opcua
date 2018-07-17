@@ -8,6 +8,7 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
+ *  and code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
  */
 
 #ifndef RECORDCONNECTOR_H
@@ -17,6 +18,8 @@
 
 #include <epicsMutex.h>
 #include <dbCommon.h>
+#include <dbScan.h>
+#include <callback.h>
 
 #include "devOpcua.h"
 #include "DataElement.h"
@@ -61,35 +64,32 @@ class RecordConnector
 public:
     RecordConnector(dbCommon *prec);
 
-    template<typename VAL> VAL read() const;
-    template<typename VAL> void write(VAL val);
+    epicsTimeStamp readTimeStamp() const { return pdataelement->readTimeStamp(plinkinfo->useServerTimestamp); }
+    epicsInt32 readInt32() const { return pdataelement->readInt32(); }
+    void writeInt32(const epicsInt32 val) const {}
+    void clearIncomingData() { pdataelement->clearIncomingData(); }
 
-    void createItem() const;
     void setDataElement(DataElement *data) { pdataelement = data; }
     void clearDataElement() { pdataelement = NULL; }
 
+    void requestRecordProcessing();
+    void requestOpcuaRead() { pitem->requestRead(); }
+    void requestOpcuaWrite() { pitem->requestWrite(); }
+
     const char * getRecordName() { return prec->name; }
+    const int debug() { return ((prec->tpro > 0) ? prec->tpro - 1 : 0); }
 
     epicsMutex lock;
     std::unique_ptr<linkInfo> plinkinfo;
     std::unique_ptr<Item> pitem;
-private:
     DataElement *pdataelement;
+    bool isIoIntrScanned;
+    IOSCANPVT ioscanpvt;
+    bool incomingData;
+private:
     dbCommon *prec;
+    CALLBACK callback;
 };
-
-template<typename VAL>
-VAL RecordConnector::read() const
-{
-    epicsUInt32 OV(0);
-    return OV;
-}
-
-template<typename VAL>
-void RecordConnector::write(VAL val)
-{
-    (void)val;
-}
 
 } // namespace DevOpcua
 

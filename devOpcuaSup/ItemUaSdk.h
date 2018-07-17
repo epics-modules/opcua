@@ -19,6 +19,7 @@
 #include <uaclientsdk.h>
 
 #include "Item.h"
+#include "SessionUaSdk.h"
 #include "DataElementUaSdk.h"
 
 namespace DevOpcua {
@@ -26,7 +27,6 @@ namespace DevOpcua {
 using namespace UaClientSdk;
 
 class SubscriptionUaSdk;
-class SessionUaSdk;
 struct linkInfo;
 
 class ItemUaSdk : public Item, public DataElementUaSdk
@@ -35,8 +35,13 @@ public:
     ItemUaSdk(const linkInfo &info);
     ~ItemUaSdk();
 
+    void requestRead() { session->requestRead((*this)); }
+    void requestWrite() {}
+
     void show(int level) const;
     bool monitored() const;
+    UaNodeId &nodeId() const { return (*nodeid); }
+
 private:
     SubscriptionUaSdk *subscription;
     SessionUaSdk *session;

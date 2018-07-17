@@ -15,6 +15,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 #include <uaclientsdk.h>
@@ -23,10 +24,12 @@
 #include <epicsExport.h>
 #include <epicsExit.h>
 #include <epicsThread.h>
+#include <epicsAtomic.h>
 #include <initHooks.h>
 #include <errlog.h>
 
 #include "Session.h"
+#include "RecordConnector.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
 #include "ItemUaSdk.h"
@@ -71,10 +74,13 @@ serverStatusString (UaClient::ServerStatus type)
 SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUrl,
                             bool autoConnect, int debug, epicsUInt32 batchNodes,
                             const char *clientCertificate, const char *clientPrivateKey)
-    : name(name)
+    : Session(debug)
+    , name(name)
     , serverURL(serverUrl.c_str())
+    , autoConnect(autoConnect)
     , puasession(new UaSession())
     , serverConnectionStatus(UaClient::Disconnected)
+    , transactionId(0)
 {
     int status = -1;
     char host[256];
@@ -107,6 +113,12 @@ const std::string &
 SessionUaSdk::getName() const
 {
     return name;
+}
+
+const OpcUa_UInt32
+SessionUaSdk::getTransactionId()
+{
+    return epics::atomic::increment(transactionId);
 }
 
 SessionUaSdk &
@@ -153,7 +165,10 @@ SessionUaSdk::connect ()
                              << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
     } else {
-        UaStatus result = puasession->connect(serverURL, connectInfo, securityInfo, this);
+        UaStatus result = puasession->connect(serverURL,      // URL of the Endpoint
+                                              connectInfo,    // General connection settings
+                                              securityInfo,   // Security settings
+                                              this);          // Callback interface
 
         if (result.isGood()) {
             if (debug) std::cerr << "OPC UA session " << name.c_str()
@@ -163,7 +178,7 @@ SessionUaSdk::connect ()
                       << ": connect service failed with status "
                       << result.toString().toUtf8() << std::endl;
         }
-        // asynchronous: remaining actions are done at the status-change callback
+        // asynchronous: remaining actions are done on the status-change callback
         return !result.isGood();
     }
 }
@@ -174,7 +189,8 @@ SessionUaSdk::disconnect ()
     if (isConnected()) {
         ServiceSettings serviceSettings;
 
-        UaStatus result = puasession->disconnect(serviceSettings, OpcUa_True); // delete subscriptions
+        UaStatus result = puasession->disconnect(serviceSettings,  // Use default settings
+                                                 OpcUa_True);      // Delete subscriptions
 
         if (result.isGood()) {
             if (debug) std::cerr << "OPC UA session " << name.c_str()
@@ -200,21 +216,103 @@ bool
 SessionUaSdk::isConnected () const
 {
     if (puasession)
-        return !!puasession->isConnected();
+        return (!!puasession->isConnected()
+                && serverConnectionStatus != UaClient::ConnectionErrorApiReconnect);
     else
         return false;
+}
+
+//TODO: Push to queue for worker thread (instead of doing an explicit request)
+void
+SessionUaSdk::readAllNodes ()
+{
+    UaStatus status;
+    UaReadValueIds nodesToRead;
+    std::unique_ptr<std::vector<ItemUaSdk *>> itemsToRead(new std::vector<ItemUaSdk *>);
+    ServiceSettings serviceSettings;
+    OpcUa_UInt32 id = getTransactionId();
+
+    nodesToRead.create(items.size());
+    OpcUa_UInt32 i = 0;
+    for (auto &it : items) {
+        it->nodeId().copyTo(&nodesToRead[i].NodeId);
+        nodesToRead[i].AttributeId = OpcUa_Attributes_Value;
+        i++;
+        itemsToRead->push_back(it);
+    }
+
+    Guard G(readlock);
+    status = puasession->beginRead(serviceSettings,                // Use default settings
+                                   0,                              // Max age
+                                   OpcUa_TimestampsToReturn_Both,  // Time stamps to return
+                                   nodesToRead,                    // Array of nodes to read
+                                   id);                            // Transaction id
+
+    if (status.isBad()) {
+        errlogPrintf("OPC UA session %s: (readAllNodes) beginRead service failed with status %s\n",
+                     name.c_str(), status.toString().toUtf8());
+    } else {
+        if (debug)
+            std::cout << "OPC UA session " << name.c_str()
+                      << ": (readAllNodes) beginRead service ok"
+                      << " (transaction id " << id
+                      << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
+        outstandingReads.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
+                                (id, std::move(itemsToRead)));
+    }
+}
+
+//TODO: Push to queue for worker thread (instead of doing a single item request)
+void
+SessionUaSdk::requestRead (ItemUaSdk &item)
+{
+    UaStatus status;
+    UaReadValueIds nodesToRead;
+    std::unique_ptr<std::vector<ItemUaSdk *>> itemsToRead(new std::vector<ItemUaSdk *>);
+    ServiceSettings serviceSettings;
+    OpcUa_UInt32 id = getTransactionId();
+
+    nodesToRead.create(1);
+    item.nodeId().copyTo(&nodesToRead[0].NodeId);
+    nodesToRead[0].AttributeId = OpcUa_Attributes_Value;
+    itemsToRead->push_back(&item);
+
+    Guard G(readlock);
+    status = puasession->beginRead(serviceSettings,                // Use default settings
+                                   0,                              // Max age
+                                   OpcUa_TimestampsToReturn_Both,  // Time stamps to return
+                                   nodesToRead,                    // Array of nodes to read
+                                   id);                            // Transaction id
+
+    if (status.isBad()) {
+        errlogPrintf("OPC UA session %s: (readAllNodes) beginRead service failed with status %s\n",
+                     name.c_str(), status.toString().toUtf8());
+    } else {
+        if (debug)
+            std::cout << "OPC UA session " << name.c_str()
+                      << ": (readItem) beginRead service ok"
+                      << " (transaction id " << id
+                      << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
+        outstandingReads.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
+                                (id, std::move(itemsToRead)));
+    }
 }
 
 void
 SessionUaSdk::show (int level) const
 {
-    std::cerr << "session="      << name
+    std::cout << "session="      << name
               << " url="         << serverURL.toUtf8()
               << " status="      << serverStatusString(serverConnectionStatus)
               << " cert="        << "[none]"
               << " key="         << "[none]"
               << " debug="       << debug
-              << " batch="       << puasession->maxOperationsPerServiceCall()
+              << " batch=";
+    if (isConnected())
+        std::cout << puasession->maxOperationsPerServiceCall();
+    else
+        std::cout << "?";
+    std::cout << "(" << connectInfo.nMaxOperationsPerServiceCall << ")"
               << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "Y" : "N")
               << std::endl;
 
@@ -248,12 +346,14 @@ SessionUaSdk::removeItemUaSdk (ItemUaSdk *item)
         items.erase(it);
 }
 
+// UaSessionCallback interface
+
 void SessionUaSdk::connectionStatusChanged (
     OpcUa_UInt32             clientConnectionId,
     UaClient::ServerStatus   serverStatus)
 {
     OpcUa_ReferenceParameter(clientConnectionId);
-    errlogPrintf("OPC UA session %s: Connection status changed from %s to %s\n",
+    errlogPrintf("OPC UA session %s: connection status changed from %s to %s\n",
                  name.c_str(),
                  serverStatusString(serverConnectionStatus),
                  serverStatusString(serverStatus));
@@ -283,6 +383,7 @@ void SessionUaSdk::connectionStatusChanged (
                 || serverConnectionStatus == UaClient::NewSessionCreated
                 || (serverConnectionStatus == UaClient::Disconnected)) {
             // TODO: register nodes, start subscriptions, add monitored items
+            readAllNodes();
         }
         break;
 
@@ -297,11 +398,59 @@ void SessionUaSdk::connectionStatusChanged (
 }
 
 void
+SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
+                            const UaStatus &result,
+                            const UaDataValues &values,
+                            const UaDiagnosticInfos &diagnosticInfos)
+{
+    Guard G(readlock);
+    auto it = outstandingReads.find(transactionId);
+    if (it == outstandingReads.end()) {
+        errlogPrintf("OPC UA session %s: (readComplete) received a callback "
+                     "with unknown transaction id %u - ignored\n",
+                     name.c_str(), transactionId);
+    } else {
+        if (debug)
+            std::cout << "OPC UA session " << name.c_str()
+                      << ": (readComplete) getting data for read service"
+                      << " (transaction id " << transactionId
+                      << "; data for " << values.length() << " nodes)" << std::endl;
+        OpcUa_UInt32 i = 0;
+        for (auto item : (*it->second)) {
+            if (debug >= 5) {
+                std::cout << "OPC UA session " << name.c_str()
+                          << ": (readComplete) getting data for node "
+                          << " ns="     << item->linkinfo.namespaceIndex;
+                if (item->linkinfo.identifierIsNumeric)
+                    std::cout << ";i=" << item->linkinfo.identifierNumber;
+                else
+                    std::cout << ";s=" << item->linkinfo.identifierString;
+                std::cout << std::endl;
+            }
+            item->setIncomingData(values[i]);
+            i++;
+        }
+        outstandingReads.erase(it);
+    }
+}
+
+void
 SessionUaSdk::showAll (int level)
 {
-    std::cout << "OPC UA: "
-              << sessions.size() << " session(s) configured"
-              << std::endl;
+    unsigned int connected = 0;
+    unsigned int subscriptions = 0;
+    unsigned long int items = 0;
+
+    for (auto &it : sessions) {
+        if (it.second->isConnected()) connected++;
+        subscriptions += it.second->noOfSubscriptions();
+        items += it.second->noOfItems();
+    }
+    std::cout << "OPC UA: total of "
+              << sessions.size() << " session(s) ("
+              << connected << " connected) with "
+              << subscriptions << " subscription(s) and "
+              << items << " items" << std::endl;
     if (level >= 1) {
         for (auto &it : sessions) {
             it.second->show(level-1);

@@ -14,6 +14,8 @@
 #ifndef DEVOPCUA_DATAELEMENTUASDK_H
 #define DEVOPCUA_DATAELEMENTUASDK_H
 
+#include <uadatavalue.h>
+
 #include "DataElement.h"
 
 namespace DevOpcua {
@@ -22,6 +24,21 @@ class DataElementUaSdk : public DataElement
 {
 public:
     DataElementUaSdk(const std::string &name = "");
+
+    void setIncomingData(const UaDataValue &value);
+
+    virtual epicsTimeStamp readTimeStamp(bool server = true) const;
+
+    virtual epicsInt32   readInt32() const;
+    virtual epicsUInt32  readUInt32() const;
+    virtual epicsFloat64 readFloat64() const;
+//    virtual epicsOldString readOldString() const;
+
+    virtual void clearIncomingData() { incomingData.clear(); }
+
+private:
+    UaDataValue incomingData;
+    OpcUa_BuiltInType incomingType;
 };
 
 } // namespace DevOpcua

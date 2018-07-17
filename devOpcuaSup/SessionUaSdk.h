@@ -16,10 +16,12 @@
 
 #include <algorithm>
 #include <vector>
+#include <memory>
 
 #include <uabase.h>
 #include <uaclientsdk.h>
 
+#include <epicsMutex.h>
 #include <epicsTypes.h>
 #include <initHooks.h>
 
@@ -67,13 +69,22 @@ public:
      * @param clientPrivateKey   path to client-side private key
      */
     SessionUaSdk(const std::string &name, const std::string &serverUrl,
-                 bool autoConnect=true, int debug=0, epicsUInt32 batchNodes=0,
-                 const char *clientCertificate=NULL, const char *clientPrivateKey=NULL);
+                 bool autoConnect = true, int debug = 0, epicsUInt32 batchNodes = 0,
+                 const char *clientCertificate = NULL, const char *clientPrivateKey = NULL);
     ~SessionUaSdk();
 
+    // Implement Session interface
     long connect();
     long disconnect();
     bool isConnected() const;
+    void readAllNodes();
+
+    /**
+     * @brief Request a beginRead service for an item
+     *
+     * @param item  item to request beginRead for
+     */
+    void requestRead(ItemUaSdk &item);
 
     /**
      * @brief Print configuration and status of all sessions on stdout.
@@ -105,6 +116,8 @@ public:
      */
     static bool sessionExists(const std::string &name);
 
+    const unsigned int noOfSubscriptions() const { return subscriptions.size(); }
+    const unsigned int noOfItems() const { return items.size(); }
     const std::string & getName() const;
     void show(int level) const;
 
@@ -140,11 +153,20 @@ public:
      */
     static void atExit(void *junk);
 
+    // Get a new (unique) transaction id
+    const OpcUa_UInt32 getTransactionId();
+
     // UaSessionCallback interface
-    virtual void connectionStatusChanged(OpcUa_UInt32 clientConnectionId,
-                                         UaClient::ServerStatus serverStatus);
+    void connectionStatusChanged(OpcUa_UInt32 clientConnectionId,
+                                 UaClient::ServerStatus serverStatus);
+
+    void readComplete(OpcUa_UInt32 transactionId,
+                      const UaStatus &result,
+                      const UaDataValues &values,
+                      const UaDiagnosticInfos &diagnosticInfos);
+
 private:
-    static std::map<std::string, SessionUaSdk*> sessions;     /**< session management */
+    static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
     const std::string name;                                   /**< unique session name */
     UaString serverURL;                                       /**< server URL */
@@ -155,6 +177,10 @@ private:
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */
     UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
+    int transactionId;                                        /**< next transaction id */
+    /** item vectors of outstanding read operations, indexed by transaction id */
+    std::map<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>> outstandingReads;
+    epicsMutex readlock;                                      /**< lock for outstandingRead map */
 };
 
 } // namespace DevOpcua

@@ -15,6 +15,7 @@
 #include <string>
 #include <stdexcept>
 #include <memory>
+#include <utility>
 
 #include <epicsVersion.h>
 #include <epicsStdlib.h>
@@ -25,10 +26,12 @@
 #include <alarm.h>
 #include <dbAccess.h>
 #include <epicsExit.h>
+#include <epicsTime.h>
 #include <iocsh.h>
 #include <errlog.h>
 
 #include <dbCommon.h>
+#include <dbScan.h>
 #include <longoutRecord.h>
 #include <longinRecord.h>
 #include <mbboDirectRecord.h>
@@ -64,7 +67,8 @@ using namespace DevOpcua;
 
 // Device Support Extension: link parsing and setup
 
-long opcua_add_record (dbCommon *prec)
+long
+opcua_add_record (dbCommon *prec)
 {
     try {
         DBEntry ent(prec);
@@ -82,7 +86,8 @@ long opcua_add_record (dbCommon *prec)
     }
 }
 
-long opcua_del_record (dbCommon *prec)
+long
+opcua_del_record (dbCommon *prec)
 {
     //TODO: support changing OPCUA links
     return -1;
@@ -90,38 +95,65 @@ long opcua_del_record (dbCommon *prec)
 
 dsxt opcua_dsxt = { opcua_add_record, opcua_del_record };
 
-// initialization
+// Initialization
 
-long opcua_init (int pass)
+long
+opcua_init (int pass)
 {
     if (pass == 0) devExtend(&opcua_dsxt);
+    return 0;
+}
+
+// Get I/O interrupt information
+
+long
+opcua_get_ioint (int cmd, dbCommon *prec, IOSCANPVT *ppvt)
+{
+    if (!prec->dpvt) return 0;
+    RecordConnector *pvt = static_cast<RecordConnector *>(prec->dpvt);
+    pvt->isIoIntrScanned = (cmd ? false : true);
+    *ppvt = pvt->ioscanpvt;
     return 0;
 }
 
 // integer to/from VAL
 
 template<typename REC>
-long opcua_read_int_val (REC *prec)
+long
+opcua_read_int32_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        prec->val = pvt->read<epicsUInt32>();
-        if (prec->tpro > 1) {
-            errlogPrintf("%s: read -> VAL=%08x\n", prec->name, (unsigned)prec->val);
+        if (prec->pact || pvt->incomingData) {
+            prec->val = pvt->readInt32();
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL=%d (%08x)\n",
+                             prec->name, prec->val,
+                             static_cast<unsigned int>(prec->val));
+            }
+            pvt->clearIncomingData();
+        } else {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
         }
         return 0;
     } CATCH()
 }
 
 template<typename REC>
-long opcua_write_int_val (REC *prec)
+long
+opcua_write_int32_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
         if (prec->tpro > 1) {
-            errlogPrintf("%s: write <- VAL=%08x\n", prec->name, (unsigned)prec->val);
+            errlogPrintf("%s: write <- VAL=%d (%08x)\n",
+                         prec->name, prec->val,
+                         static_cast<unsigned int>(prec->val));
         }
-        pvt->write(prec->val);
+        pvt->writeInt32(prec->val);
         return 0;
     } CATCH()
 }
@@ -129,8 +161,8 @@ long opcua_write_int_val (REC *prec)
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-  {6, NULL, opcua_init, NULL, NULL, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
+  {6, NULL, opcua_init, NULL, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
-SUP(devLiOpcua, longin,  int_val, read)
-SUP(devLoOpcua, longout, int_val, write)
+SUP(devLiOpcua, longin,  int32_val, read)
+SUP(devLoOpcua, longout, int32_val, write)

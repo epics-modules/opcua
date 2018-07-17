@@ -16,6 +16,9 @@
 #include <vector>
 #include <memory>
 
+#include <epicsTypes.h>
+#include <epicsTime.h>
+
 namespace DevOpcua {
 
 class RecordConnector;
@@ -27,6 +30,15 @@ public:
     virtual ~DataElement();
 
     void setRecordConnector(RecordConnector *connector);
+
+    virtual epicsTimeStamp readTimeStamp(bool server = true) const = 0;
+
+    virtual epicsInt32   readInt32() const = 0;
+    virtual epicsUInt32  readUInt32() const = 0;
+    virtual epicsFloat64 readFloat64() const = 0;
+//    virtual epicsOldString readOldString() const = 0;
+
+    virtual void clearIncomingData() = 0;
 
 protected:
     std::string name;                                    /**< element name */

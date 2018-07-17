@@ -97,6 +97,15 @@ public:
     virtual void show(int level) const = 0;
 
     /**
+     * @brief Do a single read of all nodes of this session.
+     *
+     * Called after a session connects, to trigger the initial
+     * read that sets all data and the OPC UA data types.
+     *
+     */
+    virtual void readAllNodes() = 0;
+
+    /**
      * @brief Find a session by name.
      *
      * @param name  session name to search for

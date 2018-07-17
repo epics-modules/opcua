@@ -28,12 +28,15 @@ class Item
 public:
     virtual ~Item() {}
 
+    virtual void requestRead() = 0;
+    virtual void requestWrite() = 0;
+
     /**
      * @brief Print configuration and status on stdout.
      *
      * The verbosity level controls the amount of information:
      * 0 = one line
-     * 1 = item line, then one line per record connector
+     * 1 = item line, then one line per data element
      *
      * @param level  verbosity level
      */
