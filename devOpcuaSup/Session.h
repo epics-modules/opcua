@@ -13,13 +13,7 @@
 #ifndef DEVOPCUA_SESSION_H
 #define DEVOPCUA_SESSION_H
 
-#include <iostream>
-#include <map>
-
-#include <epicsTypes.h>
-#include <initHooks.h>
-
-#include "Subscription.h"
+#include <string>
 
 namespace DevOpcua {
 
@@ -123,7 +117,7 @@ public:
     int debug;  /**< debug verbosity level */
 
 protected:
-    Session() {}
+    Session (const int debug);
 };
 
 } // namespace DevOpcua
