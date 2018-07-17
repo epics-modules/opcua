@@ -61,23 +61,23 @@ ItemUaSdk::monitored () const
 void
 ItemUaSdk::show (int level) const
 {
-    std::cerr << "item"
+    std::cout << "item"
               << " ns="     << linkinfo.namespaceIndex;
     if (linkinfo.identifierIsNumeric)
-        std::cerr << ";i=" << linkinfo.identifierNumber;
+        std::cout << ";i=" << linkinfo.identifierNumber;
     else
-        std::cerr << ";s=" << linkinfo.identifierString;
-    std::cerr << " context=" << linkinfo.subscription
+        std::cout << ";s=" << linkinfo.identifierString;
+    std::cout << " context=" << linkinfo.subscription
               << "@" << session->getName();
     if (pconnector)
-        std::cerr << " record=" << pconnector->getRecordName();
-    std::cerr << " sampling=" << linkinfo.samplingInterval
+        std::cout << " record=" << pconnector->getRecordName();
+    std::cout << " sampling=" << linkinfo.samplingInterval
               << " qsize=" << linkinfo.queueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source");
     if (linkinfo.isOutput)
-        std::cerr << " output=y readback=" << (linkinfo.doOutputReadback ? "y" : "n");
-    std::cerr << std::endl;
+        std::cout << " output=y readback=" << (linkinfo.doOutputReadback ? "y" : "n");
+    std::cout << std::endl;
 }
 
 } // namespace DevOpcua
