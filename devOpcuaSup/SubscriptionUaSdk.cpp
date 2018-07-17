@@ -35,6 +35,7 @@ SubscriptionUaSdk::SubscriptionUaSdk (const std::string &name, SessionUaSdk *ses
                                       const int debug)
     : Subscription(debug)
     , name(name)
+    , puasubscription(NULL)
     , psessionuasdk(session)
     //TODO: add runtime support for subscription enable/disable
     , enable(true)
