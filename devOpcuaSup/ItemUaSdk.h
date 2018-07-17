@@ -38,7 +38,6 @@ public:
     void show(int level) const;
     bool monitored() const;
 private:
-    const linkInfo &linkinfo;
     SubscriptionUaSdk *subscription;
     SessionUaSdk *session;
     std::unique_ptr<UaNodeId> nodeid;

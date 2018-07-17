@@ -15,6 +15,8 @@
 
 namespace DevOpcua {
 
+struct linkInfo;
+
 /**
  * @brief The Item interface for an OPC UA item.
  *
@@ -24,7 +26,6 @@ namespace DevOpcua {
 class Item
 {
 public:
-    Item() {}
     virtual ~Item() {}
 
     /**
@@ -39,6 +40,14 @@ public:
     virtual void show(int level) const = 0;
 
     virtual bool monitored() const = 0;
+
+    const linkInfo &linkinfo;
+
+protected:
+    Item(const linkInfo &info) : linkinfo(info) {}
+
+private:
+    Item();
 };
 
 } // namespace DevOpcua

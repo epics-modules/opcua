@@ -25,8 +25,8 @@ namespace DevOpcua {
 
 using namespace UaClientSdk;
 
-ItemUaSdk::ItemUaSdk (const linkInfo & info)
-    : linkinfo(info)
+ItemUaSdk::ItemUaSdk (const linkInfo &info)
+    : Item(info)
     , subscription(NULL)
     , session(NULL)
 {
