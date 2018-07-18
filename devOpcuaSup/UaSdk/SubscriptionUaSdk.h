@@ -28,21 +28,34 @@ namespace DevOpcua {
 using namespace UaClientSdk;
 
 /**
- * @brief Subscription class for the Unified Automation OPC UA Client SDK.
+ * @brief The SubscriptionUaSdk implementation of an OPC UA Subscription.
  *
- * The class provides all Subscription related UA services.
+ * See DevOpcua::Subscription
+ *
+ * The class provides all Subscription related services.
  */
-
 class SubscriptionUaSdk : public UaSubscriptionCallback, public Subscription
 {
     UA_DISABLE_COPY(SubscriptionUaSdk);
 
 public:
+    /**
+     * @brief Constructor for SubscriptionUaSdk.
+     *
+     * @param name  subscription name
+     * @param session  session that the subscription should be linked to
+     * @param publishingInterval  initial publishing interval
+     * @param priority  priority (default 0=lowest)
+     * @param debug  debug verbosity (default 0=no debug)
+     */
     SubscriptionUaSdk(const std::string &name, SessionUaSdk *session,
-                      const double publishingInterval, const epicsUInt8 priority=0,
-                      const int debug=0);
+                      const double publishingInterval, const epicsUInt8 priority = 0,
+                      const int debug = 0);
 
-    void show(int level) const;
+    /**
+     * @brief Print configuration and status. See DevOpcua::Subscription::show
+     */
+    void show(int level) const override;
 
     /**
      * @brief Print configuration and status of all subscriptions on stdout.
@@ -75,34 +88,54 @@ public:
     static bool subscriptionExists(const std::string &name);
 
     /**
-     * @brief Get the session that this subscription is running on.
+     * @brief Get the session. See DevOpcua::Subscription::getSession
      *
      * @return Session
      */
-    virtual Session &getSession() const;
-    virtual SessionUaSdk &getSessionUaSdk() const;
+    Session &getSession() const override;
 
     /**
-     * @brief Add an item to the subscription.
+     * @brief Get the session (implementation) that this subscription
+     * is running on.
      *
-     * @param item  item to add
+     * @return SessionUaSdk  reference to session implementation
      */
-    virtual void addItemUaSdk(ItemUaSdk *item);
+    SessionUaSdk &getSessionUaSdk() const;
 
     /**
-     * @brief Remove an item from the subscription.
+     * @brief Add an item (implementation) to the subscription.
      *
-     * @param item  item to remove
+     * The validity of the pointer supplied as parameter is bound
+     * to the life time of the ItemUaSdk object.
+     * The destructor ItemUaSdk::~ItemUaSdk removes the item.
+     *
+     * @param item  item (implementation) to add
      */
-    virtual void removeItemUaSdk(ItemUaSdk *item);
+    void addItemUaSdk(ItemUaSdk *item);
+
+    /**
+     * @brief Remove an item (implementation) from the subscription.
+     *
+     * The ItemUaSdk is removed from the subscription's list of
+     * monitored items. It is not deleted.
+     *
+     * @param item  item (implementation) to remove
+     */
+    void removeItemUaSdk(ItemUaSdk *item);
 
     /**
      * @brief Create subscription on the server.
+     *
+     * If the connection to the server (session) is up, the subscription is
+     * created on the server side using the createSubscription service.
      */
     void create();
 
     /**
      * @brief Clear connection to driver level.
+     *
+     * Clears the internal pointer to the driver level subscription that was
+     * created through the create() method.
      */
     void clear();
 
@@ -110,16 +143,16 @@ public:
     void subscriptionStatusChanged(
             OpcUa_UInt32      clientSubscriptionHandle,
             const UaStatus&   status
-            );
+            ) override;
     void dataChange(
             OpcUa_UInt32               clientSubscriptionHandle,
             const UaDataNotifications& dataNotifications,
             const UaDiagnosticInfos&   diagnosticInfos
-            );
+            ) override;
     void newEvents(
             OpcUa_UInt32                clientSubscriptionHandle,
             UaEventFieldLists&          eventFieldList
-            );
+            ) override;
 
 private:
     static std::map<std::string, SubscriptionUaSdk*> subscriptions;
@@ -128,8 +161,8 @@ private:
     UaSubscription *puasubscription;            /**< pointer to low level subscription */
     SessionUaSdk *psessionuasdk;                /**< pointer to session */
     std::vector<ItemUaSdk *> items;             /**< items on this subscription */
-    SubscriptionSettings subscriptionSettings;
-    bool enable;
+    SubscriptionSettings subscriptionSettings;  /**< subscription specific settings */
+    bool enable;                                /**< subscription enable flag */
 };
 
 } // namespace DevOpcua

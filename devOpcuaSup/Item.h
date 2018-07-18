@@ -22,13 +22,19 @@ struct linkInfo;
  *
  * The interface provides all item related configuration and functionality.
  */
-
 class Item
 {
 public:
     virtual ~Item() {}
 
+    /**
+     * @brief Schedule a read request (using beginRead service).
+     */
     virtual void requestRead() = 0;
+
+    /**
+     * @brief Schedule a write request (using beginWrite service).
+     */
     virtual void requestWrite() = 0;
 
     /**
@@ -42,15 +48,22 @@ public:
      */
     virtual void show(int level) const = 0;
 
-    virtual bool monitored() const = 0;
+    /**
+     * @brief Return the monitored status of the item.
+     *
+     * @return true if item is monitored
+     */
+    virtual bool isMonitored() const = 0;
 
-    const linkInfo &linkinfo;
+    const linkInfo &linkinfo;  /**< configuration of the item as parsed from the EPICS record */
 
 protected:
+    /**
+     * @brief Constructor for Item, to be used by derived classes.
+     *
+     * @param info  Item configuration as parsed from EPICS database
+     */
     Item(const linkInfo &info) : linkinfo(info) {}
-
-private:
-    Item();
 };
 
 } // namespace DevOpcua

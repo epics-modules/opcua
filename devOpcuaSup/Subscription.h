@@ -70,7 +70,11 @@ public:
     int debug;              /**< debug verbosity level */
 
 protected:
-    // No construction through the interface
+    /**
+     * @brief Constructor, to be used by the implementation (derived) classes.
+     *
+     * @param debug  initial debug level
+     */
     Subscription(const int debug) : debug(debug) {}
 };
 

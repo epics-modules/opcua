@@ -29,6 +29,8 @@ DataElement::~DataElement ()
 void
 DataElement::setRecordConnector (RecordConnector *connector)
 {
+    if (pconnector)
+        pconnector->clearDataElement();
     pconnector = connector;
     connector->setDataElement(this);
 }

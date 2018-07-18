@@ -235,7 +235,7 @@ SessionUaSdk::readAllNodes ()
     nodesToRead.create(items.size());
     OpcUa_UInt32 i = 0;
     for (auto &it : items) {
-        it->nodeId().copyTo(&nodesToRead[i].NodeId);
+        it->getNodeId().copyTo(&nodesToRead[i].NodeId);
         nodesToRead[i].AttributeId = OpcUa_Attributes_Value;
         i++;
         itemsToRead->push_back(it);
@@ -273,7 +273,7 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
     OpcUa_UInt32 id = getTransactionId();
 
     nodesToRead.create(1);
-    item.nodeId().copyTo(&nodesToRead[0].NodeId);
+    item.getNodeId().copyTo(&nodesToRead[0].NodeId);
     nodesToRead[0].AttributeId = OpcUa_Attributes_Value;
     itemsToRead->push_back(&item);
 
@@ -326,7 +326,7 @@ SessionUaSdk::show (int level) const
         if (items.size() > 0) {
             std::cerr << "subscription=[none]" << std::endl;
             for (auto &it : items) {
-                if (!it->monitored()) it->show(level-1);
+                if (!it->isMonitored()) it->show(level-1);
             }
         }
     }

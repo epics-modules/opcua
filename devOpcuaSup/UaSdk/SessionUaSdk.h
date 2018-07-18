@@ -35,11 +35,9 @@ class SubscriptionUaSdk;
 class ItemUaSdk;
 
 /**
- * @brief Session class for the Unified Automation OPC UA Client SDK.
+ * @brief The SessionUaSdk implementation of an OPC UA client session.
  *
- * Main class for connecting with any OPC UA Server.
- * The class manages the connection to an OPC Unified Architecture server
- * and the application session established with the server.
+ * See DevOpcua::Session
  *
  * The connect call establishes and maintains a Session with a Server.
  * After a successful connect, the connection is monitored by the low level driver.
@@ -73,11 +71,40 @@ public:
                  const char *clientCertificate = NULL, const char *clientPrivateKey = NULL);
     ~SessionUaSdk();
 
-    // Implement Session interface
-    long connect();
-    long disconnect();
-    bool isConnected() const;
-    void readAllNodes();
+    /**
+     * @brief Connect session. See DevOpcua::Session::connect
+     * @return long status (0 = OK)
+     */
+    long connect() override;
+
+    /**
+     * @brief Disconnect session. See DevOpcua::Session::disconnect
+     * @return long status (0 = OK)
+     */
+    long disconnect() override;
+
+    /**
+     * @brief Return connection status. See DevOpcua::Session::isConnected
+     * @return
+     */
+    bool isConnected() const override;
+
+    /**
+     * @brief Initiate read of all nodes. See DevOpcua::Session::readAllNodes
+     */
+    void readAllNodes() override;
+
+    /**
+     * @brief Print configuration and status. See DevOpcua::Session::show
+     * @param level
+     */
+    void show(int level) const override;
+
+    /**
+     * @brief Get session name. See DevOpcua::Session::getName
+     * @return session name
+     */
+    const std::string & getName() const override;
 
     /**
      * @brief Request a beginRead service for an item
@@ -118,8 +145,6 @@ public:
 
     const unsigned int noOfSubscriptions() const { return subscriptions.size(); }
     const unsigned int noOfItems() const { return items.size(); }
-    const std::string & getName() const;
-    void show(int level) const;
 
     /**
      * @brief Add an item to the session.
@@ -158,12 +183,12 @@ public:
 
     // UaSessionCallback interface
     void connectionStatusChanged(OpcUa_UInt32 clientConnectionId,
-                                 UaClient::ServerStatus serverStatus);
+                                 UaClient::ServerStatus serverStatus) override;
 
     void readComplete(OpcUa_UInt32 transactionId,
                       const UaStatus &result,
                       const UaDataValues &values,
-                      const UaDiagnosticInfos &diagnosticInfos);
+                      const UaDiagnosticInfos &diagnosticInfos) override;
 
 private:
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */

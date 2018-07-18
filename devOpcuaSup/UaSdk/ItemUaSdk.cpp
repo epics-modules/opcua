@@ -52,12 +52,6 @@ ItemUaSdk::~ItemUaSdk ()
     session->removeItemUaSdk(this);
 }
 
-bool
-ItemUaSdk::monitored () const
-{
-    return !!subscription;
-}
-
 void
 ItemUaSdk::show (int level) const
 {

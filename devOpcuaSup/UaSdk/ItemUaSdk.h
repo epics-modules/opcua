@@ -29,18 +29,46 @@ using namespace UaClientSdk;
 class SubscriptionUaSdk;
 struct linkInfo;
 
+/**
+ * @brief The ItemUaSdk inplementation of an OPC UA item.
+ *
+ * See DevOpcua::Item
+ */
 class ItemUaSdk : public Item, public DataElementUaSdk
 {
 public:
+    /**
+     * @brief Constructor for an OPC UA item (implementation).
+     * @param info  configuration as parsed from the EPICS database
+     */
     ItemUaSdk(const linkInfo &info);
     ~ItemUaSdk();
 
-    void requestRead() { session->requestRead((*this)); }
-    void requestWrite() {}
+    /**
+     * @brief Request beginRead service. See DevOpcua::Item::requestRead
+     */
+    void requestRead() override { session->requestRead((*this)); }
 
-    void show(int level) const;
-    bool monitored() const;
-    UaNodeId &nodeId() const { return (*nodeid); }
+    /**
+     * @brief Request beginWrite service. See DevOpcua::Item::requestWrite
+     */
+    void requestWrite() override {}
+
+    /**
+     * @brief Print configuration and status. See DevOpcua::Item::show
+     */
+    void show(int level) const override;
+
+    /**
+     * @brief Return monitored status. See DevOpcua::Item::isMonitored
+     */
+    bool isMonitored() const override { return !!subscription; }
+
+    /**
+     * @brief Getter that returns the node id of this item.
+     * @return node id
+     */
+    UaNodeId &getNodeId() const { return (*nodeid); }
 
 private:
     SubscriptionUaSdk *subscription;
