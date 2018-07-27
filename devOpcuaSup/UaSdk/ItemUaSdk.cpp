@@ -20,6 +20,7 @@
 #include "ItemUaSdk.h"
 #include "SubscriptionUaSdk.h"
 #include "SessionUaSdk.h"
+#include "DataElementUaSdk.h"
 
 namespace DevOpcua {
 
@@ -29,6 +30,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     : Item(info)
     , subscription(NULL)
     , session(NULL)
+    , dataElement(std::unique_ptr<DataElementUaSdk>(new DataElementUaSdk(this)))
 {
     if (info.identifierIsNumeric) {
         nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(info.identifierNumber, info.namespaceIndex));
@@ -63,8 +65,6 @@ ItemUaSdk::show (int level) const
         std::cout << ";s=" << linkinfo.identifierString;
     std::cout << " context=" << linkinfo.subscription
               << "@" << session->getName();
-    if (pconnector)
-        std::cout << " record=" << pconnector->getRecordName();
     std::cout << " sampling=" << linkinfo.samplingInterval
               << " qsize=" << linkinfo.queueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")

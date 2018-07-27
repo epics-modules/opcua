@@ -50,6 +50,7 @@
 #include "RecordConnector.h"
 #include "linkParser.h"
 #include "ItemUaSdk.h"
+#include "DataElementUaSdk.h"
 
 namespace {
 
@@ -76,7 +77,7 @@ opcua_add_record (dbCommon *prec)
         pvt->plinkinfo = parseLink(prec, ent);
         //TODO: Switch to implementation selection
         std::unique_ptr<ItemUaSdk> item (new ItemUaSdk(*pvt->plinkinfo));
-        item->setRecordConnector(pvt.get());
+        item->data().setRecordConnector(pvt.get());
         pvt->pitem = std::move(item);
         prec->dpvt = pvt.release();
         return 0;
@@ -124,7 +125,8 @@ opcua_read_int32_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (prec->pact || pvt->incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             prec->val = pvt->readInt32();
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
@@ -148,12 +150,29 @@ opcua_write_int32_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (prec->tpro > 1) {
-            errlogPrintf("%s: write <- VAL=%d (%08x)\n",
-                         prec->name, prec->val,
-                         static_cast<unsigned int>(prec->val));
+        if (pvt->reason == ProcessReason::incomingData) {
+            prec->val = pvt->readInt32();
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL=%d (%08x)\n",
+                             prec->name, prec->val,
+                             static_cast<unsigned int>(prec->val));
+            }
+            prec->udf = false;
+            pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::writeComplete) {
+            pvt->checkWriteStatus();
+        } else {
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write <- VAL=%d (%08x)\n",
+                             prec->name, prec->val,
+                             static_cast<unsigned int>(prec->val));
+            }
+            pvt->writeInt32(prec->val);
+            prec->pact = true;
+            pvt->requestOpcuaWrite();
         }
-        pvt->writeInt32(prec->val);
         return 0;
     } CATCH()
 }

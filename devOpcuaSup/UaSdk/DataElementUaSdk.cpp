@@ -11,7 +11,14 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+// Avoid problems on Windows (macros min, max clash with numeric_limits<>)
+#ifdef _WIN32
+#  define NOMINMAX
+#endif
+
 #include <iostream>
+#include <limits>
+#include <string>
 
 #include <uadatetime.h>
 #include <opcua_builtintypes.h>
@@ -55,8 +62,9 @@ variantTypeString (const OpcUa_BuiltInType type)
     }
 }
 
-DataElementUaSdk::DataElementUaSdk (const std::string &name)
+DataElementUaSdk::DataElementUaSdk (ItemUaSdk *item, const std::string &name)
     : DataElement(name)
+    , pitem(item)
 {}
 
 void
@@ -69,7 +77,7 @@ DataElementUaSdk::setIncomingData (const UaDataValue &value)
         Guard(pconnector->lock);
         incomingData = value;
         incomingType = static_cast<OpcUa_BuiltInType>(value.value()->Datatype);
-        pconnector->requestRecordProcessing();
+        pconnector->requestRecordProcessing(ProcessReason::incomingData);
     }
     //TODO: add structure support by calling DataElement children
 }
@@ -102,7 +110,7 @@ DataElementUaSdk::readTimeStamp (bool server) const
 }
 
 epicsInt32
-DataElementUaSdk::readInt32() const
+DataElementUaSdk::readInt32 () const
 {
     OpcUa_Int32 v;
     UaVariant tempValue(*incomingData.value());
@@ -122,7 +130,7 @@ DataElementUaSdk::readInt32() const
 }
 
 epicsUInt32
-DataElementUaSdk::readUInt32() const
+DataElementUaSdk::readUInt32 () const
 {
     OpcUa_UInt32 v;
     UaVariant tempValue(*incomingData.value());
@@ -142,7 +150,7 @@ DataElementUaSdk::readUInt32() const
 }
 
 epicsFloat64
-DataElementUaSdk::readFloat64() const
+DataElementUaSdk::readFloat64 () const
 {
     OpcUa_Double v;
     UaVariant tempValue(*incomingData.value());
@@ -159,6 +167,114 @@ DataElementUaSdk::readFloat64() const
     if (OpcUa_IsNotGood(tempValue.toDouble(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
     return v;
+}
+
+bool
+DataElementUaSdk::readWasOk () const
+{
+    bool status = !!pitem->getReadStatus().isGood();
+    if (pconnector->debug())
+        std::cout << pconnector->getRecordName()
+                  << ": read status is '"
+                  << pitem->getReadStatus().toString().toUtf8() << "'"
+                  << std::endl;
+    return status;
+}
+
+bool
+DataElementUaSdk::writeWasOk () const
+{
+    bool status = !!pitem->getWriteStatus().isGood();
+    if (pconnector->debug())
+        std::cout << pconnector->getRecordName()
+                  << ": write status is '"
+                  << pitem->getWriteStatus().toString().toUtf8() << "'"
+                  << std::endl;
+    return status;
+}
+
+template<typename FROM, typename TO>
+void checkRange (const FROM &value) {
+    if (value < std::numeric_limits<TO>::min() || value > std::numeric_limits<TO>::max())
+        throw std::runtime_error(SB() << "outgoing data out-of-bounds");
+}
+
+// Specialization to avoid compiler warnings
+template<>
+void checkRange<epicsInt32, OpcUa_UInt32> (const int &value) {
+    if (value < 0)
+        throw std::runtime_error(SB() << "outgoing data out-of-bounds");
+}
+
+void
+DataElementUaSdk::writeInt32 (const epicsInt32 &value)
+{
+    UaVariant tempValue;
+
+    switch (incomingType) {
+    case OpcUaType_Boolean:
+        if (value == 0)
+            tempValue.setBoolean(false);
+        else
+            tempValue.setBoolean(true);
+        break;
+    case OpcUaType_Byte:
+        checkRange<epicsInt32, OpcUa_Byte>(value);
+        tempValue.setByte(static_cast<OpcUa_Byte>(value));
+        break;
+    case OpcUaType_SByte:
+        checkRange<epicsInt32, OpcUa_SByte>(value);
+        tempValue.setSByte(static_cast<OpcUa_SByte>(value));
+        break;
+    case OpcUaType_UInt16:
+        checkRange<epicsInt32, OpcUa_UInt16>(value);
+        tempValue.setUInt16(static_cast<OpcUa_UInt16>(value));
+        break;
+    case OpcUaType_Int16:
+        checkRange<epicsInt32, OpcUa_Int16>(value);
+        tempValue.setInt16(static_cast<OpcUa_Int16>(value));
+        break;
+    case OpcUaType_UInt32:
+        checkRange<epicsInt32, OpcUa_UInt32>(value);
+        tempValue.setUInt32(static_cast<OpcUa_UInt32>(value));
+        break;
+    case OpcUaType_Int32:
+        tempValue.setInt32(value);
+        break;
+    case OpcUaType_UInt64:
+        tempValue.setUInt64(static_cast<OpcUa_UInt64>(value));
+        break;
+    case OpcUaType_Int64:
+        tempValue.setInt64(static_cast<OpcUa_Int64>(value));
+        break;
+    case OpcUaType_Float:
+        tempValue.setFloat(static_cast<OpcUa_Float>(value));
+        break;
+    case OpcUaType_Double:
+        tempValue.setDouble(static_cast<OpcUa_Double>(value));
+        break;
+    case OpcUaType_String:
+        tempValue.setString(static_cast<UaString>(std::to_string(value).c_str()));
+        break;
+    default:
+        throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
+    }
+
+    if (pconnector->debug())
+        std::cout << pconnector->getRecordName()
+                  << ": set outgoing data ("
+                  << variantTypeString(tempValue.type())
+                  << ") to value " << tempValue.toString().toUtf8() << std::endl;
+
+    outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
+}
+
+void
+DataElementUaSdk::requestRecordProcessing (const ProcessReason reason) const
+{
+    if (pconnector) {
+        pconnector->requestRecordProcessing(reason);
+    }
 }
 
 } // namespace DevOpcua

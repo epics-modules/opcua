@@ -16,16 +16,17 @@
 
 #include <memory>
 
-#include <uaclientsdk.h>
+#include <statuscode.h>
+#include <opcua_builtintypes.h>
 
 #include "Item.h"
 #include "SessionUaSdk.h"
-#include "DataElementUaSdk.h"
 
 namespace DevOpcua {
 
 using namespace UaClientSdk;
 
+class DataElementUaSdk;
 class SubscriptionUaSdk;
 struct linkInfo;
 
@@ -34,7 +35,7 @@ struct linkInfo;
  *
  * See DevOpcua::Item
  */
-class ItemUaSdk : public Item, public DataElementUaSdk
+class ItemUaSdk : public Item
 {
 public:
     /**
@@ -47,12 +48,12 @@ public:
     /**
      * @brief Request beginRead service. See DevOpcua::Item::requestRead
      */
-    void requestRead() override { session->requestRead((*this)); }
+    void requestRead() override { session->requestRead(*this); }
 
     /**
      * @brief Request beginWrite service. See DevOpcua::Item::requestWrite
      */
-    void requestWrite() override {}
+    void requestWrite() override { session->requestWrite(*this); }
 
     /**
      * @brief Print configuration and status. See DevOpcua::Item::show
@@ -70,10 +71,43 @@ public:
      */
     UaNodeId &getNodeId() const { return (*nodeid); }
 
+    /**
+     * @brief Setter for the status of a read operation.
+     * @param status  status code received by the client library
+     */
+    void setReadStatus(const OpcUa_StatusCode &status) { readStatus = status; }
+
+    /**
+     * @brief Getter for the status of the last read operation.
+     * @return read status
+     */
+    const UaStatusCode &getReadStatus() { return readStatus; }
+
+    /**
+     * @brief Setter for the status of a write operation.
+     * @param status  status code received by the client library
+     */
+    void setWriteStatus(const OpcUa_StatusCode &status) { writeStatus = status; }
+
+    /**
+     * @brief Getter for the status of the last write operation.
+     * @return write status
+     */
+    const UaStatusCode &getWriteStatus() { return writeStatus; }
+
+    /**
+     * @brief Getter to access the top data element of this item
+     * @return top data element
+     */
+    DataElementUaSdk &data() { return (*dataElement); }
+
 private:
-    SubscriptionUaSdk *subscription;
-    SessionUaSdk *session;
-    std::unique_ptr<UaNodeId> nodeid;
+    SubscriptionUaSdk *subscription;   /**< pointer to subscription (if monitored) */
+    SessionUaSdk *session;             /**< pointer to session */
+    std::unique_ptr<UaNodeId> nodeid;  /**< node id of this item */
+    std::unique_ptr<DataElementUaSdk> dataElement;  /**< top level data element */
+    UaStatusCode readStatus;           /**< status code of last read service */
+    UaStatusCode writeStatus;          /**< status code of last write service */
 };
 
 } // namespace DevOpcua

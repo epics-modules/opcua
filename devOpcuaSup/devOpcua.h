@@ -23,6 +23,41 @@
 
 namespace DevOpcua {
 
+/** @brief Configuration data for a single record instance.
+ *
+ * This structure holds all configuration data for a single instance of
+ * a supported standard record type, i.e. the result of INP/OUT link parsing.
+ *
+ * It is kept around, as in the case of a server disconnect/reconnect, the
+ * complete sequence of creating the lower level interface will have to be
+ * repeated.
+ */
+typedef struct linkInfo {
+    bool useSimpleSetup = true;
+    std::string session;
+    std::string subscription;
+
+    epicsUInt16 namespaceIndex = 0;
+    bool identifierIsNumeric = false;
+    epicsUInt32 identifierNumber;
+    std::string identifierString;
+
+    double samplingInterval;
+    epicsUInt32 queueSize;
+    bool discardOldest = true;
+
+    std::string element;
+    bool useServerTimestamp = true;
+
+    bool isOutput;
+    bool doOutputReadback = true;
+} linkInfo;
+
+/**
+ * @brief Enum marking the reason for processing a record
+ */
+enum ProcessReason { none, incomingData, readComplete, writeComplete };
+
 template<typename R>
 struct dset6 {
     long N;
@@ -86,6 +121,8 @@ public:
             return entry.pinfonode->string;
     }
 };
+
+typedef std::unique_ptr<linkInfo> (*linkParserFunc)(dbCommon*, DBEntry&);
 
 } // namespace DevOpcua
 

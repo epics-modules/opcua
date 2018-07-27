@@ -15,8 +15,11 @@
 #define DEVOPCUA_DATAELEMENTUASDK_H
 
 #include <uadatavalue.h>
+#include <statuscode.h>
 
 #include "DataElement.h"
+#include "devOpcua.h"
+#include "ItemUaSdk.h"
 
 namespace DevOpcua {
 
@@ -32,9 +35,10 @@ public:
      * @brief Constructor for DataElement (implementation).
      * See DevOpcua::DataElement::DataElement
      *
-     * @param name  structure element name (empty otherwise)
+     * @param pitem  pointer to corresponding ItemUaSdk
+     * @param name   structure element name (empty otherwise)
      */
-    DataElementUaSdk(const std::string &name = "");
+    DataElementUaSdk(ItemUaSdk *pitem, const std::string &name = "");
 
     /**
      * @brief Push an incoming data value into the DataElement.
@@ -45,6 +49,16 @@ public:
      * @param value  new value for this data element
      */
     void setIncomingData(const UaDataValue &value);
+
+    /**
+     * @brief Get the outgoing data value from the DataElement.
+     *
+     * Called from the OPC UA client worker thread when data is being
+     * assembled in OPC UA session for sending.
+     *
+     * @param value  new value for this data element
+     */
+    const UaDataValue &getOutgoingData() { return outgoingData; }
 
     /**
      * @brief Read the time stamp of the incoming data.
@@ -81,14 +95,57 @@ public:
 //    epicsOldString readOldString() const override;
 
     /**
+     * @brief Check status of last read service. See DevOpcua::DataElement::readWasOk
+     *
+     * @return true = last read service ok
+     */
+    bool readWasOk() const override;
+
+    /**
+     * @brief Write outgoing Int32 data. See DevOpcua::DataElement::writeInt32
+     *
+     * @param value  value to write
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    void writeInt32(const epicsInt32 &value) override;
+
+    /**
+     * @brief Check status of last write service. See DevOpcua::DataElement::writeOk
+     *
+     * @return true = last write service ok
+     */
+    bool writeWasOk() const override;
+
+    /**
      * @brief Clear (discard) the current incoming data.
      * See DevOpcua::DataElement::clearIncomingData
      */
     void clearIncomingData() override { incomingData.clear(); }
 
+    /**
+     * @brief Clear (discard) the current outgoing data.
+     *
+     * Called by the low level connection (OPC UA session)
+     * after it is done accessing the data in the context of sending.
+     *
+     * In case an implementation uses a queue, this should remove the
+     * oldest element from the queue, allowing access to the next element
+     * with the next send.
+     */
+    void clearOutgoingData() { outgoingData.clear(); }
+
+    /**
+     * @brief Create processing requests for record(s) attached to this element.
+     * See DevOpcua::DataElement::requestRecordProcessing
+     */
+    void requestRecordProcessing(const ProcessReason reason) const override;
+
 private:
+    ItemUaSdk *pitem;                /**< corresponding item */
     UaDataValue incomingData;        /**< incoming data value */
     OpcUa_BuiltInType incomingType;  /**< type of incoming data */
+    UaDataValue outgoingData;        /**< outgoing data value */
 };
 
 } // namespace DevOpcua

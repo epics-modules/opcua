@@ -13,20 +13,62 @@
 #include <cstddef>
 #include <iostream>
 #include <stdexcept>
+#include <string.h>
 
 #include <link.h>
 #include <epicsExport.h>
+#include <epicsThread.h>
 #include <callback.h>
 #include <recSup.h>
+#include <recGbl.h>
 #include <dbLock.h>
 #include <dbScan.h>
+#include <dbServer.h>
+#include <errlog.h>
+#include <alarm.h>
 
 #include "RecordConnector.h"
 #include "Session.h"
 
 namespace DevOpcua {
 
-static void processIncomingDataCallback (CALLBACK *pcallback)
+// See dbProcess() in dbAccess.c
+long reProcess (dbCommon *prec)
+{
+    char context[40] = "";
+    long status = 0;
+    int *ptrace;
+    bool set_trace = false;
+
+    ptrace = dbLockSetAddrTrace(prec);
+
+    /* check for trace processing*/
+    if (prec->tpro) {
+        if (!*ptrace) {
+            *ptrace = 1;
+            set_trace = true;
+        }
+    }
+
+    if (*ptrace) {
+        /* Identify this thread's client from server layer */
+        if (dbServerClient(context, sizeof(context))) {
+            /* No client, use thread name */
+            strncpy(context, epicsThreadGetNameSelf(), sizeof(context));
+            context[sizeof(context) - 1] = 0;
+        }
+        printf("%s: Re-process %s\n", context, prec->name);
+    }
+
+    status = reinterpret_cast<long (*)(dbCommon *)>(prec->rset->process)(prec);
+
+    if (set_trace)
+        *ptrace = 0;
+
+    return status;
+}
+
+void processCallback (CALLBACK *pcallback, const ProcessReason reason)
 {
     void *pUsr;
     dbCommon *prec;
@@ -37,33 +79,72 @@ static void processIncomingDataCallback (CALLBACK *pcallback)
 
     RecordConnector *pvt = static_cast<RecordConnector*>(prec->dpvt);
     dbScanLock(prec);
-    pvt->incomingData = true;
+    pvt->reason = reason;
     if (prec->pact)
-        reinterpret_cast<long (*)(dbCommon *)>(prec->rset->process)(prec);
+        reProcess(prec);
     else
         dbProcess(prec);
-    pvt->incomingData = false;
+    pvt->reason = ProcessReason::none;
     dbScanUnlock(prec);
+}
+
+void processIncomingDataCallback (CALLBACK *pcallback)
+{
+    processCallback(pcallback, ProcessReason::incomingData);
+}
+
+void processWriteCompleteCallback (CALLBACK *pcallback)
+{
+    processCallback(pcallback, ProcessReason::writeComplete);
+}
+
+void processReadCompleteCallback (CALLBACK *pcallback)
+{
+    processCallback(pcallback, ProcessReason::readComplete);
 }
 
 RecordConnector::RecordConnector (dbCommon *prec)
     : isIoIntrScanned(false)
-    , incomingData(false)
+    , reason(ProcessReason::none)
     , prec(prec)
 {
     scanIoInit(&ioscanpvt);
-    callbackSetCallback(DevOpcua::processIncomingDataCallback, &callback);
-    callbackSetPriority(prec->prio, &callback);
-    callbackSetUser(prec, &callback);
+    callbackSetCallback(DevOpcua::processIncomingDataCallback, &incomingDataCallback);
+    callbackSetUser(prec, &incomingDataCallback);
+    callbackSetCallback(DevOpcua::processReadCompleteCallback, &readCompleteCallback);
+    callbackSetUser(prec, &readCompleteCallback);
+    callbackSetCallback(DevOpcua::processWriteCompleteCallback, &writeCompleteCallback);
+    callbackSetUser(prec, &writeCompleteCallback);
 }
 
 void
-RecordConnector::requestRecordProcessing ()
+RecordConnector::requestRecordProcessing (const ProcessReason reason)
 {
+    CALLBACK *callback;
+
     if (isIoIntrScanned)
         scanIoRequest(ioscanpvt);
-    else
-        callbackRequest(&callback);
+    else {
+        if (reason == ProcessReason::writeComplete)
+            callback = &writeCompleteCallback;
+        else if (reason == ProcessReason::readComplete)
+            callback = &readCompleteCallback;
+        else
+            callback = &incomingDataCallback;
+        callbackSetPriority(prec->prio, callback);
+        callbackRequest(callback);
+    }
+}
+
+void
+RecordConnector::checkWriteStatus() const
+{
+    if (!pdataelement->writeWasOk()) {
+        if (debug() >= 2)
+            errlogPrintf("%s: write returned an error -> setting to WRITE/INVALID\n",
+                         prec->name);
+        (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+    }
 }
 
 } // namespace DevOpcua

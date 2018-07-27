@@ -19,6 +19,8 @@
 #include <epicsTypes.h>
 #include <epicsTime.h>
 
+#include "devOpcua.h"
+
 namespace DevOpcua {
 
 class RecordConnector;
@@ -96,6 +98,29 @@ public:
 //    virtual epicsOldString readOldString() const = 0;
 
     /**
+     * @brief Check status of last read service.
+     *
+     * @return true = last read service ok
+     */
+    virtual bool readWasOk() const = 0;
+
+    /**
+     * @brief Write outgoing Int32 data.
+     *
+     * @param value  value to write
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeInt32(const epicsInt32 &value) = 0;
+
+    /**
+     * @brief Check status of last write service.
+     *
+     * @return true = last write service ok
+     */
+    virtual bool writeWasOk() const = 0;
+
+    /**
      * @brief Clear (discard) the current incoming data.
      *
      * Called by the device support (still holding the RecordConnector lock!)
@@ -106,6 +131,11 @@ public:
      * next element with the next processing.
      */
     virtual void clearIncomingData() = 0;
+
+    /**
+     * @brief Create processing requests for record(s) attached to this element.
+     */
+    virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
 protected:
     /**

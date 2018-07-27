@@ -114,6 +114,13 @@ public:
     void requestRead(ItemUaSdk &item);
 
     /**
+     * @brief Request a beginWrite service for an item
+     *
+     * @param item  item to request beginWrite for
+     */
+    void requestWrite(ItemUaSdk &item);
+
+    /**
      * @brief Print configuration and status of all sessions on stdout.
      *
      * The verbosity level controls the amount of information:
@@ -190,6 +197,11 @@ public:
                       const UaDataValues &values,
                       const UaDiagnosticInfos &diagnosticInfos) override;
 
+    void writeComplete(OpcUa_UInt32 transactionId,
+                       const UaStatus&          result,
+                       const UaStatusCodeArray& results,
+                       const UaDiagnosticInfos& diagnosticInfos) override;
+
 private:
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
@@ -203,9 +215,9 @@ private:
     SessionSecurityInfo securityInfo;                         /**< security metadata */
     UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
     int transactionId;                                        /**< next transaction id */
-    /** item vectors of outstanding read operations, indexed by transaction id */
-    std::map<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>> outstandingReads;
-    epicsMutex readlock;                                      /**< lock for outstandingRead map */
+    /** itemUaSdk vectors of outstanding read or write operations, indexed by transaction id */
+    std::map<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>> outstandingOps;
+    epicsMutex opslock;                                      /**< lock for outstandingOps map */
 };
 
 } // namespace DevOpcua

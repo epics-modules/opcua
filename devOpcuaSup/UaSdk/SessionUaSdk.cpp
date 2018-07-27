@@ -32,6 +32,7 @@
 #include "RecordConnector.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
+#include "DataElementUaSdk.h"
 #include "ItemUaSdk.h"
 
 namespace DevOpcua {
@@ -241,7 +242,7 @@ SessionUaSdk::readAllNodes ()
         itemsToRead->push_back(it);
     }
 
-    Guard G(readlock);
+    Guard G(opslock);
     status = puasession->beginRead(serviceSettings,                // Use default settings
                                    0,                              // Max age
                                    OpcUa_TimestampsToReturn_Both,  // Time stamps to return
@@ -257,8 +258,8 @@ SessionUaSdk::readAllNodes ()
                       << ": (readAllNodes) beginRead service ok"
                       << " (transaction id " << id
                       << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
-        outstandingReads.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
-                                (id, std::move(itemsToRead)));
+        outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
+                              (id, std::move(itemsToRead)));
     }
 }
 
@@ -277,7 +278,7 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
     nodesToRead[0].AttributeId = OpcUa_Attributes_Value;
     itemsToRead->push_back(&item);
 
-    Guard G(readlock);
+    Guard G(opslock);
     status = puasession->beginRead(serviceSettings,                // Use default settings
                                    0,                              // Max age
                                    OpcUa_TimestampsToReturn_Both,  // Time stamps to return
@@ -285,16 +286,52 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
                                    id);                            // Transaction id
 
     if (status.isBad()) {
-        errlogPrintf("OPC UA session %s: (readAllNodes) beginRead service failed with status %s\n",
+        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
     } else {
         if (debug)
             std::cout << "OPC UA session " << name.c_str()
-                      << ": (readItem) beginRead service ok"
+                      << ": (requestRead) beginRead service ok"
                       << " (transaction id " << id
                       << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
-        outstandingReads.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
-                                (id, std::move(itemsToRead)));
+        outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
+                              (id, std::move(itemsToRead)));
+    }
+}
+
+//TODO: Push to queue for worker thread (instead of doing a single item request)
+void
+SessionUaSdk::requestWrite (ItemUaSdk &item)
+{
+    UaStatus status;
+    UaWriteValues nodesToWrite;
+    std::unique_ptr<std::vector<ItemUaSdk *>> itemsToWrite(new std::vector<ItemUaSdk *>);
+    ServiceSettings serviceSettings;
+    OpcUa_UInt32 id = getTransactionId();
+
+    nodesToWrite.create(1);
+    item.getNodeId().copyTo(&nodesToWrite[0].NodeId);
+    nodesToWrite[0].AttributeId = OpcUa_Attributes_Value;
+    item.data().getOutgoingData().copyTo(&nodesToWrite[0].Value);
+    item.data().clearOutgoingData();
+    itemsToWrite->push_back(&item);
+
+    Guard G(opslock);
+    status = puasession->beginWrite(serviceSettings,        // Use default settings
+                                    nodesToWrite,           // Array of nodes/data to write
+                                    id);                    // Transaction id
+
+    if (status.isBad()) {
+        errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
+                     name.c_str(), status.toString().toUtf8());
+    } else {
+        if (debug)
+            std::cout << "OPC UA session " << name.c_str()
+                      << ": (requestWrite) beginWrite service ok"
+                      << " (transaction id " << id
+                      << "; writing " << nodesToWrite.length() << " nodes)" << std::endl;
+        outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
+                              (id, std::move(itemsToWrite)));
     }
 }
 
@@ -403,9 +440,9 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                             const UaDataValues &values,
                             const UaDiagnosticInfos &diagnosticInfos)
 {
-    Guard G(readlock);
-    auto it = outstandingReads.find(transactionId);
-    if (it == outstandingReads.end()) {
+    Guard G(opslock);
+    auto it = outstandingOps.find(transactionId);
+    if (it == outstandingOps.end()) {
         errlogPrintf("OPC UA session %s: (readComplete) received a callback "
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
@@ -427,10 +464,49 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                     std::cout << ";s=" << item->linkinfo.identifierString;
                 std::cout << std::endl;
             }
-            item->setIncomingData(values[i]);
+            item->data().setIncomingData(values[i]);
+            item->setReadStatus(values[i].StatusCode);
             i++;
         }
-        outstandingReads.erase(it);
+        outstandingOps.erase(it);
+    }
+}
+
+void
+SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
+                             const UaStatus&          result,
+                             const UaStatusCodeArray& results,
+                             const UaDiagnosticInfos& diagnosticInfos)
+{
+    Guard G(opslock);
+    auto it = outstandingOps.find(transactionId);
+    if (it == outstandingOps.end()) {
+        errlogPrintf("OPC UA session %s: (writeComplete) received a callback "
+                     "with unknown transaction id %u - ignored\n",
+                     name.c_str(), transactionId);
+    } else {
+        if (debug)
+            std::cout << "OPC UA session " << name.c_str()
+                      << ": (writeComplete) getting results for write service"
+                      << " (transaction id " << transactionId
+                      << "; results for " << results.length() << " nodes)" << std::endl;
+        OpcUa_UInt32 i = 0;
+        for (auto item : (*it->second)) {
+            if (debug >= 5) {
+                std::cout << "OPC UA session " << name.c_str()
+                          << ": (writeComplete) getting results for node "
+                          << " ns="     << item->linkinfo.namespaceIndex;
+                if (item->linkinfo.identifierIsNumeric)
+                    std::cout << ";i=" << item->linkinfo.identifierNumber;
+                else
+                    std::cout << ";s=" << item->linkinfo.identifierString;
+                std::cout << std::endl;
+            }
+            item->setWriteStatus(results[i]);
+            item->data().requestRecordProcessing(ProcessReason::writeComplete);
+            i++;
+        }
+        outstandingOps.erase(it);
     }
 }
 
