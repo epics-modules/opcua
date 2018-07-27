@@ -7,8 +7,7 @@
 /*
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
- *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
- *  and code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
+ *  based on code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
  */
 
 #include <memory>
@@ -111,6 +110,8 @@ parseLink(dbCommon *prec, DBEntry &ent)
         pinfo->element = s;
 
     // parse INP/OUT link
+    if (!link->text)
+        throw std::runtime_error(SB() << "INP/OUT not set");
     std::string linkstr(link->text);
     if (debug > 4)
         std::cerr << prec->name << " parsing inp/out link '" << linkstr << "'" << std::endl;

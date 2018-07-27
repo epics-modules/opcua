@@ -7,8 +7,7 @@
 /*
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  *
- *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
- *  and code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
+ *  based on code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
  */
 
 #ifndef DEVOPCUA_LINKPARSER_H
