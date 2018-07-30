@@ -33,8 +33,14 @@ public:
     RecordConnector(dbCommon *prec);
 
     epicsTimeStamp readTimeStamp() const { return pdataelement->readTimeStamp(plinkinfo->useServerTimestamp); }
+
     epicsInt32 readInt32() const { return pdataelement->readInt32(); }
     void writeInt32(const epicsInt32 val) const { pdataelement->writeInt32(val); }
+    epicsUInt32 readUInt32() const { return pdataelement->readUInt32(); }
+    void writeUInt32(const epicsUInt32 val) const { pdataelement->writeUInt32(val); }
+    epicsFloat64 readFloat64() const { return pdataelement->readFloat64(); }
+    void writeFloat64(const epicsFloat64 val) const { pdataelement->writeFloat64(val); }
+
     void clearIncomingData() { pdataelement->clearIncomingData(); }
     void checkWriteStatus() const;
 

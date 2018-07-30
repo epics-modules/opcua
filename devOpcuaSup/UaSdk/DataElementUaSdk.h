@@ -111,6 +111,24 @@ public:
     void writeInt32(const epicsInt32 &value) override;
 
     /**
+     * @brief Write outgoing UInt32 data. See DevOpcua::DataElement::writeUInt32
+     *
+     * @param value  value to write
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    void writeUInt32(const epicsUInt32 &value) override;
+
+    /**
+     * @brief Write outgoing Float64 data. See DevOpcua::DataElement::writeFloat64
+     *
+     * @param value  value to write
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    void writeFloat64(const epicsFloat64 &value) override;
+
+    /**
      * @brief Check status of last write service. See DevOpcua::DataElement::writeOk
      *
      * @return true = last write service ok

@@ -114,6 +114,24 @@ public:
     virtual void writeInt32(const epicsInt32 &value) = 0;
 
     /**
+     * @brief Write outgoing UInt32 data.
+     *
+     * @param value  value to write
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeUInt32(const epicsUInt32 &value) = 0;
+
+    /**
+     * @brief Write outgoing Float64 data.
+     *
+     * @param value  value to write
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeFloat64(const epicsFloat64 &value) = 0;
+
+    /**
      * @brief Check status of last write service.
      *
      * @return true = last write service ok

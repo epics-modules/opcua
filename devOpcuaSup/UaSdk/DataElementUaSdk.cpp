@@ -199,10 +199,28 @@ void checkRange (const FROM &value) {
         throw std::runtime_error(SB() << "outgoing data out-of-bounds");
 }
 
-// Specialization to avoid compiler warnings
+// Specialization for signed/unsigned to avoid compiler warnings
 template<>
-void checkRange<epicsInt32, OpcUa_UInt32> (const int &value) {
+void checkRange<epicsInt32, OpcUa_UInt32> (const epicsInt32 &value) {
     if (value < 0)
+        throw std::runtime_error(SB() << "outgoing data out-of-bounds");
+}
+
+template<>
+void checkRange<epicsUInt32, OpcUa_SByte> (const epicsUInt32 &value) {
+    if (value > static_cast<OpcUa_UInt32>(std::numeric_limits<OpcUa_SByte>::max()))
+        throw std::runtime_error(SB() << "outgoing data out-of-bounds");
+}
+
+template<>
+void checkRange<epicsUInt32, OpcUa_Int16> (const epicsUInt32 &value) {
+    if (value > static_cast<OpcUa_UInt32>(std::numeric_limits<OpcUa_Int16>::max()))
+        throw std::runtime_error(SB() << "outgoing data out-of-bounds");
+}
+
+template<>
+void checkRange<epicsUInt32, OpcUa_Int32> (const epicsUInt32 &value) {
+    if (value > static_cast<OpcUa_UInt32>(std::numeric_limits<OpcUa_Int32>::max()))
         throw std::runtime_error(SB() << "outgoing data out-of-bounds");
 }
 
@@ -248,6 +266,136 @@ DataElementUaSdk::writeInt32 (const epicsInt32 &value)
         tempValue.setInt64(static_cast<OpcUa_Int64>(value));
         break;
     case OpcUaType_Float:
+        tempValue.setFloat(static_cast<OpcUa_Float>(value));
+        break;
+    case OpcUaType_Double:
+        tempValue.setDouble(static_cast<OpcUa_Double>(value));
+        break;
+    case OpcUaType_String:
+        tempValue.setString(static_cast<UaString>(std::to_string(value).c_str()));
+        break;
+    default:
+        throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
+    }
+
+    if (pconnector->debug())
+        std::cout << pconnector->getRecordName()
+                  << ": set outgoing data ("
+                  << variantTypeString(tempValue.type())
+                  << ") to value " << tempValue.toString().toUtf8() << std::endl;
+
+    outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
+}
+
+void
+DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
+{
+    UaVariant tempValue;
+
+    switch (incomingType) {
+    case OpcUaType_Boolean:
+        if (value == 0)
+            tempValue.setBoolean(false);
+        else
+            tempValue.setBoolean(true);
+        break;
+    case OpcUaType_Byte:
+        checkRange<epicsUInt32, OpcUa_Byte>(value);
+        tempValue.setByte(static_cast<OpcUa_Byte>(value));
+        break;
+    case OpcUaType_SByte:
+        checkRange<epicsUInt32, OpcUa_SByte>(value);
+        tempValue.setSByte(static_cast<OpcUa_SByte>(value));
+        break;
+    case OpcUaType_UInt16:
+        checkRange<epicsUInt32, OpcUa_UInt16>(value);
+        tempValue.setUInt16(static_cast<OpcUa_UInt16>(value));
+        break;
+    case OpcUaType_Int16:
+        checkRange<epicsUInt32, OpcUa_Int16>(value);
+        tempValue.setInt16(static_cast<OpcUa_Int16>(value));
+        break;
+    case OpcUaType_UInt32:
+        tempValue.setUInt32(static_cast<OpcUa_UInt32>(value));
+        break;
+    case OpcUaType_Int32:
+        checkRange<epicsUInt32, OpcUa_Int32>(value);
+        tempValue.setInt32(value);
+        break;
+    case OpcUaType_UInt64:
+        tempValue.setUInt64(static_cast<OpcUa_UInt64>(value));
+        break;
+    case OpcUaType_Int64:
+        tempValue.setInt64(static_cast<OpcUa_Int64>(value));
+        break;
+    case OpcUaType_Float:
+        tempValue.setFloat(static_cast<OpcUa_Float>(value));
+        break;
+    case OpcUaType_Double:
+        tempValue.setDouble(static_cast<OpcUa_Double>(value));
+        break;
+    case OpcUaType_String:
+        tempValue.setString(static_cast<UaString>(std::to_string(value).c_str()));
+        break;
+    default:
+        throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
+    }
+
+    if (pconnector->debug())
+        std::cout << pconnector->getRecordName()
+                  << ": set outgoing data ("
+                  << variantTypeString(tempValue.type())
+                  << ") to value " << tempValue.toString().toUtf8() << std::endl;
+
+    outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
+}
+
+void
+DataElementUaSdk::writeFloat64 (const epicsFloat64 &value)
+{
+    UaVariant tempValue;
+
+    switch (incomingType) {
+    case OpcUaType_Boolean:
+        if (value == 0.)
+            tempValue.setBoolean(false);
+        else
+            tempValue.setBoolean(true);
+        break;
+    case OpcUaType_Byte:
+        checkRange<epicsFloat64, OpcUa_Byte>(value);
+        tempValue.setByte(static_cast<OpcUa_Byte>(value));
+        break;
+    case OpcUaType_SByte:
+        checkRange<epicsFloat64, OpcUa_SByte>(value);
+        tempValue.setSByte(static_cast<OpcUa_SByte>(value));
+        break;
+    case OpcUaType_UInt16:
+        checkRange<epicsFloat64, OpcUa_UInt16>(value);
+        tempValue.setUInt16(static_cast<OpcUa_UInt16>(value));
+        break;
+    case OpcUaType_Int16:
+        checkRange<epicsFloat64, OpcUa_Int16>(value);
+        tempValue.setInt16(static_cast<OpcUa_Int16>(value));
+        break;
+    case OpcUaType_UInt32:
+        checkRange<epicsFloat64, OpcUa_UInt32>(value);
+        tempValue.setUInt32(static_cast<OpcUa_UInt32>(value));
+        break;
+    case OpcUaType_Int32:
+        checkRange<epicsFloat64, OpcUa_Int32>(value);
+        tempValue.setInt32(static_cast<OpcUa_Int32>(value));
+        break;
+    case OpcUaType_UInt64:
+        checkRange<epicsFloat64, OpcUa_UInt64>(value);
+        tempValue.setUInt64(static_cast<OpcUa_UInt64>(value));
+        break;
+    case OpcUaType_Int64:
+        checkRange<epicsFloat64, OpcUa_Int64>(value);
+        tempValue.setInt64(static_cast<OpcUa_Int64>(value));
+        break;
+    case OpcUaType_Float:
+        checkRange<epicsFloat64, OpcUa_Float>(value);
         tempValue.setFloat(static_cast<OpcUa_Float>(value));
         break;
     case OpcUaType_Double:
