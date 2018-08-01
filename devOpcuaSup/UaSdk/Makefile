@@ -24,7 +24,8 @@ opcua_SRCS += ItemUaSdk.cpp
 opcua_SRCS += DataElementUaSdk.cpp
 opcua_SRCS += iocshIntegrationUaSdk.cpp
 
-opcua_DBD += opcuaUaSdk.dbd
+DBD_INSTALLS += opcuaUaSdk.dbd
+DBD_INSTALLS += opcua.dbd
 
 UASDK_LIBS = uabase uaclient uapki uastack xmlparser
 USR_INCLUDES += $(foreach module, $(UASDK_LIBS), -I$(UASDK)/include/$(module))

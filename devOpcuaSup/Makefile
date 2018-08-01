@@ -16,6 +16,7 @@ include $(TOP)/configure/CONFIG
 #=============================
 
 OPCUA = $(TOP)/devOpcuaSup
+SRC_DIRS += $(OPCUA)
 
 #==================================================
 # build a support library
@@ -24,10 +25,8 @@ LIBRARY_IOC += opcua
 
 # xxxRecord.h will be created from xxxRecord.dbd
 #DBDINC += xxxRecord
-# install opcua.dbd into <top>/dbd
-DBD += opcua.dbd
 
-opcua_DBD += devOpcua.dbd
+DBD_INSTALLS += devOpcua.dbd
 
 # Generic sources and interfaces
 opcua_SRCS += devOpcua.cpp
