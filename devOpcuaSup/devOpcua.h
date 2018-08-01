@@ -63,7 +63,7 @@ struct dset6 {
     long N;
     long (*report)(R*);
     long (*init)(int);
-    long (*init_record)(dbCommon*);
+    long (*init_record)(R*);
     long (*get_io_intr_info)(int, dbCommon* prec, IOSCANPVT*);
     long (*readwrite)(R*);
     long (*linconv)(R*);

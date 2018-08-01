@@ -288,6 +288,9 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
     if (status.isBad()) {
         errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
+        item.setReadStatus(status.code());
+        item.data().requestRecordProcessing(ProcessReason::readComplete);
+
     } else {
         if (debug)
             std::cout << "OPC UA session " << name.c_str()
@@ -324,6 +327,9 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
     if (status.isBad()) {
         errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
+        item.setWriteStatus(status.code());
+        item.data().requestRecordProcessing(ProcessReason::writeComplete);
+
     } else {
         if (debug)
             std::cout << "OPC UA session " << name.c_str()
@@ -464,8 +470,9 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                     std::cout << ";s=" << item->linkinfo.identifierString;
                 std::cout << std::endl;
             }
-            item->data().setIncomingData(values[i]);
             item->setReadStatus(values[i].StatusCode);
+            item->data().setIncomingData(values[i]);
+            item->data().requestRecordProcessing(ProcessReason::incomingData);
             i++;
         }
         outstandingOps.erase(it);

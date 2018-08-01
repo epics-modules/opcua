@@ -72,12 +72,11 @@ DataElementUaSdk::setIncomingData (const UaDataValue &value)
 {
     if (pconnector) {
         if (pconnector->debug() >= 5)
-            std::cout << "Setting incoming data element and schedule processing"
+            std::cout << "Setting incoming data element"
                       << " for record " << pconnector->getRecordName() << std::endl;
         Guard(pconnector->lock);
         incomingData = value;
         incomingType = static_cast<OpcUa_BuiltInType>(value.value()->Datatype);
-        pconnector->requestRecordProcessing(ProcessReason::incomingData);
     }
     //TODO: add structure support by calling DataElement children
 }
