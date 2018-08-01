@@ -1,5 +1,7 @@
 device(longin,     INST_IO, devLiOpcua,         "OPCUA")
 device(longout,    INST_IO, devLoOpcua,         "OPCUA")
+device(bi,         INST_IO, devBiOpcua,         "OPCUA")
+device(bo,         INST_IO, devBoOpcua,         "OPCUA")
 device(mbbi,       INST_IO, devMbbiOpcua,       "OPCUA")
 device(mbbo,       INST_IO, devMbboOpcua,       "OPCUA")
 device(mbbiDirect, INST_IO, devMbbiDirectOpcua, "OPCUA")

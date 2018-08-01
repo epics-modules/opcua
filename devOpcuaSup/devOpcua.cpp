@@ -406,19 +406,21 @@ opcua_write_enum (REC *prec)
 
 } // namespace
 
-#define SUPN(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
+#define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
   {6, NULL, opcua_init, NULL, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
-#define SUPI(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
+#define SUPM(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
   {6, NULL, opcua_init, opcua_init_mask_##DIR<REC##Record>, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
-SUPN(devLiOpcua,             longin,   int32_val, read)
-SUPN(devLoOpcua,            longout,   int32_val, write)
-SUPI(devMbbiOpcua,             mbbi, uint32_rval, read)
-SUPI(devMbboOpcua,             mbbo,        enum, write)
-SUPI(devMbbiDirectOpcua, mbbiDirect, uint32_rval, read)
-SUPI(devMbboDirectOpcua, mbboDirect, uint32_rval, write)
-SUPN(devAiOpcua,                 ai,      analog, read)
-SUPN(devAoOpcua,                 ao,      analog, write)
+SUP (devLiOpcua,             longin,   int32_val, read)
+SUP (devLoOpcua,            longout,   int32_val, write)
+SUP (devBiOpcua,                 bi, uint32_rval, read)
+SUP (devBoOpcua,                 bo, uint32_rval, write)
+SUPM(devMbbiOpcua,             mbbi, uint32_rval, read)
+SUPM(devMbboOpcua,             mbbo,        enum, write)
+SUPM(devMbbiDirectOpcua, mbbiDirect, uint32_rval, read)
+SUPM(devMbboDirectOpcua, mbboDirect, uint32_rval, write)
+SUP (devAiOpcua,                 ai,      analog, read)
+SUP (devAoOpcua,                 ao,      analog, write)
