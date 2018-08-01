@@ -149,7 +149,7 @@ opcua_read_int32_val (REC *prec)
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
             if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%d (%08x)\n",
+                errlogPrintf("%s: read -> VAL=%d (%#010x)\n",
                              prec->name, prec->val,
                              static_cast<unsigned int>(prec->val));
             }
@@ -175,7 +175,7 @@ opcua_write_int32_val (REC *prec)
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
             if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%d (%08x)\n",
+                errlogPrintf("%s: read -> VAL=%d (%#010x)\n",
                              prec->name, prec->val,
                              static_cast<unsigned int>(prec->val));
             }
@@ -185,7 +185,7 @@ opcua_write_int32_val (REC *prec)
             pvt->checkWriteStatus();
         } else {
             if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- VAL=%d (%08x)\n",
+                errlogPrintf("%s: write <- VAL=%d (%#010x)\n",
                              prec->name, prec->val,
                              static_cast<unsigned int>(prec->val));
             }
@@ -210,7 +210,7 @@ opcua_read_uint32_rval (REC *prec)
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
             if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> RVAL=%u (%08x)\n",
+                errlogPrintf("%s: read -> RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             }
             pvt->clearIncomingData();
@@ -235,7 +235,7 @@ opcua_write_uint32_rval (REC *prec)
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
             if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> RVAL=%u (%08x)\n",
+                errlogPrintf("%s: read -> RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             }
             prec->udf = false;
@@ -244,7 +244,7 @@ opcua_write_uint32_rval (REC *prec)
             pvt->checkWriteStatus();
         } else {
             if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- RVAL=%d (%08x)\n",
+                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             }
             pvt->writeUInt32(prec->rval);
@@ -285,7 +285,7 @@ opcua_read_analog (REC *prec)
             } else {
                 prec->rval = pvt->readInt32();
                 if (prec->tpro > 1) {
-                    errlogPrintf("%s: read -> RVAL=%d (%08x)\n",
+                    errlogPrintf("%s: read -> RVAL=%d (%#010x)\n",
                                  prec->name, prec->rval,
                                  static_cast<unsigned int>(prec->rval));
                 }
@@ -344,7 +344,7 @@ opcua_write_analog (REC *prec)
             pvt->checkWriteStatus();
         } else {
             if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- RVAL=%d (%08x)\n",
+                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
                              prec->name, prec->rval,
                              static_cast<unsigned int>(prec->rval));
             }
@@ -385,7 +385,7 @@ opcua_write_enum (REC *prec)
             }
             prec->udf = FALSE;
             if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%u (RVAL=%08x)\n",
+                errlogPrintf("%s: read -> VAL=%u (RVAL=%#010x)\n",
                              prec->name, prec->val, prec->rval);
             }
             pvt->clearIncomingData();
@@ -393,7 +393,7 @@ opcua_write_enum (REC *prec)
             pvt->checkWriteStatus();
         } else {
             if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- RVAL=%d (%08x)\n",
+                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             }
             pvt->writeUInt32(prec->rval);
