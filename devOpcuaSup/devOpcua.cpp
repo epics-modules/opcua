@@ -365,7 +365,7 @@ opcua_write_enum (REC *prec)
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData) {
-            epicsUInt32 rval = pvt->readUInt32() & prec->mask;
+            epicsUInt32 rval = prec->rval = pvt->readUInt32() & prec->mask;
             if (prec->shft > 0)
                 rval >>= prec->shft;
             if (prec->sdef) {
