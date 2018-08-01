@@ -147,4 +147,15 @@ RecordConnector::checkWriteStatus() const
     }
 }
 
+void
+RecordConnector::checkReadStatus() const
+{
+    if (!pdataelement->readWasOk()) {
+        if (debug() >= 2)
+            errlogPrintf("%s: read returned an error -> setting to READ/INVALID\n",
+                         prec->name);
+        (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+    }
+}
+
 } // namespace DevOpcua

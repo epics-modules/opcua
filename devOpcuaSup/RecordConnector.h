@@ -43,6 +43,7 @@ public:
 
     void clearIncomingData() { pdataelement->clearIncomingData(); }
     void checkWriteStatus() const;
+    void checkReadStatus() const;
 
     void setDataElement(DataElement *data) { pdataelement = data; }
     void clearDataElement() { pdataelement = NULL; }
