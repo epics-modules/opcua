@@ -19,6 +19,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <cstdlib>
 
 #include <uadatetime.h>
 #include <opcua_builtintypes.h>
@@ -117,11 +118,15 @@ DataElementUaSdk::readInt32 () const
     if (tempValue.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (pconnector->debug())
-        std::cout << pconnector->getRecordName() << ": reading "
-                  << tempValue.toString().toUtf8()
-                  << " (" << variantTypeString(tempValue.type()) << ")"
+    if (pconnector->debug()) {
+        std::cout << pconnector->getRecordName() << ": reading ";
+        if (tempValue.type() == OpcUaType_String)
+            std::cout << "'" << tempValue.toString().toUtf8() << "'";
+        else
+            std::cout << tempValue.toString().toUtf8();
+        std::cout << " (" << variantTypeString(tempValue.type()) << ")"
                   << " as Int32" << std::endl;
+    }
 
     if (OpcUa_IsNotGood(tempValue.toInt32(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
@@ -137,11 +142,15 @@ DataElementUaSdk::readUInt32 () const
     if (tempValue.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (pconnector->debug())
-        std::cout << pconnector->getRecordName() << ": reading "
-                  << tempValue.toString().toUtf8()
-                  << " (" << variantTypeString(tempValue.type()) << ")"
+    if (pconnector->debug()) {
+        std::cout << pconnector->getRecordName() << ": reading ";
+        if (tempValue.type() == OpcUaType_String)
+            std::cout << "'" << tempValue.toString().toUtf8() << "'";
+        else
+            std::cout << tempValue.toString().toUtf8();
+        std::cout << " (" << variantTypeString(tempValue.type()) << ")"
                   << " as UInt32" << std::endl;
+    }
 
     if (OpcUa_IsNotGood(tempValue.toUInt32(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
@@ -157,15 +166,43 @@ DataElementUaSdk::readFloat64 () const
     if (tempValue.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (pconnector->debug())
-        std::cout << pconnector->getRecordName() << ": reading "
-                  << tempValue.toString().toUtf8()
-                  << " (" << variantTypeString(tempValue.type()) << ")"
+    if (pconnector->debug()) {
+        std::cout << pconnector->getRecordName() << ": reading ";
+        if (tempValue.type() == OpcUaType_String)
+            std::cout << "'" << tempValue.toString().toUtf8() << "'";
+        else
+            std::cout << tempValue.toString().toUtf8();
+        std::cout << " (" << variantTypeString(tempValue.type()) << ")"
                   << " as Float64" << std::endl;
+    }
 
     if (OpcUa_IsNotGood(tempValue.toDouble(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
     return v;
+}
+
+void
+DataElementUaSdk::readCString (char *value, const size_t num) const
+{
+    UaVariant tempValue(*incomingData.value());
+
+    if (tempValue.isEmpty())
+        throw std::runtime_error(SB() << "no incoming data");
+
+    if (pconnector->debug()) {
+        std::cout << pconnector->getRecordName() << ": reading ";
+        if (tempValue.type() == OpcUaType_String)
+            std::cout << "'" << tempValue.toString().toUtf8() << "'";
+        else
+            std::cout << tempValue.toString().toUtf8();
+        std::cout << " (" << variantTypeString(tempValue.type()) << ")"
+                  << " as CString [" << num << "]" << std::endl;
+    }
+
+    if (num > 0) {
+        strncpy(value, tempValue.toString().toUtf8(), num-1);
+        value[num-1] = '\0';
+    }
 }
 
 bool
@@ -224,11 +261,29 @@ void checkRange<epicsUInt32, OpcUa_Int32> (const epicsUInt32 &value) {
 }
 
 void
+DataElementUaSdk::printOutputDebugMessage (const RecordConnector *pconnector,
+                                           const UaVariant &tempValue)
+{
+    std::cout << pconnector->getRecordName()
+              << ": set outgoing data ("
+              << variantTypeString(tempValue.type())
+              << ") to value ";
+    if (tempValue.type() == OpcUaType_String)
+        std::cout << "'" << tempValue.toString().toUtf8() << "'";
+    else
+        std::cout << tempValue.toString().toUtf8();
+    std::cout << std::endl;
+}
+
+void
 DataElementUaSdk::writeInt32 (const epicsInt32 &value)
 {
     UaVariant tempValue;
 
     switch (incomingType) {
+    case OpcUaType_Int32:
+        tempValue.setInt32(value);
+        break;
     case OpcUaType_Boolean:
         if (value == 0)
             tempValue.setBoolean(false);
@@ -255,9 +310,6 @@ DataElementUaSdk::writeInt32 (const epicsInt32 &value)
         checkRange<epicsInt32, OpcUa_UInt32>(value);
         tempValue.setUInt32(static_cast<OpcUa_UInt32>(value));
         break;
-    case OpcUaType_Int32:
-        tempValue.setInt32(value);
-        break;
     case OpcUaType_UInt64:
         tempValue.setUInt64(static_cast<OpcUa_UInt64>(value));
         break;
@@ -278,10 +330,7 @@ DataElementUaSdk::writeInt32 (const epicsInt32 &value)
     }
 
     if (pconnector->debug())
-        std::cout << pconnector->getRecordName()
-                  << ": set outgoing data ("
-                  << variantTypeString(tempValue.type())
-                  << ") to value " << tempValue.toString().toUtf8() << std::endl;
+        printOutputDebugMessage(pconnector, tempValue);
 
     outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
 }
@@ -292,6 +341,9 @@ DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
     UaVariant tempValue;
 
     switch (incomingType) {
+    case OpcUaType_UInt32:
+        tempValue.setUInt32(static_cast<OpcUa_UInt32>(value));
+        break;
     case OpcUaType_Boolean:
         if (value == 0)
             tempValue.setBoolean(false);
@@ -313,9 +365,6 @@ DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
     case OpcUaType_Int16:
         checkRange<epicsUInt32, OpcUa_Int16>(value);
         tempValue.setInt16(static_cast<OpcUa_Int16>(value));
-        break;
-    case OpcUaType_UInt32:
-        tempValue.setUInt32(static_cast<OpcUa_UInt32>(value));
         break;
     case OpcUaType_Int32:
         checkRange<epicsUInt32, OpcUa_Int32>(value);
@@ -341,10 +390,7 @@ DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
     }
 
     if (pconnector->debug())
-        std::cout << pconnector->getRecordName()
-                  << ": set outgoing data ("
-                  << variantTypeString(tempValue.type())
-                  << ") to value " << tempValue.toString().toUtf8() << std::endl;
+        printOutputDebugMessage(pconnector, tempValue);
 
     outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
 }
@@ -355,6 +401,9 @@ DataElementUaSdk::writeFloat64 (const epicsFloat64 &value)
     UaVariant tempValue;
 
     switch (incomingType) {
+    case OpcUaType_Double:
+        tempValue.setDouble(static_cast<OpcUa_Double>(value));
+        break;
     case OpcUaType_Boolean:
         if (value == 0.)
             tempValue.setBoolean(false);
@@ -397,9 +446,6 @@ DataElementUaSdk::writeFloat64 (const epicsFloat64 &value)
         checkRange<epicsFloat64, OpcUa_Float>(value);
         tempValue.setFloat(static_cast<OpcUa_Float>(value));
         break;
-    case OpcUaType_Double:
-        tempValue.setDouble(static_cast<OpcUa_Double>(value));
-        break;
     case OpcUaType_String:
         tempValue.setString(static_cast<UaString>(std::to_string(value).c_str()));
         break;
@@ -408,10 +454,84 @@ DataElementUaSdk::writeFloat64 (const epicsFloat64 &value)
     }
 
     if (pconnector->debug())
-        std::cout << pconnector->getRecordName()
-                  << ": set outgoing data ("
-                  << variantTypeString(tempValue.type())
-                  << ") to value " << tempValue.toString().toUtf8() << std::endl;
+        printOutputDebugMessage(pconnector, tempValue);
+
+    outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
+}
+
+void
+DataElementUaSdk::writeCString(const char *value, const size_t num)
+{
+    long l;
+    unsigned long ul;
+    double d;
+    UaVariant tempValue;
+
+    switch (incomingType) {
+    case OpcUaType_String:
+        tempValue.setString(static_cast<UaString>(value));
+        break;
+    case OpcUaType_Boolean:
+        if (strchr("YyTt1", *value))
+            tempValue.setBoolean(true);
+        else
+            tempValue.setBoolean(false);
+        break;
+    case OpcUaType_Byte:
+        ul = strtoul(value, NULL, 0);
+        checkRange<unsigned long, OpcUa_Byte>(ul);
+        tempValue.setByte(static_cast<OpcUa_Byte>(ul));
+        break;
+    case OpcUaType_SByte:
+        l = strtol(value, NULL, 0);
+        checkRange<long, OpcUa_SByte>(l);
+        tempValue.setSByte(static_cast<OpcUa_SByte>(l));
+        break;
+    case OpcUaType_UInt16:
+        ul = strtoul(value, NULL, 0);
+        checkRange<unsigned long, OpcUa_UInt16>(ul);
+        tempValue.setUInt16(static_cast<OpcUa_UInt16>(ul));
+        break;
+    case OpcUaType_Int16:
+        l = strtol(value, NULL, 0);
+        checkRange<long, OpcUa_Int16>(l);
+        tempValue.setInt16(static_cast<OpcUa_Int16>(l));
+        break;
+    case OpcUaType_UInt32:
+        ul = strtoul(value, NULL, 0);
+        checkRange<unsigned long, OpcUa_UInt32>(ul);
+        tempValue.setUInt32(static_cast<OpcUa_UInt32>(ul));
+        break;
+    case OpcUaType_Int32:
+        l = strtol(value, NULL, 0);
+        checkRange<long, OpcUa_Int32>(l);
+        tempValue.setInt32(static_cast<OpcUa_Int32>(l));
+        break;
+    case OpcUaType_UInt64:
+        ul = strtoul(value, NULL, 0);
+        checkRange<unsigned long, OpcUa_UInt64>(ul);
+        tempValue.setUInt64(static_cast<OpcUa_UInt64>(ul));
+        break;
+    case OpcUaType_Int64:
+        l = strtol(value, NULL, 0);
+        checkRange<long, OpcUa_Int64>(l);
+        tempValue.setInt64(static_cast<OpcUa_Int64>(l));
+        break;
+    case OpcUaType_Float:
+        d = strtod(value, NULL);
+        checkRange<double, OpcUa_Float>(d);
+        tempValue.setFloat(static_cast<OpcUa_Float>(d));
+        break;
+    case OpcUaType_Double:
+        d = strtod(value, NULL);
+        tempValue.setDouble(static_cast<OpcUa_Double>(d));
+        break;
+    default:
+        throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
+    }
+
+    if (pconnector->debug())
+        printOutputDebugMessage(pconnector, tempValue);
 
     outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
 }

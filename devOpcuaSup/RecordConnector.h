@@ -15,6 +15,7 @@
 #define RECORDCONNECTOR_H
 
 #include <memory>
+#include <cstddef>
 
 #include <epicsMutex.h>
 #include <dbCommon.h>
@@ -40,6 +41,8 @@ public:
     void writeUInt32(const epicsUInt32 val) const { pdataelement->writeUInt32(val); }
     epicsFloat64 readFloat64() const { return pdataelement->readFloat64(); }
     void writeFloat64(const epicsFloat64 val) const { pdataelement->writeFloat64(val); }
+    void readCString(char *val, const size_t num) const { pdataelement->readCString(val, num); }
+    void writeCString(const char *val, const size_t num) const { pdataelement->writeCString(val, num); }
 
     void clearIncomingData() { pdataelement->clearIncomingData(); }
     void checkWriteStatus() const;
@@ -52,7 +55,7 @@ public:
     void requestOpcuaRead() { pitem->requestRead(); }
     void requestOpcuaWrite() { pitem->requestWrite(); }
 
-    const char * getRecordName() { return prec->name; }
+    const char *getRecordName() const { return prec->name; }
     const int debug() const { return ((prec->tpro > 0) ? prec->tpro - 1 : 0); }
 
     epicsMutex lock;

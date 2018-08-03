@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <memory>
+#include <cstring>
 
 #include <epicsTypes.h>
 #include <epicsTime.h>
@@ -95,7 +96,18 @@ public:
      * @throws std::runtime_error if no data present or on conversion error
      */
     virtual epicsFloat64 readFloat64() const = 0;
-//    virtual epicsOldString readOldString() const = 0;
+
+    /**
+     * @brief Read incoming data as classic C string (char[]).
+     *
+     * The result (string in the target buffer) will be NULL terminated.
+     *
+     * @param value  pointer to target string buffer
+     * @param num  target buffer size (incl. NULL byte)
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual void readCString(char *value, const size_t num) const = 0;
 
     /**
      * @brief Check status of last read service.
@@ -130,6 +142,16 @@ public:
      * @throws std::runtime_error on conversion error
      */
     virtual void writeFloat64(const epicsFloat64 &value) = 0;
+
+    /**
+     * @brief Write outgoing classic C string (char[]) data.
+     *
+     * @param value  pointer to source string buffer
+     * @param num  max no. of bytes to copy (incl. NULL byte)
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeCString(const char *value, const size_t num) = 0;
 
     /**
      * @brief Check status of last write service.

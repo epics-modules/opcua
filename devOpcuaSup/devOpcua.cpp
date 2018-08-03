@@ -46,6 +46,10 @@
 #include <biRecord.h>
 #include <aoRecord.h>
 #include <aiRecord.h>
+#include <stringinRecord.h>
+#include <stringoutRecord.h>
+#include <lsoRecord.h>
+#include <lsiRecord.h>
 #include <waveformRecord.h>
 #include <epicsExport.h>  // must be after dbAccess.h (lp:1784616)
 
@@ -404,6 +408,126 @@ opcua_write_enum (REC *prec)
     } CATCH()
 }
 
+// string to/from VAL
+
+template<typename REC>
+long
+opcua_read_string_val (REC *prec)
+{
+    TRY {
+        Guard G(pvt->lock);
+        if (pvt->reason == ProcessReason::incomingData) {
+            pvt->readCString(prec->val, MAX_STRING_SIZE);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL='%s'\n",
+                             prec->name, prec->val);
+            }
+            prec->udf = false;
+            pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::readComplete) {
+            pvt->checkReadStatus();
+        } else {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        }
+        return 0;
+    } CATCH()
+}
+
+template<typename REC>
+long
+opcua_write_string_val (REC *prec)
+{
+    TRY {
+        Guard G(pvt->lock);
+        if (pvt->reason == ProcessReason::incomingData) {
+            pvt->readCString(prec->val, MAX_STRING_SIZE);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL='%s'\n",
+                             prec->name, prec->val);
+            }
+            prec->udf = false;
+            pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::writeComplete) {
+            pvt->checkWriteStatus();
+        } else {
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write <- VAL='%s'\n",
+                             prec->name, prec->val);
+            }
+            pvt->writeCString(prec->val, MAX_STRING_SIZE);
+            prec->pact = true;
+            pvt->requestOpcuaWrite();
+        }
+        return 0;
+    } CATCH()
+}
+
+// long string to/from VAL
+
+template<typename REC>
+long
+opcua_read_lstring_val (REC *prec)
+{
+    TRY {
+        Guard G(pvt->lock);
+        if (pvt->reason == ProcessReason::incomingData) {
+            pvt->readCString(prec->val, prec->sizv);
+            prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL='%s'\n",
+                             prec->name, prec->val);
+            }
+            prec->udf = false;
+            pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::readComplete) {
+            pvt->checkReadStatus();
+        } else {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        }
+        return 0;
+    } CATCH()
+}
+
+template<typename REC>
+long
+opcua_write_lstring_val (REC *prec)
+{
+    TRY {
+        Guard G(pvt->lock);
+        if (pvt->reason == ProcessReason::incomingData) {
+            pvt->readCString(prec->val, prec->sizv);
+            prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL='%s'\n",
+                             prec->name, prec->val);
+            }
+            prec->udf = false;
+            pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::writeComplete) {
+            pvt->checkWriteStatus();
+        } else {
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write <- VAL='%s'\n",
+                             prec->name, prec->val);
+            }
+            pvt->writeCString(prec->val, prec->sizv);
+            prec->pact = true;
+            pvt->requestOpcuaWrite();
+        }
+        return 0;
+    } CATCH()
+}
+
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
@@ -424,3 +548,7 @@ SUPM(devMbbiDirectOpcua, mbbiDirect, uint32_rval, read)
 SUPM(devMbboDirectOpcua, mbboDirect, uint32_rval, write)
 SUP (devAiOpcua,                 ai,      analog, read)
 SUP (devAoOpcua,                 ao,      analog, write)
+SUP (devSiOpcua,           stringin,  string_val, read)
+SUP (devSoOpcua,          stringout,  string_val, write)
+SUP (devLsiOpcua,               lsi, lstring_val, read)
+SUP (devLsoOpcua,               lso, lstring_val, write)

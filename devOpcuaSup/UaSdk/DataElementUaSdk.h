@@ -92,7 +92,17 @@ public:
      * @throws std::runtime_error if no data present or on conversion error
      */
     epicsFloat64 readFloat64() const override;
-//    epicsOldString readOldString() const override;
+
+
+    /**
+     * @brief Read incoming data as classic C string (char[]).
+     * See DevOpcua::DataElement::readCString
+     *
+     * @param value  pointer to target string buffer
+     * @param num  max no. of bytes to copy (incl. NULL byte)
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    void readCString(char *value, const size_t num) const override;
 
     /**
      * @brief Check status of last read service. See DevOpcua::DataElement::readWasOk
@@ -129,6 +139,16 @@ public:
     void writeFloat64(const epicsFloat64 &value) override;
 
     /**
+     * @brief Write outgoing classic C string (char[]) data.
+     * See DevOpcua::DataElement::writeCString
+     *
+     * @param value  pointer to source string buffer
+     * @param num  max no. of bytes to copy (incl. NULL byte)
+     * @throws std::runtime_error on conversion error
+     */
+    void writeCString(const char *value, const size_t num) override;
+
+    /**
      * @brief Check status of last write service. See DevOpcua::DataElement::writeOk
      *
      * @return true = last write service ok
@@ -160,6 +180,8 @@ public:
     void requestRecordProcessing(const ProcessReason reason) const override;
 
 private:
+    static void printOutputDebugMessage(const RecordConnector *pconnector, const UaVariant &tempValue);
+
     ItemUaSdk *pitem;                /**< corresponding item */
     UaDataValue incomingData;        /**< incoming data value */
     OpcUa_BuiltInType incomingType;  /**< type of incoming data */
