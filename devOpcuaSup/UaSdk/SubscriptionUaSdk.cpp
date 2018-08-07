@@ -23,6 +23,8 @@
 
 #include "SubscriptionUaSdk.h"
 #include "ItemUaSdk.h"
+#include "DataElementUaSdk.h"
+#include "devOpcua.h"
 
 namespace DevOpcua {
 
@@ -124,14 +126,14 @@ SubscriptionUaSdk::showAll (int level)
 }
 
 Session &
-SubscriptionUaSdk::getSession() const
+SubscriptionUaSdk::getSession () const
 {
     return static_cast<Session &>(*psessionuasdk);
 }
 
 
 SessionUaSdk &
-SubscriptionUaSdk::getSessionUaSdk() const
+SubscriptionUaSdk::getSessionUaSdk () const
 {
     return *psessionuasdk;
 }
@@ -153,6 +155,61 @@ SubscriptionUaSdk::create ()
     if (status.isBad()) {
         errlogPrintf("OPC UA subscription %s: createSubscription on session %s failed (%s)\n",
                      name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
+    } else {
+        if (debug)
+            errlogPrintf("OPC UA subscription %s on session %s created (%s)\n",
+                         name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
+    }
+}
+
+void
+SubscriptionUaSdk::addMonitoredItems ()
+{
+    UaStatus status;
+    ServiceSettings serviceSettings;
+    OpcUa_UInt32 i;
+    UaMonitoredItemCreateRequests monitoredItemCreateRequests;
+    UaMonitoredItemCreateResults monitoredItemCreateResults;
+
+    monitoredItemCreateRequests.create(items.size());
+    i = 0;
+    for (auto &it : items) {
+        it->getNodeId().copyTo(&monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
+        monitoredItemCreateRequests[i].ItemToMonitor.AttributeId = OpcUa_Attributes_Value;
+        monitoredItemCreateRequests[i].MonitoringMode = OpcUa_MonitoringMode_Reporting;
+        monitoredItemCreateRequests[i].RequestedParameters.ClientHandle = i;
+        monitoredItemCreateRequests[i].RequestedParameters.SamplingInterval = it->linkinfo.samplingInterval;
+        monitoredItemCreateRequests[i].RequestedParameters.QueueSize = it->linkinfo.queueSize;
+        monitoredItemCreateRequests[i].RequestedParameters.DiscardOldest = it->linkinfo.discardOldest;
+        i++;
+    }
+
+    status = puasubscription->createMonitoredItems(
+                serviceSettings,               // Use default settings
+                OpcUa_TimestampsToReturn_Both, // Select timestamps to return
+                monitoredItemCreateRequests,   // monitored items to create
+                monitoredItemCreateResults);   // Returned monitored items create result
+
+    if (status.isBad()) {
+        errlogPrintf("OPC UA subscription %s@%s: createMonitoredItems failed (%s)\n",
+                     name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
+    } else {
+        if (debug)
+            errlogPrintf("OPC UA subscription %s@%s: created %lu monitored items (%s)\n",
+                         name.c_str(), psessionuasdk->getName().c_str(), items.size(), status.toString().toUtf8());
+        if (debug >= 5) {
+            for (i = 0; i < items.size(); i++) {
+                UaNodeId node(monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
+                if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode))
+                    printf("** Item %s succeeded with MonitoredItemId = %u\n",
+                           node.toXmlString().toUtf8(),
+                           monitoredItemCreateResults[i].MonitoredItemId);
+                else
+                    printf("** Item %s failed with error %s\n",
+                           node.toXmlString().toUtf8(),
+                           UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8());
+            }
+        }
     }
 }
 
@@ -163,13 +220,13 @@ SubscriptionUaSdk::clear ()
 }
 
 void
-SubscriptionUaSdk::addItemUaSdk(ItemUaSdk *item)
+SubscriptionUaSdk::addItemUaSdk (ItemUaSdk *item)
 {
     items.push_back(item);
 }
 
 void
-SubscriptionUaSdk::removeItemUaSdk(ItemUaSdk *item)
+SubscriptionUaSdk::removeItemUaSdk (ItemUaSdk *item)
 {
     auto it = std::find(items.begin(), items.end(), item);
     if (it != items.end())
@@ -188,7 +245,28 @@ void
 SubscriptionUaSdk::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
                                const UaDataNotifications& dataNotifications,
                                const UaDiagnosticInfos&   diagnosticInfos)
-{}
+{
+    OpcUa_UInt32 i;
+
+    if (debug)
+        std::cout << "Subscription " << name.c_str()
+                  << "@" << psessionuasdk->getName()
+                  << ": (dataChange) getting data for "
+                  << dataNotifications.length() << " items" << std::endl;
+
+    for (i = 0; i < dataNotifications.length(); i++) {
+        ItemUaSdk *item = items[dataNotifications[i].ClientHandle];
+        if (debug >= 5) {
+            std::cout << "** Subscription " << name.c_str()
+                      << "@" << psessionuasdk->getName()
+                      << ": (dataChange) getting data for item "
+                      << item->getNodeId().toXmlString().toUtf8() << std::endl;
+        }
+        item->setReadStatus(dataNotifications[i].Value.StatusCode);
+        item->data().setIncomingData(dataNotifications[i].Value);
+        item->data().requestRecordProcessing(ProcessReason::incomingData);
+    }
+}
 
 void
 SubscriptionUaSdk::newEvents (OpcUa_UInt32  clientSubscriptionHandle,

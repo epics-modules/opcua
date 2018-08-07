@@ -90,11 +90,6 @@ public:
     bool isConnected() const override;
 
     /**
-     * @brief Initiate read of all nodes. See DevOpcua::Session::readAllNodes
-     */
-    void readAllNodes() override;
-
-    /**
      * @brief Print configuration and status. See DevOpcua::Session::show
      * @param level
      */
@@ -119,6 +114,21 @@ public:
      * @param item  item to request beginWrite for
      */
     void requestWrite(ItemUaSdk &item);
+
+    /**
+     * @brief Initiate read of all nodes.
+     */
+    void readAllNodes();
+
+    /**
+     * @brief Create all subscriptions related to this session.
+     */
+    void createAllSubscriptions();
+
+    /**
+     * @brief Add all monitored items to subscriptions related to this session.
+     */
+    void addAllMonitoredItems();
 
     /**
      * @brief Print configuration and status of all sessions on stdout.

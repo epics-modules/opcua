@@ -148,7 +148,8 @@ opcua_read_int32_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             prec->val = pvt->readInt32();
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
@@ -157,9 +158,8 @@ opcua_read_int32_val (REC *prec)
                              prec->name, prec->val,
                              static_cast<unsigned int>(prec->val));
             }
-            pvt->clearIncomingData();
-        } else if (pvt->reason == ProcessReason::readComplete) {
             pvt->checkReadStatus();
+            pvt->clearIncomingData();
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -174,7 +174,8 @@ opcua_write_int32_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             prec->val = pvt->readInt32();
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
@@ -184,6 +185,7 @@ opcua_write_int32_val (REC *prec)
                              static_cast<unsigned int>(prec->val));
             }
             prec->udf = false;
+            pvt->checkReadStatus();
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
@@ -209,7 +211,8 @@ opcua_read_uint32_rval (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             prec->rval = pvt->readUInt32();
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
@@ -217,9 +220,8 @@ opcua_read_uint32_rval (REC *prec)
                 errlogPrintf("%s: read -> RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             }
-            pvt->clearIncomingData();
-        } else if (pvt->reason == ProcessReason::readComplete) {
             pvt->checkReadStatus();
+            pvt->clearIncomingData();
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -234,7 +236,8 @@ opcua_write_uint32_rval (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             prec->rval = pvt->readUInt32();
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
@@ -243,6 +246,7 @@ opcua_write_uint32_rval (REC *prec)
                              prec->name, prec->rval, prec->rval);
             }
             prec->udf = false;
+            pvt->checkReadStatus();
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
@@ -268,7 +272,8 @@ opcua_read_analog (REC *prec)
     TRY {
         long ret = 0;
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             if (prec->linr == menuConvertNO_CONVERSION) {
                 double value = pvt->readFloat64();
                 // Do ASLO/AOFF conversion and smoothing
@@ -284,8 +289,6 @@ opcua_read_analog (REC *prec)
                     errlogPrintf("%s: read -> VAL=%g\n",
                                  prec->name, prec->val);
                 }
-            } else if (pvt->reason == ProcessReason::readComplete) {
-                pvt->checkReadStatus();
             } else {
                 prec->rval = pvt->readInt32();
                 if (prec->tpro > 1) {
@@ -296,6 +299,7 @@ opcua_read_analog (REC *prec)
             }
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
+            pvt->checkReadStatus();
             pvt->clearIncomingData();
         } else {
             prec->pact = true;
@@ -312,7 +316,8 @@ opcua_write_analog (REC *prec)
     TRY {
         Guard G(pvt->lock);
         //TODO: ignore incoming data when output rate limit active
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             double value;
             bool useValue = true;
             if (prec->linr != menuConvertNO_CONVERSION) {
@@ -343,6 +348,7 @@ opcua_write_analog (REC *prec)
                 errlogPrintf("%s: read -> VAL=%g\n",
                              prec->name, prec->val);
             }
+            pvt->checkReadStatus();
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
@@ -368,7 +374,8 @@ opcua_write_enum (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             epicsUInt32 rval = prec->rval = pvt->readUInt32() & prec->mask;
             if (prec->shft > 0)
                 rval >>= prec->shft;
@@ -392,6 +399,7 @@ opcua_write_enum (REC *prec)
                 errlogPrintf("%s: read -> VAL=%u (RVAL=%#010x)\n",
                              prec->name, prec->val, prec->rval);
             }
+            pvt->checkReadStatus();
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
@@ -416,7 +424,8 @@ opcua_read_string_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             pvt->readCString(prec->val, MAX_STRING_SIZE);
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
@@ -425,9 +434,8 @@ opcua_read_string_val (REC *prec)
                              prec->name, prec->val);
             }
             prec->udf = false;
-            pvt->clearIncomingData();
-        } else if (pvt->reason == ProcessReason::readComplete) {
             pvt->checkReadStatus();
+            pvt->clearIncomingData();
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -442,7 +450,8 @@ opcua_write_string_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             pvt->readCString(prec->val, MAX_STRING_SIZE);
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
@@ -451,6 +460,7 @@ opcua_write_string_val (REC *prec)
                              prec->name, prec->val);
             }
             prec->udf = false;
+            pvt->checkReadStatus();
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
@@ -475,7 +485,8 @@ opcua_read_lstring_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             pvt->readCString(prec->val, prec->sizv);
             prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
             if (prec->tse == epicsTimeEventDeviceTime)
@@ -485,9 +496,8 @@ opcua_read_lstring_val (REC *prec)
                              prec->name, prec->val);
             }
             prec->udf = false;
-            pvt->clearIncomingData();
-        } else if (pvt->reason == ProcessReason::readComplete) {
             pvt->checkReadStatus();
+            pvt->clearIncomingData();
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -502,7 +512,8 @@ opcua_write_lstring_val (REC *prec)
 {
     TRY {
         Guard G(pvt->lock);
-        if (pvt->reason == ProcessReason::incomingData) {
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
             pvt->readCString(prec->val, prec->sizv);
             prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
             if (prec->tse == epicsTimeEventDeviceTime)
@@ -512,6 +523,7 @@ opcua_write_lstring_val (REC *prec)
                              prec->name, prec->val);
             }
             prec->udf = false;
+            pvt->checkReadStatus();
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();

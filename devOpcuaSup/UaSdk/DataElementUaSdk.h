@@ -159,7 +159,7 @@ public:
      * @brief Clear (discard) the current incoming data.
      * See DevOpcua::DataElement::clearIncomingData
      */
-    void clearIncomingData() override { incomingData.clear(); }
+    void clearIncomingData() override;
 
     /**
      * @brief Clear (discard) the current outgoing data.

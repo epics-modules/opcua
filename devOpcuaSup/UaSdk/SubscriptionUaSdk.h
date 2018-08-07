@@ -132,6 +132,15 @@ public:
     void create();
 
     /**
+     * @brief Add all monitored items of this subscription to the server.
+     *
+     * If the subscription is created, all monitored items (i.e. all items
+     * configured to be on the subscription) are being added (created on the
+     * server side) using the createMonitoredItems service.
+     */
+    void addMonitoredItems();
+
+    /**
      * @brief Clear connection to driver level.
      *
      * Clears the internal pointer to the driver level subscription that was

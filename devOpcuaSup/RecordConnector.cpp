@@ -79,12 +79,13 @@ void processCallback (CALLBACK *pcallback, const ProcessReason reason)
 
     RecordConnector *pvt = static_cast<RecordConnector*>(prec->dpvt);
     dbScanLock(prec);
+    ProcessReason oldreason = pvt->reason;
     pvt->reason = reason;
     if (prec->pact)
         reProcess(prec);
     else
         dbProcess(prec);
-    pvt->reason = ProcessReason::none;
+    pvt->reason = oldreason;
     dbScanUnlock(prec);
 }
 
@@ -122,9 +123,10 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
 {
     CALLBACK *callback;
 
-    if (isIoIntrScanned)
+    if (isIoIntrScanned && reason == ProcessReason::incomingData) {
+        this->reason = reason;
         scanIoRequest(ioscanpvt);
-    else {
+    } else {
         if (reason == ProcessReason::writeComplete)
             callback = &writeCompleteCallback;
         else if (reason == ProcessReason::readComplete)

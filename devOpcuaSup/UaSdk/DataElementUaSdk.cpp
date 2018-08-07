@@ -229,6 +229,12 @@ DataElementUaSdk::writeWasOk () const
     return status;
 }
 
+void DataElementUaSdk::clearIncomingData()
+{
+    incomingData.clear();
+    pconnector->reason = ProcessReason::none;
+}
+
 template<typename FROM, typename TO>
 void checkRange (const FROM &value) {
     if (value < std::numeric_limits<TO>::min() || value > std::numeric_limits<TO>::max())

@@ -293,7 +293,7 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
 
     } else {
         if (debug)
-            std::cout << "OPC UA session " << name.c_str()
+            std::cout << "Session " << name.c_str()
                       << ": (requestRead) beginRead service ok"
                       << " (transaction id " << id
                       << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
@@ -332,12 +332,28 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
 
     } else {
         if (debug)
-            std::cout << "OPC UA session " << name.c_str()
+            std::cout << "Session " << name.c_str()
                       << ": (requestWrite) beginWrite service ok"
                       << " (transaction id " << id
                       << "; writing " << nodesToWrite.length() << " nodes)" << std::endl;
         outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
                               (id, std::move(itemsToWrite)));
+    }
+}
+
+void
+SessionUaSdk::createAllSubscriptions ()
+{
+    for (auto &it : subscriptions) {
+        it.second->create();
+    }
+}
+
+void
+SessionUaSdk::addAllMonitoredItems ()
+{
+    for (auto &it : subscriptions) {
+        it.second->addMonitoredItems();
     }
 }
 
@@ -425,8 +441,10 @@ void SessionUaSdk::connectionStatusChanged (
         if (serverConnectionStatus == UaClient::ConnectionErrorApiReconnect
                 || serverConnectionStatus == UaClient::NewSessionCreated
                 || (serverConnectionStatus == UaClient::Disconnected)) {
-            // TODO: register nodes, start subscriptions, add monitored items
+            // TODO: register nodes
             readAllNodes();
+            createAllSubscriptions();
+            addAllMonitoredItems();
         }
         break;
 
@@ -454,25 +472,20 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                      name.c_str(), transactionId);
     } else {
         if (debug)
-            std::cout << "OPC UA session " << name.c_str()
+            std::cout << "Session " << name.c_str()
                       << ": (readComplete) getting data for read service"
                       << " (transaction id " << transactionId
-                      << "; data for " << values.length() << " nodes)" << std::endl;
+                      << "; data for " << values.length() << " items)" << std::endl;
         OpcUa_UInt32 i = 0;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
-                std::cout << "OPC UA session " << name.c_str()
-                          << ": (readComplete) getting data for node "
-                          << " ns="     << item->linkinfo.namespaceIndex;
-                if (item->linkinfo.identifierIsNumeric)
-                    std::cout << ";i=" << item->linkinfo.identifierNumber;
-                else
-                    std::cout << ";s=" << item->linkinfo.identifierString;
-                std::cout << std::endl;
+                std::cout << "** Session " << name.c_str()
+                          << ": (readComplete) getting data for item "
+                          << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             item->setReadStatus(values[i].StatusCode);
             item->data().setIncomingData(values[i]);
-            item->data().requestRecordProcessing(ProcessReason::incomingData);
+            item->data().requestRecordProcessing(ProcessReason::readComplete);
             i++;
         }
         outstandingOps.erase(it);
@@ -493,21 +506,16 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
                      name.c_str(), transactionId);
     } else {
         if (debug)
-            std::cout << "OPC UA session " << name.c_str()
+            std::cout << "Session " << name.c_str()
                       << ": (writeComplete) getting results for write service"
                       << " (transaction id " << transactionId
-                      << "; results for " << results.length() << " nodes)" << std::endl;
+                      << "; results for " << results.length() << " ïtems)" << std::endl;
         OpcUa_UInt32 i = 0;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
-                std::cout << "OPC UA session " << name.c_str()
-                          << ": (writeComplete) getting results for node "
-                          << " ns="     << item->linkinfo.namespaceIndex;
-                if (item->linkinfo.identifierIsNumeric)
-                    std::cout << ";i=" << item->linkinfo.identifierNumber;
-                else
-                    std::cout << ";s=" << item->linkinfo.identifierString;
-                std::cout << std::endl;
+                std::cout << "** Session " << name.c_str()
+                          << ": (writeComplete) getting results for item "
+                          << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             item->setWriteStatus(results[i]);
             item->data().requestRecordProcessing(ProcessReason::writeComplete);
