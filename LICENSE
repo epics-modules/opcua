@@ -1,18 +1,14 @@
-Copyright (c) 1991-2011 UChicago Argonne LLC.
-Copyright (c) 1991-2006 The Regents of the University of California.
-Copyright (c) 2006-2011. Los Alamos National Security, LLC. Some of this
-material was produced under U.S. Government contract DE-AC52-06NA25396
-for Los Alamos National Laboratory (LANL), which is operated by Los Alamos
-National Security, LLC for the U.S. Department of Energy.
+Copyright (c) 2018 ITER Organization. All rights reserved.
 
-EPICS BASE is distributed subject to the following license conditions:
+EPICS Device Support for OPC UA is distributed subject to the following
+license conditions:
 
  SOFTWARE LICENSE AGREEMENT
- Software: EPICS BASE
+ Software: EPICS Device Support for OPC UA
 
- 1. The "Software", below, refers to EPICS BASE (in either source code, or
-    binary form and accompanying documentation). Each licensee is
-    addressed as "you" or "Licensee."
+ 1. The "Software", below, refers to EPICS Device Support for OPC UA (in
+    either source code, or binary form and accompanying documentation).
+    Each licensee is addressed as "you" or "Licensee."
 
  2. The copyright holders shown above and their third-party licensors
     hereby grant Licensee a royalty-free nonexclusive license, subject to
@@ -67,21 +63,3 @@ EPICS BASE is distributed subject to the following license conditions:
     CONTRACT, TORT (INCLUDING NEGLIGENCE OR STRICT LIABILITY), OR
     OTHERWISE, EVEN IF ANY OF SAID PARTIES HAS BEEN WARNED OF THE
     POSSIBILITY OF SUCH LOSS OR DAMAGES.
-
-________________________________________________________________________
-
-This software is in part copyrighted by the BERLINER SPEICHERRING
-GESELLSCHAFT FUER SYNCHROTRONSTRAHLUNG M.B.H. (BESSY), BERLIN, GERMANY.
-
-In no event shall BESSY be liable to any party for direct, indirect,
-special, incidental, or consequential damages arising out of the use of
-this software, its documentation, or any derivatives thereof, even if
-BESSY has been advised of the possibility of such damage.
-
-BESSY specifically disclaims any warranties, including, but not limited
-to, the implied warranties of merchantability, fitness for a particular
-purpose, and non-infringement.  This software is provided on an "as is"
-basis, and BESSY has no obligation to provide maintenance, support,
-updates, enhancements, or modifications.
-________________________________________________________________________
-
