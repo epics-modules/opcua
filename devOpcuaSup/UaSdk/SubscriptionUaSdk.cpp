@@ -195,19 +195,21 @@ SubscriptionUaSdk::addMonitoredItems ()
                      name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
     } else {
         if (debug)
-            errlogPrintf("OPC UA subscription %s@%s: created %lu monitored items (%s)\n",
-                         name.c_str(), psessionuasdk->getName().c_str(), items.size(), status.toString().toUtf8());
+            std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
+                      << ": created " << items.size() << " monitored items ("
+                      << status.toString().toUtf8() << ")" << std::endl;
         if (debug >= 5) {
             for (i = 0; i < items.size(); i++) {
                 UaNodeId node(monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
                 if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode))
-                    printf("** Item %s succeeded with MonitoredItemId = %u\n",
-                           node.toXmlString().toUtf8(),
-                           monitoredItemCreateResults[i].MonitoredItemId);
+                    std::cout << "** Monitored item " << node.toXmlString().toUtf8()
+                              << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
+                              << std::endl;
                 else
-                    printf("** Item %s failed with error %s\n",
-                           node.toXmlString().toUtf8(),
-                           UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8());
+                    std::cout << "** Monitored item " << node.toXmlString().toUtf8()
+                              << " failed with error "
+                              << UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8()
+                              << std::endl;
             }
         }
     }

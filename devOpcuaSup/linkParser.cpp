@@ -47,7 +47,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
 
     // set default from variables and info items
     s = ent.info("opcua:SAMPLING", "");
-    if (debug > 9 && s[0] != '\0')
+    if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:SAMPLING'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->samplingInterval = opcua_DefaultSamplingInterval;
@@ -56,7 +56,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
             throw std::runtime_error(SB() << "error converting '" << s << "' to Double");
 
     s = ent.info("opcua:QSIZE", "");
-    if (debug > 9 && s[0] != '\0')
+    if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:QSIZE'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->queueSize = opcua_DefaultQueueSize;
@@ -65,7 +65,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
             throw std::runtime_error(SB() << "error converting '" << s << "' to UInt32");
 
     s = ent.info("opcua:DISCARD", "");
-    if (debug > 9 && s[0] != '\0')
+    if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:DISCARD'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->discardOldest = !!opcua_DefaultDiscardOldest;
@@ -78,7 +78,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
             throw std::runtime_error(SB() << "illegal value '" << s << "'");
 
     s = ent.info("opcua:TIMESTAMP", "");
-    if (debug > 9 && s[0] != '\0')
+    if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:TIMESTAMP'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->useServerTimestamp = !!opcua_DefaultUseServerTime;
@@ -91,7 +91,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
             throw std::runtime_error(SB() << "illegal value '" << s << "'");
 
     s = ent.info("opcua:READBACK", "");
-    if (debug > 9 && s[0] != '\0')
+    if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:READBACK'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->doOutputReadback = !!opcua_DefaultOutputReadback;
@@ -104,7 +104,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
             throw std::runtime_error(SB() << "illegal value '" << s << "'");
 
     s = ent.info("opcua:ELEMENT", "");
-    if (debug > 9 && s[0] != '\0')
+    if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:ELEMENT'='" << s << "'" << std::endl;
     if (s[0] != '\0')
         pinfo->element = s;
@@ -141,7 +141,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
         std::string optname(linkstr.substr(sep, seq-sep)),
                     optval (linkstr.substr(seq+1, send-seq-1));
 
-        if (debug > 9) {
+        if (debug > 19) {
             std::cerr << prec->name << " opt '" << optname << "'='" << optval << "'" << std::endl;
         }
 
