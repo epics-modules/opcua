@@ -259,8 +259,8 @@ SubscriptionUaSdk::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
         if (debug >= 5) {
             std::cout << "** Subscription " << name.c_str()
                       << "@" << psessionuasdk->getName()
-                      << ": (dataChange) getting data for item "
-                      << item->getNodeId().toXmlString().toUtf8() << std::endl;
+                      << ": (dataChange) getting data for item " << dataNotifications[i].ClientHandle
+                      << " (" << item->getNodeId().toXmlString().toUtf8() << ")" << std::endl;
         }
         item->setReadStatus(dataNotifications[i].Value.StatusCode);
         item->data().setIncomingData(dataNotifications[i].Value);
