@@ -438,11 +438,9 @@ void SessionUaSdk::connectionStatusChanged (
 
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
-        if (serverConnectionStatus == UaClient::ConnectionErrorApiReconnect
-                || serverConnectionStatus == UaClient::NewSessionCreated
-                || (serverConnectionStatus == UaClient::Disconnected)) {
+        readAllNodes();
+        if (serverConnectionStatus == UaClient::Disconnected) {
             // TODO: register nodes
-            readAllNodes();
             createAllSubscriptions();
             addAllMonitoredItems();
         }
@@ -453,6 +451,9 @@ void SessionUaSdk::connectionStatusChanged (
         // This requires to redo register nodes for the new session
         // or to read the namespace array."
     case UaClient::NewSessionCreated:
+        // TODO: register nodes
+        createAllSubscriptions();
+        addAllMonitoredItems();
         break;
     }
     serverConnectionStatus = serverStatus;
