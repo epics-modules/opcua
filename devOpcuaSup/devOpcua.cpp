@@ -320,7 +320,11 @@ opcua_write_analog (REC *prec)
                 || pvt->reason == ProcessReason::readComplete) {
             double value;
             bool useValue = true;
-            if (prec->linr != menuConvertNO_CONVERSION) {
+            if (prec->linr == menuConvertNO_CONVERSION) {
+                value = pvt->readFloat64();
+                if (prec->aslo != 0.0) value *= prec->aslo;
+                value += prec->aoff;
+            } else {
                 prec->rval = pvt->readInt32();
                 value = static_cast<double>(prec->rval)
                         + static_cast<double>(prec->roff);
@@ -333,17 +337,12 @@ opcua_write_analog (REC *prec)
                                        static_cast<void **>(&prec->pbrk), &prec->lbrk) != 0)
                         useValue = false;
                 }
-            } else {
-                value = pvt->readFloat64();
-                if (prec->aslo != 0.0) value *= prec->aslo;
-                value += prec->aoff;
             }
             if (prec->tse == epicsTimeEventDeviceTime)
                 prec->time = pvt->readTimeStamp();
-            if (useValue) {
+            if (useValue)
                 prec->val = value;
-                prec->udf = isnan(value);
-            }
+            prec->udf = isnan(prec->val);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL=%g\n",
                              prec->name, prec->val);
@@ -353,12 +352,20 @@ opcua_write_analog (REC *prec)
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
         } else {
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
-                             prec->name, prec->rval,
-                             static_cast<unsigned int>(prec->rval));
+            if (prec->linr == menuConvertNO_CONVERSION) {
+                if (prec->tpro > 1) {
+                    errlogPrintf("%s: write <- VAL=%g\n",
+                                 prec->name, prec->val);
+                }
+                pvt->writeFloat64(prec->val);
+            } else {
+                if (prec->tpro > 1) {
+                    errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
+                                 prec->name, prec->rval,
+                                 static_cast<unsigned int>(prec->rval));
+                }
+                pvt->writeInt32(prec->rval);
             }
-            pvt->writeInt32(prec->rval);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
