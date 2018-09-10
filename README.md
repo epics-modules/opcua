@@ -1,7 +1,7 @@
 # opcua - EPICS Device Support for OPC UA
 
-EPICS Device Support module for interfacing to the OPC UA protocol
-using the Unified Automation C++ Based
+[EPICS](https://epics-controls.org) Device Support module for interfacing
+to the OPC UA protocol using the Unified Automation C++ Based
 [OPC UA Client SDK](https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html).
 
 ## Status
@@ -12,9 +12,11 @@ Please contact the author <ralph.lange@gmx.de> for details.
 
 ## Prerequisites
 
-* EPICS Base 3.15.5 (and up).
+* [EPICS Base](https://epics-controls.org/resources-and-support/base/)
+  3.15.5 (and up).
 
-* Unified Automation C++ Based OPC UA Client SDK.
+* Unified Automation C++ Based
+  [OPC UA Client SDK](https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html).
   This device support has been developed using the 1.5.x series.
 
 * For OPC UA security support (authentication/encryption), you need
