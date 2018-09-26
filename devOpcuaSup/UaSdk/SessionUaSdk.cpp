@@ -111,13 +111,13 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
 }
 
 const std::string &
-SessionUaSdk::getName() const
+SessionUaSdk::getName () const
 {
     return name;
 }
 
 const OpcUa_UInt32
-SessionUaSdk::getTransactionId()
+SessionUaSdk::getTransactionId ()
 {
     return epics::atomic::increment(transactionId);
 }
@@ -373,6 +373,7 @@ SessionUaSdk::show (int level) const
         std::cout << "?";
     std::cout << "(" << connectInfo.nMaxOperationsPerServiceCall << ")"
               << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "Y" : "N")
+              << " subscriptions=" << subscriptions.size()
               << std::endl;
 
     if (level >= 1) {

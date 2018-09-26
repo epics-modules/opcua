@@ -71,7 +71,8 @@ SubscriptionUaSdk::show (int level) const
     std::cout << "(" << static_cast<int>(subscriptionSettings.priority) << ")"
               << " enable=" << (puasubscription ? (puasubscription->publishingEnabled() ? "Y" : "N") : "?")
               << "(" << (enable ? "Y" : "N") << ")"
-              << " debug="       << debug
+              << " debug=" << debug
+              << " items=" << items.size()
               << std::endl;
 
     if (level >= 1) {
@@ -191,7 +192,7 @@ SubscriptionUaSdk::addMonitoredItems ()
                 monitoredItemCreateResults);   // Returned monitored items create result
 
     if (status.isBad()) {
-        errlogPrintf("OPC UA subscription %s@%s: createMonitoredItems failed (%s)\n",
+        errlogPrintf("OPC UA subscription %s@%s: createMonitoredItems failed with status %s\n",
                      name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
     } else {
         if (debug)
