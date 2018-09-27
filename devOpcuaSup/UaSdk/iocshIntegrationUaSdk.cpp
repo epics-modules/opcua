@@ -20,8 +20,10 @@
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
 #include "Session.h"
+#include "RecordConnector.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
+#include "DataElement.h"
 #include "iocshVariables.h"
 
 namespace {
@@ -230,6 +232,34 @@ void opcuaShowSubscriptionCallFunc (const iocshArgBuf *args)
     }
 }
 
+static const iocshArg opcuaShowDataArg0 = {"record name", iocshArgString};
+static const iocshArg opcuaShowDataArg1 = {"verbosity", iocshArgInt};
+
+static const iocshArg *const opcuaShowDataArg[2] = {&opcuaShowDataArg0, &opcuaShowDataArg1};
+
+static const iocshFuncDef opcuaShowDataFuncDef = {"opcuaShowData", 2, opcuaShowDataArg};
+
+static
+void opcuaShowDataCallFunc (const iocshArgBuf *args)
+{
+    try {
+        if (args[0].sval == NULL || args[0].sval[0] == '\0') {
+            errlogPrintf("missing argument #1 (record name)\n");
+        } else {
+            RecordConnector *rc = RecordConnector::findRecordConnector(args[0].sval);
+            if (rc) {
+                rc->pitem->show(1);
+            } else {
+                errlogPrintf("record %s does not exist\n",
+                             args[0].sval);
+            }
+        }
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static
 void opcuaUaSdkIocshRegister ()
 {
@@ -240,6 +270,8 @@ void opcuaUaSdkIocshRegister ()
 
     iocshRegister(&opcuaCreateSubscriptionFuncDef, opcuaCreateSubscriptionCallFunc);
     iocshRegister(&opcuaShowSubscriptionFuncDef, opcuaShowSubscriptionCallFunc);
+
+    iocshRegister(&opcuaShowDataFuncDef, opcuaShowDataCallFunc);
 }
 
 extern "C" {

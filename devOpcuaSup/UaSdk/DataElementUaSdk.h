@@ -77,6 +77,11 @@ public:
                                 const std::string &path);
 
     /**
+     * @brief Print configuration and status. See DevOpcua::DataElement::show
+     */
+    void show(const int level, const unsigned int indent) const override;
+
+    /**
      * @brief Push an incoming data value into the DataElement.
      *
      * Called from the OPC UA client worker thread when new data is

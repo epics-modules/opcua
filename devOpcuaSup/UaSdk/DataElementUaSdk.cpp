@@ -80,6 +80,23 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
 }
 
 void
+DataElementUaSdk::show (const int level, const unsigned int indent) const
+{
+    std::string ind(indent*2, ' ');
+    std::cout << ind;
+    if (isLeaf()) {
+        std::cout << "leaf=" << name << " record=" << pconnector->getRecordName() << "\n";
+    } else {
+        std::cout << "node=" << name << " children=" << elements.size() << "\n";
+        for (auto it : elements) {
+            if (auto pelem = it.lock()) {
+                pelem->show(level, indent + 1);
+            }
+        }
+    }
+}
+
+void
 DataElementUaSdk::addElementChain (ItemUaSdk *item,
                                    RecordConnector *pconnector,
                                    const std::string &path)

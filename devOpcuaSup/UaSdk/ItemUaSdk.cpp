@@ -74,6 +74,13 @@ ItemUaSdk::show (int level) const
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
               << std::endl;
+
+    if (level >= 1) {
+        if (auto re = rootElement.lock()) {
+            re->show(level, 1);
+        }
+        std::cout.flush();
+    }
 }
 
 void

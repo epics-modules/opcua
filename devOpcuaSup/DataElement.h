@@ -66,6 +66,17 @@ public:
     void setRecordConnector(RecordConnector *connector);
 
     /**
+     * @brief Print configuration and status on stdout.
+     *
+     * The verbosity level controls the amount of information:
+     * 0 = one line
+     *
+     * @param level   verbosity level
+     * @param indent  indentation level
+     */
+    virtual void show(const int level, const unsigned int indent) const = 0;
+
+    /**
      * @brief Read the time stamp of the incoming data.
      *
      * The server flag selects the time stamp to read:
