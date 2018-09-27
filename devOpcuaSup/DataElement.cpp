@@ -18,6 +18,7 @@ namespace DevOpcua {
 
 DataElement::DataElement (const std::string &name)
     : name(name)
+    , pconnector(nullptr)
 {}
 
 DataElement::~DataElement ()
