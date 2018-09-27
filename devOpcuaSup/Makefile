@@ -25,7 +25,7 @@ SRC_DIRS += $(OPCUA)
 LIBRARY_IOC += opcua
 
 # xxxRecord.h will be created from xxxRecord.dbd
-#DBDINC += xxxRecord
+DBDINC += opcuaItemRecord
 
 DBD_INSTALLS += devOpcua.dbd
 
@@ -35,6 +35,7 @@ opcua_SRCS += iocshIntegration.cpp
 opcua_SRCS += DataElement.cpp
 opcua_SRCS += RecordConnector.cpp
 opcua_SRCS += linkParser.cpp
+opcua_SRCS += opcuaItemRecord.cpp
 
 opcua_LIBS += $(EPICS_BASE_IOC_LIBS)
 

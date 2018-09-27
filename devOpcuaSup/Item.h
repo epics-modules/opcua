@@ -13,6 +13,8 @@
 #ifndef DEVOPCUA_ITEM_H
 #define DEVOPCUA_ITEM_H
 
+struct opcuaItemRecord;
+
 namespace DevOpcua {
 
 struct linkInfo;
@@ -55,7 +57,8 @@ public:
      */
     virtual bool isMonitored() const = 0;
 
-    const linkInfo &linkinfo;  /**< configuration of the item as parsed from the EPICS record */
+    const linkInfo &linkinfo;     /**< configuration of the item as parsed from the EPICS record */
+    opcuaItemRecord *itemRecord;  /**< pointer to the itemRecord (if linked to one) */
 
 protected:
     /**

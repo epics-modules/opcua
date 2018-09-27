@@ -20,6 +20,7 @@
 #include "DataElement.h"
 #include "devOpcua.h"
 #include "ItemUaSdk.h"
+#include "RecordConnector.h"
 
 namespace DevOpcua {
 
@@ -32,13 +33,48 @@ class DataElementUaSdk : public DataElement
 {
 public:
     /**
-     * @brief Constructor for DataElement (implementation).
-     * See DevOpcua::DataElement::DataElement
+     * @brief Constructor for DataElement from record connector.
      *
-     * @param pitem  pointer to corresponding ItemUaSdk
-     * @param name   structure element name (empty otherwise)
+     * Creates the final (leaf) element of the data structure. The record connector
+     * holds a shared pointer to its leaf, while the data element has a weak pointer
+     * to the record connector.
+     *
+     * @param name        name of the element (empty for root element)
+     * @param pitem       pointer to corresponding ItemUaSdk
+     * @param pconnector  pointer to record connector to link to
      */
-    DataElementUaSdk(ItemUaSdk *pitem, const std::string &name = "");
+    DataElementUaSdk(const std::string &name,
+                     ItemUaSdk *pitem,
+                     RecordConnector *pconnector);
+
+    /**
+     * @brief Constructor for DataElement from child element.
+     *
+     * Creates an intermediate (node) element of the data structure. The child holds
+     * a shared pointer, while the parent has a weak pointer in its list/map of child
+     * nodes, to facilitate traversing the structure when data updates come in.
+     *
+     * @param name   name of the element
+     * @param item   pointer to corresponding ItemUaSdk
+     * @param child  weak pointer to child
+     */
+    DataElementUaSdk(const std::string &name,
+                     ItemUaSdk *item,
+                     std::weak_ptr<DataElementUaSdk> child);
+
+    /**
+     * @brief Construct a linked list of data elements between a record connector and an item.
+     *
+     * Creates the leaf element first, then identifies the part of the path that already exists
+     * on the item and creates the missing list of linked nodes.
+     *
+     * @param pitem       pointer to corresponding ItemUaSdk
+     * @param pconnector  pointer to record connector to link to
+     * @param path        path of leaf element inside the structure
+     */
+    static void addElementChain(ItemUaSdk *item,
+                                RecordConnector *pconnector,
+                                const std::string &path);
 
     /**
      * @brief Push an incoming data value into the DataElement.
@@ -92,7 +128,6 @@ public:
      * @throws std::runtime_error if no data present or on conversion error
      */
     virtual epicsFloat64 readFloat64() const override;
-
 
     /**
      * @brief Read incoming data as classic C string (char[]).
@@ -180,9 +215,13 @@ public:
     virtual void requestRecordProcessing(const ProcessReason reason) const override;
 
 private:
-    static void printOutputDebugMessage(const RecordConnector *pconnector, const UaVariant &tempValue);
+    static void printOutputDebugMessage(const RecordConnector *pconnector,
+                                        const UaVariant &tempValue);
 
-    ItemUaSdk *pitem;                /**< corresponding item */
+    ItemUaSdk *pitem;                                       /**< corresponding item */
+    std::vector<std::weak_ptr<DataElementUaSdk>> elements;  /**< children (if node) */
+    std::shared_ptr<DataElementUaSdk> parent;               /**< parent */
+
     UaDataValue incomingData;        /**< incoming data value */
     OpcUa_BuiltInType incomingType;  /**< type of incoming data */
     UaDataValue outgoingData;        /**< outgoing data value */

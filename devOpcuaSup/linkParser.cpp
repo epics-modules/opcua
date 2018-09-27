@@ -23,6 +23,7 @@
 
 #include "devOpcua.h"
 #include "linkParser.h"
+#include "opcuaItemRecord.h"
 #include "iocshVariables.h"
 #include "Subscription.h"
 #include "Session.h"
@@ -41,6 +42,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
         throw std::logic_error("link is not INST_IO");
 
     pinfo->isOutput = ent.isOutput();
+    pinfo->isItemRecord = ent.isItemRecord();
 
     if (debug > 4)
         std::cerr << prec->name << " parsing info items" << std::endl;
@@ -126,11 +128,35 @@ parseLink(dbCommon *prec, DBEntry &ent)
         pinfo->subscription = name;
     } else if (Session::sessionExists(name)) {
         pinfo->session = name;
-    } else {
-        throw std::runtime_error(SB() << "unknown session or subscription '" << name << "'");
+    } else if (name != "") {
+            throw std::runtime_error(SB() << "unknown session or subscription '" << name << "'");
     }
 
     sep = linkstr.find_first_not_of("; \t", send);
+
+    if (name == "") {
+        if (sep < linkstr.size()) {
+            DBENTRY entry;
+            dbInitEntry(pdbbase, &entry);
+            size_t send = linkstr.find_first_of(" \t", sep);
+            std::string itemRecord = linkstr.substr(sep, send-1);
+            if (dbFindRecord(&entry, itemRecord.c_str())) {
+                dbFinishEntry(&entry);
+                throw std::runtime_error(SB() << "no such record '" << itemRecord << "'");
+            }
+            if (dbFindField(&entry, "RTYP")
+                    || strcmp(dbGetString(&entry), "opcuaItem")) {
+                dbFinishEntry(&entry);
+                throw std::runtime_error(SB() << "record '"
+                                         << itemRecord << "' is not of type opcuaItem");
+            }
+            pinfo->linkedToItem = false;
+            RecordConnector *pconnector = static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+            pinfo->item = pconnector->pitem;
+            sep = linkstr.find_first_not_of("; \t", send);
+            dbFinishEntry(&entry);
+        }
+    }
 
     // everything else is "key=value ..." options
     while (sep < linkstr.size()) {
@@ -153,30 +179,35 @@ parseLink(dbCommon *prec, DBEntry &ent)
             std::cerr << prec->name << " opt '" << optname << "'='" << optval << "'" << std::endl;
         }
 
-        if (optname == "ns") {
-            if (epicsParseUInt16(optval.c_str(), &pinfo->namespaceIndex, 0, nullptr))
-                throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt16");
-        } else if (optname == "s") {
-            pinfo->identifierString = optval;
-            pinfo->identifierIsNumeric = false;
-        } else if (optname == "i") {
-            if (epicsParseUInt32(optval.c_str(), &pinfo->identifierNumber, 0, nullptr))
-                throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
-            pinfo->identifierIsNumeric = true;
-        } else if (optname == "sampling") {
-            if (epicsParseDouble(optval.c_str(), &pinfo->samplingInterval, nullptr))
-                throw std::runtime_error(SB() << "error converting '" << optval << "' to Double");
-        } else if (optname == "qsize") {
-            if (epicsParseUInt32(optval.c_str(), &pinfo->queueSize, 0, nullptr))
-                throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
-        } else if (optname == "discard") {
-            if (optval == "new")
-                pinfo->discardOldest = false;
-            else if (optval == "old")
-                pinfo->discardOldest = true;
-            else
-                throw std::runtime_error(SB() << "illegal value '" << optval << "'");
-        } else if (optname == "timestamp") {
+        // Item related options
+        if (pinfo->linkedToItem) {
+            if (optname == "ns") {
+                if (epicsParseUInt16(optval.c_str(), &pinfo->namespaceIndex, 0, nullptr))
+                    throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt16");
+            } else if (optname == "s") {
+                pinfo->identifierString = optval;
+                pinfo->identifierIsNumeric = false;
+            } else if (optname == "i") {
+                if (epicsParseUInt32(optval.c_str(), &pinfo->identifierNumber, 0, nullptr))
+                    throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
+                pinfo->identifierIsNumeric = true;
+            } else if (optname == "sampling") {
+                if (epicsParseDouble(optval.c_str(), &pinfo->samplingInterval, nullptr))
+                    throw std::runtime_error(SB() << "error converting '" << optval << "' to Double");
+            } else if (optname == "qsize") {
+                if (epicsParseUInt32(optval.c_str(), &pinfo->queueSize, 0, nullptr))
+                    throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
+            } else if (optname == "discard") {
+                if (optval == "new")
+                    pinfo->discardOldest = false;
+                else if (optval == "old")
+                    pinfo->discardOldest = true;
+                else
+                    throw std::runtime_error(SB() << "illegal value '" << optval << "'");
+            }
+        }
+        // Record/data element related options
+        if (optname == "timestamp") {
             if (optval == "server")
                 pinfo->useServerTimestamp = true;
             else if (optval == "source")
@@ -197,28 +228,30 @@ parseLink(dbCommon *prec, DBEntry &ent)
             }
         } else if (optname == "element") {
             pinfo->element = optval;
-        } else {
-            throw std::runtime_error(SB() << "unknown option '" << optname << "'");
         }
 
         sep = linkstr.find_first_not_of("; \t", send);
     }
 
     if (debug > 4) {
-        std::cerr << prec->name << " :";
-        if (pinfo->session.length())
-            std::cerr << " session=" << pinfo->session;
-        else if (pinfo->subscription.length())
-            std::cerr << " subscription=" << pinfo->subscription;
-        std::cerr << " ns=" << pinfo->namespaceIndex;
-        if (pinfo->identifierIsNumeric)
-            std::cerr << " id(i)=" << pinfo->identifierNumber;
-        else
-            std::cerr << " id(s)=" << pinfo->identifierString;
-        std::cerr << " sampling=" << pinfo->samplingInterval
-                  << " qsize=" << pinfo->queueSize
-                  << " discard=" << (pinfo->discardOldest ? "old" : "new")
-                  << " timestamp=" << (pinfo->useServerTimestamp ? "server" : "source")
+        std::cout << prec->name << " :";
+        if (pinfo->linkedToItem) {
+            if (pinfo->session.length())
+                std::cout << " session=" << pinfo->session;
+            else if (pinfo->subscription.length())
+                std::cout << " subscription=" << pinfo->subscription;
+            std::cout << " ns=" << pinfo->namespaceIndex;
+            if (pinfo->identifierIsNumeric)
+                std::cout << " id(i)=" << pinfo->identifierNumber;
+            else
+                std::cout << " id(s)=" << pinfo->identifierString;
+            std::cout << " sampling=" << pinfo->samplingInterval
+                      << " qsize=" << pinfo->queueSize
+                      << " discard=" << (pinfo->discardOldest ? "old" : "new");
+        } else {
+            std::cout << " element=" << pinfo->element;
+        }
+        std::cout << " timestamp=" << (pinfo->useServerTimestamp ? "server" : "source")
                   << " output=" << (pinfo->isOutput ? "y" : "n")
                   << " monitor=" << (pinfo->monitor ? "y" : "n")
                   << std::endl;
@@ -226,7 +259,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
 
     // consistency checks
     if (pinfo->isOutput && pinfo->monitor && !pinfo->subscription.length())
-        throw std::runtime_error(SB() << "readback of output requires a valid subscription");
+        throw std::runtime_error(SB() << "monitoring an output requires a valid subscription");
 
     return pinfo;
 }

@@ -163,4 +163,16 @@ RecordConnector::checkReadStatus() const
     }
 }
 
+RecordConnector *
+RecordConnector::findRecordConnector (const std::string &name)
+{
+    DBENTRY entry;
+    dbInitEntry(pdbbase, &entry);
+    if (dbFindRecord(&entry, name.c_str())) {
+        dbFinishEntry(&entry);
+        return nullptr;
+    }
+    return static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+}
+
 } // namespace DevOpcua

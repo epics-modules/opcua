@@ -47,6 +47,13 @@ public:
     virtual ~DataElement();
 
     /**
+     * @brief Get the type of element (inside a structure).
+     *
+     * @return true if element is a leaf (has no child elements)
+     */
+    bool isLeaf() const { return isleaf; }
+
+    /**
      * @brief Setter to create a (bidirectional) link to a RecordConnector.
      *
      * Sets the internal pointer to the record connector as well as the
@@ -177,17 +184,35 @@ public:
      */
     virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
+    int debug;
+    static const char separator = '.';
+
 protected:
     /**
-     * @brief Constructor for DataElement, to be used by implementations.
+     * @brief Constructor for node DataElement, to be used by implementations.
      *
      * @param name  structure element name (empty otherwise)
      */
-    DataElement(const std::string &name = "");
+    DataElement(const std::string &name = "")
+        : name(name)
+        , isleaf(false)
+    {}
 
-    std::string name;                                    /**< element name */
-    std::vector<std::unique_ptr<DataElement>> elements;  /**< children (if node) */
-    RecordConnector *pconnector;                         /**< connector (if leaf) */
+    /**
+     * @brief Constructor for leaf DataElement, to be used by implementations.
+     *
+     * @param name  structure element name (empty otherwise)
+     * @param connector
+     */
+    DataElement(RecordConnector *pconnector, const std::string &name = "")
+        : name(name)
+        , pconnector(pconnector)
+        , isleaf(true)
+    {}
+
+    std::string name;                           /**< element name */
+    RecordConnector *pconnector;                /**< pointer to connector (if leaf) */
+    bool isleaf;                                /**< flag for leaf property */
 };
 
 } // namespace DevOpcua

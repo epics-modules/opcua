@@ -48,7 +48,7 @@ public:
     void checkWriteStatus() const;
     void checkReadStatus() const;
 
-    void setDataElement(DataElement *data) { pdataelement = data; }
+    void setDataElement(std::shared_ptr<DataElement> data) { pdataelement = data; }
     void clearDataElement() { pdataelement = nullptr; }
 
     void requestRecordProcessing(const ProcessReason reason);
@@ -58,10 +58,18 @@ public:
     char *getRecordName() const { return prec->name; }
     int debug() const { return ((prec->tpro > 0) ? prec->tpro - 1 : 0); }
 
+    /**
+     * @brief Find record connector by record name.
+     *
+     * @param name  record name
+     * @return record connector (nullptr if record not found)
+     */
+    static RecordConnector *findRecordConnector(const std::string &name);
+
     epicsMutex lock;
     std::unique_ptr<linkInfo> plinkinfo;
-    std::unique_ptr<Item> pitem;
-    DataElement *pdataelement;
+    Item *pitem;
+    std::shared_ptr<DataElement> pdataelement;
     bool isIoIntrScanned;
     IOSCANPVT ioscanpvt;
     ProcessReason reason;

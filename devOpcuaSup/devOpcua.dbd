@@ -12,6 +12,7 @@ device(stringin,   INST_IO, devSiOpcua,         "OPCUA")
 device(stringout,  INST_IO, devSoOpcua,         "OPCUA")
 device(lsi,        INST_IO, devLsiOpcua,        "OPCUA")
 device(lso,        INST_IO, devLsoOpcua,        "OPCUA")
+device(opcuaItem,  INST_IO, devItemOpcua,       "OPCUA")
 
 variable(opcua_ConnectTimeout, double)
 variable(opcua_MaxOperationsPerServiceCall)

@@ -14,6 +14,7 @@
 #define DEVOPCUA_H
 
 #include <sstream>
+#include <cstring>
 #include <memory>
 
 #include <epicsMutex.h>
@@ -24,17 +25,21 @@
 
 namespace DevOpcua {
 
+class Item;
+
 /** @brief Configuration data for a single record instance.
  *
  * This structure holds all configuration data for a single instance of
  * a supported standard record type, i.e. the result of INP/OUT link parsing.
  *
  * It is kept around, as in the case of a server disconnect/reconnect, the
- * complete sequence of creating the lower level interface will have to be
+ * sequence of creating the lower level interface will have to be partially
  * repeated.
  */
 typedef struct linkInfo {
-    bool useSimpleSetup = true;
+    bool linkedToItem = true;
+    bool isItemRecord = false;
+    Item *item;                        /**< pointer to root item (if structure element) */
     std::string session;
     std::string subscription;
 
@@ -90,7 +95,7 @@ public:
     explicit DBEntry(dbCommon *prec) {
         dbInitEntry(pdbbase, &entry);
         if (dbFindRecord(&entry, prec->name))
-            throw std::logic_error(SB() << "getLink can't find record " << prec->name);
+            throw std::logic_error(SB() << "can't find record " << prec->name);
     }
     DBEntry(const DBEntry& ent) {
         dbCopyEntryContents(const_cast<DBENTRY*>(&ent.entry), &entry);
@@ -105,14 +110,17 @@ public:
     }
     DBLINK *getDevLink() const {
         if (dbFindField(pentry(), "INP") && dbFindField(pentry(), "OUT"))
-            throw std::logic_error(SB() << entry.precnode->recordname << " has no INP/OUT?!?!");
+            throw std::logic_error(SB() << entry.precnode->recordname << " has no INP/OUT?!");
         if (entry.pflddes->field_type != DBF_INLINK &&
            entry.pflddes->field_type != DBF_OUTLINK)
-            throw std::logic_error(SB() << entry.precnode->recordname << " not devlink or INP/OUT?!?!");
+            throw std::logic_error(SB() << entry.precnode->recordname << " INP/OUT is not a link?!");
         return static_cast<DBLINK*>(entry.pfield);
     }
     bool isOutput() const {
         return !dbFindField(pentry(), "OUT");
+    }
+    bool isItemRecord() const {
+        return !(dbFindField(pentry(), "RTYP") || strcmp(dbGetString(pentry()), "opcuaItem"));
     }
     const char *info(const char *name, const char *def) const
     {

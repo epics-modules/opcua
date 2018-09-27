@@ -296,7 +296,7 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
         errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
         item.setReadStatus(status.code());
-        item.data().requestRecordProcessing(ProcessReason::readComplete);
+        item.requestRecordProcessing(ProcessReason::readComplete);
 
     } else {
         if (debug)
@@ -322,8 +322,8 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
     nodesToWrite.create(1);
     item.getNodeId().copyTo(&nodesToWrite[0].NodeId);
     nodesToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    item.data().getOutgoingData().copyTo(&nodesToWrite[0].Value);
-    item.data().clearOutgoingData();
+    item.getOutgoingData().copyTo(&nodesToWrite[0].Value);
+    item.clearOutgoingData();
     itemsToWrite->push_back(&item);
 
     Guard G(opslock);
@@ -335,7 +335,7 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
         errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
         item.setWriteStatus(status.code());
-        item.data().requestRecordProcessing(ProcessReason::writeComplete);
+        item.requestRecordProcessing(ProcessReason::writeComplete);
 
     } else {
         if (debug)
@@ -493,8 +493,8 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             item->setReadStatus(values[i].StatusCode);
-            item->data().setIncomingData(values[i]);
-            item->data().requestRecordProcessing(ProcessReason::readComplete);
+            item->setIncomingData(values[i]);
+            item->requestRecordProcessing(ProcessReason::readComplete);
             i++;
         }
         outstandingOps.erase(it);
@@ -527,7 +527,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             item->setWriteStatus(results[i]);
-            item->data().requestRecordProcessing(ProcessReason::writeComplete);
+            item->requestRecordProcessing(ProcessReason::writeComplete);
             i++;
         }
         outstandingOps.erase(it);

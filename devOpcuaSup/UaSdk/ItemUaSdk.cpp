@@ -17,6 +17,7 @@
 #include <uanodeid.h>
 
 #include "RecordConnector.h"
+#include "opcuaItemRecord.h"
 #include "ItemUaSdk.h"
 #include "SubscriptionUaSdk.h"
 #include "SessionUaSdk.h"
@@ -30,7 +31,6 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     : Item(info)
     , subscription(nullptr)
     , session(nullptr)
-    , dataElement(std::unique_ptr<DataElementUaSdk>(new DataElementUaSdk(this)))
 {
     if (info.identifierIsNumeric) {
         nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(info.identifierNumber, info.namespaceIndex));
@@ -63,6 +63,8 @@ ItemUaSdk::show (int level) const
         std::cout << ";i=" << linkinfo.identifierNumber;
     else
         std::cout << ";s=" << linkinfo.identifierString;
+    if (linkinfo.isItemRecord)
+        std::cout << " record=" << itemRecord->name;
     std::cout << " context=" << linkinfo.subscription
               << "@" << session->getName()
               << " sampling=" << linkinfo.samplingInterval
@@ -72,6 +74,42 @@ ItemUaSdk::show (int level) const
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
               << std::endl;
+}
+
+void
+ItemUaSdk::requestRecordProcessing (const ProcessReason reason) const
+{
+    if (auto pd = rootElement.lock()) {
+        pd->requestRecordProcessing(reason);
+    }
+}
+
+const UaDataValue &
+ItemUaSdk::getOutgoingData() const
+{
+    if (auto pd = rootElement.lock()) {
+        return pd->getOutgoingData();
+    } else {
+        throw std::runtime_error(SB() << "stale pointer to root data element");
+    }
+}
+
+void
+ItemUaSdk::clearOutgoingData()
+{
+    if (auto pd = rootElement.lock()) {
+        pd->clearOutgoingData();
+    }
+}
+
+void
+ItemUaSdk::setIncomingData(const UaDataValue &value)
+{
+    if (auto pd = rootElement.lock()) {
+        return pd->setIncomingData(value);
+    } else {
+        throw std::runtime_error(SB() << "stale pointer to root data element");
+    }
 }
 
 } // namespace DevOpcua

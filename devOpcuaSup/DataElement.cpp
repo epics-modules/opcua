@@ -22,18 +22,6 @@ DataElement::DataElement (const std::string &name)
 {}
 
 DataElement::~DataElement ()
-{
-    if (pconnector)
-        pconnector->clearDataElement();
-}
-
-void
-DataElement::setRecordConnector (RecordConnector *connector)
-{
-    if (pconnector)
-        pconnector->clearDataElement();
-    pconnector = connector;
-    connector->setDataElement(this);
-}
+{}
 
 } // namespace DevOpcua

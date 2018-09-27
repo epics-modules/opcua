@@ -53,6 +53,7 @@
 #include <waveformRecord.h>
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
+#include "opcuaItemRecord.h"
 #include "devOpcuaVersion.h"
 #include "devOpcua.h"
 #include "RecordConnector.h"
@@ -67,7 +68,6 @@ using namespace DevOpcua;
 #define TRY \
     if (!prec->dpvt) return 0; \
     RecordConnector *pvt = static_cast<RecordConnector*>(prec->dpvt); \
-    (void)pvt; \
     try
 #define CATCH() catch(std::exception& e) { \
     std::cerr << prec->name << " Error : " << e.what() << std::endl; \
@@ -82,11 +82,16 @@ opcua_add_record (dbCommon *prec)
     try {
         DBEntry ent(prec);
         std::unique_ptr<RecordConnector> pvt (new RecordConnector(prec));
+        ItemUaSdk *pitem;
         pvt->plinkinfo = parseLink(prec, ent);
-        //TODO: Switch to implementation selection
-        std::unique_ptr<ItemUaSdk> item (new ItemUaSdk(*pvt->plinkinfo));
-        item->data().setRecordConnector(pvt.get());
-        pvt->pitem = std::move(item);
+        //TODO: Switch to implementation selection / factory
+        if (pvt->plinkinfo->linkedToItem) {
+            pitem = new ItemUaSdk(*pvt->plinkinfo);
+        } else {
+            pitem = static_cast<ItemUaSdk *>(pvt->plinkinfo->item);
+        }
+        DataElementUaSdk::addElementChain(pitem, pvt.get(), pvt->plinkinfo->element);
+        pvt->pitem = pitem;
         prec->dpvt = pvt.release();
         return 0;
     } catch(std::exception& e) {
@@ -558,6 +563,10 @@ opcua_write_lstring_val (REC *prec)
   {6, nullptr, opcua_init, opcua_init_mask_##DIR<REC##Record>, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
+#define SUPI(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
+  {6, NULL, NULL, NULL, opcua_get_ioint, NULL, NULL}; \
+    extern "C" { epicsExportAddress(dset, NAME); }
+
 SUP (devLiOpcua,             longin,   int32_val, read)
 SUP (devLoOpcua,            longout,   int32_val, write)
 SUP (devBiOpcua,                 bi, uint32_rval, read)
@@ -572,3 +581,4 @@ SUP (devSiOpcua,           stringin,  string_val, read)
 SUP (devSoOpcua,          stringout,  string_val, write)
 SUP (devLsiOpcua,               lsi, lstring_val, read)
 SUP (devLsoOpcua,               lso, lstring_val, write)
+SUPI(devItemOpcua,        opcuaItem,        item, dummy)

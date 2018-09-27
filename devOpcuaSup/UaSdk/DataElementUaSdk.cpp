@@ -63,18 +63,122 @@ variantTypeString (const OpcUa_BuiltInType type)
     }
 }
 
-DataElementUaSdk::DataElementUaSdk (ItemUaSdk *item, const std::string &name)
-    : DataElement(name)
+DataElementUaSdk::DataElementUaSdk (const std::string &name,
+                                    ItemUaSdk *item,
+                                    RecordConnector *pconnector)
+    : DataElement(pconnector, name)
     , pitem(item)
 {}
+
+DataElementUaSdk::DataElementUaSdk (const std::string &name,
+                                    ItemUaSdk *item,
+                                    std::weak_ptr<DataElementUaSdk> child)
+    : DataElement(name)
+    , pitem(item)
+{
+    elements.push_back(child);
+}
+
+void
+DataElementUaSdk::addElementChain (ItemUaSdk *item,
+                                   RecordConnector *pconnector,
+                                   const std::string &path)
+{
+    bool hasRootElement = true;
+    // Create final path element as leaf and link it to connector
+    std::string restpath;
+    size_t sep = path.find_last_of(separator);
+    std::string leafname = path.substr(sep + 1);
+    if (sep != std::string::npos)
+        restpath = path.substr(0, sep);
+
+    auto chainelem = std::make_shared<DataElementUaSdk>(leafname, item, pconnector);
+    pconnector->setDataElement(chainelem);
+
+    // Starting from item...
+    std::weak_ptr<DataElementUaSdk> topelem = item->rootElement;
+
+    if (topelem.expired()) hasRootElement = false;
+
+    // Simple case (leaf is the root element)
+    if (leafname.empty()) {
+        if (hasRootElement) throw std::runtime_error(SB() << "root data element already set");
+        item->rootElement = chainelem;
+        return;
+    }
+
+    std::string name;
+    if (hasRootElement) {
+        // Find the existing part of the path
+        bool found;
+        do {
+            found = false;
+            sep = restpath.find_first_of(separator);
+            if (sep == std::string::npos)
+                name = restpath;
+            else
+                name = restpath.substr(0, sep);
+
+            // Search for name in list of children
+            if (!name.empty()) {
+                if (auto pelem = topelem.lock()) {
+                    for (auto it : pelem->elements) {
+                        if (auto pit = it.lock()) {
+                            if (pit->name == name) {
+                                found = true;
+                                topelem = it;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (found) {
+                if (sep == std::string::npos)
+                    restpath.clear();
+                else
+                    restpath = restpath.substr(sep + 1);
+            }
+        } while (found && !restpath.empty());
+    }
+    // At this point, topelem is the element to add the chain to
+    // (otherwise, a root element has to be added), and
+    // restpath is the remaining chain that has to be created
+
+    // Create remaining chain, bottom up
+    while (restpath.length()) {
+        sep = restpath.find_last_of(separator);
+        name = restpath.substr(sep + 1);
+        if (sep != std::string::npos)
+            restpath = restpath.substr(0, sep);
+        else
+            restpath.clear();
+
+        chainelem->parent = std::make_shared<DataElementUaSdk>(name, item, chainelem);
+        chainelem = chainelem->parent;
+    }
+
+    // Add to topelem, or create rootelem and add it to item
+    if (hasRootElement) {
+        if (auto pelem = topelem.lock()) {
+            pelem->elements.push_back(chainelem);
+            chainelem->parent = pelem;
+        } else {
+            throw std::runtime_error(SB() << "previously found top element invalidated");
+        }
+    } else {
+        chainelem->parent = std::make_shared<DataElementUaSdk>("", item, chainelem);
+        chainelem = chainelem->parent;
+        item->rootElement = chainelem;
+    }
+}
 
 void
 DataElementUaSdk::setIncomingData (const UaDataValue &value)
 {
-    if (pconnector) {
-        if (pconnector->debug() >= 5)
-            std::cout << "Setting incoming data element"
-                      << " for record " << pconnector->getRecordName() << std::endl;
+    if (isLeaf() && debug >= 5) {
+        std::cout << "Setting incoming data element"
+                  << " for record " << pconnector->getRecordName() << std::endl;
         Guard(pconnector->lock);
         incomingData = value;
         incomingType = static_cast<OpcUa_BuiltInType>(value.value()->Datatype);
@@ -98,7 +202,7 @@ DataElementUaSdk::readTimeStamp (bool server) const
     ts.secPastEpoch = static_cast<epicsUInt32>(dt.toTime_t()) - POSIX_TIME_AT_EPICS_EPOCH;
     ts.nsec         = static_cast<epicsUInt32>(dt.msec()) * 1000000 + pico10 / 100;
 
-    if (pconnector->debug()) {
+    if (isLeaf() && debug) {
         char time_buf[40];
         epicsTimeToStrftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f", &ts);
         std::cout << pconnector->getRecordName() << ": reading "
@@ -118,7 +222,7 @@ DataElementUaSdk::readInt32 () const
     if (tempValue.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (pconnector->debug()) {
+    if (isLeaf() && debug) {
         std::cout << pconnector->getRecordName() << ": reading ";
         if (tempValue.type() == OpcUaType_String)
             std::cout << "'" << tempValue.toString().toUtf8() << "'";
@@ -142,7 +246,7 @@ DataElementUaSdk::readUInt32 () const
     if (tempValue.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (pconnector->debug()) {
+    if (isLeaf() && debug) {
         std::cout << pconnector->getRecordName() << ": reading ";
         if (tempValue.type() == OpcUaType_String)
             std::cout << "'" << tempValue.toString().toUtf8() << "'";
@@ -166,7 +270,7 @@ DataElementUaSdk::readFloat64 () const
     if (tempValue.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (pconnector->debug()) {
+    if (isLeaf() && debug) {
         std::cout << pconnector->getRecordName() << ": reading ";
         if (tempValue.type() == OpcUaType_String)
             std::cout << "'" << tempValue.toString().toUtf8() << "'";
@@ -189,7 +293,7 @@ DataElementUaSdk::readCString (char *value, const size_t num) const
     if (tempValue.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (pconnector->debug()) {
+    if (isLeaf() && debug) {
         std::cout << pconnector->getRecordName() << ": reading ";
         if (tempValue.type() == OpcUaType_String)
             std::cout << "'" << tempValue.toString().toUtf8() << "'";
@@ -209,7 +313,8 @@ bool
 DataElementUaSdk::readWasOk () const
 {
     bool status = !!pitem->getReadStatus().isGood();
-    if (pconnector->debug())
+
+    if (isLeaf() && debug)
         std::cout << pconnector->getRecordName()
                   << ": read status is '"
                   << pitem->getReadStatus().toString().toUtf8() << "'"
@@ -221,7 +326,7 @@ bool
 DataElementUaSdk::writeWasOk () const
 {
     bool status = !!pitem->getWriteStatus().isGood();
-    if (pconnector->debug())
+    if (isLeaf() && debug)
         std::cout << pconnector->getRecordName()
                   << ": write status is '"
                   << pitem->getWriteStatus().toString().toUtf8() << "'"
@@ -232,7 +337,8 @@ DataElementUaSdk::writeWasOk () const
 void DataElementUaSdk::clearIncomingData()
 {
     incomingData.clear();
-    pconnector->reason = ProcessReason::none;
+    if (isLeaf())
+        pconnector->reason = ProcessReason::none;
 }
 
 template<typename FROM, typename TO>
@@ -270,15 +376,17 @@ void
 DataElementUaSdk::printOutputDebugMessage (const RecordConnector *pconnector,
                                            const UaVariant &tempValue)
 {
-    std::cout << pconnector->getRecordName()
-              << ": set outgoing data ("
-              << variantTypeString(tempValue.type())
-              << ") to value ";
-    if (tempValue.type() == OpcUaType_String)
-        std::cout << "'" << tempValue.toString().toUtf8() << "'";
-    else
-        std::cout << tempValue.toString().toUtf8();
-    std::cout << std::endl;
+    if (pconnector) {
+        std::cout << pconnector->getRecordName()
+                  << ": set outgoing data ("
+                  << variantTypeString(tempValue.type())
+                  << ") to value ";
+        if (tempValue.type() == OpcUaType_String)
+            std::cout << "'" << tempValue.toString().toUtf8() << "'";
+        else
+            std::cout << tempValue.toString().toUtf8();
+        std::cout << std::endl;
+    }
 }
 
 void
@@ -335,7 +443,7 @@ DataElementUaSdk::writeInt32 (const epicsInt32 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (pconnector->debug())
+    if (isLeaf() && debug)
         printOutputDebugMessage(pconnector, tempValue);
 
     outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
@@ -395,7 +503,7 @@ DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (pconnector->debug())
+    if (isLeaf() && debug)
         printOutputDebugMessage(pconnector, tempValue);
 
     outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
@@ -459,7 +567,7 @@ DataElementUaSdk::writeFloat64 (const epicsFloat64 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (pconnector->debug())
+    if (isLeaf() && debug)
         printOutputDebugMessage(pconnector, tempValue);
 
     outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
@@ -536,7 +644,7 @@ DataElementUaSdk::writeCString(const char *value, const size_t num)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (pconnector->debug())
+    if (isLeaf() && debug)
         printOutputDebugMessage(pconnector, tempValue);
 
     outgoingData.setValue(tempValue, true); // true = detach variant from tempValue
@@ -545,7 +653,7 @@ DataElementUaSdk::writeCString(const char *value, const size_t num)
 void
 DataElementUaSdk::requestRecordProcessing (const ProcessReason reason) const
 {
-    if (pconnector) {
+    if (isLeaf()) {
         pconnector->requestRecordProcessing(reason);
     }
 }

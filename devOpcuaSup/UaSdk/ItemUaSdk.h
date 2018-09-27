@@ -20,6 +20,7 @@
 #include <opcua_builtintypes.h>
 
 #include "Item.h"
+#include "devOpcua.h"
 #include "SessionUaSdk.h"
 
 namespace DevOpcua {
@@ -28,6 +29,7 @@ using namespace UaClientSdk;
 
 class DataElementUaSdk;
 class SubscriptionUaSdk;
+class RecordConnector;
 struct linkInfo;
 
 /**
@@ -37,6 +39,8 @@ struct linkInfo;
  */
 class ItemUaSdk : public Item
 {
+    friend class DataElementUaSdk;
+
 public:
     /**
      * @brief Constructor for an OPC UA item (implementation).
@@ -96,16 +100,46 @@ public:
     const UaStatusCode &getWriteStatus() { return writeStatus; }
 
     /**
-     * @brief Getter to access the top data element of this item
-     * @return top data element
+     * @brief Create processing requests for record(s) attached to this element.
+     * See DevOpcua::DataElement::requestRecordProcessing
      */
-    DataElementUaSdk &data() { return (*dataElement); }
+    void requestRecordProcessing(const ProcessReason reason) const;
+
+    /**
+     * @brief Get the outgoing data value.
+     *
+     * Called from the OPC UA client worker thread when data is being
+     * assembled in OPC UA session for sending.
+     */
+    const UaDataValue &getOutgoingData() const;
+
+    /**
+     * @brief Clear (discard) the current outgoing data.
+     *
+     * Called by the low level connection (OPC UA session)
+     * after it is done accessing the data in the context of sending.
+     *
+     * In case an implementation uses a queue, this should remove the
+     * oldest element from the queue, allowing access to the next element
+     * with the next send.
+     */
+    void clearOutgoingData();
+
+    /**
+     * @brief Push an incoming data value down the root element.
+     *
+     * Called from the OPC UA client worker thread when new data is
+     * received from the OPC UA session.
+     *
+     * @param value  new value for this data element
+     */
+    void setIncomingData(const UaDataValue &value);
 
 private:
-    SubscriptionUaSdk *subscription;   /**< pointer to subscription (if monitored) */
-    SessionUaSdk *session;             /**< pointer to session */
+    SubscriptionUaSdk *subscription;   /**< raw pointer to subscription (if monitored) */
+    SessionUaSdk *session;             /**< raw pointer to session */
     std::unique_ptr<UaNodeId> nodeid;  /**< node id of this item */
-    std::unique_ptr<DataElementUaSdk> dataElement;  /**< top level data element */
+    std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
     UaStatusCode readStatus;           /**< status code of last read service */
     UaStatusCode writeStatus;          /**< status code of last write service */
 };
