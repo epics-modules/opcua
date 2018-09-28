@@ -97,16 +97,36 @@ public:
     virtual void show(int level) const = 0;
 
     /**
-     * @brief Find a session by name.
+     * @brief Set an option for the session.
+     *
+     * @param name   option name
+     * @param value  value
+     */
+    virtual void setOption(const std::string &name, const std::string &value) = 0;
+
+    /**
+     * @brief Factory method to create a session (implementation specific).
+     *
+     * @param name         name of the new session
+     * @param url          url of the server to connect
+     * @param debuglevel   initial debug level
+     * @param autoconnect  connect automatically at IOC init
+     */
+    static void createSession(const std::string &name,
+                              const std::string &url,
+                              const int debuglevel,
+                              const bool autoconnect);
+    /**
+     * @brief Find a session by name (implementation specific).
      *
      * @param name  session name to search for
      *
-     * @return Session & session
+     * @return Session  session
      */
     static Session & findSession(const std::string &name);
 
     /**
-     * @brief Check if a session with the specified name exists.
+     * @brief Check if a session with the specified name exists (implementation specific).
      *
      * @param name  session name to search for
      *
@@ -114,10 +134,16 @@ public:
      */
     static bool sessionExists(const std::string &name);
 
+    /**
+     * @brief Print help text for available options.
+     */
+    static void showOptionHelp();
+
     int debug;  /**< debug verbosity level */
 
 protected:
-    Session (const int debug);
+    Session (const int debug)
+        : debug(debug) {}
 };
 
 } // namespace DevOpcua

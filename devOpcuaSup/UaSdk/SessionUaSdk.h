@@ -160,6 +160,11 @@ public:
      */
     static bool sessionExists(const std::string &name);
 
+    /**
+     * @brief Set an option for the session. See DevOpcua::Session::setOption
+     */
+    void setOption(const std::string &name, const std::string &value) override;
+
     const unsigned int noOfSubscriptions() const { return subscriptions.size(); }
     const unsigned int noOfItems() const { return items.size(); }
 
@@ -208,9 +213,9 @@ public:
                       const UaDiagnosticInfos &diagnosticInfos) override;
 
     void writeComplete(OpcUa_UInt32 transactionId,
-                       const UaStatus&          result,
-                       const UaStatusCodeArray& results,
-                       const UaDiagnosticInfos& diagnosticInfos) override;
+                       const UaStatus &result,
+                       const UaStatusCodeArray &results,
+                       const UaDiagnosticInfos &diagnosticInfos) override;
 
 private:
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */

@@ -18,6 +18,7 @@ SRC_DIRS += $(OPCUA)/UaSdk
 USR_INCLUDES += -I$(OPCUA)/UaSdk
 USR_DBDFLAGS += -I $(OPCUA)/UaSdk
 
+opcua_SRCS += Session.cpp
 opcua_SRCS += SessionUaSdk.cpp
 opcua_SRCS += SubscriptionUaSdk.cpp
 opcua_SRCS += ItemUaSdk.cpp

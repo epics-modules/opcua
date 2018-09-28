@@ -11,12 +11,18 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+// Avoid problems on Windows (macros min, max clash with numeric_limits<>)
+#ifdef _WIN32
+#  define NOMINMAX
+#endif
+
 #include <iostream>
 #include <string>
 #include <map>
 #include <algorithm>
 #include <utility>
 #include <vector>
+#include <limits>
 
 #include <uaclientsdk.h>
 #include <uasession.h>
@@ -139,18 +145,19 @@ SessionUaSdk::sessionExists (const std::string &name)
     return !(it == sessions.end());
 }
 
-//TODO: move Session::findSession() and Session::sessionExists()
-// back to Session.cpp after adding implementation management there
-Session &
-Session::findSession (const std::string &name)
+void
+SessionUaSdk::setOption (const std::string &name, const std::string &value)
 {
-    return static_cast<Session &>(SessionUaSdk::findSession(name));
-}
-
-bool
-Session::sessionExists (const std::string &name)
-{
-    return SessionUaSdk::sessionExists(name);
+    if (name == "clientcert") {
+        errlogPrintf("security not implemented\n");
+    } else if (name == "clientkey") {
+        errlogPrintf("security not implemented\n");
+    } else if (name == "batch-nodes") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        connectInfo.nMaxOperationsPerServiceCall = ul;
+    } else {
+        errlogPrintf("unknown option '%s' ignored\n", name.c_str());
+    }
 }
 
 long
