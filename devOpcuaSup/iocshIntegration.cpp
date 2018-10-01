@@ -111,7 +111,7 @@ void opcuaCreateSessionCallFunc (const iocshArgBuf *args)
         if (ok) {
             Session::createSession(args[0].sval, args[1].sval, debuglevel, autoconnect);
             if (debuglevel)
-                errlogPrintf("opcuaCreateSession: created session '%s'\n", args[0].sval);
+                errlogPrintf("opcuaCreateSession: successfully created session '%s'\n", args[0].sval);
         } else {
             errlogPrintf("ERROR - no session created\n");
         }

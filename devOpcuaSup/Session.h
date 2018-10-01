@@ -94,7 +94,19 @@ public:
      *
      * @param level  verbosity level
      */
-    virtual void show(int level) const = 0;
+    virtual void show(const int level) const = 0;
+
+    /**
+     * @brief Print configuration and status of all sessions on stdout.
+     *
+     * The verbosity level controls the amount of information:
+     * 0 = one summary
+     * 1 = one line per session
+     * 2 = one session line, then one line per subscription
+     *
+     * @param level  verbosity level
+     */
+    static void showAll(const int level);
 
     /**
      * @brief Set an option for the session.
@@ -116,6 +128,7 @@ public:
                               const std::string &url,
                               const int debuglevel,
                               const bool autoconnect);
+
     /**
      * @brief Find a session by name (implementation specific).
      *

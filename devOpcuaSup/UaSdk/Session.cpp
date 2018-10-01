@@ -51,6 +51,12 @@ Session::sessionExists (const std::string &name)
 }
 
 void
+Session::showAll (const int level)
+{
+    SessionUaSdk::showAll(level);
+}
+
+void
 Session::showOptionHelp ()
 {
     std::cout << "Options:\n"
