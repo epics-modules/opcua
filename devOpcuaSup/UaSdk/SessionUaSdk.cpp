@@ -365,7 +365,7 @@ SessionUaSdk::addAllMonitoredItems ()
 }
 
 void
-SessionUaSdk::show (int level) const
+SessionUaSdk::show (const int level) const
 {
     std::cout << "session="      << name
               << " url="         << serverURL.toUtf8()
@@ -535,7 +535,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
 }
 
 void
-SessionUaSdk::showAll (int level)
+SessionUaSdk::showAll (const int level)
 {
     unsigned int connected = 0;
     unsigned int subscriptions = 0;

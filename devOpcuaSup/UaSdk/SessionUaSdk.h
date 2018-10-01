@@ -93,7 +93,7 @@ public:
      * @brief Print configuration and status. See DevOpcua::Session::show
      * @param level
      */
-    void show(int level) const override;
+    void show(const int level) const override;
 
     /**
      * @brief Get session name. See DevOpcua::Session::getName
@@ -140,7 +140,7 @@ public:
      *
      * @param level  verbosity level
      */
-    static void showAll(int level);
+    static void showAll(const int level);
 
     /**
      * @brief Find a session by name.
