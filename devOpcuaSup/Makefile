@@ -31,7 +31,6 @@ DBD_INSTALLS += devOpcua.dbd
 # Generic sources and interfaces
 opcua_SRCS += devOpcua.cpp
 opcua_SRCS += iocshIntegration.cpp
-opcua_SRCS += Subscription.cpp
 opcua_SRCS += Item.cpp
 opcua_SRCS += DataElement.cpp
 opcua_SRCS += RecordConnector.cpp

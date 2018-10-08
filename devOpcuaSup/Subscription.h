@@ -16,6 +16,8 @@
 #include <iostream>
 #include <map>
 
+#include <epicsTypes.h>
+
 namespace DevOpcua {
 
 class Session;
@@ -32,6 +34,20 @@ public:
     virtual ~Subscription();
 
     /**
+     * @brief Factory method to create a subscription (implementation specific).
+     *
+     * @param name  subscription name
+     * @param session  session that the subscription should be linked to
+     * @param publishingInterval  initial publishing interval
+     * @param priority  priority (default 0=lowest)
+     * @param debug  initial debug verbosity (default 0=no debug)
+     */
+    static void createSubscription(const std::string &name,
+                                   const std::string &session,
+                                   const double publishingInterval,
+                                   const epicsUInt8 priority = 0,
+                                   const int debug = 0);
+    /**
      * @brief Print configuration and status on stdout.
      *
      * The verbosity level controls the amount of information:
@@ -40,6 +56,18 @@ public:
      * @param level  verbosity level
      */
     virtual void show(int level) const = 0;
+
+    /**
+     * @brief Print configuration and status of all subscriptions on stdout.
+     *
+     * The verbosity level controls the amount of information:
+     * 0 = one summary line
+     * 1 = one line per subscription
+     * 2 = one subscription line, then one line per monitored item
+     *
+     * @param level  verbosity level
+     */
+    static void showAll(int level);
 
     /**
      * @brief Get the session that this subscription is running on.
@@ -75,7 +103,9 @@ protected:
      *
      * @param debug  initial debug level
      */
-    Subscription(const int debug) : debug(debug) {}
+    Subscription(const std::string &name, const int debug)
+        : name(name)
+        , debug(debug) {}
 };
 
 } // namespace DevOpcua

@@ -35,9 +35,8 @@ std::map<std::string, SubscriptionUaSdk*> SubscriptionUaSdk::subscriptions;
 SubscriptionUaSdk::SubscriptionUaSdk (const std::string &name, SessionUaSdk *session,
                                       const double publishingInterval, const epicsUInt8 priority,
                                       const int debug)
-    : Subscription(debug)
-    , name(name)
-    , puasubscription(NULL)
+    : Subscription(name, debug)
+    , puasubscription(nullptr)
     , psessionuasdk(session)
     //TODO: add runtime support for subscription enable/disable
     , enable(true)
@@ -97,20 +96,6 @@ SubscriptionUaSdk::subscriptionExists (const std::string &name)
 {
     auto it = subscriptions.find(name);
     return !(it == subscriptions.end());
-}
-
-//TODO: move Subscription::findSubscription() and Subscription::subscriptionExists()
-// back to Subscription.cpp after adding implementation management there
-Subscription &
-Subscription::findSubscription (const std::string &name)
-{
-    return static_cast<Subscription &>(SubscriptionUaSdk::findSubscription(name));
-}
-
-bool
-Subscription::subscriptionExists (const std::string &name)
-{
-    return SubscriptionUaSdk::subscriptionExists(name);
 }
 
 void

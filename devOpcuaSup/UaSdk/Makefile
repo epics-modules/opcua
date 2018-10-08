@@ -20,6 +20,7 @@ USR_DBDFLAGS += -I $(OPCUA)/UaSdk
 
 opcua_SRCS += Session.cpp
 opcua_SRCS += SessionUaSdk.cpp
+opcua_SRCS += Subscription.cpp
 opcua_SRCS += SubscriptionUaSdk.cpp
 opcua_SRCS += ItemUaSdk.cpp
 opcua_SRCS += DataElementUaSdk.cpp
