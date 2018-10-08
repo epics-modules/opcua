@@ -55,7 +55,7 @@ public:
     /**
      * @brief Print configuration and status. See DevOpcua::Subscription::show
      */
-    void show(int level) const override;
+    virtual void show(int level) const override;
 
     /**
      * @brief Print configuration and status of all subscriptions on stdout.
@@ -92,7 +92,7 @@ public:
      *
      * @return Session
      */
-    Session &getSession() const override;
+    virtual Session &getSession() const override;
 
     /**
      * @brief Get the session (implementation) that this subscription
@@ -149,16 +149,16 @@ public:
     void clear();
 
     // UaSubscriptionCallback interface
-    void subscriptionStatusChanged(
+    virtual void subscriptionStatusChanged(
             OpcUa_UInt32      clientSubscriptionHandle,
             const UaStatus&   status
             ) override;
-    void dataChange(
+    virtual void dataChange(
             OpcUa_UInt32               clientSubscriptionHandle,
             const UaDataNotifications& dataNotifications,
             const UaDiagnosticInfos&   diagnosticInfos
             ) override;
-    void newEvents(
+    virtual void newEvents(
             OpcUa_UInt32                clientSubscriptionHandle,
             UaEventFieldLists&          eventFieldList
             ) override;

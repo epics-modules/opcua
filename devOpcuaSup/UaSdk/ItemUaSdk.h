@@ -48,22 +48,22 @@ public:
     /**
      * @brief Request beginRead service. See DevOpcua::Item::requestRead
      */
-    void requestRead() override { session->requestRead(*this); }
+    virtual void requestRead() override { session->requestRead(*this); }
 
     /**
      * @brief Request beginWrite service. See DevOpcua::Item::requestWrite
      */
-    void requestWrite() override { session->requestWrite(*this); }
+    virtual void requestWrite() override { session->requestWrite(*this); }
 
     /**
      * @brief Print configuration and status. See DevOpcua::Item::show
      */
-    void show(int level) const override;
+    virtual void show(int level) const override;
 
     /**
      * @brief Return monitored status. See DevOpcua::Item::isMonitored
      */
-    bool isMonitored() const override { return !!subscription; }
+    virtual bool isMonitored() const override { return !!subscription; }
 
     /**
      * @brief Getter that returns the node id of this item.

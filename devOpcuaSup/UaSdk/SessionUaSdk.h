@@ -75,31 +75,31 @@ public:
      * @brief Connect session. See DevOpcua::Session::connect
      * @return long status (0 = OK)
      */
-    long connect() override;
+    virtual long connect() override;
 
     /**
      * @brief Disconnect session. See DevOpcua::Session::disconnect
      * @return long status (0 = OK)
      */
-    long disconnect() override;
+    virtual long disconnect() override;
 
     /**
      * @brief Return connection status. See DevOpcua::Session::isConnected
      * @return
      */
-    bool isConnected() const override;
+    virtual bool isConnected() const override;
 
     /**
      * @brief Print configuration and status. See DevOpcua::Session::show
      * @param level
      */
-    void show(const int level) const override;
+    virtual void show(const int level) const override;
 
     /**
      * @brief Get session name. See DevOpcua::Session::getName
      * @return session name
      */
-    const std::string & getName() const override;
+    virtual const std::string & getName() const override;
 
     /**
      * @brief Request a beginRead service for an item
@@ -163,7 +163,7 @@ public:
     /**
      * @brief Set an option for the session. See DevOpcua::Session::setOption
      */
-    void setOption(const std::string &name, const std::string &value) override;
+    virtual void setOption(const std::string &name, const std::string &value) override;
 
     const unsigned int noOfSubscriptions() const { return subscriptions.size(); }
     const unsigned int noOfItems() const { return items.size(); }
@@ -173,14 +173,14 @@ public:
      *
      * @param item  item to add
      */
-    virtual void addItemUaSdk(ItemUaSdk *item);
+    void addItemUaSdk(ItemUaSdk *item);
 
     /**
      * @brief Remove an item from the session.
      *
      * @param item  item to remove
      */
-    virtual void removeItemUaSdk(ItemUaSdk *item);
+    void removeItemUaSdk(ItemUaSdk *item);
 
     /**
      * @brief EPICS IOC Database initHook function.
@@ -204,18 +204,21 @@ public:
     const OpcUa_UInt32 getTransactionId();
 
     // UaSessionCallback interface
-    void connectionStatusChanged(OpcUa_UInt32 clientConnectionId,
-                                 UaClient::ServerStatus serverStatus) override;
+    virtual void connectionStatusChanged(
+            OpcUa_UInt32 clientConnectionId,
+            UaClient::ServerStatus serverStatus) override;
 
-    void readComplete(OpcUa_UInt32 transactionId,
-                      const UaStatus &result,
-                      const UaDataValues &values,
-                      const UaDiagnosticInfos &diagnosticInfos) override;
+    virtual void readComplete(
+            OpcUa_UInt32 transactionId,
+            const UaStatus &result,
+            const UaDataValues &values,
+            const UaDiagnosticInfos &diagnosticInfos) override;
 
-    void writeComplete(OpcUa_UInt32 transactionId,
-                       const UaStatus &result,
-                       const UaStatusCodeArray &results,
-                       const UaDiagnosticInfos &diagnosticInfos) override;
+    virtual void writeComplete(
+            OpcUa_UInt32 transactionId,
+            const UaStatus &result,
+            const UaStatusCodeArray &results,
+            const UaDiagnosticInfos &diagnosticInfos) override;
 
 private:
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
