@@ -116,9 +116,12 @@ parseLink(dbCommon *prec, DBEntry &ent)
     if (debug > 4)
         std::cerr << prec->name << " parsing inp/out link '" << linkstr << "'" << std::endl;
 
+    size_t sep, seq, send;
+
     // first token: session or subscription name
-    size_t sep = linkstr.find_first_of("@ \t");
-    std::string name = linkstr.substr(0, sep);
+    sep = linkstr.find_first_of("@");
+    send = linkstr.find_first_of("; \t", sep);
+    std::string name = linkstr.substr(sep+1, send-sep-1);
 
     if (Subscription::subscriptionExists(name)) {
         pinfo->subscription = name;
@@ -128,12 +131,12 @@ parseLink(dbCommon *prec, DBEntry &ent)
         throw std::runtime_error(SB() << "unknown session or subscription '" << name << "'");
     }
 
-    sep = linkstr.find_first_not_of("@ \t", sep);
+    sep = linkstr.find_first_not_of("@ \t", send);
 
     // everything else is "key=value ..." options
     while (sep < linkstr.size()) {
-        size_t send = linkstr.find_first_of("; \t", sep),
-               seq  = linkstr.find_first_of('=', sep);
+        send = linkstr.find_first_of("; \t", sep);
+        seq = linkstr.find_first_of('=', sep);
 
         if (seq >= send)
             throw std::runtime_error(SB() << "expected '=' in '" << linkstr.substr(0, send) << "'");
