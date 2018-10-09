@@ -50,7 +50,7 @@ typedef struct linkInfo {
     bool useServerTimestamp = true;
 
     bool isOutput;
-    bool doOutputReadback = true;
+    bool monitor = true;
 } linkInfo;
 
 /**

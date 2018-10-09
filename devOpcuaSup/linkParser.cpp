@@ -94,12 +94,12 @@ parseLink(dbCommon *prec, DBEntry &ent)
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:READBACK'='" << s << "'" << std::endl;
     if (s[0] == '\0')
-        pinfo->doOutputReadback = !!opcua_DefaultOutputReadback;
+        pinfo->monitor = !!opcua_DefaultOutputReadback;
     else
         if (strchr("YyTt1", s[0]))
-            pinfo->doOutputReadback = true;
+            pinfo->monitor = true;
         else if (strchr("NnFf0", s[0]))
-            pinfo->doOutputReadback = false;
+            pinfo->monitor = false;
         else
             throw std::runtime_error(SB() << "illegal value '" << s << "'");
 
@@ -178,13 +178,13 @@ parseLink(dbCommon *prec, DBEntry &ent)
                 pinfo->useServerTimestamp = false;
             else
                 throw std::runtime_error(SB() << "illegal value '" << optval << "'");
-        } else if (optname == "readback") {
+        } else if (optname == "monitor" || optname == "readback") {
             if (optval.length() > 0) {
                 char c = optval[0];
                 if (strchr("YyTt1", c))
-                    pinfo->doOutputReadback = true;
+                    pinfo->monitor = true;
                 else if (strchr("NnFf0", c))
-                    pinfo->doOutputReadback = false;
+                    pinfo->monitor = false;
                 else
                     throw std::runtime_error(SB() << "illegal value '" << optval << "'");
             } else {
@@ -213,14 +213,14 @@ parseLink(dbCommon *prec, DBEntry &ent)
         std::cerr << " sampling=" << pinfo->samplingInterval
                   << " qsize=" << pinfo->queueSize
                   << " discard=" << (pinfo->discardOldest ? "old" : "new")
-                  << " timestamp=" << (pinfo->useServerTimestamp ? "server" : "source");
-        if (pinfo->isOutput)
-            std::cerr << " output=y readback=" << (pinfo->doOutputReadback ? "y" : "n");
-        std::cerr << std::endl;
+                  << " timestamp=" << (pinfo->useServerTimestamp ? "server" : "source")
+                  << " output=" << (pinfo->isOutput ? "y" : "n")
+                  << " monitor=" << (pinfo->monitor ? "y" : "n")
+                  << std::endl;
     }
 
     // consistency checks
-    if (pinfo->isOutput && pinfo->doOutputReadback && !pinfo->subscription.length())
+    if (pinfo->isOutput && pinfo->monitor && !pinfo->subscription.length())
         throw std::runtime_error(SB() << "readback of output requires a valid subscription");
 
     return pinfo;

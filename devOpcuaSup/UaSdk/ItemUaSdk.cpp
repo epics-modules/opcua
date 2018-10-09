@@ -64,14 +64,14 @@ ItemUaSdk::show (int level) const
     else
         std::cout << ";s=" << linkinfo.identifierString;
     std::cout << " context=" << linkinfo.subscription
-              << "@" << session->getName();
-    std::cout << " sampling=" << linkinfo.samplingInterval
+              << "@" << session->getName()
+              << " sampling=" << linkinfo.samplingInterval
               << " qsize=" << linkinfo.queueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
-              << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source");
-    if (linkinfo.isOutput)
-        std::cout << " output=y readback=" << (linkinfo.doOutputReadback ? "y" : "n");
-    std::cout << std::endl;
+              << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
+              << " output=" << (linkinfo.isOutput ? "y" : "n")
+              << " monitor=" << (linkinfo.monitor ? "y" : "n")
+              << std::endl;
 }
 
 } // namespace DevOpcua
