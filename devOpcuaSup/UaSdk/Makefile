@@ -29,28 +29,4 @@ opcua_SRCS += iocshIntegrationUaSdk.cpp
 DBD_INSTALLS += opcuaUaSdk.dbd
 DBD_INSTALLS += opcua.dbd
 
-UASDK_LIBS = uabase uaclient uapki uastack xmlparser
-USR_INCLUDES += $(foreach module, $(UASDK_LIBS), -I$(UASDK)/include/$(module))
-
-ifeq ($(UASDK_DEPLOY_MODE),SYSTEM)
-USR_SYS_LIBS += $(UASDK_LIBS)
-endif
-
-ifeq ($(UASDK_DEPLOY_MODE),PROVIDED)
-define UA_template
-  USR_LIBS += $(1)
-  $(1)_DIR = $(UASDK_DIR)
-endef
-$(foreach lib, $(UASDK_LIBS), $(eval $(call UA_template,$(lib))))
-endif
-
-ifeq ($(UASDK_DEPLOY_MODE),INSTALL)
-EXTLIB_INSTALLS += $(addprefix $(INSTALL_LIB)/, \
-    $(notdir $(wildcard $(foreach lib, $(UASDK_LIBS), \
-    $(UASDK_DIR)/$(LIB_PREFIX)$(lib)$(LIB_SUFFIX) ))))
-    ifeq ($(SHARED_LIBRARIES),YES)
-EXTLIB_INSTALLS += $(addprefix $(INSTALL_LIB)/, \
-    $(notdir $(wildcard $(foreach lib, $(UASDK_LIBS), \
-    $(UASDK_DIR)/$(SHRLIB_PREFIX)$(lib)$(SHRLIB_SUFFIX) ))))
-    endif
-endif
+CFG += RULES_OPCUA

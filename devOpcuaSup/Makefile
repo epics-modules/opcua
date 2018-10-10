@@ -7,6 +7,7 @@
 # Author: Ralph Lange <ralph.lange@gmx.de>
 #
 # based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
+# and code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
 
 TOP=..
 
@@ -41,7 +42,7 @@ opcua_LIBS += $(EPICS_BASE_IOC_LIBS)
 #==================================================
 # Implementations for different client libraries
 # are in separate directories, added by reading
-# Makefile snippets
+# Makefile fragments
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
@@ -53,5 +54,8 @@ include $(TOP)/configure/RULES
 #  ADD RULES AFTER THIS LINE
 
 ifdef UASDK
-include $(OPCUA)/UaSdk/RULES
+ifndef UASDK_MODULES
+include $(OPCUA)/UaSdk/RULES_OPCUA
 endif
+endif
+
