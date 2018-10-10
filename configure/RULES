@@ -2,5 +2,9 @@
 
 include $(CONFIG)/RULES
 
+# Needed for Base <=3.15.5
+vpath CONFIG% $(USR_VPATH) $(SRC_DIRS)
+vpath RULES% $(USR_VPATH) $(SRC_DIRS)
+
 # Library should be rebuilt because LIBOBJS may have changed.
 $(LIBNAME): ../Makefile
