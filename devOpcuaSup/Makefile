@@ -39,6 +39,9 @@ opcua_SRCS += linkParser.cpp
 
 opcua_LIBS += $(EPICS_BASE_IOC_LIBS)
 
+INC += devOpcuaVersion.h
+INC += devOpcuaVersionNum.h
+
 #==================================================
 # Implementations for different client libraries
 # are in separate directories, added by reading
@@ -48,6 +51,17 @@ opcua_LIBS += $(EPICS_BASE_IOC_LIBS)
 ifdef UASDK
 include $(OPCUA)/UaSdk/Makefile
 endif
+
+# Module versioning
+EXPANDVARS += EPICS_OPCUA_MAJOR_VERSION
+EXPANDVARS += EPICS_OPCUA_MINOR_VERSION
+EXPANDVARS += EPICS_OPCUA_MAINTENANCE_VERSION
+EXPANDVARS += EPICS_OPCUA_DEVELOPMENT_FLAG
+
+EXPANDFLAGS += $(foreach var,$(EXPANDVARS),-D$(var)="$(strip $($(var)))")
+
+# Shared library ABI version
+SHRLIB_VERSION = $(EPICS_OPCUA_MAJOR_VERSION).$(EPICS_OPCUA_MINOR_VERSION)
 
 include $(TOP)/configure/RULES
 #----------------------------------------
@@ -59,3 +73,7 @@ include $(OPCUA)/UaSdk/RULES_OPCUA
 endif
 endif
 
+# Can't use EXPAND as generated headers must appear
+# in O.Common, but EXPAND emits rules for O.$(T_A)
+../O.Common/devOpcuaVersionNum.h: ../devOpcuaVersionNum.h@
+	$(EXPAND_TOOL) $(EXPANDFLAGS) $($@_EXPANDFLAGS) $< $@

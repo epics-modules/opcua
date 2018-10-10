@@ -15,6 +15,7 @@ endif
 
 CONFIG = $(RULES)/configure
 include $(CONFIG)/CONFIG
+include $(TOP)/configure/CONFIG_OPCUA_VERSION
 
 # Override the Base definition:
 INSTALL_LOCATION = $(TOP)

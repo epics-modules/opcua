@@ -53,6 +53,7 @@
 #include <waveformRecord.h>
 #include <epicsExport.h>  // must be after dbAccess.h (lp:1784616)
 
+#include "devOpcuaVersion.h"
 #include "devOpcua.h"
 #include "RecordConnector.h"
 #include "linkParser.h"
