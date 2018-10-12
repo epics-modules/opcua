@@ -280,7 +280,7 @@ opcua_read_analog (REC *prec)
                 // Do ASLO/AOFF conversion and smoothing
                 if (prec->aslo != 0.0) value *= prec->aslo;
                 value += prec->aoff;
-                if (prec->smoo == 0.0 || prec->udf || !isfinite(prec->val))
+                if (prec->smoo == 0.0 || prec->udf || !std::isfinite(prec->val))
                     prec->val = value;
                 else
                     prec->val = prec->val * prec->smoo + value * (1.0 - prec->smoo);
