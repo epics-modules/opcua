@@ -15,3 +15,4 @@
   - Platform (OS):
   - EPICS Base:
   - Client library:
+  - Server:
