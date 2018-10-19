@@ -166,7 +166,6 @@ public:
 private:
     static std::map<std::string, SubscriptionUaSdk*> subscriptions;
 
-    const std::string name;                     /**< unique subscription name */
     UaSubscription *puasubscription;            /**< pointer to low level subscription */
     SessionUaSdk *psessionuasdk;                /**< pointer to session */
     std::vector<ItemUaSdk *> items;             /**< items on this subscription */
