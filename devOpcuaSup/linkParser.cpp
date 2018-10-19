@@ -110,18 +110,17 @@ parseLink(dbCommon *prec, DBEntry &ent)
         pinfo->element = s;
 
     // parse INP/OUT link
-    if (!link->text)
+    if (!link->value.instio.string)
         throw std::runtime_error(SB() << "INP/OUT not set");
-    std::string linkstr(link->text);
+    std::string linkstr(link->value.instio.string);
     if (debug > 4)
         std::cerr << prec->name << " parsing inp/out link '" << linkstr << "'" << std::endl;
 
     size_t sep, seq, send;
 
     // first token: session or subscription name
-    sep = linkstr.find_first_of("@");
     send = linkstr.find_first_of("; \t", sep);
-    std::string name = linkstr.substr(sep+1, send-sep-1);
+    std::string name = linkstr.substr(0, send);
 
     if (Subscription::subscriptionExists(name)) {
         pinfo->subscription = name;
