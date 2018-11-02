@@ -119,7 +119,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
     size_t sep, seq, send;
 
     // first token: session or subscription name
-    send = linkstr.find_first_of("; \t", sep);
+    send = linkstr.find_first_of("; \t", 0);
     std::string name = linkstr.substr(0, send);
 
     if (Subscription::subscriptionExists(name)) {
