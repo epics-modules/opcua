@@ -1,0 +1,110 @@
+# Database connecting to a manually created global data block
+# DB1 with some example items
+# The namespace for the SIEMENS Simatic S7 OPCUA is ns=3
+
+# Set of longin/longout, working on an Integer type data item
+# Both set up monitors, i.e. the output is bidirectional
+
+record(longin, "$(P)$(R)li1") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myInt\"")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)lo1") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myInt\"")
+}
+
+# This longin/longout pair is working on data of type Word
+# The input uses server timestamps, the output is unidirectional
+record(longin, "$(P)$(R)li2") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myWord\"")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+record(longout, "$(P)$(R)lo2") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SESS) ns=3;s=\"Data_block_1\".\"myWord\" monitor=n")
+}
+
+# An enum pair working on the same Word type data item
+record(mbbi, "$(P)$(R)mbbi1") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myWord\"")
+    field(SCAN, "I/O Intr")
+    field(ZRST, "zero")
+    field(ZRVL, "1")
+    field(ONST, "one")
+    field(ONVL, "2")
+    field(TWST, "two")
+    field(TWVL, "4")
+    field(THST, "three")
+    field(THVL, "8")
+}
+record(mbbo, "$(P)$(R)mbbo1") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myWord\"")
+    field(ZRST, "zero")
+    field(ZRVL, "1")
+    field(ONST, "one")
+    field(ONVL, "2")
+    field(TWST, "two")
+    field(TWVL, "4")
+    field(THST, "three")
+    field(THVL, "8")
+}
+
+# A pair of ai/ao working on a double data item
+# The other input uses SLOPE conversion
+record(ai, "$(P)$(R)ai1") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myDouble\"")
+    field(SCAN, "I/O Intr")
+}
+record(ao, "$(P)$(R)ao1") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myDouble\"")
+}
+record(ai, "$(P)$(R)ai2") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myDouble\"")
+    field(SCAN, "I/O Intr")
+    field(LINR, "SLOPE")
+    field(ESLO, "5e6")
+    field(EOFF, "1e3")
+}
+
+# A pair of bi/bo working on a Boolean data item
+record(bi, "$(P)$(R)bi1") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myBool\"")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)bo1") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myBool\"")
+}
+
+# A pair of stringin/stringout and their "long string" versions
+# all working on a String data item
+record(stringin, "$(P)$(R)si1") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myString\"")
+    field(SCAN, "I/O Intr")
+}
+record(stringout, "$(P)$(R)so1") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myString\"")
+}
+record(lsi, "$(P)$(R)lsi1") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myString\"")
+    field(SCAN, "I/O Intr")
+    field(SIZV, "255")
+}
+record(lso, "$(P)$(R)lso1") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=3;s=\"Data_block_1\".\"myString\"")
+    field(SIZV, "255")
+}
