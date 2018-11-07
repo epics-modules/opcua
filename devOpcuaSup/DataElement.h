@@ -44,7 +44,7 @@ class RecordConnector;
 class DataElement
 {
 public:
-    virtual ~DataElement();
+    virtual ~DataElement() {}
 
     /**
      * @brief Get the type of element (inside a structure).
