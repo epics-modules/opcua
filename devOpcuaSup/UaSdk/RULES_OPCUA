@@ -17,6 +17,9 @@ UASDK_MODULES = uaclient uapki uabase uastack
 ifeq ($(UASDK_USE_XMLPARSER),YES)
 UASDK_MODULES += xmlparser
 endif
+ifeq ($(UASDK_USE_CRYPTO),YES)
+USR_SYS_LIBS += crypto
+endif
 
 # Depending on SDK version, C++ modules may have a 'cpp' suffix
 UASDK_LIBS = $(notdir $(wildcard $(foreach module, $(UASDK_MODULES), \
