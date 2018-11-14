@@ -130,12 +130,18 @@ parseLink(dbCommon *prec, DBEntry &ent)
         throw std::runtime_error(SB() << "unknown session or subscription '" << name << "'");
     }
 
-    sep = linkstr.find_first_not_of("@ \t", send);
+    sep = linkstr.find_first_not_of("; \t", send);
 
     // everything else is "key=value ..." options
     while (sep < linkstr.size()) {
         send = linkstr.find_first_of("; \t", sep);
         seq = linkstr.find_first_of('=', sep);
+
+        // allow escaping separators
+        while (linkstr[send-1] == '\\') {
+                linkstr.erase(send-1, 1);
+                send = linkstr.find_first_of("; \t", send);
+        }
 
         if (seq >= send)
             throw std::runtime_error(SB() << "expected '=' in '" << linkstr.substr(0, send) << "'");
