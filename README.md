@@ -35,6 +35,9 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
   Use the `CONFIG_SITE.local` file in the module where the binary is created
   to set this option.
 
+* Since UASDK v1.6.3 has BUILD_SHARED_LIBS=OFF as default,
+  one should use ON via ```./buildSdk.sh -s ON```.
+
 ## Building the module
 
 This is a standard EPICS module.
