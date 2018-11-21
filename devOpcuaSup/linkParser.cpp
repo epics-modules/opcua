@@ -120,7 +120,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
 
     size_t sep, seq, send;
 
-    // first token: session or subscription name
+    // first token: session or subscription or itemRecord name
     send = linkstr.find_first_of("; \t", 0);
     std::string name = linkstr.substr(0, send);
 
@@ -129,34 +129,28 @@ parseLink(dbCommon *prec, DBEntry &ent)
     } else if (Session::sessionExists(name)) {
         pinfo->session = name;
     } else if (name != "") {
-            throw std::runtime_error(SB() << "unknown session or subscription '" << name << "'");
+        DBENTRY entry;
+        dbInitEntry(pdbbase, &entry);
+        if (dbFindRecord(&entry, name.c_str())) {
+            dbFinishEntry(&entry);
+            throw std::runtime_error(SB() << "no such record '" << name << "'");
+        }
+        if (dbFindField(&entry, "RTYP")
+                || strcmp(dbGetString(&entry), "opcuaItem")) {
+            dbFinishEntry(&entry);
+            throw std::runtime_error(SB() << "record '"
+                                     << name << "' is not of type opcuaItem");
+        }
+        pinfo->linkedToItem = false;
+        RecordConnector *pconnector = static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+        pinfo->item = pconnector->pitem;
+        sep = linkstr.find_first_not_of("; \t", send);
+        dbFinishEntry(&entry);
+    } else {
+        throw std::runtime_error(SB() << "unknown session or subscription '" << name << "'");
     }
 
     sep = linkstr.find_first_not_of("; \t", send);
-
-    if (name == "") {
-        if (sep < linkstr.size()) {
-            DBENTRY entry;
-            dbInitEntry(pdbbase, &entry);
-            size_t send = linkstr.find_first_of(" \t", sep);
-            std::string itemRecord = linkstr.substr(sep, send-1);
-            if (dbFindRecord(&entry, itemRecord.c_str())) {
-                dbFinishEntry(&entry);
-                throw std::runtime_error(SB() << "no such record '" << itemRecord << "'");
-            }
-            if (dbFindField(&entry, "RTYP")
-                    || strcmp(dbGetString(&entry), "opcuaItem")) {
-                dbFinishEntry(&entry);
-                throw std::runtime_error(SB() << "record '"
-                                         << itemRecord << "' is not of type opcuaItem");
-            }
-            pinfo->linkedToItem = false;
-            RecordConnector *pconnector = static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
-            pinfo->item = pconnector->pitem;
-            sep = linkstr.find_first_not_of("; \t", send);
-            dbFinishEntry(&entry);
-        }
-    }
 
     // everything else is "key=value ..." options
     while (sep < linkstr.size()) {
