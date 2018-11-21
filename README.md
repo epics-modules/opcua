@@ -30,13 +30,10 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
 * For OPC UA security support (authentication/encryption), you need
   libcrypto on your system - both when compiling the SDK and when generating
   any binaries (IOCs).
-  The name of the package you have to install depends on the Linux distribution:
-  openssl-devel on RedHat/CentOS/Fedora, libssl-dev on Debian/Ubuntu.
-  Use the `CONFIG_SITE.local` file in the module where the binary is created
-  to set this option.
 
-* The OPC UA Client SDK has `BUILD_SHARED_LIBS=OFF` as default.
-  To create shared SDK libraries, build the using ```./buildSdk.sh -s ON```.
+* For more details, refer to the `README.md` in the
+  [`devOpcuaSup/UaSdk`](https://github.com/ralphlange/opcua/tree/master/devOpcuaSup/UaSdk)
+  directory.
 
 ## Building the module
 
@@ -46,30 +43,9 @@ Inside the `configure` subdirectory or one level above the TOP location
 (TOP is where this README file resides), create a file `RELEASE.local`
 that sets `EPICS_BASE` to the absolute path of your EPICS installation.
 
-### Using the Unified Automation Client SDK
-
-Inside the `configure` subdirectory or one level above the TOP location,
-create a file `CONFIG_SITE.local` that sets the absolute path of your SDK
-installation as well as the SDK build and deploy features if necessary.
-```
-# Path to the Unified Automation OPC UA C++ SDK
-UASDK = /usr/local/opcua/uasdkcppclient-v1.5.3-346/sdk
-
-# How the Unified Automation SDK shared libraries are deployed
-#   SYSTEM = shared libs are in a system location
-#   PROVIDED = shared libs are in $(UASDK_DIR)
-#   INSTALL = shared libs are installed (copied) into this module
-UASDK_DEPLOY_MODE = PROVIDED
-UASDK_DIR = $(UASDK)/lib
-# How the Unified Automation SDK libraries were built
-UASDK_USE_CRYPTO = YES
-UASDK_USE_XMLPARSER = YES
-```
-
-Note: On Windows, paths must include "short names" where needed, e.g.
-```
-UASDK = C:/PROGRA~2/UnifiedAutomation/UaSdkCppBundleEval
-```
+The configuration necessary when building against a specific client library
+is documented in the `README.md` file inside the respective subdirectory of
+`devOpcuaSup`.
 
 ## Using the module
 
