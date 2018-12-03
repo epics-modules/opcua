@@ -386,6 +386,24 @@ void opcuaShowSubscriptionCallFunc (const iocshArgBuf *args)
     }
 }
 
+static const iocshArg opcuaDebugSubscriptionArg0 = {"subscription name [\"\"=all]", iocshArgString};
+static const iocshArg opcuaDebugSubscriptionArg1 = {"debug level [0]", iocshArgInt};
+
+static const iocshArg *const opcuaDebugSubscriptionArg[2] = {&opcuaDebugSubscriptionArg0, &opcuaDebugSubscriptionArg1};
+
+static const iocshFuncDef opcuaDebugSubscriptionFuncDef = {"opcuaDebugSubscription", 2, opcuaDebugSubscriptionArg};
+
+static
+void opcuaDebugSubscriptionCallFunc (const iocshArgBuf *args)
+{
+    try {
+        Subscription::findSubscription(args[0].sval).debug = args[1].ival;
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static
 void opcuaIocshRegister ()
 {
@@ -399,6 +417,7 @@ void opcuaIocshRegister ()
 
     iocshRegister(&opcuaCreateSubscriptionFuncDef, opcuaCreateSubscriptionCallFunc);
     iocshRegister(&opcuaShowSubscriptionFuncDef, opcuaShowSubscriptionCallFunc);
+    iocshRegister(&opcuaDebugSubscriptionFuncDef, opcuaDebugSubscriptionCallFunc);
 }
 
 extern "C" {
