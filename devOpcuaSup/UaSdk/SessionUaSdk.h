@@ -68,8 +68,8 @@ public:
      */
     SessionUaSdk(const std::string &name, const std::string &serverUrl,
                  bool autoConnect = true, int debug = 0, epicsUInt32 batchNodes = 0,
-                 const char *clientCertificate = NULL, const char *clientPrivateKey = NULL);
-    ~SessionUaSdk();
+                 const char *clientCertificate = nullptr, const char *clientPrivateKey = nullptr);
+    ~SessionUaSdk() override;
 
     /**
      * @brief Connect session. See DevOpcua::Session::connect
@@ -165,8 +165,8 @@ public:
      */
     virtual void setOption(const std::string &name, const std::string &value) override;
 
-    const unsigned int noOfSubscriptions() const { return subscriptions.size(); }
-    const unsigned int noOfItems() const { return items.size(); }
+    unsigned int noOfSubscriptions() const { return static_cast<unsigned int>(subscriptions.size()); }
+    unsigned int noOfItems() const { return static_cast<unsigned int>(items.size()); }
 
     /**
      * @brief Add an item to the session.
@@ -201,7 +201,7 @@ public:
     static void atExit(void *junk);
 
     // Get a new (unique) transaction id
-    const OpcUa_UInt32 getTransactionId();
+    OpcUa_UInt32 getTransactionId();
 
     // UaSessionCallback interface
     virtual void connectionStatusChanged(

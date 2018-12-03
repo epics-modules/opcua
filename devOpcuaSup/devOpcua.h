@@ -14,6 +14,7 @@
 #define DEVOPCUA_H
 
 #include <sstream>
+#include <memory>
 
 #include <epicsMutex.h>
 #include <epicsGuard.h>
@@ -108,7 +109,7 @@ public:
         if (entry.pflddes->field_type != DBF_INLINK &&
            entry.pflddes->field_type != DBF_OUTLINK)
             throw std::logic_error(SB() << entry.precnode->recordname << " not devlink or INP/OUT?!?!");
-        return (DBLINK*)entry.pfield;
+        return static_cast<DBLINK*>(entry.pfield);
     }
     bool isOutput() const {
         return !dbFindField(pentry(), "OUT");

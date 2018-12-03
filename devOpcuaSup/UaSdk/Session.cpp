@@ -34,7 +34,7 @@ void
 Session::createSession (const std::string &name, const std::string &url,
                         const int debuglevel, const bool autoconnect)
 {
-    epicsThreadOnce(&opcuaUaSdk_once, &opcuaUaSdk_init, NULL);
+    epicsThreadOnce(&opcuaUaSdk_once, &opcuaUaSdk_init, nullptr);
     new SessionUaSdk(name, url, autoconnect, debuglevel);
 }
 

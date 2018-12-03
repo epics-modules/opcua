@@ -551,11 +551,11 @@ opcua_write_lstring_val (REC *prec)
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-  {6, NULL, opcua_init, NULL, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
+  {6, nullptr, opcua_init, nullptr, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
 #define SUPM(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-  {6, NULL, opcua_init, opcua_init_mask_##DIR<REC##Record>, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, NULL}; \
+  {6, nullptr, opcua_init, opcua_init_mask_##DIR<REC##Record>, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
 SUP (devLiOpcua,             longin,   int32_val, read)

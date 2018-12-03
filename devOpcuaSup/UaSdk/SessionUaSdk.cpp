@@ -61,7 +61,7 @@ static
 void session_uasdk_atexit_register (void *junk)
 {
     (void)junk;
-    epicsAtExit(SessionUaSdk::atExit, NULL);
+    epicsAtExit(SessionUaSdk::atExit, nullptr);
 }
 
 inline const char *
@@ -113,7 +113,7 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
         errlogPrintf("OPC UA security not supported yet\n");
 
     sessions[name] = this;
-    epicsThreadOnce(&DevOpcua::session_uasdk_ihooks_once, &DevOpcua::session_uasdk_ihooks_register, NULL);
+    epicsThreadOnce(&DevOpcua::session_uasdk_ihooks_once, &DevOpcua::session_uasdk_ihooks_register, nullptr);
 }
 
 const std::string &
@@ -122,10 +122,10 @@ SessionUaSdk::getName () const
     return name;
 }
 
-const OpcUa_UInt32
+OpcUa_UInt32
 SessionUaSdk::getTransactionId ()
 {
-    return epics::atomic::increment(transactionId);
+    return static_cast<OpcUa_UInt32>(epics::atomic::increment(transactionId));
 }
 
 SessionUaSdk &
@@ -580,7 +580,7 @@ SessionUaSdk::initHook (initHookState state)
             if (it.second->autoConnect)
                 it.second->connect();
         }
-        epicsThreadOnce(&DevOpcua::session_uasdk_atexit_once, &DevOpcua::session_uasdk_atexit_register, NULL);
+        epicsThreadOnce(&DevOpcua::session_uasdk_atexit_once, &DevOpcua::session_uasdk_atexit_register, nullptr);
         break;
     }
     default:

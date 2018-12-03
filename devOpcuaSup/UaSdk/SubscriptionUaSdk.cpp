@@ -204,7 +204,7 @@ SubscriptionUaSdk::addMonitoredItems ()
 void
 SubscriptionUaSdk::clear ()
 {
-    puasubscription = NULL;
+    puasubscription = nullptr;
 }
 
 void
@@ -257,8 +257,8 @@ SubscriptionUaSdk::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
 }
 
 void
-SubscriptionUaSdk::newEvents (OpcUa_UInt32  clientSubscriptionHandle,
-                              UaEventFieldLists&          eventFieldList)
+SubscriptionUaSdk::newEvents (OpcUa_UInt32 clientSubscriptionHandle,
+                              UaEventFieldLists& eventFieldList)
 {}
 
 } // namespace DevOpcua

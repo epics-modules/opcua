@@ -49,14 +49,14 @@ public:
     void checkReadStatus() const;
 
     void setDataElement(DataElement *data) { pdataelement = data; }
-    void clearDataElement() { pdataelement = NULL; }
+    void clearDataElement() { pdataelement = nullptr; }
 
     void requestRecordProcessing(const ProcessReason reason);
     void requestOpcuaRead() { pitem->requestRead(); }
     void requestOpcuaWrite() { pitem->requestWrite(); }
 
-    const char *getRecordName() const { return prec->name; }
-    const int debug() const { return ((prec->tpro > 0) ? prec->tpro - 1 : 0); }
+    char *getRecordName() const { return prec->name; }
+    int debug() const { return ((prec->tpro > 0) ? prec->tpro - 1 : 0); }
 
     epicsMutex lock;
     std::unique_ptr<linkInfo> plinkinfo;

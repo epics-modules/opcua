@@ -43,7 +43,7 @@ public:
      * @param info  configuration as parsed from the EPICS database
      */
     ItemUaSdk(const linkInfo &info);
-    ~ItemUaSdk();
+    ~ItemUaSdk() override;
 
     /**
      * @brief Request beginRead service. See DevOpcua::Item::requestRead

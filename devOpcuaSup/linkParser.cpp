@@ -52,16 +52,16 @@ parseLink(dbCommon *prec, DBEntry &ent)
     if (s[0] == '\0')
         pinfo->samplingInterval = opcua_DefaultSamplingInterval;
     else
-        if (epicsParseDouble(s, &pinfo->samplingInterval, NULL))
+        if (epicsParseDouble(s, &pinfo->samplingInterval, nullptr))
             throw std::runtime_error(SB() << "error converting '" << s << "' to Double");
 
     s = ent.info("opcua:QSIZE", "");
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:QSIZE'='" << s << "'" << std::endl;
     if (s[0] == '\0')
-        pinfo->queueSize = opcua_DefaultQueueSize;
+        pinfo->queueSize = static_cast<epicsUInt32>(opcua_DefaultQueueSize);
     else
-        if (epicsParseUInt32(s, &pinfo->queueSize, 0, NULL))
+        if (epicsParseUInt32(s, &pinfo->queueSize, 0, nullptr))
             throw std::runtime_error(SB() << "error converting '" << s << "' to UInt32");
 
     s = ent.info("opcua:DISCARD", "");
@@ -154,20 +154,20 @@ parseLink(dbCommon *prec, DBEntry &ent)
         }
 
         if (optname == "ns") {
-            if (epicsParseUInt16(optval.c_str(), &pinfo->namespaceIndex, 0, NULL))
+            if (epicsParseUInt16(optval.c_str(), &pinfo->namespaceIndex, 0, nullptr))
                 throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt16");
         } else if (optname == "s") {
             pinfo->identifierString = optval;
             pinfo->identifierIsNumeric = false;
         } else if (optname == "i") {
-            if (epicsParseUInt32(optval.c_str(), &pinfo->identifierNumber, 0, NULL))
+            if (epicsParseUInt32(optval.c_str(), &pinfo->identifierNumber, 0, nullptr))
                 throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
             pinfo->identifierIsNumeric = true;
         } else if (optname == "sampling") {
-            if (epicsParseDouble(optval.c_str(), &pinfo->samplingInterval, NULL))
+            if (epicsParseDouble(optval.c_str(), &pinfo->samplingInterval, nullptr))
                 throw std::runtime_error(SB() << "error converting '" << optval << "' to Double");
         } else if (optname == "qsize") {
-            if (epicsParseUInt32(optval.c_str(), &pinfo->queueSize, 0, NULL))
+            if (epicsParseUInt32(optval.c_str(), &pinfo->queueSize, 0, nullptr))
                 throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
         } else if (optname == "discard") {
             if (optval == "new")

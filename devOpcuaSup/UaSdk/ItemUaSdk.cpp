@@ -28,8 +28,8 @@ using namespace UaClientSdk;
 
 ItemUaSdk::ItemUaSdk (const linkInfo &info)
     : Item(info)
-    , subscription(NULL)
-    , session(NULL)
+    , subscription(nullptr)
+    , session(nullptr)
     , dataElement(std::unique_ptr<DataElementUaSdk>(new DataElementUaSdk(this)))
 {
     if (info.identifierIsNumeric) {

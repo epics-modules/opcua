@@ -39,7 +39,7 @@ static
 void opcuaShowSessionCallFunc (const iocshArgBuf *args)
 {
     try {
-        if (args[0].sval == NULL || args[0].sval[0] == '\0') {
+        if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
             SessionUaSdk::showAll(args[1].ival);
         } else {
             SessionUaSdk::findSession(args[0].sval).show(args[1].ival);
@@ -61,7 +61,7 @@ void opcuaConnectCallFunc (const iocshArgBuf *args)
 {
     bool ok = true;
 
-    if (args[0].sval == NULL) {
+    if (args[0].sval == nullptr) {
         errlogPrintf("ERROR : missing argument #1 (session name)\n");
         ok = false;
     }
@@ -88,7 +88,7 @@ void opcuaDisconnectCallFunc (const iocshArgBuf *args)
 {
     bool ok = true;
 
-    if (args[0].sval == NULL) {
+    if (args[0].sval == nullptr) {
         errlogPrintf("ERROR : missing argument #1 (session name)\n");
         ok = false;
     }
@@ -140,11 +140,11 @@ void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
     bool ok = true;
     std::string name;
     int debuglevel = 0;
-    int priority = 0;
+    epicsUInt8 priority = 0;
     double publishingInterval = 0.;
 
     try {
-        if (args[0].sval == NULL) {
+        if (args[0].sval == nullptr) {
             errlogPrintf("missing argument #1 (subscription name)\n");
             ok = false;
         } else if (strchr(args[0].sval, ' ')) {
@@ -157,7 +157,7 @@ void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
             ok = false;
         }
 
-        if (args[1].sval == NULL) {
+        if (args[1].sval == nullptr) {
             errlogPrintf("missing argument #2 (session name)\n");
             ok = false;
         } else if (strchr(args[1].sval, ' ')) {
@@ -180,11 +180,11 @@ void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
             publishingInterval = args[2].dval;
         }
 
-        if (args[3].ival < 0) {
+        if (args[3].ival < 0 || args[3].ival > 255) {
             errlogPrintf("invalid argument #4 (priority) '%d'\n",
                          args[3].ival);
         } else {
-            priority = args[3].ival;
+            priority = static_cast<epicsUInt8>(args[3].ival);
         }
 
         if (args[4].ival < 0) {
@@ -219,7 +219,7 @@ static
 void opcuaShowSubscriptionCallFunc (const iocshArgBuf *args)
 {
     try {
-        if (args[0].sval == NULL || args[0].sval[0] == '\0') {
+        if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
             SubscriptionUaSdk::showAll(args[1].ival);
         } else {
             SubscriptionUaSdk::findSubscription(args[0].sval).show(args[1].ival);

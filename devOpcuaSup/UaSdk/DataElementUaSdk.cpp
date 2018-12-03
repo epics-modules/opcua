@@ -96,7 +96,7 @@ DataElementUaSdk::readTimeStamp (bool server) const
         pico10 = incomingData.serverPicoseconds();
     }
     ts.secPastEpoch = static_cast<epicsUInt32>(dt.toTime_t()) - POSIX_TIME_AT_EPICS_EPOCH;
-    ts.nsec         = dt.msec() * 1000000L + pico10 / 100;
+    ts.nsec         = static_cast<epicsUInt32>(dt.msec()) * 1000000 + pico10 / 100;
 
     if (pconnector->debug()) {
         char time_buf[40];
@@ -374,7 +374,7 @@ DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
         break;
     case OpcUaType_Int32:
         checkRange<epicsUInt32, OpcUa_Int32>(value);
-        tempValue.setInt32(value);
+        tempValue.setInt32(static_cast<OpcUa_Int32>(value));
         break;
     case OpcUaType_UInt64:
         tempValue.setUInt64(static_cast<OpcUa_UInt64>(value));
@@ -484,52 +484,52 @@ DataElementUaSdk::writeCString(const char *value, const size_t num)
             tempValue.setBoolean(false);
         break;
     case OpcUaType_Byte:
-        ul = strtoul(value, NULL, 0);
+        ul = strtoul(value, nullptr, 0);
         checkRange<unsigned long, OpcUa_Byte>(ul);
         tempValue.setByte(static_cast<OpcUa_Byte>(ul));
         break;
     case OpcUaType_SByte:
-        l = strtol(value, NULL, 0);
+        l = strtol(value, nullptr, 0);
         checkRange<long, OpcUa_SByte>(l);
         tempValue.setSByte(static_cast<OpcUa_SByte>(l));
         break;
     case OpcUaType_UInt16:
-        ul = strtoul(value, NULL, 0);
+        ul = strtoul(value, nullptr, 0);
         checkRange<unsigned long, OpcUa_UInt16>(ul);
         tempValue.setUInt16(static_cast<OpcUa_UInt16>(ul));
         break;
     case OpcUaType_Int16:
-        l = strtol(value, NULL, 0);
+        l = strtol(value, nullptr, 0);
         checkRange<long, OpcUa_Int16>(l);
         tempValue.setInt16(static_cast<OpcUa_Int16>(l));
         break;
     case OpcUaType_UInt32:
-        ul = strtoul(value, NULL, 0);
+        ul = strtoul(value, nullptr, 0);
         checkRange<unsigned long, OpcUa_UInt32>(ul);
         tempValue.setUInt32(static_cast<OpcUa_UInt32>(ul));
         break;
     case OpcUaType_Int32:
-        l = strtol(value, NULL, 0);
+        l = strtol(value, nullptr, 0);
         checkRange<long, OpcUa_Int32>(l);
         tempValue.setInt32(static_cast<OpcUa_Int32>(l));
         break;
     case OpcUaType_UInt64:
-        ul = strtoul(value, NULL, 0);
+        ul = strtoul(value, nullptr, 0);
         checkRange<unsigned long, OpcUa_UInt64>(ul);
         tempValue.setUInt64(static_cast<OpcUa_UInt64>(ul));
         break;
     case OpcUaType_Int64:
-        l = strtol(value, NULL, 0);
+        l = strtol(value, nullptr, 0);
         checkRange<long, OpcUa_Int64>(l);
         tempValue.setInt64(static_cast<OpcUa_Int64>(l));
         break;
     case OpcUaType_Float:
-        d = strtod(value, NULL);
+        d = strtod(value, nullptr);
         checkRange<double, OpcUa_Float>(d);
         tempValue.setFloat(static_cast<OpcUa_Float>(d));
         break;
     case OpcUaType_Double:
-        d = strtod(value, NULL);
+        d = strtod(value, nullptr);
         tempValue.setDouble(static_cast<OpcUa_Double>(d));
         break;
     default:
