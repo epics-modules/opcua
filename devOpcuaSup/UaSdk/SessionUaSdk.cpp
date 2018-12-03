@@ -27,13 +27,13 @@
 #include <uaclientsdk.h>
 #include <uasession.h>
 
-#include <epicsExport.h>
 #include <epicsExit.h>
 #include <epicsThread.h>
 #include <epicsAtomic.h>
 #include <initHooks.h>
 #include <errlog.h>
 
+#define epicsExportSharedSymbols
 #include "Session.h"
 #include "RecordConnector.h"
 #include "SessionUaSdk.h"

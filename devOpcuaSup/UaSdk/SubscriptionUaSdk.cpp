@@ -19,8 +19,8 @@
 #include <uasession.h>
 
 #include <errlog.h>
-#include <epicsExport.h>
 
+#define epicsExportSharedSymbols
 #include "SubscriptionUaSdk.h"
 #include "ItemUaSdk.h"
 #include "DataElementUaSdk.h"

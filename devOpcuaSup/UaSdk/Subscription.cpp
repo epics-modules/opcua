@@ -10,9 +10,9 @@
  *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
  */
 
-#include <epicsExport.h>
 #include <errlog.h>
 
+#define epicsExportSharedSymbols
 #include "Session.h"
 #include "Subscription.h"
 #include "SessionUaSdk.h"

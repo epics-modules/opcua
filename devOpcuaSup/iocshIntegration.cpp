@@ -17,9 +17,9 @@
 
 #include <iocsh.h>
 #include <errlog.h>
-#include <epicsExport.h>
 #include <epicsThread.h>
 
+#include <epicsExport.h>  // defines epicsExportSharedSymbols
 #include "Session.h"
 #include "Subscription.h"
 

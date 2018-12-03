@@ -16,8 +16,8 @@
 #include <string.h>
 
 #include <link.h>
-#include <epicsExport.h>
 #include <epicsThread.h>
+#include <dbStaticLib.h>
 #include <callback.h>
 #include <recSup.h>
 #include <recGbl.h>
@@ -27,6 +27,7 @@
 #include <errlog.h>
 #include <alarm.h>
 
+#define epicsExportSharedSymbols
 #include "RecordConnector.h"
 #include "Session.h"
 

@@ -51,8 +51,8 @@
 #include <lsoRecord.h>
 #include <lsiRecord.h>
 #include <waveformRecord.h>
-#include <epicsExport.h>  // must be after dbAccess.h (lp:1784616)
 
+#include <epicsExport.h>  // defines epicsExportSharedSymbols
 #include "devOpcuaVersion.h"
 #include "devOpcua.h"
 #include "RecordConnector.h"
