@@ -18,7 +18,7 @@ ifeq ($(UASDK_USE_XMLPARSER),YES)
 UASDK_MODULES += xmlparser
 endif
 ifeq ($(UASDK_USE_CRYPTO),YES)
-USR_SYS_LIBS += crypto
+USR_SYS_LIBS_Linux += crypto
 endif
 
 # Depending on SDK version, C++ modules may have a 'cpp' suffix
