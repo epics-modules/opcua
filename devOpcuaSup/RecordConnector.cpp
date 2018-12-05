@@ -16,14 +16,16 @@
 #include <string.h>
 
 #include <link.h>
+#include <shareLib.h>
 #include <epicsThread.h>
-#include <dbStaticLib.h>
 #include <callback.h>
 #include <recSup.h>
 #include <recGbl.h>
 #include <dbLock.h>
 #include <dbScan.h>
 #include <dbServer.h>
+#include <dbAccessDefs.h>
+#include <dbStaticLib.h>
 #include <errlog.h>
 #include <alarm.h>
 
