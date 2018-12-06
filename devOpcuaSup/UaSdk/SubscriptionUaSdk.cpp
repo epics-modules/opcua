@@ -250,7 +250,6 @@ SubscriptionUaSdk::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
                       << ": (dataChange) getting data for item " << dataNotifications[i].ClientHandle
                       << " (" << item->getNodeId().toXmlString().toUtf8() << ")" << std::endl;
         }
-        item->setReadStatus(dataNotifications[i].Value.StatusCode);
         item->setIncomingData(dataNotifications[i].Value);
         item->requestRecordProcessing(ProcessReason::incomingData);
     }

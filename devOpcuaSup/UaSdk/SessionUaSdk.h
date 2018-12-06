@@ -20,6 +20,7 @@
 
 #include <uabase.h>
 #include <uaclientsdk.h>
+#include <uasession.h>
 
 #include <epicsMutex.h>
 #include <epicsTypes.h>
@@ -100,6 +101,14 @@ public:
      * @return session name
      */
     virtual const std::string & getName() const override;
+
+    /**
+     * @brief Get a structure definition from the session dictionary.
+     * @param dataTypeId data type of the extension object
+     * @return structure definition
+     */
+    UaStructureDefinition structureDefinition(const UaNodeId &dataTypeId)
+    { return puasession->structureDefinition(dataTypeId); }
 
     /**
      * @brief Request a beginRead service for an item

@@ -18,6 +18,7 @@
 
 #include <statuscode.h>
 #include <opcua_builtintypes.h>
+#include <uastructuredefinition.h>
 
 #include "Item.h"
 #include "devOpcua.h"
@@ -100,6 +101,14 @@ public:
     const UaStatusCode &getWriteStatus() { return writeStatus; }
 
     /**
+     * @brief Get a structure definition from the session dictionary.
+     * @param dataTypeId data type of the extension object
+     * @return structure definition
+     */
+    UaStructureDefinition structureDefinition(const UaNodeId &dataTypeId)
+    { return session->structureDefinition(dataTypeId); }
+
+    /**
      * @brief Create processing requests for record(s) attached to this element.
      * See DevOpcua::DataElement::requestRecordProcessing
      */
@@ -111,7 +120,7 @@ public:
      * Called from the OPC UA client worker thread when data is being
      * assembled in OPC UA session for sending.
      */
-    const UaDataValue &getOutgoingData() const;
+    const UaVariant &getOutgoingData() const;
 
     /**
      * @brief Clear (discard) the current outgoing data.
@@ -133,7 +142,15 @@ public:
      *
      * @param value  new value for this data element
      */
-    void setIncomingData(const UaDataValue &value);
+    void setIncomingData(const OpcUa_DataValue &value);
+
+    /**
+     * @brief Convert OPC UA time stamp to EPICS time stamp.
+     * @param dt time stamp in UaDateTime format
+     * @param pico10 10 picosecond resolution counter
+     * @return EPICS time stamp
+     */
+    static epicsTimeStamp uaToEpicsTimeStamp(const UaDateTime &dt, const OpcUa_UInt16 pico10);
 
 private:
     SubscriptionUaSdk *subscription;   /**< raw pointer to subscription (if monitored) */
@@ -142,6 +159,8 @@ private:
     std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
     UaStatusCode readStatus;           /**< status code of last read service */
     UaStatusCode writeStatus;          /**< status code of last write service */
+    epicsTimeStamp tsServer;           /**< server time stamp */
+    epicsTimeStamp tsSource;           /**< device time stamp */
 };
 
 } // namespace DevOpcua

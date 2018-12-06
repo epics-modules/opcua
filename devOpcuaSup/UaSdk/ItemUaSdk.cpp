@@ -91,7 +91,7 @@ ItemUaSdk::requestRecordProcessing (const ProcessReason reason) const
     }
 }
 
-const UaDataValue &
+const UaVariant &
 ItemUaSdk::getOutgoingData() const
 {
     if (auto pd = rootElement.lock()) {
@@ -109,11 +109,25 @@ ItemUaSdk::clearOutgoingData()
     }
 }
 
-void
-ItemUaSdk::setIncomingData(const UaDataValue &value)
+epicsTimeStamp
+ItemUaSdk::uaToEpicsTimeStamp (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 {
+    epicsTimeStamp ts;
+    ts.secPastEpoch = static_cast<epicsUInt32>(dt.toTime_t()) - POSIX_TIME_AT_EPICS_EPOCH;
+    ts.nsec         = static_cast<epicsUInt32>(dt.msec()) * 1000000 + pico10 / 100;
+    return ts;
+}
+
+void
+ItemUaSdk::setIncomingData(const OpcUa_DataValue &value)
+{
+    tsSource = uaToEpicsTimeStamp(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
+    tsServer = uaToEpicsTimeStamp(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+
+    readStatus = value.StatusCode;
+
     if (auto pd = rootElement.lock()) {
-        return pd->setIncomingData(value);
+        return pd->setIncomingData(value.Value);
     } else {
         throw std::runtime_error(SB() << "stale pointer to root data element");
     }

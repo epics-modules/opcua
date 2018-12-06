@@ -322,7 +322,7 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
     nodesToWrite.create(1);
     item.getNodeId().copyTo(&nodesToWrite[0].NodeId);
     nodesToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    item.getOutgoingData().copyTo(&nodesToWrite[0].Value);
+    item.getOutgoingData().copyTo(&nodesToWrite[0].Value.Value);
     item.clearOutgoingData();
     itemsToWrite->push_back(&item);
 

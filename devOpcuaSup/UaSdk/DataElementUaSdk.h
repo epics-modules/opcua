@@ -14,6 +14,8 @@
 #ifndef DEVOPCUA_DATAELEMENTUASDK_H
 #define DEVOPCUA_DATAELEMENTUASDK_H
 
+#include <unordered_map>
+
 #include <uadatavalue.h>
 #include <statuscode.h>
 
@@ -89,7 +91,7 @@ public:
      *
      * @param value  new value for this data element
      */
-    void setIncomingData(const UaDataValue &value);
+    void setIncomingData(const UaVariant &value);
 
     /**
      * @brief Get the outgoing data value from the DataElement.
@@ -99,7 +101,7 @@ public:
      *
      * @param value  new value for this data element
      */
-    const UaDataValue &getOutgoingData() { return outgoingData; }
+    const UaVariant &getOutgoingData() { return outgoingData; }
 
     /**
      * @brief Read the time stamp of the incoming data.
@@ -227,9 +229,12 @@ private:
     std::vector<std::weak_ptr<DataElementUaSdk>> elements;  /**< children (if node) */
     std::shared_ptr<DataElementUaSdk> parent;               /**< parent */
 
-    UaDataValue incomingData;        /**< incoming data value */
+    std::unordered_map<int,std::weak_ptr<DataElementUaSdk>> elementMap;
+
+    bool mapped;                     /**< child name to index mapping done */
+    UaVariant incomingData;          /**< incoming value */
     OpcUa_BuiltInType incomingType;  /**< type of incoming data */
-    UaDataValue outgoingData;        /**< outgoing data value */
+    UaVariant outgoingData;          /**< outgoing value */
 };
 
 } // namespace DevOpcua
