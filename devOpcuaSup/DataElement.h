@@ -195,7 +195,8 @@ public:
      */
     virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
-    int debug;
+    const std::string name;                     /**< element name */
+    int debug;                                  /**< debug level */
     static const char separator = '.';
 
 protected:
@@ -221,7 +222,6 @@ protected:
         , isleaf(true)
     {}
 
-    std::string name;                           /**< element name */
     RecordConnector *pconnector;                /**< pointer to connector (if leaf) */
     bool isleaf;                                /**< flag for leaf property */
 };
