@@ -56,7 +56,7 @@ public:
     void requestOpcuaWrite() { pitem->requestWrite(); }
 
     char *getRecordName() const { return prec->name; }
-    int debug() const { return ((prec->tpro > 0) ? prec->tpro - 1 : 0); }
+    int debug() const { return prec->tpro; }
 
     /**
      * @brief Find record connector by record name.

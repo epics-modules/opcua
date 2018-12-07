@@ -83,6 +83,16 @@ ItemUaSdk::show (int level) const
     }
 }
 
+int ItemUaSdk::debug() const
+{
+    if (linkinfo.isItemRecord)
+        return itemRecord->tpro;
+    else if (auto pd = rootElement.lock())
+        return pd->debug();
+    else
+        return 0;
+}
+
 void
 ItemUaSdk::requestRecordProcessing (const ProcessReason reason) const
 {

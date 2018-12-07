@@ -27,6 +27,7 @@
 
 #include <errlog.h>
 
+#include "ItemUaSdk.h"
 #include "DataElementUaSdk.h"
 #include "RecordConnector.h"
 
@@ -199,14 +200,15 @@ DataElementUaSdk::setIncomingData (const UaVariant &value)
     incomingType = value.type();
 
     if (isLeaf()) {
-        if (debug >= 5)
+        if (debug() >= 5)
             std::cout << "Element " << name << " setting incoming data for record "
                       << pconnector->getRecordName() << std::endl;
         Guard(pconnector->lock);
         incomingData = value;
     } else {
-        if (debug >= 5)
-            std::cout << "Splitting incoming data structure to child elements" << std::endl;
+        if (debug() >= 5)
+            std::cout << "Element " << name << " splitting incoming data structure to "
+                      << elements.size() << " child elements" << std::endl;
 
         if (value.type() == OpcUaType_ExtensionObject) {
             UaExtensionObject extensionObject;
@@ -222,8 +224,8 @@ DataElementUaSdk::setIncomingData (const UaVariant &value)
                     genericValue.setGenericValue(extensionObject, definition);
 
                     if (!mapped) {
-                        if (debug >= 5)
-                            std::cout << "Creating index-to-element map for child elements" << std::endl;
+                        if (debug() >= 5)
+                            std::cout << " ** creating index-to-element map for child elements" << std::endl;
                         for (auto &it : elements) {
                             auto pelem = it.lock();
                             for (int i = 0; i < definition.childrenCount(); i++) {
@@ -233,6 +235,10 @@ DataElementUaSdk::setIncomingData (const UaVariant &value)
                                 }
                             }
                         }
+                        if (debug() >= 5)
+                            std::cout << " ** " << elementMap.size() << "/" << elements.size()
+                                      << " child elements mapped to a "
+                                      << "structure of " << definition.childrenCount() << " elements" << std::endl;
                         mapped = true;
                     } else {
                         for (auto &it : elementMap) {
@@ -259,7 +265,7 @@ DataElementUaSdk::readTimeStamp (bool server) const
     else
         ts = &pitem->tsSource;
 
-    if (isLeaf() && debug) {
+    if (isLeaf() && debug()) {
         char time_buf[40];
         epicsTimeToStrftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f", ts);
         std::cout << pconnector->getRecordName() << ": reading "
@@ -278,7 +284,7 @@ DataElementUaSdk::readInt32 () const
     if (incomingData.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (isLeaf() && debug) {
+    if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": reading ";
         if (incomingData.type() == OpcUaType_String)
             std::cout << "'" << incomingData.toString().toUtf8() << "'";
@@ -301,7 +307,7 @@ DataElementUaSdk::readUInt32 () const
     if (incomingData.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (isLeaf() && debug) {
+    if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": reading ";
         if (incomingData.type() == OpcUaType_String)
             std::cout << "'" << incomingData.toString().toUtf8() << "'";
@@ -324,7 +330,7 @@ DataElementUaSdk::readFloat64 () const
     if (incomingData.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (isLeaf() && debug) {
+    if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": reading ";
         if (incomingData.type() == OpcUaType_String)
             std::cout << "'" << incomingData.toString().toUtf8() << "'";
@@ -345,7 +351,7 @@ DataElementUaSdk::readCString (char *value, const size_t num) const
     if (incomingData.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
-    if (isLeaf() && debug) {
+    if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": reading ";
         if (incomingData.type() == OpcUaType_String)
             std::cout << "'" << incomingData.toString().toUtf8() << "'";
@@ -366,7 +372,7 @@ DataElementUaSdk::readWasOk () const
 {
     bool status = !!pitem->getReadStatus().isGood();
 
-    if (isLeaf() && debug)
+    if (isLeaf() && debug())
         std::cout << pconnector->getRecordName()
                   << ": read status is '"
                   << pitem->getReadStatus().toString().toUtf8() << "'"
@@ -378,7 +384,7 @@ bool
 DataElementUaSdk::writeWasOk () const
 {
     bool status = !!pitem->getWriteStatus().isGood();
-    if (isLeaf() && debug)
+    if (isLeaf() && debug())
         std::cout << pconnector->getRecordName()
                   << ": write status is '"
                   << pitem->getWriteStatus().toString().toUtf8() << "'"
@@ -493,7 +499,7 @@ DataElementUaSdk::writeInt32 (const epicsInt32 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug)
+    if (isLeaf() && debug())
         printOutputDebugMessage(pconnector, outgoingData);
 }
 
@@ -549,7 +555,7 @@ DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug)
+    if (isLeaf() && debug())
         printOutputDebugMessage(pconnector, outgoingData);
 }
 
@@ -609,7 +615,7 @@ DataElementUaSdk::writeFloat64 (const epicsFloat64 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug)
+    if (isLeaf() && debug())
         printOutputDebugMessage(pconnector, outgoingData);
 }
 
@@ -683,7 +689,7 @@ DataElementUaSdk::writeCString(const char *value, const size_t num)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug)
+    if (isLeaf() && debug())
         printOutputDebugMessage(pconnector, outgoingData);
 }
 

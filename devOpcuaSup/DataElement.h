@@ -196,7 +196,6 @@ public:
     virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
     const std::string name;                     /**< element name */
-    int debug;                                  /**< debug level */
     static const char separator = '.';
 
 protected:

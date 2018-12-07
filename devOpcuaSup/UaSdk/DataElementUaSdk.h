@@ -21,10 +21,12 @@
 
 #include "DataElement.h"
 #include "devOpcua.h"
-#include "ItemUaSdk.h"
 #include "RecordConnector.h"
+#include "ItemUaSdk.h"
 
 namespace DevOpcua {
+
+class ItemUaSdk;
 
 /**
  * @brief The DataElementUaSdk implementation of a single piece of data.
@@ -220,6 +222,12 @@ public:
      * See DevOpcua::DataElement::requestRecordProcessing
      */
     virtual void requestRecordProcessing(const ProcessReason reason) const override;
+
+    /**
+     * @brief Get debug level from record (via RecordConnector)`.
+     * @return debug level
+     */
+    int debug() const { return (isLeaf() ? pconnector->debug() : pitem->debug()); }
 
 private:
     static void printOutputDebugMessage(const RecordConnector *pconnector,

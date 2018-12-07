@@ -21,6 +21,7 @@
 #include <uastructuredefinition.h>
 
 #include "Item.h"
+#include "opcuaItemRecord.h"
 #include "devOpcua.h"
 #include "SessionUaSdk.h"
 
@@ -28,8 +29,8 @@ namespace DevOpcua {
 
 using namespace UaClientSdk;
 
-class DataElementUaSdk;
 class SubscriptionUaSdk;
+class DataElementUaSdk;
 class RecordConnector;
 struct linkInfo;
 
@@ -151,6 +152,12 @@ public:
      * @return EPICS time stamp
      */
     static epicsTimeStamp uaToEpicsTimeStamp(const UaDateTime &dt, const OpcUa_UInt16 pico10);
+
+    /**
+     * @brief Get debug level (from itemRecord or via TOP DataElement)
+     * @return debug level
+     */
+    int debug() const;
 
 private:
     SubscriptionUaSdk *subscription;   /**< raw pointer to subscription (if monitored) */
