@@ -89,9 +89,12 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
     std::string ind(indent*2, ' ');
     std::cout << ind;
     if (isLeaf()) {
-        std::cout << "leaf=" << name << " record=" << pconnector->getRecordName() << "\n";
+        std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")="
+                  << pconnector->getRecordName()
+                  << " type=" << variantTypeString(incomingType) << "\n";
     } else {
-        std::cout << "node=" << name << " children=" << elements.size() << "\n";
+        std::cout << "node=" << name << " children=" << elements.size()
+                  << " mapped=" << (mapped ? "y" : "n") << "\n";
         for (auto it : elements) {
             if (auto pelem = it.lock()) {
                 pelem->show(level, indent + 1);
@@ -110,6 +113,7 @@ DataElementUaSdk::addElementChain (ItemUaSdk *item,
     std::string restpath;
     size_t sep = path.find_last_of(separator);
     std::string leafname = path.substr(sep + 1);
+    if (leafname.empty()) leafname = "[ROOT]";
     if (sep != std::string::npos)
         restpath = path.substr(0, sep);
 
@@ -122,7 +126,7 @@ DataElementUaSdk::addElementChain (ItemUaSdk *item,
     if (topelem.expired()) hasRootElement = false;
 
     // Simple case (leaf is the root element)
-    if (leafname.empty()) {
+    if (leafname == "[ROOT]") {
         if (hasRootElement) throw std::runtime_error(SB() << "root data element already set");
         item->rootElement = chainelem;
         return;
@@ -188,7 +192,7 @@ DataElementUaSdk::addElementChain (ItemUaSdk *item,
             throw std::runtime_error(SB() << "previously found top element invalidated");
         }
     } else {
-        chainelem->parent = std::make_shared<DataElementUaSdk>("", item, chainelem);
+        chainelem->parent = std::make_shared<DataElementUaSdk>("[ROOT]", item, chainelem);
         chainelem = chainelem->parent;
         item->rootElement = chainelem;
     }

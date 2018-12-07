@@ -379,7 +379,7 @@ SessionUaSdk::show (const int level) const
     else
         std::cout << "?";
     std::cout << "(" << connectInfo.nMaxOperationsPerServiceCall << ")"
-              << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "Y" : "N")
+              << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "y" : "n")
               << " subscriptions=" << subscriptions.size()
               << std::endl;
 

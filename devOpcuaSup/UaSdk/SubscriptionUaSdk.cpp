@@ -68,7 +68,7 @@ SubscriptionUaSdk::show (int level) const
     else
         std::cout << "?";
     std::cout << "(" << static_cast<int>(subscriptionSettings.priority) << ")"
-              << " enable=" << (puasubscription ? (puasubscription->publishingEnabled() ? "Y" : "N") : "?")
+              << " enable=" << (puasubscription ? (puasubscription->publishingEnabled() ? "y" : "n") : "?")
               << "(" << (enable ? "Y" : "N") << ")"
               << " debug=" << debug
               << " items=" << items.size()

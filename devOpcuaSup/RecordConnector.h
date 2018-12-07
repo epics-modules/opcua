@@ -55,7 +55,8 @@ public:
     void requestOpcuaRead() { pitem->requestRead(); }
     void requestOpcuaWrite() { pitem->requestWrite(); }
 
-    char *getRecordName() const { return prec->name; }
+    const char *getRecordName() const { return prec->name; }
+    const char *getRecordType() const { return prec->rdes->name; }
     int debug() const { return prec->tpro; }
 
     /**
