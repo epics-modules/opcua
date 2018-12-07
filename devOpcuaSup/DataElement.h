@@ -223,7 +223,7 @@ protected:
     {}
 
     RecordConnector *pconnector;                /**< pointer to connector (if leaf) */
-    bool isleaf;                                /**< flag for leaf property */
+    const bool isleaf;                          /**< flag for leaf property */
 };
 
 } // namespace DevOpcua
