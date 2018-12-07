@@ -27,14 +27,13 @@
 #include <special.h>
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
-#include "devOpcua.h"
-#include "ItemUaSdk.h"
-#include "DataElementUaSdk.h"
-#include "RecordConnector.h"
-#include "linkParser.h"
 #define GEN_SIZE_OFFSET
 #include "opcuaItemRecord.h"
 #undef GEN_SIZE_OFFSET
+#include "devOpcua.h"
+#include "ItemUaSdk.h"    //FIXME: replace item creation with factory call (see below)
+#include "RecordConnector.h"
+#include "linkParser.h"
 
 #include <epicsVersion.h>
 #ifdef VERSION_INT
@@ -75,7 +74,7 @@ init_record (opcuaItemRecord *prec, int pass)
             DBEntry ent(pdbc);
             std::unique_ptr<RecordConnector> pvt (new RecordConnector(pdbc));
             pvt->plinkinfo = parseLink(pdbc, ent);
-            ItemUaSdk *pitem = new ItemUaSdk(*pvt->plinkinfo);
+            ItemUaSdk *pitem = new ItemUaSdk(*pvt->plinkinfo); //FIXME: replace item creation with factory call
             pitem->itemRecord = prec;
             pvt->pitem = pitem;
             prec->dpvt = pvt.release();
