@@ -240,7 +240,7 @@ SessionUaSdk::readAllNodes ()
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToRead.create(items.size());
+    nodesToRead.create(static_cast<OpcUa_UInt32>(items.size()));
     OpcUa_UInt32 i = 0;
     for (auto &it : items) {
         it->getNodeId().copyTo(&nodesToRead[i].NodeId);

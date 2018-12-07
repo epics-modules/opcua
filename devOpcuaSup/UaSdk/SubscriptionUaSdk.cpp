@@ -157,7 +157,7 @@ SubscriptionUaSdk::addMonitoredItems ()
     UaMonitoredItemCreateRequests monitoredItemCreateRequests;
     UaMonitoredItemCreateResults monitoredItemCreateResults;
 
-    monitoredItemCreateRequests.create(items.size());
+    monitoredItemCreateRequests.create(static_cast<OpcUa_UInt32>(items.size()));
     i = 0;
     for (auto &it : items) {
         it->getNodeId().copyTo(&monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
