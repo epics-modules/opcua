@@ -133,7 +133,7 @@ monitor (opcuaItemRecord *prec)
 long
 readValue (opcuaItemRecord *prec)
 {
-    long status;
+    long status=0;
 
     if (prec->pact)
         goto read;
