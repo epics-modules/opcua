@@ -64,13 +64,13 @@ long readValue(opcuaItemRecord *prec);
 void monitor(opcuaItemRecord *);
 
 long
-init_record (opcuaItemRecord *prec, int pass)
+init_record (dbCommon *pdbc, int pass)
 {
+    opcuaItemRecord *prec = reinterpret_cast<opcuaItemRecord *>(pdbc);
     dbLoadLink(&prec->siml, DBF_USHORT, &prec->simm);
 
     if (pass == 0) {
         try {
-            dbCommon *pdbc = reinterpret_cast<dbCommon *>(prec);
             DBEntry ent(pdbc);
             std::unique_ptr<RecordConnector> pvt (new RecordConnector(pdbc));
             pvt->plinkinfo = parseLink(pdbc, ent);
@@ -89,8 +89,9 @@ init_record (opcuaItemRecord *prec, int pass)
 }
 
 long
-process (opcuaItemRecord *prec)
+process (dbCommon *pdbc)
 {
+    opcuaItemRecord *prec = reinterpret_cast<opcuaItemRecord *>(pdbc);
     int pact = prec->pact;
     long status = 0;
 
@@ -133,7 +134,7 @@ monitor (opcuaItemRecord *prec)
 long
 readValue (opcuaItemRecord *prec)
 {
-    long status=0;
+    long status = 0;
 
     if (prec->pact)
         goto read;
