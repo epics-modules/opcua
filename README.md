@@ -1,3 +1,5 @@
+<a target="_blank" href="http://semver.org">![Version][badge.version]</a>
+<a target="_blank" href="https://travis-ci.org/ralphlange/opcua">![Travis status][badge.travis]</a>
 # opcua - EPICS Device Support for OPC UA
 
 [EPICS](https://epics-controls.org) Device Support module for interfacing
@@ -83,3 +85,7 @@ Michael Davidsaver (Osprey DCS).
 
 This module is distributed subject to a Software License Agreement found
 in file LICENSE that is included with this distribution.
+
+<!-- Links -->
+[badge.version]: https://badge.fury.io/gh/ralphlange%2Fopcua.svg
+[badge.travis]: https://travis-ci.org/ralphlange/opcua.svg?branch=master
