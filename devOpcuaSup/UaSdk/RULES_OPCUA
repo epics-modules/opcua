@@ -16,6 +16,7 @@
 UASDK_MODULES = uaclient uapki uabase uastack
 ifeq ($(UASDK_USE_XMLPARSER),YES)
 UASDK_MODULES += xmlparser
+USR_SYS_LIBS_Linux += xml2
 endif
 ifeq ($(UASDK_USE_CRYPTO),YES)
 USR_SYS_LIBS_Linux += crypto

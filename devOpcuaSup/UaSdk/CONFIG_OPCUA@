@@ -10,3 +10,6 @@ UASDK_DIR = @UASDK_DIR@
 # How the Unified Automation SDK libraries were built
 UASDK_USE_CRYPTO = @UASDK_USE_CRYPTO@
 UASDK_USE_XMLPARSER = @UASDK_USE_XMLPARSER@
+
+# Needed to keep OS_TYPE variable for later expansion
+USR_SYS_LIBS_Linux += -nil-
