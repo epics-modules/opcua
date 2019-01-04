@@ -342,7 +342,7 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
             std::cout << "Session " << name.c_str()
                       << ": (requestWrite) beginWrite service ok"
                       << " (transaction id " << id
-                      << "; writing " << nodesToWrite.length() << " nodes)" << std::endl;
+                      << "; writing " << nodesToWrite.length() << " node(s))" << std::endl;
         outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
                               (id, std::move(itemsToWrite)));
     }
@@ -518,7 +518,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) getting results for write service"
                       << " (transaction id " << transactionId
-                      << "; results for " << results.length() << " ïtems)" << std::endl;
+                      << "; results for " << results.length() << " item(s))" << std::endl;
         OpcUa_UInt32 i = 0;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
