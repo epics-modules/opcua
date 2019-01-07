@@ -1,0 +1,18 @@
+#- ###               OPCUA iocsh                    ###
+#- ####################################################
+#- >> Mandatory
+#- SESS           - SESSION NAME
+#- SUBS           - SUBSCRIPTION NAME
+#- INET           - OPCUA SERVER INET
+#- >> Optional
+#- PORT           - OPCUA SERVER PORT, Default : 48020
+#- DEBUG          - SESSION initial level of debuggging, Default : 0
+#- AUTOCONNECT    - Automatically connect/reconnect to server, Default : y
+#-                  True : YyTt      False : NnFf
+#- SUBSTIME       - SUBSCRIPTION Interval, Default : 200 ms
+#- SUBSPRIO       - SUBSCRIPTION Priority, Default : 0 (lowest) [0..255]
+#- SUBSDEBUG      - SUBSCRIPTION DEBUG (0:off, positive number:on), Default : 0
+#- ####################################################
+
+opcuaCreateSession "$(SESS)" "opc.tcp://$(INET):$(PORT=48020)" "$(DEBUG=0)" "$(AUTOCONNECT=y)"
+opcuaCreateSubscription "$(SUBS)" "$(SESS)" "$(SUBSTIME=200)" "$(SUBPRIO=0)" "$(SUBSDEBUG=0)"
