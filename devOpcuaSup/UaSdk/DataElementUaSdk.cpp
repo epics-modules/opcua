@@ -303,6 +303,29 @@ DataElementUaSdk::readInt32 () const
     return v;
 }
 
+epicsInt64
+DataElementUaSdk::readInt64 () const
+{
+    OpcUa_Int64 v;
+
+    if (incomingData.isEmpty())
+        throw std::runtime_error(SB() << "no incoming data");
+
+    if (isLeaf() && debug()) {
+        std::cout << pconnector->getRecordName() << ": reading ";
+        if (incomingData.type() == OpcUaType_String)
+            std::cout << "'" << incomingData.toString().toUtf8() << "'";
+        else
+            std::cout << incomingData.toString().toUtf8();
+        std::cout << " (" << variantTypeString(incomingData.type()) << ")"
+                  << " as Int64" << std::endl;
+    }
+
+    if (OpcUa_IsNotGood(incomingData.toInt64(v)))
+        throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    return v;
+}
+
 epicsUInt32
 DataElementUaSdk::readUInt32 () const
 {
@@ -545,6 +568,62 @@ DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
         break;
     case OpcUaType_Int64:
         outgoingData.setInt64(static_cast<OpcUa_Int64>(value));
+        break;
+    case OpcUaType_Float:
+        outgoingData.setFloat(static_cast<OpcUa_Float>(value));
+        break;
+    case OpcUaType_Double:
+        outgoingData.setDouble(static_cast<OpcUa_Double>(value));
+        break;
+    case OpcUaType_String:
+        outgoingData.setString(static_cast<UaString>(std::to_string(value).c_str()));
+        break;
+    default:
+        throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
+    }
+
+    if (isLeaf() && debug())
+        printOutputDebugMessage(pconnector, outgoingData);
+}
+
+void
+DataElementUaSdk::writeInt64 (const epicsInt64 &value)
+{
+    switch (incomingType) {
+    case OpcUaType_Int64:
+        outgoingData.setInt64(value);
+        break;
+    case OpcUaType_Boolean:
+        if (value == 0)
+            outgoingData.setBoolean(false);
+        else
+            outgoingData.setBoolean(true);
+        break;
+    case OpcUaType_Byte:
+        checkRange<epicsInt64, OpcUa_Byte>(value);
+        outgoingData.setByte(static_cast<OpcUa_Byte>(value));
+        break;
+    case OpcUaType_SByte:
+        checkRange<epicsInt64, OpcUa_SByte>(value);
+        outgoingData.setSByte(static_cast<OpcUa_SByte>(value));
+        break;
+    case OpcUaType_UInt16:
+        checkRange<epicsInt64, OpcUa_UInt16>(value);
+        outgoingData.setUInt16(static_cast<OpcUa_UInt16>(value));
+        break;
+    case OpcUaType_Int16:
+        checkRange<epicsInt64, OpcUa_Int16>(value);
+        outgoingData.setInt16(static_cast<OpcUa_Int16>(value));
+        break;
+    case OpcUaType_UInt32:
+        checkRange<epicsInt64, OpcUa_UInt32>(value);
+        outgoingData.setUInt32(static_cast<OpcUa_UInt32>(value));
+        break;
+    case OpcUaType_Int32:
+        outgoingData.setInt32(static_cast<OpcUa_Int32>(value));
+        break;
+    case OpcUaType_UInt64:
+        outgoingData.setUInt64(static_cast<OpcUa_UInt64>(value));
         break;
     case OpcUaType_Float:
         outgoingData.setFloat(static_cast<OpcUa_Float>(value));

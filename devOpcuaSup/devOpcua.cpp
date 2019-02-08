@@ -38,6 +38,10 @@
 #include <dbCommon.h>
 #include <longoutRecord.h>
 #include <longinRecord.h>
+#ifdef DBR_INT64
+#include <int64outRecord.h>
+#include <int64inRecord.h>
+#endif
 #include <mbboDirectRecord.h>
 #include <mbbiDirectRecord.h>
 #include <mbboRecord.h>
@@ -202,6 +206,67 @@ opcua_write_int32_val (REC *prec)
                              static_cast<unsigned int>(prec->val));
             }
             pvt->writeInt32(prec->val);
+            prec->pact = true;
+            pvt->requestOpcuaWrite();
+        }
+        return 0;
+    } CATCH()
+}
+
+template<typename REC>
+long
+opcua_read_int64_val (REC *prec)
+{
+    TRY {
+        Guard G(pvt->lock);
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
+            prec->val = pvt->readInt64();
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL=%lld (%#010x)\n",
+                             prec->name, prec->val,
+                             static_cast<unsigned int>(prec->val));
+            }
+            pvt->checkReadStatus();
+            pvt->clearIncomingData();
+        } else {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        }
+        return 0;
+    } CATCH()
+}
+
+template<typename REC>
+long
+opcua_write_int64_val (REC *prec)
+{
+    TRY {
+        Guard G(pvt->lock);
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
+            prec->val = pvt->readInt64();
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL=%lld (%#010x)\n",
+                             prec->name, prec->val,
+                             static_cast<unsigned int>(prec->val));
+            }
+            prec->udf = false;
+            pvt->checkReadStatus();
+            pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::writeComplete) {
+            pvt->checkWriteStatus();
+        } else {
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write <- VAL=%lld (%#010x)\n",
+                             prec->name, prec->val,
+                             static_cast<unsigned int>(prec->val));
+            }
+            pvt->writeInt64(prec->val);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
@@ -581,4 +646,8 @@ SUP (devSiOpcua,           stringin,  string_val, read)
 SUP (devSoOpcua,          stringout,  string_val, write)
 SUP (devLsiOpcua,               lsi, lstring_val, read)
 SUP (devLsoOpcua,               lso, lstring_val, write)
+#ifdef DBR_INT64
+SUP (devInt64inOpcua,       int64in,   int64_val, read)
+SUP (devInt64outOpcua,     int64out,   int64_val, write)
+#endif
 SUPI(devItemOpcua,        opcuaItem,        item, dummy)

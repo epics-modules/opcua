@@ -123,6 +123,14 @@ public:
     virtual epicsInt32 readInt32() const override;
 
     /**
+     * @brief Read incoming data as Int64. See DevOpcua::DataElement::readInt64
+     *
+     * @return value as epicsInt64
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsInt64 readInt64() const override;
+
+    /**
      * @brief Read incoming data as UInt32. See DevOpcua::DataElement::readUInt32
      *
      * @return value as epicsUInt32
@@ -163,6 +171,15 @@ public:
      * @throws std::runtime_error on conversion error
      */
     virtual void writeInt32(const epicsInt32 &value) override;
+
+    /**
+     * @brief Write outgoing Int64 data. See DevOpcua::DataElement::writeInt64
+     *
+     * @param value  value to write
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeInt64(const epicsInt64 &value) override;
 
     /**
      * @brief Write outgoing UInt32 data. See DevOpcua::DataElement::writeUInt32

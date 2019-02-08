@@ -98,6 +98,15 @@ public:
     virtual epicsInt32 readInt32() const = 0;
 
     /**
+     * @brief Read incoming data as Int64.
+     *
+     * @return value as epicsInt64
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsInt64 readInt64() const = 0;
+
+    /**
      * @brief Read incoming data as UInt32.
      *
      * @return value as epicsUInt32
@@ -142,6 +151,15 @@ public:
      * @throws std::runtime_error on conversion error
      */
     virtual void writeInt32(const epicsInt32 &value) = 0;
+
+    /**
+     * @brief Write outgoing Int64 data.
+     *
+     * @param value  value to write
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeInt64(const epicsInt64 &value) = 0;
 
     /**
      * @brief Write outgoing UInt32 data.

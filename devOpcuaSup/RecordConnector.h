@@ -37,6 +37,8 @@ public:
 
     epicsInt32 readInt32() const { return pdataelement->readInt32(); }
     void writeInt32(const epicsInt32 val) const { pdataelement->writeInt32(val); }
+    epicsInt64 readInt64() const { return pdataelement->readInt64(); }
+    void writeInt64(const epicsInt64 val) const { pdataelement->writeInt64(val); }
     epicsUInt32 readUInt32() const { return pdataelement->readUInt32(); }
     void writeUInt32(const epicsUInt32 val) const { pdataelement->writeUInt32(val); }
     epicsFloat64 readFloat64() const { return pdataelement->readFloat64(); }

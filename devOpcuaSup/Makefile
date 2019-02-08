@@ -27,7 +27,14 @@ LIBRARY_IOC += opcua
 # xxxRecord.h will be created from xxxRecord.dbd
 DBDINC += opcuaItemRecord
 
-DBD_INSTALLS += devOpcua.dbd
+DBD_INSTALLS += $(COMMON_DIR)/devOpcua.dbd
+
+COMMON_ASSEMBLIES += devOpcua.dbd
+
+ifdef BASE_3_16
+devOpcua.dbd_SNIPPETS += ../10_devOpcuaInt64.dbd
+endif
+devOpcua.dbd_SNIPPETS += ../20_devOpcuaAll.dbd
 
 # Generic sources and interfaces
 opcua_SRCS += devOpcua.cpp
