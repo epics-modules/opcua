@@ -12,7 +12,7 @@ implementations of the low level client library.
 
 :warning:
 This module is under development.
-Please contact the author <ralph.lange@gmx.de> for details.
+Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 :warning:
 
 The first (and - at this time - only) supported OPC UA client library is the
@@ -20,24 +20,22 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
 
 ## Prerequisites
 
-* A C++ compiler that supports the C++11 standard.
+*   A C++ compiler that supports the C++11 standard.
 
-* [EPICS Base](https://epics-controls.org/resources-and-support/base/)
-  3.15.5 (and up; EPICS 7 is supported).
+*   [EPICS Base](https://epics-controls.org/resources-and-support/base/)
+    3.15.5 (and up; EPICS 7 is supported).
 
 ### Using the Unified Automation Client SDK
 
-* Unified Automation C++ Based
-  [OPC UA Client SDK](https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html)
-  1.5 (and up; 1.6 is supported).
+*   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk] 1.5
+    (and up; 1.6 is supported).
 
-* For OPC UA security support (authentication/encryption), you need
-  libcrypto on your system - both when compiling the SDK and when generating
-  any binaries (IOCs).
+*   For OPC UA security support (authentication/encryption), you need
+    libcrypto on your system - both when compiling the SDK and when generating
+    any binaries (IOCs).
 
-* For more details, refer to the `README.md` in the
-  [`devOpcuaSup/UaSdk`](https://github.com/ralphlange/opcua/tree/master/devOpcuaSup/UaSdk)
-  directory.
+*   For more details, refer to the `README.md` in the
+    [`devOpcuaSup/UaSdk`][uasdk.dir] directory.
 
 ## Building the module
 
@@ -55,21 +53,21 @@ is documented in the `README.md` file inside the respective subdirectory of
 
 IOC applications that use the module need to
 
-* add an entry to the Device Support module in their `RELEASE.local` file
-* include `opcua.dbd` when building the IOC's DBD file
-* include `opcua` in the support libraries for the IOC binary.
+*   add an entry to the Device Support module in their `RELEASE.local` file
+*   include `opcua.dbd` when building the IOC's DBD file
+*   include `opcua` in the support libraries for the IOC binary.
 
 ## Documentation
 
 Sparse.
 
-The documentation folder contains the
-[Requirements Specification (SRS)](https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf)
-giving an introduction and the list of requirements that should convey a good
-idea of the planned features.
+The documentation folder of the Device Support module contains the
+[Requirements Specification (SRS)][requirements.pdf] giving an introduction
+and the list of requirements that should convey a good idea of the planned
+features.
 
-The [Cheat Sheet](https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf)
-explains the configuration in the startup script and the database links.
+The [Cheat Sheet][cheatsheet.pdf] explains the configuration in the startup
+script and the database links.
 
 ## Feedback / Reporting issues
 
@@ -92,3 +90,9 @@ in file LICENSE that is included with this distribution.
 [badge.version]: https://badge.fury.io/gh/ralphlange%2Fopcua.svg
 [badge.travis]: https://travis-ci.org/ralphlange/opcua.svg?branch=master
 [badge.codacy]: https://api.codacy.com/project/badge/Grade/65b1d28ca5e34a7d853d168f50beaafc
+
+[unified.sdk]: https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html
+
+[uasdk.dir]: https://github.com/ralphlange/opcua/tree/master/devOpcuaSup/UaSdk
+[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
+[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
