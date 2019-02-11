@@ -90,12 +90,10 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , transactionId(0)
 {
     int status = -1;
-    char host[256];
+    char host[256] = { 0 };
 
     status = gethostname(host, sizeof(host));
-    if (status)
-        strncpy(host, "unknown-host", sizeof(host));
-    host[sizeof(host)-1] = '\0';
+    if (status) strcpy(host, "unknown-host");
 
     //TODO: allow overriding by env variable
     connectInfo.sApplicationName = "EPICS IOC";
@@ -108,8 +106,8 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     connectInfo.nMaxOperationsPerServiceCall = batchNodes;
 
     //TODO: init security settings
-    if ((clientCertificate && strlen(clientCertificate))
-            || (clientPrivateKey && strlen(clientPrivateKey)))
+    if ((clientCertificate && (clientCertificate[0] != '\0'))
+            || (clientPrivateKey && (clientPrivateKey[0] != '\0')))
         errlogPrintf("OPC UA security not supported yet\n");
 
     sessions[name] = this;

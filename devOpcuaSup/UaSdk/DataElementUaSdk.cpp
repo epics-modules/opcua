@@ -389,7 +389,7 @@ DataElementUaSdk::readCString (char *value, const size_t num) const
     }
 
     if (num > 0) {
-        strncpy(value, incomingData.toString().toUtf8(), num-1);
+        strncpy(value, incomingData.toString().toUtf8(), num);
         value[num-1] = '\0';
     }
 }
