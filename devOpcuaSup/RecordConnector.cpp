@@ -58,7 +58,7 @@ long reProcess (dbCommon *prec)
         if (dbServerClient(context, sizeof(context))) {
             /* No client, use thread name */
             strncpy(context, epicsThreadGetNameSelf(), sizeof(context));
-            context[sizeof(context) - 1] = 0;
+            context[sizeof(context)-1] = 0;
         }
         printf("%s: Re-process %s\n", context, prec->name);
     }
@@ -108,7 +108,8 @@ void processReadCompleteCallback (CALLBACK *pcallback)
 }
 
 RecordConnector::RecordConnector (dbCommon *prec)
-    : isIoIntrScanned(false)
+    : pitem(nullptr)
+    , isIoIntrScanned(false)
     , reason(ProcessReason::none)
     , prec(prec)
 {
