@@ -89,7 +89,7 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
 {
-    int status = -1;
+    int status;
     char host[256] = { 0 };
 
     status = gethostname(host, sizeof(host));
