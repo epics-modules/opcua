@@ -1,5 +1,7 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
 <a target="_blank" href="https://travis-ci.org/ralphlange/opcua">![Travis status][badge.travis]</a>
+<a target="_blank" href="https://www.codacy.com/app/ralphlange/opcua">![Codacy grade][badge.codacy]</a>
+
 # opcua - EPICS Device Support for OPC UA
 
 [EPICS](https://epics-controls.org) Device Support module for interfacing
@@ -89,3 +91,4 @@ in file LICENSE that is included with this distribution.
 <!-- Links -->
 [badge.version]: https://badge.fury.io/gh/ralphlange%2Fopcua.svg
 [badge.travis]: https://travis-ci.org/ralphlange/opcua.svg?branch=master
+[badge.codacy]: https://api.codacy.com/project/badge/Grade/65b1d28ca5e34a7d853d168f50beaafc
