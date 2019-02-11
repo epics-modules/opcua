@@ -1,5 +1,5 @@
 ---
-name: Bug report
+name: Bug Report
 about: Help improve the module
 
 ---
@@ -20,12 +20,12 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Setup (please complete the following information):**
- - OPCUA Support: [e.g. v0.1]
- - Platform: [e.g. RHEL7.5]
- - EPICS Base: [e.g. 3.15.6]
- - Client library: [e.g. UA SDK 1.5.5]
- - Server: [e.g. S7-1500]
+**Setup (please complete the following information if applicable):**
+- OPCUA Support: \[e.g. v0.1\]
+- Platform: \[e.g. RHEL7.5\]
+- EPICS Base: \[e.g. 3.15.6\]
+- Client library: \[e.g. UA SDK 1.5.5\]
+- Server: \[e.g. S7-1500\]
 
 **Additional context**
 Add any other context about the problem here.
