@@ -69,12 +69,11 @@ static const iocshFuncDef opcuaCreateSessionFuncDef = {"opcuaCreateSession", 4, 
 static
 void opcuaCreateSessionCallFunc (const iocshArgBuf *args)
 {
-    bool ok = true;
-    std::string name;
-    bool autoconnect = true;
-    int debuglevel = 0;
-
     try {
+        bool ok = true;
+        bool autoconnect = true;
+        int debuglevel = 0;
+
         if (args[0].sval == nullptr) {
             errlogPrintf("missing argument #1 (session name)\n");
             ok = false;
@@ -135,10 +134,10 @@ static const iocshFuncDef opcuaSetOptionFuncDef = {"opcuaSetOption", 3, opcuaSet
 static
 void opcuaSetOptionCallFunc (const iocshArgBuf *args)
 {
-    bool ok = true;
-    bool help = false;
-
     try {
+        bool ok = true;
+        bool help = false;
+
         if (args[0].sval == nullptr) {
             errlogPrintf("missing argument #1 (session name)\n");
             ok = false;
@@ -293,13 +292,12 @@ static const iocshFuncDef opcuaCreateSubscriptionFuncDef = {"opcuaCreateSubscrip
 static
 void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
 {
-    bool ok = true;
-    std::string name;
-    int debuglevel = 0;
-    epicsUInt8 priority = 0;
-    double publishingInterval = 0.;
-
     try {
+        bool ok = true;
+        int debuglevel = 0;
+        epicsUInt8 priority = 0;
+        double publishingInterval = 0.;
+
         if (args[0].sval == nullptr) {
             errlogPrintf("missing argument #1 (subscription name)\n");
             ok = false;

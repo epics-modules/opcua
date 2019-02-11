@@ -72,6 +72,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
                                     RecordConnector *pconnector)
     : DataElement(pconnector, name)
     , pitem(item)
+    , mapped(false)
 {}
 
 DataElementUaSdk::DataElementUaSdk (const std::string &name,
@@ -79,6 +80,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
                                     std::weak_ptr<DataElementUaSdk> child)
     : DataElement(name)
     , pitem(item)
+    , mapped(false)
 {
     elements.push_back(child);
 }
@@ -389,7 +391,7 @@ DataElementUaSdk::readCString (char *value, const size_t num) const
     }
 
     if (num > 0) {
-        strncpy(value, incomingData.toString().toUtf8(), num-1);
+        strncpy(value, incomingData.toString().toUtf8(), num);
         value[num-1] = '\0';
     }
 }

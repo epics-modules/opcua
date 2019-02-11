@@ -38,7 +38,6 @@ namespace DevOpcua {
 // See dbProcess() in dbAccess.c
 long reProcess (dbCommon *prec)
 {
-    char context[40] = "";
     long status = 0;
     int *ptrace;
     bool set_trace = false;
@@ -54,11 +53,12 @@ long reProcess (dbCommon *prec)
     }
 
     if (*ptrace) {
+        char context[40] = { 0 };
         /* Identify this thread's client from server layer */
         if (dbServerClient(context, sizeof(context))) {
             /* No client, use thread name */
             strncpy(context, epicsThreadGetNameSelf(), sizeof(context));
-            context[sizeof(context) - 1] = 0;
+            context[sizeof(context)-1] = 0;
         }
         printf("%s: Re-process %s\n", context, prec->name);
     }
@@ -108,7 +108,8 @@ void processReadCompleteCallback (CALLBACK *pcallback)
 }
 
 RecordConnector::RecordConnector (dbCommon *prec)
-    : isIoIntrScanned(false)
+    : pitem(nullptr)
+    , isIoIntrScanned(false)
     , reason(ProcessReason::none)
     , prec(prec)
 {
@@ -124,12 +125,11 @@ RecordConnector::RecordConnector (dbCommon *prec)
 void
 RecordConnector::requestRecordProcessing (const ProcessReason reason)
 {
-    CALLBACK *callback;
-
     if (isIoIntrScanned && reason == ProcessReason::incomingData) {
         this->reason = reason;
         scanIoRequest(ioscanpvt);
     } else {
+        CALLBACK *callback;
         if (reason == ProcessReason::writeComplete)
             callback = &writeCompleteCallback;
         else if (reason == ProcessReason::readComplete)

@@ -28,13 +28,13 @@ The S7-1500 provides all PLC data items in OPC UA namespace 3.
 The example databases use a few static items created in DB1
 (aka `Data_block_1`).
 
-  Name   | Data Type |     OPC UA Node Name
--------- | --------- | -------------------------
-myInt    | Int       | "Data_block_1"."myInt"
-myWord   | Word      | "Data_block_1"."myWord"
-myString | String    | "Data_block_1"."myString"
-myBool   | Bool      | "Data_block_1"."myBool"
-myDouble | Double    | "Data_block_1"."myDouble"
+|   Name   | Data Type |      OPC UA Node Name       |
+| -------- | --------- | --------------------------- |
+| myInt    | Int       | `"Data_block_1"."myInt"`    |
+| myWord   | Word      | `"Data_block_1"."myWord"`   |
+| myString | String    | `"Data_block_1"."myString"` |
+| myBool   | Bool      | `"Data_block_1"."myBool"`   |
+| myDouble | Double    | `"Data_block_1"."myDouble"` |
 
 The double quotes are part of the OPC UA node name and have to be escaped
 inside EPICS database field values.
@@ -48,12 +48,12 @@ The free UaExpert tool from Unified Automation is a good choice.
 ## OPC UA Device Support Documentation
 
 The documentation folder of the Device Support module contains the
-[Requirements Specification (SRS)](https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf)
-giving an introduction and the list of requirements that should convey a good
-idea of the planned features.
+[Requirements Specification (SRS)][requirements.pdf] giving an introduction
+and the list of requirements that should convey a good idea of the planned
+features.
 
-The [Cheat Sheet](https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf)
-explains the configuration in the startup script and the database links.
+The [Cheat Sheet][cheatsheet.pdf] explains the configuration in the startup
+script and the database links.
 
 ## Feedback / Reporting issues
 
@@ -65,3 +65,7 @@ Please use the OPC UA Device Support Module's GitHub
 This example application is part of the OPC UA Device Support module
 that is distributed subject to a Software License Agreement found
 in file LICENSE that is included with its distribution.
+
+<!-- Links -->
+[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
+[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
