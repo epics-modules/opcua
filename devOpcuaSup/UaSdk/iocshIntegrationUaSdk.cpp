@@ -139,13 +139,12 @@ static const iocshFuncDef opcuaCreateSubscriptionFuncDef = {"opcuaCreateSubscrip
 static
 void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
 {
-    bool ok = true;
-    std::string name;
-    int debuglevel = 0;
-    epicsUInt8 priority = 0;
-    double publishingInterval = 0.;
-
     try {
+        bool ok = true;
+        int debuglevel = 0;
+        double publishingInterval = 0.;
+        epicsUInt8 priority = 0;
+
         if (args[0].sval == nullptr) {
             errlogPrintf("missing argument #1 (subscription name)\n");
             ok = false;

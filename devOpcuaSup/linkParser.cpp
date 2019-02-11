@@ -118,7 +118,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
     if (debug > 4)
         std::cerr << prec->name << " parsing inp/out link '" << linkstr << "'" << std::endl;
 
-    size_t sep, seq, send;
+    size_t sep, send;
 
     // first token: session or subscription or itemRecord name
     send = linkstr.find_first_of("; \t", 0);
@@ -155,7 +155,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
     // everything else is "key=value ..." options
     while (sep < linkstr.size()) {
         send = linkstr.find_first_of("; \t", sep);
-        seq = linkstr.find_first_of('=', sep);
+        size_t seq = linkstr.find_first_of('=', sep);
 
         // allow escaping separators
         while (linkstr[send-1] == '\\') {
