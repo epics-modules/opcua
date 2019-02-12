@@ -23,6 +23,7 @@
 
 #include <uadatetime.h>
 #include <uaextensionobject.h>
+#include <uaarraytemplates.h>
 #include <opcua_builtintypes.h>
 
 #include <errlog.h>
@@ -282,11 +283,10 @@ DataElementUaSdk::readTimeStamp (bool server) const
     return *ts;
 }
 
-epicsInt32
-DataElementUaSdk::readInt32 () const
-{
-    OpcUa_Int32 v;
 
+void
+DataElementUaSdk::checkScalar (const std::string &name) const
+{
     if (incomingData.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
 
@@ -297,9 +297,37 @@ DataElementUaSdk::readInt32 () const
         else
             std::cout << incomingData.toString().toUtf8();
         std::cout << " (" << variantTypeString(incomingData.type()) << ")"
-                  << " as Int32" << std::endl;
+                  << " as " << name << std::endl;
     }
+}
 
+void
+DataElementUaSdk::checkReadArray (OpcUa_BuiltInType expectedType,
+                                  const epicsUInt32 num,
+                                  const std::string &name) const
+{
+    if (incomingData.isEmpty())
+        throw std::runtime_error(SB() << "no incoming data");
+    if (!incomingData.isArray())
+        throw std::runtime_error(SB() << "incoming data is not an array");
+    if (incomingType != expectedType)
+        throw std::runtime_error(SB() << "incoming array data type ("
+                                 << variantTypeString(incomingData.type()) << ")"
+                                 << " does not match EPICS array type (" << name << ")");
+    if (isLeaf() && debug()) {
+        std::cout << pconnector->getRecordName() << ": reading"
+                  << " array of " << variantTypeString(incomingData.type())
+                  << "[" << incomingData.arraySize() << "]"
+                  << " into " << name << "[" << num << "]" << std::endl;
+    }
+}
+
+epicsInt32
+DataElementUaSdk::readInt32 () const
+{
+    checkScalar("Int32");
+
+    OpcUa_Int32 v;
     if (OpcUa_IsNotGood(incomingData.toInt32(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
     return v;
@@ -308,21 +336,9 @@ DataElementUaSdk::readInt32 () const
 epicsInt64
 DataElementUaSdk::readInt64 () const
 {
+    checkScalar("Int64");
+
     OpcUa_Int64 v;
-
-    if (incomingData.isEmpty())
-        throw std::runtime_error(SB() << "no incoming data");
-
-    if (isLeaf() && debug()) {
-        std::cout << pconnector->getRecordName() << ": reading ";
-        if (incomingData.type() == OpcUaType_String)
-            std::cout << "'" << incomingData.toString().toUtf8() << "'";
-        else
-            std::cout << incomingData.toString().toUtf8();
-        std::cout << " (" << variantTypeString(incomingData.type()) << ")"
-                  << " as Int64" << std::endl;
-    }
-
     if (OpcUa_IsNotGood(incomingData.toInt64(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
     return v;
@@ -331,21 +347,9 @@ DataElementUaSdk::readInt64 () const
 epicsUInt32
 DataElementUaSdk::readUInt32 () const
 {
+    checkScalar("UInt32");
+
     OpcUa_UInt32 v;
-
-    if (incomingData.isEmpty())
-        throw std::runtime_error(SB() << "no incoming data");
-
-    if (isLeaf() && debug()) {
-        std::cout << pconnector->getRecordName() << ": reading ";
-        if (incomingData.type() == OpcUaType_String)
-            std::cout << "'" << incomingData.toString().toUtf8() << "'";
-        else
-            std::cout << incomingData.toString().toUtf8();
-        std::cout << " (" << variantTypeString(incomingData.type()) << ")"
-                  << " as UInt32" << std::endl;
-    }
-
     if (OpcUa_IsNotGood(incomingData.toUInt32(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
     return v;
@@ -354,21 +358,9 @@ DataElementUaSdk::readUInt32 () const
 epicsFloat64
 DataElementUaSdk::readFloat64 () const
 {
+    checkScalar("Float64");
+
     OpcUa_Double v;
-
-    if (incomingData.isEmpty())
-        throw std::runtime_error(SB() << "no incoming data");
-
-    if (isLeaf() && debug()) {
-        std::cout << pconnector->getRecordName() << ": reading ";
-        if (incomingData.type() == OpcUaType_String)
-            std::cout << "'" << incomingData.toString().toUtf8() << "'";
-        else
-            std::cout << incomingData.toString().toUtf8();
-        std::cout << " (" << variantTypeString(incomingData.type()) << ")"
-                  << " as Float64" << std::endl;
-    }
-
     if (OpcUa_IsNotGood(incomingData.toDouble(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
     return v;
@@ -394,6 +386,152 @@ DataElementUaSdk::readCString (char *value, const size_t num) const
         strncpy(value, incomingData.toString().toUtf8(), num);
         value[num-1] = '\0';
     }
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayInt8 (epicsInt8 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_SByte, num, "epicsInt8");
+
+    UaSByteArray arr;
+    incomingData.toSByteArray(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsInt8) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayUInt8 (epicsUInt8 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_Byte, num, "epicsUInt8");
+
+    UaByteArray arr;
+    incomingData.toByteArray(arr);
+    epicsUInt32 no_elems = static_cast<epicsUInt32>(arr.size());
+    if (num < no_elems) no_elems = num;
+    memcpy(value, arr.data(), sizeof(epicsUInt8) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayInt16 (epicsInt16 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_Int16, num, "epicsInt16");
+
+    UaInt16Array arr;
+    incomingData.toInt16Array(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsInt16) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayUInt16 (epicsUInt16 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_UInt16, num, "epicsUInt16");
+
+    UaUInt16Array arr;
+    incomingData.toUInt16Array(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsUInt16) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayInt32 (epicsInt32 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_Int32, num, "epicsInt32");
+
+    UaInt32Array arr;
+    incomingData.toInt32Array(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsInt32) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayUInt32 (epicsUInt32 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_UInt32, num, "epicsUInt32");
+
+    UaUInt32Array arr;
+    incomingData.toUInt32Array(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsUInt32) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayInt64 (epicsInt64 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_Int64, num, "epicsInt64");
+
+    UaInt64Array arr;
+    incomingData.toInt64Array(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsInt64) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayUInt64 (epicsUInt64 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_UInt64, num, "epicsUInt64");
+
+    UaUInt64Array arr;
+    incomingData.toUInt64Array(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsUInt64) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayFloat32 (epicsFloat32 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_Float, num, "epicsFloat32");
+
+    UaFloatArray arr;
+    incomingData.toFloatArray(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsFloat32) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayFloat64 (epicsFloat64 *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_Double, num, "epicsFloat64");
+
+    UaDoubleArray arr;
+    incomingData.toDoubleArray(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    memcpy(value, arr.rawData(), sizeof(epicsFloat64) * no_elems);
+
+    return no_elems;
+}
+
+epicsUInt32
+DataElementUaSdk::readArrayOldString (epicsOldString *value, epicsUInt32 num) const
+{
+    checkReadArray(OpcUaType_String, num, "epicsOldString");
+
+    UaStringArray arr;
+    incomingData.toStringArray(arr);
+    epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
+    for (epicsUInt32 i = 0; i < num; i++) {
+        strncpy(value[i], UaString(arr[i]).toUtf8(), MAX_STRING_SIZE);
+    }
+
+    return no_elems;
 }
 
 bool

@@ -45,6 +45,17 @@ public:
     void writeFloat64(const epicsFloat64 val) const { pdataelement->writeFloat64(val); }
     void readCString(char *val, const size_t num) const { pdataelement->readCString(val, num); }
     void writeCString(const char *val, const size_t num) const { pdataelement->writeCString(val, num); }
+    epicsUInt32 readArrayInt8(epicsInt8 *val, epicsUInt32 num) { return pdataelement->readArrayInt8(val, num); }
+    epicsUInt32 readArrayUInt8(epicsUInt8 *val, epicsUInt32 num) { return pdataelement->readArrayUInt8(val, num); }
+    epicsUInt32 readArrayInt16(epicsInt16 *val, epicsUInt32 num) { return pdataelement->readArrayInt16(val, num); }
+    epicsUInt32 readArrayUInt16(epicsUInt16 *val, epicsUInt32 num) { return pdataelement->readArrayUInt16(val, num); }
+    epicsUInt32 readArrayInt32(epicsInt32 *val, epicsUInt32 num) { return pdataelement->readArrayInt32(val, num); }
+    epicsUInt32 readArrayUInt32(epicsUInt32 *val, epicsUInt32 num) { return pdataelement->readArrayUInt32(val, num); }
+    epicsUInt32 readArrayInt64(epicsInt64 *val, epicsUInt32 num) { return pdataelement->readArrayInt64(val, num); }
+    epicsUInt32 readArrayUInt64(epicsUInt64 *val, epicsUInt32 num) { return pdataelement->readArrayUInt64(val, num); }
+    epicsUInt32 readArrayFloat32(epicsFloat32 *val, epicsUInt32 num) { return pdataelement->readArrayFloat32(val, num); }
+    epicsUInt32 readArrayFloat64(epicsFloat64 *val, epicsUInt32 num) { return pdataelement->readArrayFloat64(val, num); }
+    epicsUInt32 readArrayOldString(epicsOldString *val, epicsUInt32 num) { return pdataelement->readArrayOldString(val, num); }
 
     void clearIncomingData() { pdataelement->clearIncomingData(); }
     void checkWriteStatus() const;
