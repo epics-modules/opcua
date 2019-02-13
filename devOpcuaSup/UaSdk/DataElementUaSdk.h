@@ -445,11 +445,11 @@ public:
     int debug() const { return (isLeaf() ? pconnector->debug() : pitem->debug()); }
 
 private:
-    static void printOutputDebugMessage(const RecordConnector *pconnector,
-                                        const UaVariant &tempValue);
+    void logWriteScalar () const;
     void checkScalar(const std::string &type) const;
     void checkReadArray(OpcUa_BuiltInType expectedType, const epicsUInt32 num, const std::string &name) const;
     void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &name) const;
+    void logWriteArray(const epicsUInt32 num, const std::string &name) const;
 
     ItemUaSdk *pitem;                                       /**< corresponding item */
     std::vector<std::weak_ptr<DataElementUaSdk>> elements;  /**< children (if node) */

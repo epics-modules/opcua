@@ -603,19 +603,17 @@ void checkRange<epicsUInt32, OpcUa_Int32> (const epicsUInt32 &value) {
         throw std::runtime_error(SB() << "outgoing data out-of-bounds");
 }
 
+inline
 void
-DataElementUaSdk::printOutputDebugMessage (const RecordConnector *pconnector,
-                                           const UaVariant &tempValue)
+DataElementUaSdk::logWriteScalar () const
 {
-    if (pconnector) {
-        std::cout << pconnector->getRecordName()
-                  << ": set outgoing data ("
-                  << variantTypeString(tempValue.type())
-                  << ") to value ";
-        if (tempValue.type() == OpcUaType_String)
-            std::cout << "'" << tempValue.toString().toUtf8() << "'";
+    if (isLeaf() && pconnector && debug()) {
+        std::cout << pconnector->getRecordName() << ": set outgoing data ("
+                  << variantTypeString(outgoingData.type()) << ") to value ";
+        if (outgoingData.type() == OpcUaType_String)
+            std::cout << "'" << outgoingData.toString().toUtf8() << "'";
         else
-            std::cout << tempValue.toString().toUtf8();
+            std::cout << outgoingData.toString().toUtf8();
         std::cout << std::endl;
     }
 }
@@ -672,8 +670,7 @@ DataElementUaSdk::writeInt32 (const epicsInt32 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug())
-        printOutputDebugMessage(pconnector, outgoingData);
+    logWriteScalar();
 }
 
 void
@@ -728,8 +725,7 @@ DataElementUaSdk::writeUInt32 (const epicsUInt32 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug())
-        printOutputDebugMessage(pconnector, outgoingData);
+    logWriteScalar();
 }
 
 void
@@ -784,8 +780,7 @@ DataElementUaSdk::writeInt64 (const epicsInt64 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug())
-        printOutputDebugMessage(pconnector, outgoingData);
+    logWriteScalar();
 }
 
 void
@@ -844,8 +839,7 @@ DataElementUaSdk::writeFloat64 (const epicsFloat64 &value)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug())
-        printOutputDebugMessage(pconnector, outgoingData);
+    logWriteScalar();
 }
 
 void
@@ -918,8 +912,7 @@ DataElementUaSdk::writeCString(const char *value, const size_t num)
         throw std::runtime_error(SB() << "unsupported conversion for outgoing data");
     }
 
-    if (isLeaf() && debug())
-        printOutputDebugMessage(pconnector, outgoingData);
+    logWriteScalar();
 }
 
 void
@@ -928,12 +921,20 @@ DataElementUaSdk::checkWriteArray (OpcUa_BuiltInType expectedType, const std::st
     if (!incomingIsArray)
         throw std::runtime_error(SB() << "OPC UA data is not an array");
     if (incomingType != expectedType)
-        throw std::runtime_error(SB() << "OPC UA array data type (" << variantTypeString(incomingData.type()) << ")"
-                                 << " does not match EPICS array type (" << name << ")");
+        throw std::runtime_error(SB() << "OPC UA array data type (" << variantTypeString(incomingType) << ")"
+                                 << " does not match expected type (" << variantTypeString(expectedType) << ")"
+                                 << " for EPICS array type (" << name << ")");
+}
+
+inline
+void
+DataElementUaSdk::logWriteArray (const epicsUInt32 num, const std::string &name) const
+{
     if (isLeaf() && debug()) {
-        std::cout << pconnector->getRecordName() << ": writing"
-                  << " array of " << incomingData.arraySize() << " (" << name << ")"
-                  << " as " << variantTypeString(incomingData.type()) << std::endl;
+        std::cout << pconnector->getRecordName() << ": writing array of "
+                  << name << "[" << num << "] as "
+                  << variantTypeString(outgoingData.type()) << "["<< outgoingData.arraySize() << "]"
+                  << std::endl;
     }
 }
 
@@ -943,73 +944,93 @@ DataElementUaSdk::checkWriteArray (OpcUa_BuiltInType expectedType, const std::st
 void
 DataElementUaSdk::writeArrayInt8 (const epicsInt8 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_SByte, "epicsInt8");
+    const std::string etype = "epicsInt8";
+    checkWriteArray(OpcUaType_SByte, etype);
 
     OpcUa_SByte *val = const_cast<OpcUa_SByte *>(reinterpret_cast<const OpcUa_SByte *>(value));
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
     UaSByteArray arr(size, val);
     outgoingData.setSByteArray(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayUInt8 (const epicsUInt8 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_Byte, "epicsUInt8");
+    const std::string etype = "epicsUInt8";
+    checkWriteArray(OpcUaType_Byte, etype);
 
     const char *val = reinterpret_cast<const char *>(value);
     int size = static_cast<int>(num);
     UaByteArray arr(val, size);
     outgoingData.setByteArray(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayInt16 (const epicsInt16 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_Int16, "epicsInt16");
+    const std::string etype = "epicsInt16";
+    checkWriteArray(OpcUaType_Int16, etype);
 
     OpcUa_Int16 *val = const_cast<OpcUa_Int16 *>(value);
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
     UaInt16Array arr(size, val);
     outgoingData.setInt16Array(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayUInt16 (const epicsUInt16 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_UInt16, "epicsUInt16");
+    const std::string etype = "epicsUInt16";
+    checkWriteArray(OpcUaType_UInt16, etype);
 
     OpcUa_UInt16 *val = const_cast<OpcUa_UInt16 *>(value);
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
     UaUInt16Array arr(size, val);
     outgoingData.setUInt16Array(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayInt32 (const epicsInt32 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_Int32, "epicsInt32");
+    const std::string etype = "epicsInt32";
+    checkWriteArray(OpcUaType_Int32, etype);
 
     OpcUa_Int32 *val = const_cast<OpcUa_Int32 *>(reinterpret_cast<const OpcUa_Int32 *>(value));
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
     UaInt32Array arr(size, val);
     outgoingData.setInt32Array(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayUInt32 (const epicsUInt32 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_UInt32, "epicsUInt32");
+    const std::string etype = "epicsUInt32";
+    checkWriteArray(OpcUaType_UInt32, etype);
 
     OpcUa_UInt32 *val = const_cast<OpcUa_UInt32 *>(reinterpret_cast<const OpcUa_UInt32 *>(value));
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
     UaUInt32Array arr(size, val);
     outgoingData.setUInt32Array(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayInt64 (const epicsInt64 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_Int64, "epicsInt64");
+    const std::string etype = "epicsInt64";
+
+    checkWriteArray(OpcUaType_Int64, etype);
 
     OpcUa_Int64 *val = const_cast<OpcUa_Int64 *>(reinterpret_cast<const OpcUa_Int64 *>(value));
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
@@ -1020,40 +1041,50 @@ DataElementUaSdk::writeArrayInt64 (const epicsInt64 *value, const epicsUInt32 nu
 void
 DataElementUaSdk::writeArrayUInt64 (const epicsUInt64 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_UInt64, "epicsUInt64");
+    const std::string etype = "epicsUInt64";
+    checkWriteArray(OpcUaType_UInt64, etype);
 
     OpcUa_UInt64 *val = const_cast<OpcUa_UInt64 *>(reinterpret_cast<const OpcUa_UInt64 *>(value));
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
     UaUInt64Array arr(size, val);
     outgoingData.setUInt64Array(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayFloat32 (const epicsFloat32 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_Float, "epicsFloat32");
+    const std::string etype = "epicsFloat32";
+    checkWriteArray(OpcUaType_Float, etype);
 
     OpcUa_Float *val = const_cast<OpcUa_Float *>(value);
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
     UaFloatArray arr(size, val);
     outgoingData.setFloatArray(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayFloat64 (const epicsFloat64 *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_Double, "epicsFloat64");
+    const std::string etype = "epicsFloat64";
+    checkWriteArray(OpcUaType_Double, etype);
 
     OpcUa_Double *val = const_cast<OpcUa_Double *>(value);
     OpcUa_Int32 size = static_cast<OpcUa_Int32>(num);
     UaDoubleArray arr(size, val);
     outgoingData.setDoubleArray(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
 DataElementUaSdk::writeArrayOldString (const epicsOldString *value, const epicsUInt32 num)
 {
-    checkWriteArray(OpcUaType_String, "epicsOldString");
+    const std::string etype = "epicsOldString";
+    checkWriteArray(OpcUaType_String, etype);
 
     UaStringArray arr;
     arr.create(static_cast<OpcUa_UInt32>(num));
@@ -1070,6 +1101,8 @@ DataElementUaSdk::writeArrayOldString (const epicsOldString *value, const epicsU
         UaString(pval).copyTo(&arr[i]);
     }
     outgoingData.setStringArray(arr, OpcUa_True);
+
+    logWriteArray(num, etype);
 }
 
 void
