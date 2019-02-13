@@ -24,6 +24,7 @@
 #include <epicsTime.h>
 #include <dbAccess.h>
 #include <dbStaticLib.h>
+#include <dbEvent.h>
 #include <iocsh.h>
 #include <errlog.h>
 #include <dbScan.h>
@@ -33,6 +34,7 @@
 #include <recGbl.h>
 #include <cvtTable.h>
 #include <menuConvert.h>
+#include <menuFtype.h>
 #include <alarm.h>
 
 #include <dbCommon.h>
@@ -55,6 +57,7 @@
 #include <lsoRecord.h>
 #include <lsiRecord.h>
 #include <waveformRecord.h>
+#include <aaiRecord.h>
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
 #include "opcuaItemRecord.h"
@@ -618,6 +621,77 @@ opcua_write_lstring_val (REC *prec)
     } CATCH()
 }
 
+// waveform to/from VAL
+
+template<typename REC>
+long
+opcua_read_array (REC *prec)
+{
+    TRY {
+        Guard G(pvt->lock);
+        epicsUInt32 nord = prec->nord;
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
+            switch (prec->ftvl) {
+            case menuFtypeSTRING:
+                prec->nord = pvt->readArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeCHAR:
+                prec->nord = pvt->readArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeUCHAR:
+                prec->nord = pvt->readArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeSHORT:
+                prec->nord = pvt->readArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeUSHORT:
+                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeLONG:
+                prec->nord = pvt->readArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeULONG:
+                prec->nord = pvt->readArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm);
+                break;
+#ifdef DBR_INT64
+            case menuFtypeINT64:
+                prec->nord = pvt->readArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeUINT64:
+                prec->nord = pvt->readArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm);
+                break;
+#endif
+            case menuFtypeFLOAT:
+                prec->nord = pvt->readArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeDOUBLE:
+                prec->nord = pvt->readArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeENUM:
+                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm);
+                break;
+            }
+            if (nord != prec->nord)
+                db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
+
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> %d array elements read\n",
+                             prec->name, prec->nord);
+            }
+            prec->udf = false;
+            pvt->checkReadStatus();
+            pvt->clearIncomingData();
+        } else {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        }
+        return 0;
+    } CATCH()
+}
+
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
@@ -646,6 +720,8 @@ SUP (devSiOpcua,           stringin,  string_val, read)
 SUP (devSoOpcua,          stringout,  string_val, write)
 SUP (devLsiOpcua,               lsi, lstring_val, read)
 SUP (devLsoOpcua,               lso, lstring_val, write)
+SUP (devWfOpcua,           waveform,       array, read)
+SUP (devAaiOpcua,               aai,       array, read)
 #ifdef DBR_INT64
 SUP (devInt64inOpcua,       int64in,   int64_val, read)
 SUP (devInt64outOpcua,     int64out,   int64_val, write)
