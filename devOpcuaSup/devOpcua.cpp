@@ -58,6 +58,7 @@
 #include <lsiRecord.h>
 #include <waveformRecord.h>
 #include <aaiRecord.h>
+#include <aaoRecord.h>
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
 #include "opcuaItemRecord.h"
@@ -692,6 +693,121 @@ opcua_read_array (REC *prec)
     } CATCH()
 }
 
+template<typename REC>
+long
+opcua_write_array (REC *prec)
+{
+    TRY {
+        Guard G(pvt->lock);
+        epicsUInt32 nord = prec->nord;
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
+            switch (prec->ftvl) {
+            case menuFtypeSTRING:
+                prec->nord = pvt->readArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeCHAR:
+                prec->nord = pvt->readArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeUCHAR:
+                prec->nord = pvt->readArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeSHORT:
+                prec->nord = pvt->readArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeUSHORT:
+                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeLONG:
+                prec->nord = pvt->readArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeULONG:
+                prec->nord = pvt->readArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm);
+                break;
+#ifdef DBR_INT64
+            case menuFtypeINT64:
+                prec->nord = pvt->readArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeUINT64:
+                prec->nord = pvt->readArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm);
+                break;
+#endif
+            case menuFtypeFLOAT:
+                prec->nord = pvt->readArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeDOUBLE:
+                prec->nord = pvt->readArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm);
+                break;
+            case menuFtypeENUM:
+                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm);
+                break;
+            }
+            if (nord != prec->nord)
+                db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
+
+            if (prec->tse == epicsTimeEventDeviceTime)
+                prec->time = pvt->readTimeStamp();
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> %d array elements\n",
+                             prec->name, prec->nord);
+            }
+            prec->udf = false;
+            pvt->checkReadStatus();
+            pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::writeComplete) {
+            pvt->checkWriteStatus();
+        } else {
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write <- %d array elements\n",
+                             prec->name, prec->nord);
+            }
+            switch (prec->ftvl) {
+            case menuFtypeSTRING:
+                pvt->writeArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeCHAR:
+                pvt->writeArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeUCHAR:
+                pvt->writeArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeSHORT:
+                pvt->writeArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeUSHORT:
+                pvt->writeArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeLONG:
+                pvt->writeArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeULONG:
+                pvt->writeArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nord);
+                break;
+#ifdef DBR_INT64
+            case menuFtypeINT64:
+                pvt->writeArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeUINT64:
+                pvt->writeArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nord);
+                break;
+#endif
+            case menuFtypeFLOAT:
+                pvt->writeArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeDOUBLE:
+                pvt->writeArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeENUM:
+                pvt->writeArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
+                break;
+            }
+            prec->pact = true;
+            pvt->requestOpcuaWrite();
+        }
+        return 0;
+    } CATCH()
+}
+
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
@@ -722,6 +838,7 @@ SUP (devLsiOpcua,               lsi, lstring_val, read)
 SUP (devLsoOpcua,               lso, lstring_val, write)
 SUP (devWfOpcua,           waveform,       array, read)
 SUP (devAaiOpcua,               aai,       array, read)
+SUP (devAaoOpcua,               aao,       array, write)
 #ifdef DBR_INT64
 SUP (devInt64inOpcua,       int64in,   int64_val, read)
 SUP (devInt64outOpcua,     int64out,   int64_val, write)
