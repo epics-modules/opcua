@@ -157,6 +157,84 @@ public:
     virtual void readCString(char *value, const size_t num) const override;
 
     /**
+     * @brief Read incoming data as array of Int8. See DevOpcua::DataElement::readArrayInt8
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of UInt8. See DevOpcua::DataElement::readArrayUInt8
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of Int16. See DevOpcua::DataElement::readArrayInt16
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of UInt16. See DevOpcua::DataElement::readArrayUInt16
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of Int32. See DevOpcua::DataElement::readArrayInt32
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of UInt32. See DevOpcua::DataElement::readArrayUInt32
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of Int64. See DevOpcua::DataElement::readArrayInt64
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of UInt64. See DevOpcua::DataElement::readArrayUInt64
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of Float32. See DevOpcua::DataElement::readArrayFloat32
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of Float64. See DevOpcua::DataElement::readArrayFloat64
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num) const override;
+
+    /**
+     * @brief Read incoming data as array of EPICS Old String (fixed size).
+     * See DevOpcua::DataElement::readArrayEpicsOldString
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num) const override;
+
+    /**
      * @brief Check status of last read service. See DevOpcua::DataElement::readWasOk
      *
      * @return true = last read service ok
@@ -210,6 +288,126 @@ public:
     virtual void writeCString(const char *value, const size_t num) override;
 
     /**
+     * @brief Write outgoing array of Int8 data.
+     * See DevOpcua::DataElement::writeArrayInt8
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayInt8(const epicsInt8 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of UInt8 data.
+     * See DevOpcua::DataElement::writeArrayUInt8
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayUInt8(const epicsUInt8 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of Int16 data.
+     * See DevOpcua::DataElement::writeArrayInt16
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayInt16(const epicsInt16 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of UInt16 data.
+     * See DevOpcua::DataElement::writeArrayUInt16
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayUInt16(const epicsUInt16 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of Int32 data.
+     * See DevOpcua::DataElement::writeArrayInt32
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayInt32(const epicsInt32 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of UInt32 data.
+     * See DevOpcua::DataElement::writeArrayUInt32
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayUInt32(const epicsUInt32 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of Int64 data.
+     * See DevOpcua::DataElement::writeArrayInt64
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayInt64(const epicsInt64 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of UInt64 data.
+     * See DevOpcua::DataElement::writeArrayUInt64
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayUInt64(const epicsUInt64 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of Float32 data.
+     * See DevOpcua::DataElement::writeArrayFloat32
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayFloat32(const epicsFloat32 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of Float64 data.
+     * See DevOpcua::DataElement::writeArrayFloat64
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayFloat64(const epicsFloat64 *value, const epicsUInt32 num) override;
+
+    /**
+     * @brief Write outgoing array of OldString (40 char fixed size) data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayOldString(const epicsOldString *value, const epicsUInt32 num) override;
+
+    /**
      * @brief Check status of last write service. See DevOpcua::DataElement::writeOk
      *
      * @return true = last write service ok
@@ -247,8 +445,11 @@ public:
     int debug() const { return (isLeaf() ? pconnector->debug() : pitem->debug()); }
 
 private:
-    static void printOutputDebugMessage(const RecordConnector *pconnector,
-                                        const UaVariant &tempValue);
+    void logWriteScalar () const;
+    void checkScalar(const std::string &type) const;
+    void checkReadArray(OpcUa_BuiltInType expectedType, const epicsUInt32 num, const std::string &name) const;
+    void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &name) const;
+    void logWriteArray(const epicsUInt32 num, const std::string &name) const;
 
     ItemUaSdk *pitem;                                       /**< corresponding item */
     std::vector<std::weak_ptr<DataElementUaSdk>> elements;  /**< children (if node) */
@@ -259,6 +460,7 @@ private:
     bool mapped;                     /**< child name to index mapping done */
     UaVariant incomingData;          /**< incoming value */
     OpcUa_BuiltInType incomingType;  /**< type of incoming data */
+    bool incomingIsArray;            /**< array property of incoming data */
     UaVariant outgoingData;          /**< outgoing value */
 };
 

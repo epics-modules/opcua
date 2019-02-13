@@ -137,6 +137,127 @@ public:
     virtual void readCString(char *value, const size_t num) const = 0;
 
     /**
+     * @brief Read incoming data as array of Int8.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of UInt8.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of Int16.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of UInt16.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of Int32.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of UInt32.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of Int64.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of UInt64.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of Float32.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of Float64.
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num) const = 0;
+
+    /**
+     * @brief Read incoming data as array of EPICS Old String (fixed size).
+     *
+     * @param value  pointer to target array
+     * @param num  target array size
+     * @return  number of elements written
+     *
+     * @throws std::runtime_error if no data present or on conversion error
+     */
+    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num) const = 0;
+
+    /**
      * @brief Check status of last read service.
      *
      * @return true = last read service ok
@@ -188,6 +309,116 @@ public:
      * @throws std::runtime_error on conversion error
      */
     virtual void writeCString(const char *value, const size_t num) = 0;
+
+    /**
+     * @brief Write outgoing array of Int8 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayInt8(const epicsInt8 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of UInt8 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayUInt8(const epicsUInt8 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of Int16 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayInt16(const epicsInt16 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of UInt16 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayUInt16(const epicsUInt16 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of Int32 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayInt32(const epicsInt32 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of UInt32 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayUInt32(const epicsUInt32 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of Int64 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayInt64(const epicsInt64 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of UInt64 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayUInt64(const epicsUInt64 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of Float32 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayFloat32(const epicsFloat32 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of Float64 data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayFloat64(const epicsFloat64 *value, const epicsUInt32 num) = 0;
+
+    /**
+     * @brief Write outgoing array of OldString (40 char fixed size) data.
+     *
+     * @param value  pointer to source array
+     * @param num  source array size
+     *
+     * @throws std::runtime_error on conversion error
+     */
+    virtual void writeArrayOldString(const epicsOldString *value, const epicsUInt32 num) = 0;
 
     /**
      * @brief Check status of last write service.
