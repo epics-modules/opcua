@@ -173,7 +173,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
             std::cerr << prec->name << " opt '" << optname << "'='" << optval << "'" << std::endl;
         }
 
-        // Item related options
+        // Item/node related options
         if (pinfo->linkedToItem) {
             if (optname == "ns") {
                 if (epicsParseUInt16(optval.c_str(), &pinfo->namespaceIndex, 0, nullptr))
@@ -198,6 +198,18 @@ parseLink(dbCommon *prec, DBEntry &ent)
                     pinfo->discardOldest = true;
                 else
                     throw std::runtime_error(SB() << "illegal value '" << optval << "'");
+            } else if (optname == "register") {
+                if (optval.length() > 0) {
+                    char c = optval[0];
+                    if (strchr("YyTt1", c))
+                        pinfo->registerNode = true;
+                    else if (strchr("NnFf0", c))
+                        pinfo->registerNode = false;
+                    else
+                        throw std::runtime_error(SB() << "illegal value '" << optval << "'");
+                } else {
+                    throw std::runtime_error(SB() << "no value for option '" << optname << "'");
+                }
             }
         }
         // Record/data element related options

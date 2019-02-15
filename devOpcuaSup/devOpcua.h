@@ -48,6 +48,8 @@ typedef struct linkInfo {
     epicsUInt32 identifierNumber;
     std::string identifierString;
 
+    bool registerNode = false;
+
     double samplingInterval;
     epicsUInt32 queueSize;
     bool discardOldest = true;
