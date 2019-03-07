@@ -363,6 +363,54 @@ SessionUaSdk::addAllMonitoredItems ()
 }
 
 void
+SessionUaSdk::registerNodes ()
+{
+    UaStatus          status;
+    UaNodeIdArray     nodesToRegister;
+    UaNodeIdArray     registeredNodes;
+    ServiceSettings   serviceSettings;
+
+    nodesToRegister.create(static_cast<OpcUa_UInt32>(items.size()));
+    OpcUa_UInt32 i = 0;
+    for (auto &it : items) {
+        if (it->linkinfo.registerNode) {
+            it->getNodeId().copyTo(&nodesToRegister[i]);
+            i++;
+        }
+    }
+    nodesToRegister.resize(i);
+    registeredItemsNo = i;
+
+    status = puasession->registerNodes(serviceSettings,     // Use default settings
+                                       nodesToRegister,     // Array of nodeIds to register
+                                       registeredNodes);    // Returns an array of registered nodeIds
+
+    if (status.isBad()) {
+        errlogPrintf("OPC UA session %s: (registerNodes) registerNodes service failed with status %s\n",
+                     name.c_str(), status.toString().toUtf8());
+    } else {
+        if (debug)
+            std::cout << "OPC UA session " << name.c_str()
+                      << ": (registerNodes) registerNodes service ok"
+                      << " (" << registeredNodes.length() << " nodes registered)" << std::endl;
+        i = 0;
+        for (auto &it : items) {
+            if (it->linkinfo.registerNode) {
+                it->setNodeId(registeredNodes[i]);
+                i++;
+            }
+        }
+    }
+}
+
+void
+SessionUaSdk::rebuildNodeIds ()
+{
+    for (auto &it : items)
+        it->rebuildNodeId();
+}
+
+void
 SessionUaSdk::show (const int level) const
 {
     std::cout << "session="      << name
@@ -446,7 +494,7 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::Connected:
         readAllNodes();
         if (serverConnectionStatus == UaClient::Disconnected) {
-            // TODO: register nodes
+            registerNodes();
             createAllSubscriptions();
             addAllMonitoredItems();
         }
@@ -457,7 +505,7 @@ void SessionUaSdk::connectionStatusChanged (
         // This requires to redo register nodes for the new session
         // or to read the namespace array."
     case UaClient::NewSessionCreated:
-        // TODO: register nodes
+        registerNodes();
         createAllSubscriptions();
         addAllMonitoredItems();
         break;

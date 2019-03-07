@@ -230,6 +230,16 @@ public:
             const UaDiagnosticInfos &diagnosticInfos) override;
 
 private:
+    /**
+     * @brief Register all nodes that are configured to be registered.
+     */
+    void registerNodes();
+
+    /**
+     * @brief Rebuild nodeIds for all nodes that were registered.
+     */
+    void rebuildNodeIds();
+
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
     const std::string name;                                   /**< unique session name */
