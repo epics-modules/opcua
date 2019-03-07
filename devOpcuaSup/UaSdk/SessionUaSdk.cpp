@@ -85,6 +85,7 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , name(name)
     , serverURL(serverUrl.c_str())
     , autoConnect(autoConnect)
+    , registeredItemsNo(0)
     , puasession(new UaSession())
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
@@ -396,10 +397,11 @@ SessionUaSdk::registerNodes ()
         i = 0;
         for (auto &it : items) {
             if (it->linkinfo.registerNode) {
-                it->setNodeId(registeredNodes[i]);
+                it->setRegisteredNodeId(registeredNodes[i]);
                 i++;
             }
         }
+        registeredItemsNo = i;
     }
 }
 
@@ -408,6 +410,7 @@ SessionUaSdk::rebuildNodeIds ()
 {
     for (auto &it : items)
         it->rebuildNodeId();
+    registeredItemsNo = 0;
 }
 
 void
@@ -426,6 +429,8 @@ SessionUaSdk::show (const int level) const
         std::cout << "?";
     std::cout << "(" << connectInfo.nMaxOperationsPerServiceCall << ")"
               << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "y" : "n")
+              << " items=" << items.size()
+              << " registered=" << registeredItemsNo
               << " subscriptions=" << subscriptions.size()
               << std::endl;
 

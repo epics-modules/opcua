@@ -31,6 +31,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     : Item(info)
     , subscription(nullptr)
     , session(nullptr)
+    , isRegistered(false)
 {
     rebuildNodeId();
 
@@ -58,6 +59,7 @@ ItemUaSdk::rebuildNodeId ()
     } else {
         nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierString.c_str(), linkinfo.namespaceIndex));
     }
+    isRegistered = false;
 }
 
 void
@@ -79,6 +81,8 @@ ItemUaSdk::show (int level) const
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
+              << " registered=" << (isRegistered ? nodeid->toString().toUtf8() : "-" )
+              << "(" << (linkinfo.registerNode ? "y" : "n") << ")"
               << std::endl;
 
     if (level >= 1) {

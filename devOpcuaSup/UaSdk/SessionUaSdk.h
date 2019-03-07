@@ -247,6 +247,7 @@ private:
     bool autoConnect;                                         /**< auto (re)connect flag */
     std::map<std::string, SubscriptionUaSdk*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemUaSdk *> items;                           /**< items on this session */
+    OpcUa_UInt32 registeredItemsNo;                           /**< number of registered items */
     UaSession* puasession;                                    /**< pointer to low level session */
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */
