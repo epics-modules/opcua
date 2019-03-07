@@ -52,6 +52,12 @@ public:
     ~ItemUaSdk() override;
 
     /**
+     * @brief Rebuild the node id from link info structure.
+     * @param info  configuration as parsed from the EPICS database
+     */
+    void rebuildNodeId();
+
+    /**
      * @brief Request beginRead service. See DevOpcua::Item::requestRead
      */
     virtual void requestRead() override { session->requestRead(*this); }
@@ -70,6 +76,12 @@ public:
      * @brief Return monitored status. See DevOpcua::Item::isMonitored
      */
     virtual bool isMonitored() const override { return !!subscription; }
+
+    /**
+     * @brief Setter for the node id of this item.
+     * @return node id
+     */
+    void setNodeId(const UaNodeId &id) { (*nodeid) = id; }
 
     /**
      * @brief Getter that returns the node id of this item.

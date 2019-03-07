@@ -32,11 +32,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , subscription(nullptr)
     , session(nullptr)
 {
-    if (info.identifierIsNumeric) {
-        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(info.identifierNumber, info.namespaceIndex));
-    } else {
-        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(info.identifierString.c_str(), info.namespaceIndex));
-    }
+    rebuildNodeId();
 
     if (linkinfo.subscription != "") {
         subscription = &SubscriptionUaSdk::findSubscription(linkinfo.subscription);
@@ -52,6 +48,16 @@ ItemUaSdk::~ItemUaSdk ()
 {
     subscription->removeItemUaSdk(this);
     session->removeItemUaSdk(this);
+}
+
+void
+ItemUaSdk::rebuildNodeId ()
+{
+    if (linkinfo.identifierIsNumeric) {
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierNumber, linkinfo.namespaceIndex));
+    } else {
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierString.c_str(), linkinfo.namespaceIndex));
+    }
 }
 
 void
