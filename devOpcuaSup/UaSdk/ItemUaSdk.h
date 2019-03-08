@@ -52,6 +52,12 @@ public:
     ~ItemUaSdk() override;
 
     /**
+     * @brief Rebuild the node id from link info structure.
+     * @param info  configuration as parsed from the EPICS database
+     */
+    void rebuildNodeId();
+
+    /**
      * @brief Request beginRead service. See DevOpcua::Item::requestRead
      */
     virtual void requestRead() override { session->requestRead(*this); }
@@ -70,6 +76,12 @@ public:
      * @brief Return monitored status. See DevOpcua::Item::isMonitored
      */
     virtual bool isMonitored() const override { return !!subscription; }
+
+    /**
+     * @brief Setter for the node id of this item.
+     * @return node id
+     */
+    void setRegisteredNodeId(const UaNodeId &id) { (*nodeid) = id; isRegistered = true; }
 
     /**
      * @brief Getter that returns the node id of this item.
@@ -163,6 +175,7 @@ private:
     SubscriptionUaSdk *subscription;   /**< raw pointer to subscription (if monitored) */
     SessionUaSdk *session;             /**< raw pointer to session */
     std::unique_ptr<UaNodeId> nodeid;  /**< node id of this item */
+    bool isRegistered;                 /**< flag for registration status */
     std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
     UaStatusCode readStatus;           /**< status code of last read service */
     UaStatusCode writeStatus;          /**< status code of last write service */

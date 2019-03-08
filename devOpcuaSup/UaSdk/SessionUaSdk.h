@@ -230,6 +230,16 @@ public:
             const UaDiagnosticInfos &diagnosticInfos) override;
 
 private:
+    /**
+     * @brief Register all nodes that are configured to be registered.
+     */
+    void registerNodes();
+
+    /**
+     * @brief Rebuild nodeIds for all nodes that were registered.
+     */
+    void rebuildNodeIds();
+
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
     const std::string name;                                   /**< unique session name */
@@ -237,6 +247,7 @@ private:
     bool autoConnect;                                         /**< auto (re)connect flag */
     std::map<std::string, SubscriptionUaSdk*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemUaSdk *> items;                           /**< items on this session */
+    OpcUa_UInt32 registeredItemsNo;                           /**< number of registered items */
     UaSession* puasession;                                    /**< pointer to low level session */
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */

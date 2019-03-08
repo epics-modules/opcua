@@ -31,12 +31,9 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     : Item(info)
     , subscription(nullptr)
     , session(nullptr)
+    , isRegistered(false)
 {
-    if (info.identifierIsNumeric) {
-        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(info.identifierNumber, info.namespaceIndex));
-    } else {
-        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(info.identifierString.c_str(), info.namespaceIndex));
-    }
+    rebuildNodeId();
 
     if (linkinfo.subscription != "") {
         subscription = &SubscriptionUaSdk::findSubscription(linkinfo.subscription);
@@ -52,6 +49,17 @@ ItemUaSdk::~ItemUaSdk ()
 {
     subscription->removeItemUaSdk(this);
     session->removeItemUaSdk(this);
+}
+
+void
+ItemUaSdk::rebuildNodeId ()
+{
+    if (linkinfo.identifierIsNumeric) {
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierNumber, linkinfo.namespaceIndex));
+    } else {
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierString.c_str(), linkinfo.namespaceIndex));
+    }
+    isRegistered = false;
 }
 
 void
@@ -73,6 +81,8 @@ ItemUaSdk::show (int level) const
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
+              << " registered=" << (isRegistered ? nodeid->toString().toUtf8() : "-" )
+              << "(" << (linkinfo.registerNode ? "y" : "n") << ")"
               << std::endl;
 
     if (level >= 1) {
