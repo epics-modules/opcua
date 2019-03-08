@@ -20,6 +20,8 @@
 
 namespace DevOpcua {
 
+bool getYesNo(const char c);
+
 std::unique_ptr<linkInfo> parseLink(dbCommon* prec, DBEntry &ent);
 
 } // namespace DevOpcua

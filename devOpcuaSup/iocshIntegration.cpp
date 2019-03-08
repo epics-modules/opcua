@@ -21,6 +21,7 @@
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
 #include "iocshVariables.h"
+#include "linkParser.h"
 #include "Session.h"
 #include "Subscription.h"
 
@@ -100,12 +101,11 @@ void opcuaCreateSessionCallFunc (const iocshArgBuf *args)
         }
 
         if (args[3].sval != nullptr) {
-            char c = args[3].sval[0];
-            if (c == 'n' || c == 'N' || c == 'f' || c == 'F') {
-                autoconnect = false;
-            } else if (c != 'y' && c != 'Y' && c != 't' && c != 'T') {
+            try {
+                autoconnect = getYesNo(args[3].sval[0]);
+            } catch (...) {
                 errlogPrintf("invalid argument #4 (autoconnect) '%s'\n",
-                             args[6].sval);
+                             args[3].sval);
             }
         }
 

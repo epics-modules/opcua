@@ -30,8 +30,19 @@
 
 namespace DevOpcua {
 
+bool
+getYesNo (const char c)
+{
+    if (strchr("YyTt1", c))
+        return true;
+    else if (strchr("NnFf0", c))
+        return false;
+    else
+        throw std::runtime_error(SB() << "illegal value '" << c << "'");
+}
+
 std::unique_ptr<linkInfo>
-parseLink(dbCommon *prec, DBEntry &ent)
+parseLink (dbCommon *prec, DBEntry &ent)
 {
     const char *s;
     std::unique_ptr<linkInfo> pinfo (new linkInfo);
@@ -98,12 +109,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
     if (s[0] == '\0')
         pinfo->monitor = !!opcua_DefaultOutputReadback;
     else
-        if (strchr("YyTt1", s[0]))
-            pinfo->monitor = true;
-        else if (strchr("NnFf0", s[0]))
-            pinfo->monitor = false;
-        else
-            throw std::runtime_error(SB() << "illegal value '" << s << "'");
+        pinfo->monitor = getYesNo(s[0]);
 
     s = ent.info("opcua:ELEMENT", "");
     if (debug > 19 && s[0] != '\0')
@@ -200,13 +206,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
                     throw std::runtime_error(SB() << "illegal value '" << optval << "'");
             } else if (optname == "register") {
                 if (optval.length() > 0) {
-                    char c = optval[0];
-                    if (strchr("YyTt1", c))
-                        pinfo->registerNode = true;
-                    else if (strchr("NnFf0", c))
-                        pinfo->registerNode = false;
-                    else
-                        throw std::runtime_error(SB() << "illegal value '" << optval << "'");
+                    pinfo->registerNode = getYesNo(optval[0]);
                 } else {
                     throw std::runtime_error(SB() << "no value for option '" << optname << "'");
                 }
@@ -222,13 +222,7 @@ parseLink(dbCommon *prec, DBEntry &ent)
                 throw std::runtime_error(SB() << "illegal value '" << optval << "'");
         } else if (optname == "monitor" || optname == "readback") {
             if (optval.length() > 0) {
-                char c = optval[0];
-                if (strchr("YyTt1", c))
-                    pinfo->monitor = true;
-                else if (strchr("NnFf0", c))
-                    pinfo->monitor = false;
-                else
-                    throw std::runtime_error(SB() << "illegal value '" << optval << "'");
+                pinfo->monitor = getYesNo(optval[0]);
             } else {
                 throw std::runtime_error(SB() << "no value for option '" << optname << "'");
             }
