@@ -569,7 +569,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) getting results for write service"
                       << " (transaction id " << transactionId
-                      << "; results for " << results.length() << " ïtems)" << std::endl;
+                      << "; results for " << results.length() << " items)" << std::endl;
         OpcUa_UInt32 i = 0;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
