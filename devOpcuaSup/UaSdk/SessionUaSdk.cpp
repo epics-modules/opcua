@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -414,6 +414,13 @@ SessionUaSdk::rebuildNodeIds ()
 }
 
 void
+SessionUaSdk::invalidateAllNodes ()
+{
+    for (auto &it : items)
+        it->requestRecordProcessing(ProcessReason::connectionLoss);
+}
+
+void
 SessionUaSdk::show (const int level) const
 {
     std::cout << "session="      << name
@@ -481,13 +488,11 @@ void SessionUaSdk::connectionStatusChanged (
         // "The monitoring of the connection to the server detected an error
         // and is trying to reconnect to the server."
     case UaClient::ConnectionErrorApiReconnect:
-        break;
         // "The server sent a shut-down event and the client API tries a reconnect."
     case UaClient::ServerShutdown:
-        break;
         // "The connection to the server is deactivated by the user of the client API."
     case UaClient::Disconnected:
-        // TODO: set all records to invalid, and remove the OPC side type info
+        invalidateAllNodes();
         break;
 
         // "The monitoring of the connection to the server indicated

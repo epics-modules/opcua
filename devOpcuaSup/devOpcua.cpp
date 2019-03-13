@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -174,6 +174,10 @@ opcua_read_int32_val (REC *prec)
             }
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -203,6 +207,10 @@ opcua_write_int32_val (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL=%d (%#010x)\n",
@@ -235,6 +243,10 @@ opcua_read_int64_val (REC *prec)
             }
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -264,6 +276,10 @@ opcua_write_int64_val (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL=%lld (%#010x)\n",
@@ -297,6 +313,10 @@ opcua_read_uint32_rval (REC *prec)
             }
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -325,6 +345,10 @@ opcua_write_uint32_rval (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
@@ -376,6 +400,10 @@ opcua_read_analog (REC *prec)
                 prec->time = pvt->readTimeStamp();
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -426,6 +454,10 @@ opcua_write_analog (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             if (prec->linr == menuConvertNO_CONVERSION) {
                 if (prec->tpro > 1) {
@@ -485,6 +517,10 @@ opcua_write_enum (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
@@ -518,6 +554,10 @@ opcua_read_string_val (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -546,6 +586,10 @@ opcua_write_string_val (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL='%s'\n",
@@ -580,6 +624,10 @@ opcua_read_lstring_val (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -609,6 +657,10 @@ opcua_write_lstring_val (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL='%s'\n",
@@ -685,6 +737,10 @@ opcua_read_array (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -756,6 +812,10 @@ opcua_write_array (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- %d array elements\n",

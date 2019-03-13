@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -239,6 +239,11 @@ private:
      * @brief Rebuild nodeIds for all nodes that were registered.
      */
     void rebuildNodeIds();
+
+    /**
+     * @brief Set all nodes of the session to INVALID.
+     */
+    void invalidateAllNodes();
 
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 

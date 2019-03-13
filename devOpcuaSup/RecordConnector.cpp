@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -107,6 +107,11 @@ void processReadCompleteCallback (CALLBACK *pcallback)
     processCallback(pcallback, ProcessReason::readComplete);
 }
 
+void processConnectionLossCallback (CALLBACK *pcallback)
+{
+    processCallback(pcallback, ProcessReason::connectionLoss);
+}
+
 RecordConnector::RecordConnector (dbCommon *prec)
     : pitem(nullptr)
     , isIoIntrScanned(false)
@@ -120,22 +125,26 @@ RecordConnector::RecordConnector (dbCommon *prec)
     callbackSetUser(prec, &readCompleteCallback);
     callbackSetCallback(DevOpcua::processWriteCompleteCallback, &writeCompleteCallback);
     callbackSetUser(prec, &writeCompleteCallback);
+    callbackSetCallback(DevOpcua::processConnectionLossCallback, &connectionLossCallback);
+    callbackSetUser(prec, &connectionLossCallback);
 }
 
 void
 RecordConnector::requestRecordProcessing (const ProcessReason reason)
 {
-    if (isIoIntrScanned && reason == ProcessReason::incomingData) {
+    if (isIoIntrScanned &&
+            (reason == ProcessReason::incomingData || reason == ProcessReason::connectionLoss)) {
         this->reason = reason;
         scanIoRequest(ioscanpvt);
     } else {
-        CALLBACK *callback;
-        if (reason == ProcessReason::writeComplete)
-            callback = &writeCompleteCallback;
-        else if (reason == ProcessReason::readComplete)
-            callback = &readCompleteCallback;
-        else
-            callback = &incomingDataCallback;
+        CALLBACK *callback = nullptr;
+        switch (reason) {
+        case ProcessReason::none :
+        case ProcessReason::incomingData : callback = &incomingDataCallback; break;
+        case ProcessReason::writeComplete : callback = &writeCompleteCallback; break;
+        case ProcessReason::readComplete : callback = &readCompleteCallback; break;
+        case ProcessReason::connectionLoss : callback = &connectionLossCallback; break;
+        }
         callbackSetPriority(prec->prio, callback);
         callbackRequest(callback);
     }
