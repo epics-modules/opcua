@@ -114,12 +114,18 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
 void
 DataElementUaSdk::addElementChain (ItemUaSdk *item,
                                    RecordConnector *pconnector,
-                                   const std::string &path)
+                                   const std::string &fullpath)
 {
     bool hasRootElement = true;
     // Create final path element as leaf and link it to connector
+    std::string path(fullpath);
     std::string restpath;
     size_t sep = path.find_last_of(separator);
+    // allow escaping separators
+    while (path[sep-1] == '\\') {
+        path.erase(--sep, 1);
+        sep = path.find_last_of(separator, --sep);
+    }
     std::string leafname = path.substr(sep + 1);
     if (leafname.empty()) leafname = "[ROOT]";
     if (sep != std::string::npos)
@@ -147,6 +153,11 @@ DataElementUaSdk::addElementChain (ItemUaSdk *item,
         do {
             found = false;
             sep = restpath.find_first_of(separator);
+            // allow escaping separators
+            while (restpath[sep-1] == '\\') {
+                    restpath.erase(sep-1, 1);
+                    sep = restpath.find_first_of(separator, sep);
+            }
             if (sep == std::string::npos)
                 name = restpath;
             else
@@ -181,6 +192,11 @@ DataElementUaSdk::addElementChain (ItemUaSdk *item,
     // Create remaining chain, bottom up
     while (restpath.length()) {
         sep = restpath.find_last_of(separator);
+        // allow escaping separators
+        while (restpath[sep-1] == '\\') {
+            restpath.erase(--sep, 1);
+            sep = restpath.find_last_of(separator, --sep);
+        }
         name = restpath.substr(sep + 1);
         if (sep != std::string::npos)
             restpath = restpath.substr(0, sep);
