@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -80,7 +80,7 @@ using namespace DevOpcua;
 #define CATCH() catch(std::exception& e) { \
     std::cerr << prec->name << " Error : " << e.what() << std::endl; \
     (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM); \
-    return 0; }
+    return 1; }
 
 // Device Support Extension: link parsing and setup
 
@@ -160,6 +160,7 @@ template<typename REC>
 long
 opcua_read_int32_val (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -174,18 +175,28 @@ opcua_read_int32_val (REC *prec)
             }
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 template<typename REC>
 long
 opcua_write_int32_val (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -203,6 +214,15 @@ opcua_write_int32_val (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL=%d (%#010x)\n",
@@ -213,14 +233,15 @@ opcua_write_int32_val (REC *prec)
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 template<typename REC>
 long
 opcua_read_int64_val (REC *prec)
 {
+    long ret =0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -235,18 +256,28 @@ opcua_read_int64_val (REC *prec)
             }
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 template<typename REC>
 long
 opcua_write_int64_val (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -264,6 +295,15 @@ opcua_write_int64_val (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL=%lld (%#010x)\n",
@@ -274,8 +314,8 @@ opcua_write_int64_val (REC *prec)
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 // unsigned integer to/from RVAL
@@ -284,6 +324,7 @@ template<typename REC>
 long
 opcua_read_uint32_rval (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -297,18 +338,28 @@ opcua_read_uint32_rval (REC *prec)
             }
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 template<typename REC>
 long
 opcua_write_uint32_rval (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -325,6 +376,15 @@ opcua_write_uint32_rval (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
@@ -334,8 +394,8 @@ opcua_write_uint32_rval (REC *prec)
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 // analog input/output
@@ -344,8 +404,8 @@ template<typename REC>
 long
 opcua_read_analog (REC *prec)
 {
+    long ret = 0;
     TRY {
-        long ret = 0;
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
@@ -376,18 +436,28 @@ opcua_read_analog (REC *prec)
                 prec->time = pvt->readTimeStamp();
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        return ret;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 template<typename REC>
 long
 opcua_write_analog (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         //TODO: ignore incoming data when output rate limit active
@@ -426,6 +496,15 @@ opcua_write_analog (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->linr == menuConvertNO_CONVERSION) {
                 if (prec->tpro > 1) {
@@ -444,8 +523,8 @@ opcua_write_analog (REC *prec)
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 // enum output
@@ -454,6 +533,7 @@ template<typename REC>
 long
 opcua_write_enum (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -485,6 +565,15 @@ opcua_write_enum (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
@@ -494,8 +583,8 @@ opcua_write_enum (REC *prec)
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 // string to/from VAL
@@ -504,6 +593,7 @@ template<typename REC>
 long
 opcua_read_string_val (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -518,18 +608,28 @@ opcua_read_string_val (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 template<typename REC>
 long
 opcua_write_string_val (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -546,6 +646,15 @@ opcua_write_string_val (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL='%s'\n",
@@ -555,8 +664,8 @@ opcua_write_string_val (REC *prec)
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 // long string to/from VAL
@@ -565,6 +674,7 @@ template<typename REC>
 long
 opcua_read_lstring_val (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -580,18 +690,28 @@ opcua_read_lstring_val (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 template<typename REC>
 long
 opcua_write_lstring_val (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
@@ -609,6 +729,15 @@ opcua_write_lstring_val (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL='%s'\n",
@@ -618,8 +747,8 @@ opcua_write_lstring_val (REC *prec)
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 // waveform to/from VAL
@@ -628,6 +757,7 @@ template<typename REC>
 long
 opcua_read_array (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         epicsUInt32 nord = prec->nord;
@@ -685,18 +815,28 @@ opcua_read_array (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
             pvt->clearIncomingData();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 template<typename REC>
 long
 opcua_write_array (REC *prec)
 {
+    long ret = 0;
     TRY {
         Guard G(pvt->lock);
         epicsUInt32 nord = prec->nord;
@@ -756,6 +896,15 @@ opcua_write_array (REC *prec)
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::writeComplete) {
             pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- %d array elements\n",
@@ -804,8 +953,8 @@ opcua_write_array (REC *prec)
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        return 0;
-    } CATCH()
+    } CATCH();
+    return ret;
 }
 
 } // namespace

@@ -122,7 +122,7 @@ public:
     { return session->structureDefinition(dataTypeId); }
 
     /**
-     * @brief Create processing requests for record(s) attached to this element.
+     * @brief Create processing requests for record(s) attached to this item.
      * See DevOpcua::DataElement::requestRecordProcessing
      */
     void requestRecordProcessing(const ProcessReason reason) const;

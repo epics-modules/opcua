@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -64,7 +64,7 @@ typedef struct linkInfo {
 /**
  * @brief Enum marking the reason for processing a record
  */
-enum ProcessReason { none, incomingData, readComplete, writeComplete };
+enum ProcessReason { none, incomingData, readComplete, writeComplete, connectionLoss };
 
 template<typename R>
 struct dset6 {
