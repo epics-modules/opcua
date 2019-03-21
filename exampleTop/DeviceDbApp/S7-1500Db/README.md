@@ -45,6 +45,19 @@ When developing, using a professional GUI client for OPC UA is strongly
 suggested.
 The free UaExpert tool from Unified Automation is a good choice.
 
+## S7-1500 Firmware versions
+
+With every update of the firmware, Siemens changes the server behavior a lot,
+increasing limitations, fixing bugs and improving the "user experience".
+
+It is generally advisable to update the PLC to the newest available firmware.
+
+Regularly check the [detailed release notes][release_notes_1500] to see what
+things were fixed.
+
+Known issues:
+*   Firmware V2.6.0 is needed for subscriptions on registered items to work.
+
 ## OPC UA Device Support Documentation
 
 The documentation folder of the Device Support module contains the
@@ -69,3 +82,4 @@ in file LICENSE that is included with its distribution.
 <!-- Links -->
 [requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
 [cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
+[release_notes_1500]: https://support.industry.siemens.com/cs/document/109478459/firmware-update-s7-1500-cpus-incl-displays-and-et200-cpus-(et200sp-et200pro)?dti=0&lc=en-WW
