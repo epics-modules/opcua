@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -248,7 +248,10 @@ SubscriptionUaSdk::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
             std::cout << "** Subscription " << name.c_str()
                       << "@" << psessionuasdk->getName()
                       << ": (dataChange) getting data for item " << dataNotifications[i].ClientHandle
-                      << " (" << item->getNodeId().toXmlString().toUtf8() << ")" << std::endl;
+                      << " (" << item->getNodeId().toXmlString().toUtf8();
+            if (item->isRegistered() && ! item->linkinfo.identifierIsNumeric)
+                std::cout << "/" << item->linkinfo.identifierString;
+            std::cout << ")" << std::endl;
         }
         item->setIncomingData(dataNotifications[i].Value);
         item->requestRecordProcessing(ProcessReason::incomingData);

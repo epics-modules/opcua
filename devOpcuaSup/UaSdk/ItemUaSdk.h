@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -78,10 +78,15 @@ public:
     virtual bool isMonitored() const override { return !!subscription; }
 
     /**
+     * @brief Return registered status.
+     */
+    bool isRegistered() const { return registered; }
+
+    /**
      * @brief Setter for the node id of this item.
      * @return node id
      */
-    void setRegisteredNodeId(const UaNodeId &id) { (*nodeid) = id; isRegistered = true; }
+    void setRegisteredNodeId(const UaNodeId &id) { (*nodeid) = id; registered = true; }
 
     /**
      * @brief Getter that returns the node id of this item.
@@ -175,7 +180,7 @@ private:
     SubscriptionUaSdk *subscription;   /**< raw pointer to subscription (if monitored) */
     SessionUaSdk *session;             /**< raw pointer to session */
     std::unique_ptr<UaNodeId> nodeid;  /**< node id of this item */
-    bool isRegistered;                 /**< flag for registration status */
+    bool registered;                   /**< flag for registration status */
     std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
     UaStatusCode readStatus;           /**< status code of last read service */
     UaStatusCode writeStatus;          /**< status code of last write service */
