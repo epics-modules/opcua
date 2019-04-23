@@ -48,6 +48,9 @@ UASDK_DIR = $(UASDK)/lib
 UASDK_USE_CRYPTO = YES
 UASDK_USE_XMLPARSER = YES
 
+# Expect Google Test as system package
+GTEST_HOME = SYSTEM
+
 USR_CXXFLAGS_Linux += -std=c++11
 USR_CXXFLAGS += -DUSE_TYPED_RSET
 
