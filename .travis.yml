@@ -9,10 +9,6 @@ install:
 script:
 - ./.ci/travis-build.sh
 
-env:
-  global:
-  - EXTRA="CMD_CXXFLAGS=-std=c++11"
-
 matrix:
   include:
 
