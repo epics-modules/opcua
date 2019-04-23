@@ -1,0 +1,8 @@
+# Pointer to the Google Test location
+#   <not set> = do not use gtest
+#   SYSTEM    = libraries and headers are in a system location
+#   <path>    = libraries and headers are under <path>
+
+GTEST_HOME = SYSTEM
+
+# Remember that Google Test needs C++11 to be activated

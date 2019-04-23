@@ -1,0 +1,29 @@
+# Definitions for Google Test
+
+# GTEST_HOME - pointer to the Google Test location
+#   <not set> = do not use gtest
+#   SYSTEM    = libraries and headers are in a system location
+#   <path>    = libraries and headers are under <path>
+
+# A special version of gtest_main (that provides TAP output)
+# is provided by EPICS Base in library epics_gtest_main
+
+ifdef GTEST_HOME
+
+ifeq ($(GTEST_HOME),SYSTEM)
+define gtest_prod_template
+  $(1)_SYS_LIBS += gtest epics_gtest_main pthread
+endef
+else
+define gtest_prod_template
+  $(1)_SYS_LIBS += pthread
+  $(1)_LIBS += gtest epics_gtest_main
+  $(1)_INCLUDES += -I$(GTEST_HOME)/googletest/include
+endef
+gtest_DIR = $(GTEST_HOME)/googletest
+endif
+
+$(foreach testprod, $(GTESTPROD_HOST), $(eval $(call gtest_prod_template,$(testprod))))
+TESTPROD_HOST +=  $(GTESTPROD_HOST)
+
+endif
