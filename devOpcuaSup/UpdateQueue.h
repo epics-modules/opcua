@@ -45,7 +45,7 @@ public:
      * @param type  type of the update (process reason)
      * @param data  const reference to the data to put in the update
      */
-    Update(const epicsTime &time, const ProcessReason reason, const T &newdata)
+    Update(const epicsTime &time, ProcessReason reason, const T &newdata)
         : overrides(0)
         , ts(time)
         , type(reason)
@@ -196,10 +196,14 @@ public:
      * Pushes the given update to the end of the queue.
      *
      * @param update  the update to push
+     * @param[out] wasFirst  `true` if pushed element was the first one, `false` otherwise
      */
-    void pushUpdate(std::shared_ptr<Update<T>> update)
+    void pushUpdate(std::shared_ptr<Update<T>> update, bool *wasFirst = nullptr)
     {
+        Guard G(lock);
+        if (wasFirst) *wasFirst = false;
         if (updq.size() < capacity) {
+            if (wasFirst && updq.empty()) *wasFirst = true;
             updq.push(update);
         } else {
             if (discardOldest) {
@@ -221,12 +225,19 @@ public:
      *
      * Calling popUpdate on an empty queue is undefined.
      *
+     * @param[out] nextReason  ProcessReason of the next element, `none` if last element
+     *
      * @return  reference to the removed update
      */
-    std::shared_ptr<Update<T>> popUpdate()
+    std::shared_ptr<Update<T>> popUpdate(ProcessReason *nextReason = nullptr)
     {
+        Guard G(lock);
         std::shared_ptr<Update<T>> drop = updq.front();
         updq.pop();
+        if (nextReason) {
+            if (updq.empty()) *nextReason = ProcessReason::none;
+            else *nextReason = updq.front()->getType();
+        }
         return drop;
     }
 
@@ -253,6 +264,7 @@ public:
 private:
     size_t capacity;
     bool discardOldest;
+    epicsMutex lock;
     std::queue<std::shared_ptr<Update<T>>> updq;
 };
 
