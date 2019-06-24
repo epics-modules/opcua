@@ -111,6 +111,24 @@ TEST_F(UpdateQueueTest, popUpdate_UsedQueue_DataAndOrderCorrect) {
     EXPECT_EQ(2, i) << "Update 2 data (" << i << ") differs from original data (2)";
 }
 
+TEST_F(UpdateQueueTest, popUpdate_UsedQueue_nextReasonIsCorrect) {
+    epicsTime ts0;
+    ts0.getCurrent();
+    std::shared_ptr<Update<int>> u0(new Update<int> (ts0, ProcessReason::incomingData, 0));
+    epicsTime ts1 = ts0 + 1.0;
+    std::shared_ptr<Update<int>> u1(new Update<int> (ts1, ProcessReason::writeComplete, 1));
+    ProcessReason nextReason = ProcessReason::none;
+    std::shared_ptr<Update<int>> r0;
+
+    q0.pushUpdate(u0);
+    q0.pushUpdate(u1);
+
+    r0 = q0.popUpdate(&nextReason);
+    EXPECT_EQ(ProcessReason::writeComplete, nextReason) << "Second-to-last pop does not set nextReason = writeComplete";
+    r0 = q0.popUpdate(&nextReason);
+    EXPECT_EQ(ProcessReason::none, nextReason) << "Last pop does not set nextReason = none";
+}
+
 TEST_F(UpdateQueueTest, pushUpdate_FullQueueOldest_OverrideAtOldEnd) {
     std::shared_ptr<Update<int>> r0;
     epicsTime ts0;
@@ -167,6 +185,20 @@ TEST_F(UpdateQueueTest, pushUpdate_FullQueueNewest_OverrideAtNewEnd) {
     EXPECT_EQ(0lu, q2.size()) << "After pop 3/3, update queue returns size " << q2.size() << " not 0";
     EXPECT_EQ(3ul, r0->getOverrides()) << "Pop 3/3 override counter (" << r0->getOverrides() << ") not 3";
     EXPECT_EQ(ts2, r0->getTimeStamp()) << "Pop 3/3 timestamp is not as from 3rd added Update";
+}
+
+TEST_F(UpdateQueueTest, pushUpdate_EmptyQueue_wasFirstIsCorrect) {
+    epicsTime ts0;
+    ts0.getCurrent();
+    std::shared_ptr<Update<int>> u0(new Update<int> (ts0, ProcessReason::incomingData, 0));
+    epicsTime ts1 = ts0 + 1.0;
+    std::shared_ptr<Update<int>> u1(new Update<int> (ts1, ProcessReason::writeComplete, 1));
+    bool wasFirst = false;
+
+    q0.pushUpdate(u0, &wasFirst);
+    EXPECT_EQ(true, wasFirst) << "First push does not set wasFirst = true";
+    q0.pushUpdate(u1, &wasFirst);
+    EXPECT_EQ(false, wasFirst) << "Second push does not set wasFirst = false";
 }
 
 } // namespace
