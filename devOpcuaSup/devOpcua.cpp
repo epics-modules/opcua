@@ -165,9 +165,7 @@ opcua_read_int32_val (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            prec->val = pvt->readInt32();
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
+            prec->val = pvt->readInt32(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL=%d (%#010x)\n",
                              prec->name, prec->val,
@@ -201,9 +199,7 @@ opcua_write_int32_val (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            prec->val = pvt->readInt32();
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
+            prec->val = pvt->readInt32(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL=%d (%#010x)\n",
                              prec->name, prec->val,
@@ -246,9 +242,7 @@ opcua_read_int64_val (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            prec->val = pvt->readInt64();
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
+            prec->val = pvt->readInt64(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL=%lld (%#010x)\n",
                              prec->name, prec->val,
@@ -282,9 +276,7 @@ opcua_write_int64_val (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            prec->val = pvt->readInt64();
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
+            prec->val = pvt->readInt64(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL=%lld (%#010x)\n",
                              prec->name, prec->val,
@@ -329,9 +321,7 @@ opcua_read_uint32_rval (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            prec->rval = pvt->readUInt32();
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
+            prec->rval = pvt->readUInt32(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
@@ -364,9 +354,7 @@ opcua_write_uint32_rval (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            prec->rval = pvt->readUInt32();
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
+            prec->rval = pvt->readUInt32(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
@@ -410,7 +398,7 @@ opcua_read_analog (REC *prec)
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
             if (prec->linr == menuConvertNO_CONVERSION) {
-                double value = pvt->readFloat64();
+                double value = pvt->readFloat64(&prec->time);
                 // Do ASLO/AOFF conversion and smoothing
                 if (prec->aslo != 0.0) value *= prec->aslo;
                 value += prec->aoff;
@@ -425,15 +413,13 @@ opcua_read_analog (REC *prec)
                                  prec->name, prec->val);
                 }
             } else {
-                prec->rval = pvt->readInt32();
+                prec->rval = pvt->readInt32(&prec->time);
                 if (prec->tpro > 1) {
                     errlogPrintf("%s: read -> RVAL=%d (%#010x)\n",
                                  prec->name, prec->rval,
                                  static_cast<unsigned int>(prec->rval));
                 }
             }
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
             pvt->checkReadStatus();
             pvt->clearIncomingData();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
@@ -466,7 +452,7 @@ opcua_write_analog (REC *prec)
             double value;
             bool useValue = true;
             if (prec->linr == menuConvertNO_CONVERSION) {
-                value = pvt->readFloat64();
+                value = pvt->readFloat64(&prec->time);
                 if (prec->aslo != 0.0) value *= prec->aslo;
                 value += prec->aoff;
             } else {
@@ -483,8 +469,6 @@ opcua_write_analog (REC *prec)
                         useValue = false;
                 }
             }
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
             if (useValue)
                 prec->val = value;
             prec->udf = isnan(prec->val);
@@ -538,7 +522,7 @@ opcua_write_enum (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            epicsUInt32 rval = prec->rval = pvt->readUInt32() & prec->mask;
+            epicsUInt32 rval = prec->rval = pvt->readUInt32(&prec->time) & prec->mask;
             if (prec->shft > 0)
                 rval >>= prec->shft;
             if (prec->sdef) {
@@ -598,9 +582,7 @@ opcua_read_string_val (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            pvt->readCString(prec->val, MAX_STRING_SIZE);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
+            pvt->readCString(prec->val, MAX_STRING_SIZE, &prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL='%s'\n",
                              prec->name, prec->val);
@@ -634,9 +616,7 @@ opcua_write_string_val (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            pvt->readCString(prec->val, MAX_STRING_SIZE);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
+            pvt->readCString(prec->val, MAX_STRING_SIZE, &prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL='%s'\n",
                              prec->name, prec->val);
@@ -679,10 +659,8 @@ opcua_read_lstring_val (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            pvt->readCString(prec->val, prec->sizv);
+            pvt->readCString(prec->val, prec->sizv, &prec->time);
             prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL='%s'\n",
                              prec->name, prec->val);
@@ -716,10 +694,8 @@ opcua_write_lstring_val (REC *prec)
         Guard G(pvt->lock);
         if (pvt->reason == ProcessReason::incomingData
                 || pvt->reason == ProcessReason::readComplete) {
-            pvt->readCString(prec->val, prec->sizv);
+            pvt->readCString(prec->val, prec->sizv, &prec->time);
             prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> VAL='%s'\n",
                              prec->name, prec->val);
@@ -765,49 +741,47 @@ opcua_read_array (REC *prec)
                 || pvt->reason == ProcessReason::readComplete) {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
-                prec->nord = pvt->readArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeCHAR:
-                prec->nord = pvt->readArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeUCHAR:
-                prec->nord = pvt->readArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeSHORT:
-                prec->nord = pvt->readArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeUSHORT:
-                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeLONG:
-                prec->nord = pvt->readArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeULONG:
-                prec->nord = pvt->readArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
 #ifdef DBR_INT64
             case menuFtypeINT64:
-                prec->nord = pvt->readArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeUINT64:
-                prec->nord = pvt->readArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
 #endif
             case menuFtypeFLOAT:
-                prec->nord = pvt->readArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeDOUBLE:
-                prec->nord = pvt->readArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeENUM:
-                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             }
             if (nord != prec->nord)
                 db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
 
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> %d array elements read\n",
                              prec->name, prec->nord);
@@ -844,49 +818,47 @@ opcua_write_array (REC *prec)
                 || pvt->reason == ProcessReason::readComplete) {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
-                prec->nord = pvt->readArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeCHAR:
-                prec->nord = pvt->readArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeUCHAR:
-                prec->nord = pvt->readArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeSHORT:
-                prec->nord = pvt->readArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeUSHORT:
-                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeLONG:
-                prec->nord = pvt->readArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeULONG:
-                prec->nord = pvt->readArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
 #ifdef DBR_INT64
             case menuFtypeINT64:
-                prec->nord = pvt->readArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeUINT64:
-                prec->nord = pvt->readArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
 #endif
             case menuFtypeFLOAT:
-                prec->nord = pvt->readArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeDOUBLE:
-                prec->nord = pvt->readArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             case menuFtypeENUM:
-                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm);
+                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm, &prec->time);
                 break;
             }
             if (nord != prec->nord)
                 db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
 
-            if (prec->tse == epicsTimeEventDeviceTime)
-                prec->time = pvt->readTimeStamp();
             if (prec->tpro > 1) {
                 errlogPrintf("%s: read -> %d array elements\n",
                              prec->name, prec->nord);

@@ -106,21 +106,12 @@ public:
     const UaVariant &getOutgoingData() { return outgoingData; }
 
     /**
-     * @brief Read the time stamp of the incoming data.
-     * See DevOpcua::DataElement::readTimeStamp
-     *
-     * @param server  true = server time stamp
-     * @return EPICS time stamp
-     */
-    virtual epicsTimeStamp readTimeStamp(bool server = true) const override;
-
-    /**
      * @brief Read incoming data as Int32. See DevOpcua::DataElement::readInt32
      *
      * @return value as epicsInt32
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsInt32 readInt32() const override;
+    virtual epicsInt32 readInt32(epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as Int64. See DevOpcua::DataElement::readInt64
@@ -128,7 +119,7 @@ public:
      * @return value as epicsInt64
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsInt64 readInt64() const override;
+    virtual epicsInt64 readInt64(epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as UInt32. See DevOpcua::DataElement::readUInt32
@@ -136,7 +127,7 @@ public:
      * @return value as epicsUInt32
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readUInt32() const override;
+    virtual epicsUInt32 readUInt32(epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as Float64. See DevOpcua::DataElement::readFloat64
@@ -144,7 +135,7 @@ public:
      * @return value as epicsFloat64
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsFloat64 readFloat64() const override;
+    virtual epicsFloat64 readFloat64(epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as classic C string (char[]).
@@ -154,77 +145,77 @@ public:
      * @param num  max no. of bytes to copy (incl. NULL byte)
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual void readCString(char *value, const size_t num) const override;
+    virtual void readCString(char *value, const size_t num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of Int8. See DevOpcua::DataElement::readArrayInt8
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of UInt8. See DevOpcua::DataElement::readArrayUInt8
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of Int16. See DevOpcua::DataElement::readArrayInt16
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of UInt16. See DevOpcua::DataElement::readArrayUInt16
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of Int32. See DevOpcua::DataElement::readArrayInt32
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of UInt32. See DevOpcua::DataElement::readArrayUInt32
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of Int64. See DevOpcua::DataElement::readArrayInt64
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of UInt64. See DevOpcua::DataElement::readArrayUInt64
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of Float32. See DevOpcua::DataElement::readArrayFloat32
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of Float64. See DevOpcua::DataElement::readArrayFloat64
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Read incoming data as array of EPICS Old String (fixed size).
@@ -232,7 +223,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num) const override;
+    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const override;
 
     /**
      * @brief Check status of last read service. See DevOpcua::DataElement::readWasOk
@@ -451,6 +442,7 @@ private:
     void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &name) const;
     void logWriteArray(const epicsUInt32 num, const std::string &name) const;
 
+    // Get the time stamp from the incoming object
     const epicsTime getIncomingTimeStamp() const {
         if (isLeaf())
             if (pconnector->plinkinfo->useServerTimestamp)
@@ -460,6 +452,9 @@ private:
         else
             return pitem->tsServer;
     }
+
+    // Get the time stamp when record reads data
+    epicsTimeStamp readTimeStamp () const;
 
     ItemUaSdk *pitem;                                       /**< corresponding item */
     std::vector<std::weak_ptr<DataElementUaSdk>> elements;  /**< children (if node) */

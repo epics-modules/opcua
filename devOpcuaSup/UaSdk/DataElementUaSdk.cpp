@@ -285,26 +285,20 @@ DataElementUaSdk::setIncomingData (const UaVariant &value)
 }
 
 epicsTimeStamp
-DataElementUaSdk::readTimeStamp (bool server) const
+DataElementUaSdk::readTimeStamp () const
 {
-    epicsTimeStamp *ts;
-
-    if (server)
-        ts = &pitem->tsServer;
-    else
-        ts = &pitem->tsSource;
+    epicsTimeStamp ts = getIncomingTimeStamp();
 
     if (isLeaf() && debug()) {
         char time_buf[40];
-        epicsTimeToStrftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f", ts);
+        epicsTimeToStrftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f", &ts);
         std::cout << pconnector->getRecordName() << ": reading "
-                  << (server ? "server" : "device") << " timestamp ("
+                  << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device") << " timestamp ("
                   << time_buf << ")" << std::endl;
     }
 
-    return *ts;
+    return ts;
 }
-
 
 void
 DataElementUaSdk::checkScalar (const std::string &name) const
@@ -345,51 +339,55 @@ DataElementUaSdk::checkReadArray (OpcUa_BuiltInType expectedType,
 }
 
 epicsInt32
-DataElementUaSdk::readInt32 () const
+DataElementUaSdk::readInt32 (epicsTimeStamp *ts) const
 {
     checkScalar("Int32");
 
     OpcUa_Int32 v;
     if (OpcUa_IsNotGood(incomingData.toInt32(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    if (ts) *ts = readTimeStamp();
     return v;
 }
 
 epicsInt64
-DataElementUaSdk::readInt64 () const
+DataElementUaSdk::readInt64 (epicsTimeStamp *ts) const
 {
     checkScalar("Int64");
 
     OpcUa_Int64 v;
     if (OpcUa_IsNotGood(incomingData.toInt64(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    if (ts) *ts = readTimeStamp();
     return v;
 }
 
 epicsUInt32
-DataElementUaSdk::readUInt32 () const
+DataElementUaSdk::readUInt32 (epicsTimeStamp *ts) const
 {
     checkScalar("UInt32");
 
     OpcUa_UInt32 v;
     if (OpcUa_IsNotGood(incomingData.toUInt32(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    if (ts) *ts = readTimeStamp();
     return v;
 }
 
 epicsFloat64
-DataElementUaSdk::readFloat64 () const
+DataElementUaSdk::readFloat64 (epicsTimeStamp *ts) const
 {
     checkScalar("Float64");
 
     OpcUa_Double v;
     if (OpcUa_IsNotGood(incomingData.toDouble(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    if (ts) *ts = readTimeStamp();
     return v;
 }
 
 void
-DataElementUaSdk::readCString (char *value, const size_t num) const
+DataElementUaSdk::readCString (char *value, const size_t num, epicsTimeStamp *ts) const
 {
     if (incomingData.isEmpty())
         throw std::runtime_error(SB() << "no incoming data");
@@ -408,10 +406,12 @@ DataElementUaSdk::readCString (char *value, const size_t num) const
         strncpy(value, incomingData.toString().toUtf8(), num);
         value[num-1] = '\0';
     }
+
+    if (ts) *ts = readTimeStamp();
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayInt8 (epicsInt8 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayInt8 (epicsInt8 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_SByte, num, "epicsInt8");
 
@@ -420,11 +420,13 @@ DataElementUaSdk::readArrayInt8 (epicsInt8 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsInt8) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayUInt8 (epicsUInt8 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayUInt8 (epicsUInt8 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_Byte, num, "epicsUInt8");
 
@@ -434,11 +436,13 @@ DataElementUaSdk::readArrayUInt8 (epicsUInt8 *value, epicsUInt32 num) const
     if (num < no_elems) no_elems = num;
     memcpy(value, arr.data(), sizeof(epicsUInt8) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayInt16 (epicsInt16 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayInt16 (epicsInt16 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_Int16, num, "epicsInt16");
 
@@ -447,11 +451,13 @@ DataElementUaSdk::readArrayInt16 (epicsInt16 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsInt16) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayUInt16 (epicsUInt16 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayUInt16 (epicsUInt16 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_UInt16, num, "epicsUInt16");
 
@@ -460,11 +466,13 @@ DataElementUaSdk::readArrayUInt16 (epicsUInt16 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsUInt16) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayInt32 (epicsInt32 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayInt32 (epicsInt32 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_Int32, num, "epicsInt32");
 
@@ -473,11 +481,13 @@ DataElementUaSdk::readArrayInt32 (epicsInt32 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsInt32) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayUInt32 (epicsUInt32 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayUInt32 (epicsUInt32 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_UInt32, num, "epicsUInt32");
 
@@ -486,11 +496,13 @@ DataElementUaSdk::readArrayUInt32 (epicsUInt32 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsUInt32) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayInt64 (epicsInt64 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayInt64 (epicsInt64 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_Int64, num, "epicsInt64");
 
@@ -499,11 +511,13 @@ DataElementUaSdk::readArrayInt64 (epicsInt64 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsInt64) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayUInt64 (epicsUInt64 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayUInt64 (epicsUInt64 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_UInt64, num, "epicsUInt64");
 
@@ -512,11 +526,13 @@ DataElementUaSdk::readArrayUInt64 (epicsUInt64 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsUInt64) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayFloat32 (epicsFloat32 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayFloat32 (epicsFloat32 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_Float, num, "epicsFloat32");
 
@@ -525,11 +541,13 @@ DataElementUaSdk::readArrayFloat32 (epicsFloat32 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsFloat32) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayFloat64 (epicsFloat64 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayFloat64 (epicsFloat64 *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_Double, num, "epicsFloat64");
 
@@ -538,11 +556,13 @@ DataElementUaSdk::readArrayFloat64 (epicsFloat64 *value, epicsUInt32 num) const
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsFloat64) * no_elems);
 
+    if (ts) *ts = readTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayOldString (epicsOldString *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayOldString (epicsOldString *value, epicsUInt32 num, epicsTimeStamp *ts) const
 {
     checkReadArray(OpcUaType_String, num, "epicsOldString");
 
@@ -552,6 +572,8 @@ DataElementUaSdk::readArrayOldString (epicsOldString *value, epicsUInt32 num) co
     for (epicsUInt32 i = 0; i < num; i++) {
         strncpy(value[i], UaString(arr[i]).toUtf8(), MAX_STRING_SIZE);
     }
+
+    if (ts) *ts = readTimeStamp();
 
     return no_elems;
 }

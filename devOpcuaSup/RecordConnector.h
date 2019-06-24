@@ -33,29 +33,54 @@ class RecordConnector
 public:
     RecordConnector(dbCommon *prec);
 
-    epicsTimeStamp readTimeStamp() const { return pdataelement->readTimeStamp(plinkinfo->useServerTimestamp); }
-
-    epicsInt32 readInt32() const { return pdataelement->readInt32(); }
+    epicsInt32 readInt32(epicsTimeStamp *ts = nullptr) const { return pdataelement->readInt32(ts); }
     void writeInt32(const epicsInt32 val) const { pdataelement->writeInt32(val); }
-    epicsInt64 readInt64() const { return pdataelement->readInt64(); }
+
+    epicsInt64 readInt64(epicsTimeStamp *ts = nullptr) const { return pdataelement->readInt64(ts); }
     void writeInt64(const epicsInt64 val) const { pdataelement->writeInt64(val); }
-    epicsUInt32 readUInt32() const { return pdataelement->readUInt32(); }
+
+    epicsUInt32 readUInt32(epicsTimeStamp *ts = nullptr) const { return pdataelement->readUInt32(ts); }
     void writeUInt32(const epicsUInt32 val) const { pdataelement->writeUInt32(val); }
-    epicsFloat64 readFloat64() const { return pdataelement->readFloat64(); }
+
+    epicsFloat64 readFloat64(epicsTimeStamp *ts = nullptr) const { return pdataelement->readFloat64(ts); }
     void writeFloat64(const epicsFloat64 val) const { pdataelement->writeFloat64(val); }
-    void readCString(char *val, const size_t num) const { pdataelement->readCString(val, num); }
+
+    void readCString(char *val, const size_t num, epicsTimeStamp *ts = nullptr) const { pdataelement->readCString(val, num, ts); }
     void writeCString(const char *val, const size_t num) const { pdataelement->writeCString(val, num); }
-    epicsUInt32 readArrayInt8(epicsInt8 *val, epicsUInt32 num) { return pdataelement->readArrayInt8(val, num); }
-    epicsUInt32 readArrayUInt8(epicsUInt8 *val, epicsUInt32 num) { return pdataelement->readArrayUInt8(val, num); }
-    epicsUInt32 readArrayInt16(epicsInt16 *val, epicsUInt32 num) { return pdataelement->readArrayInt16(val, num); }
-    epicsUInt32 readArrayUInt16(epicsUInt16 *val, epicsUInt32 num) { return pdataelement->readArrayUInt16(val, num); }
-    epicsUInt32 readArrayInt32(epicsInt32 *val, epicsUInt32 num) { return pdataelement->readArrayInt32(val, num); }
-    epicsUInt32 readArrayUInt32(epicsUInt32 *val, epicsUInt32 num) { return pdataelement->readArrayUInt32(val, num); }
-    epicsUInt32 readArrayInt64(epicsInt64 *val, epicsUInt32 num) { return pdataelement->readArrayInt64(val, num); }
-    epicsUInt32 readArrayUInt64(epicsUInt64 *val, epicsUInt32 num) { return pdataelement->readArrayUInt64(val, num); }
-    epicsUInt32 readArrayFloat32(epicsFloat32 *val, epicsUInt32 num) { return pdataelement->readArrayFloat32(val, num); }
-    epicsUInt32 readArrayFloat64(epicsFloat64 *val, epicsUInt32 num) { return pdataelement->readArrayFloat64(val, num); }
-    epicsUInt32 readArrayOldString(epicsOldString *val, epicsUInt32 num) { return pdataelement->readArrayOldString(val, num); }
+
+    epicsUInt32 readArrayInt8(epicsInt8 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayInt8(val, num, ts);
+    }
+    epicsUInt32 readArrayUInt8(epicsUInt8 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayUInt8(val, num, ts);
+    }
+    epicsUInt32 readArrayInt16(epicsInt16 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayInt16(val, num, ts);
+    }
+    epicsUInt32 readArrayUInt16(epicsUInt16 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayUInt16(val, num, ts);
+    }
+    epicsUInt32 readArrayInt32(epicsInt32 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayInt32(val, num, ts);
+    }
+    epicsUInt32 readArrayUInt32(epicsUInt32 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayUInt32(val, num, ts);
+    }
+    epicsUInt32 readArrayInt64(epicsInt64 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayInt64(val, num, ts);
+    }
+    epicsUInt32 readArrayUInt64(epicsUInt64 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayUInt64(val, num, ts);
+    }
+    epicsUInt32 readArrayFloat32(epicsFloat32 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayFloat32(val, num, ts);
+    }
+    epicsUInt32 readArrayFloat64(epicsFloat64 *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayFloat64(val, num, ts);
+    }
+    epicsUInt32 readArrayOldString(epicsOldString *val, epicsUInt32 num, epicsTimeStamp *ts = nullptr) {
+        return pdataelement->readArrayOldString(val, num, ts);
+    }
     void writeArrayInt8(const epicsInt8 *val, const epicsUInt32 num) { pdataelement->writeArrayInt8(val, num); }
     void writeArrayUInt8(const epicsUInt8 *val, const epicsUInt32 num) { pdataelement->writeArrayUInt8(val, num); }
     void writeArrayInt16(const epicsInt16 *val, const epicsUInt32 num) { pdataelement->writeArrayInt16(val, num); }
