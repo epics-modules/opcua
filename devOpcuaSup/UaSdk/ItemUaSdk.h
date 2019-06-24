@@ -168,7 +168,7 @@ public:
      * @param pico10 10 picosecond resolution counter
      * @return EPICS time stamp
      */
-    static epicsTimeStamp uaToEpicsTimeStamp(const UaDateTime &dt, const OpcUa_UInt16 pico10);
+    static epicsTime uaToEpicsTime(const UaDateTime &dt, const OpcUa_UInt16 pico10);
 
     /**
      * @brief Get debug level (from itemRecord or via TOP DataElement)
@@ -184,8 +184,8 @@ private:
     std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
     UaStatusCode readStatus;           /**< status code of last read service */
     UaStatusCode writeStatus;          /**< status code of last write service */
-    epicsTimeStamp tsServer;           /**< server time stamp */
-    epicsTimeStamp tsSource;           /**< device time stamp */
+    epicsTime tsServer;                /**< server time stamp */
+    epicsTime tsSource;                /**< device time stamp */
 };
 
 } // namespace DevOpcua

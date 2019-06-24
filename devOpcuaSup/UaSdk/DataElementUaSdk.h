@@ -451,6 +451,16 @@ private:
     void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &name) const;
     void logWriteArray(const epicsUInt32 num, const std::string &name) const;
 
+    const epicsTime getIncomingTimeStamp() const {
+        if (isLeaf())
+            if (pconnector->plinkinfo->useServerTimestamp)
+                return pitem->tsServer;
+            else
+                return pitem->tsSource;
+        else
+            return pitem->tsServer;
+    }
+
     ItemUaSdk *pitem;                                       /**< corresponding item */
     std::vector<std::weak_ptr<DataElementUaSdk>> elements;  /**< children (if node) */
     std::shared_ptr<DataElementUaSdk> parent;               /**< parent */
