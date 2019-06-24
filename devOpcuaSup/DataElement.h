@@ -77,25 +77,13 @@ public:
     virtual void show(const int level, const unsigned int indent) const = 0;
 
     /**
-     * @brief Read the time stamp of the incoming data.
-     *
-     * The server flag selects the time stamp to read:
-     * true = read server time stamp
-     * false = device time stamp
-     *
-     * @param server  select server time stamp
-     * @return EPICS time stamp
-     */
-    virtual epicsTimeStamp readTimeStamp(bool server = true) const = 0;
-
-    /**
      * @brief Read incoming data as Int32.
      *
      * @return value as epicsInt32
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsInt32 readInt32() const = 0;
+    virtual epicsInt32 readInt32(epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as Int64.
@@ -104,7 +92,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsInt64 readInt64() const = 0;
+    virtual epicsInt64 readInt64(epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as UInt32.
@@ -113,7 +101,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readUInt32() const = 0;
+    virtual epicsUInt32 readUInt32(epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as Float64.
@@ -122,7 +110,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsFloat64 readFloat64() const = 0;
+    virtual epicsFloat64 readFloat64(epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as classic C string (char[]).
@@ -134,7 +122,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual void readCString(char *value, const size_t num) const = 0;
+    virtual void readCString(char *value, const size_t num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of Int8.
@@ -145,7 +133,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of UInt8.
@@ -156,7 +144,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of Int16.
@@ -167,7 +155,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of UInt16.
@@ -178,7 +166,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of Int32.
@@ -189,7 +177,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of UInt32.
@@ -200,7 +188,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of Int64.
@@ -211,7 +199,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of UInt64.
@@ -222,7 +210,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of Float32.
@@ -233,7 +221,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of Float64.
@@ -244,7 +232,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Read incoming data as array of EPICS Old String (fixed size).
@@ -255,7 +243,7 @@ public:
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num, epicsTimeStamp *ts = nullptr) const = 0;
 
     /**
      * @brief Check status of last read service.
