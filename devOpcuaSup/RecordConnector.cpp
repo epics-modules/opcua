@@ -112,6 +112,16 @@ void processConnectionLossCallback (CALLBACK *pcallback)
     processCallback(pcallback, ProcessReason::connectionLoss);
 }
 
+void processReadFailureCallback (CALLBACK *pcallback)
+{
+    processCallback(pcallback, ProcessReason::readFailure);
+}
+
+void processWriteFailureCallback (CALLBACK *pcallback)
+{
+    processCallback(pcallback, ProcessReason::writeFailure);
+}
+
 RecordConnector::RecordConnector (dbCommon *prec)
     : pitem(nullptr)
     , isIoIntrScanned(false)
@@ -127,11 +137,18 @@ RecordConnector::RecordConnector (dbCommon *prec)
     callbackSetUser(prec, &writeCompleteCallback);
     callbackSetCallback(DevOpcua::processConnectionLossCallback, &connectionLossCallback);
     callbackSetUser(prec, &connectionLossCallback);
+    callbackSetCallback(DevOpcua::processReadFailureCallback, &readFailureCallback);
+    callbackSetUser(prec, &readFailureCallback);
+    callbackSetCallback(DevOpcua::processWriteFailureCallback, &writeFailureCallback);
+    callbackSetUser(prec, &writeFailureCallback);
 }
 
 void
 RecordConnector::requestRecordProcessing (const ProcessReason reason)
 {
+    if (debug() > 5)
+        std::cout << "Registering record " << getRecordName()
+                  << " for processing" << std::endl;
     if (isIoIntrScanned &&
             (reason == ProcessReason::incomingData || reason == ProcessReason::connectionLoss)) {
         this->reason = reason;
@@ -144,6 +161,8 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
         case ProcessReason::writeComplete : callback = &writeCompleteCallback; break;
         case ProcessReason::readComplete : callback = &readCompleteCallback; break;
         case ProcessReason::connectionLoss : callback = &connectionLossCallback; break;
+        case ProcessReason::readFailure : callback = &readFailureCallback; break;
+        case ProcessReason::writeFailure : callback = &writeFailureCallback; break;
         }
         callbackSetPriority(prec->prio, callback);
         callbackRequest(callback);
