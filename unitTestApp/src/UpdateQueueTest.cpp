@@ -56,6 +56,8 @@ protected:
 TEST_F(UpdateQueueTest, status_EmptyQueue_IsCorrect) {
     EXPECT_EQ(0lu, q0.size()) << "Empty update queue returns size " << q0.size();
     EXPECT_EQ(true, q0.empty()) << "Empty update queue returns empty() as false";
+    EXPECT_EQ(5ul, q0.capacity()) << "Queue of size 5 reports " << q0.capacity() << " as capacity";
+    EXPECT_EQ(3ul, q1.capacity()) << "Queue of size 3 reports " << q0.capacity() << " as capacity";
 }
 
 TEST_F(UpdateQueueTest, status_UsedQueue_IsCorrect) {
