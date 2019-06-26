@@ -103,14 +103,6 @@ int ItemUaSdk::debug() const
         return 0;
 }
 
-void
-ItemUaSdk::requestRecordProcessing (const ProcessReason reason) const
-{
-    if (auto pd = rootElement.lock()) {
-        pd->requestRecordProcessing(reason);
-    }
-}
-
 const UaVariant &
 ItemUaSdk::getOutgoingData() const
 {
@@ -139,7 +131,7 @@ ItemUaSdk::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 }
 
 void
-ItemUaSdk::setIncomingData(const OpcUa_DataValue &value)
+ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 {
     tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
     tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
@@ -147,9 +139,17 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value)
     readStatus = value.StatusCode;
 
     if (auto pd = rootElement.lock()) {
-        return pd->setIncomingData(value.Value);
+        return pd->setIncomingData(value.Value, reason);
     } else {
         throw std::runtime_error(SB() << "stale pointer to root data element");
+    }
+}
+
+void
+ItemUaSdk::setIncomingEvent(const ProcessReason reason) const
+{
+    if (auto pd = rootElement.lock()) {
+        pd->requestRecordProcessing(reason);
     }
 }
 

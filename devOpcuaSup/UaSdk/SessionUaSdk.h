@@ -241,11 +241,6 @@ private:
     void rebuildNodeIds();
 
     /**
-     * @brief Set all nodes of the session to INVALID.
-     */
-    void invalidateAllNodes();
-
-    /**
      * @brief Issue read request for one batch of nodes.
      */
     void readBatchOfNodes (std::vector<ItemUaSdk *>::iterator from,
