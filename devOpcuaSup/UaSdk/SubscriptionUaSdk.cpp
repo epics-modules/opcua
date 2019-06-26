@@ -253,8 +253,7 @@ SubscriptionUaSdk::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
                 std::cout << "/" << item->linkinfo.identifierString;
             std::cout << ")" << std::endl;
         }
-        item->setIncomingData(dataNotifications[i].Value);
-        item->requestRecordProcessing(ProcessReason::incomingData);
+        item->setIncomingData(dataNotifications[i].Value, ProcessReason::incomingData);
     }
 }
 

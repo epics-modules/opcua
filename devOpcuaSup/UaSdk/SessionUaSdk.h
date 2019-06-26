@@ -240,11 +240,6 @@ private:
      */
     void rebuildNodeIds();
 
-    /**
-     * @brief Set all nodes of the session to INVALID.
-     */
-    void invalidateAllNodes();
-
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
     const std::string name;                                   /**< unique session name */
