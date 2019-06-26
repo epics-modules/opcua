@@ -144,7 +144,7 @@ public:
      *
      * @return  reference to the update's data
      */
-    T& getData() { return *data; }
+    T& getData() const { return *data; }
 
     /**
      * @brief Getter for the update's overrides counter.
@@ -186,7 +186,7 @@ class UpdateQueue
 {
 public:
     UpdateQueue(const size_t size, const bool discardOldest = true)
-        : capacity(size)
+        : maxElements(size)
         , discardOldest(discardOldest)
     {}
 
@@ -202,7 +202,7 @@ public:
     {
         Guard G(lock);
         if (wasFirst) *wasFirst = false;
-        if (updq.size() < capacity) {
+        if (updq.size() < maxElements) {
             if (wasFirst && updq.empty()) *wasFirst = true;
             updq.push(update);
         } else {
@@ -261,8 +261,17 @@ public:
      */
     size_t size() const { return updq.size(); }
 
+    /**
+     * @brief Returns the maximum number of elements.
+     *
+     * Returns the maximum allowed number of elements.
+     *
+     * @return  queue capacity (max. number of elements)
+     */
+    size_t capacity() const { return maxElements; }
+
 private:
-    size_t capacity;
+    size_t maxElements;
     bool discardOldest;
     epicsMutex lock;
     std::queue<std::shared_ptr<Update<T>>> updq;
