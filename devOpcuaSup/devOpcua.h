@@ -64,7 +64,9 @@ typedef struct linkInfo {
 /**
  * @brief Enum marking the reason for processing a record
  */
-enum ProcessReason { none, incomingData, readComplete, writeComplete, connectionLoss };
+enum ProcessReason { none, incomingData, connectionLoss,
+                     readComplete, readFailure,
+                     writeComplete, writeFailure };
 
 template<typename R>
 struct dset6 {

@@ -129,6 +129,8 @@ private:
     CALLBACK readCompleteCallback;
     CALLBACK writeCompleteCallback;
     CALLBACK connectionLossCallback;
+    CALLBACK readFailureCallback;
+    CALLBACK writeFailureCallback;
 };
 
 } // namespace DevOpcua
