@@ -54,10 +54,10 @@ protected:
 };
 
 TEST_F(UpdateQueueTest, status_EmptyQueue_IsCorrect) {
-    EXPECT_EQ(0lu, q0.size()) << "Empty update queue returns size " << q0.size();
-    EXPECT_EQ(true, q0.empty()) << "Empty update queue returns empty() as false";
-    EXPECT_EQ(5ul, q0.capacity()) << "Queue of size 5 reports " << q0.capacity() << " as capacity";
-    EXPECT_EQ(3ul, q1.capacity()) << "Queue of size 3 reports " << q0.capacity() << " as capacity";
+    EXPECT_EQ(q0.size(), 0lu) << "Empty update queue returns size " << q0.size();
+    EXPECT_EQ(q0.empty(), true) << "Empty update queue returns empty() as false";
+    EXPECT_EQ(q0.capacity(), 5ul) << "Queue of size 5 reports " << q0.capacity() << " as capacity";
+    EXPECT_EQ(q1.capacity(), 3ul) << "Queue of size 3 reports " << q0.capacity() << " as capacity";
 }
 
 TEST_F(UpdateQueueTest, status_UsedQueue_IsCorrect) {
@@ -69,8 +69,8 @@ TEST_F(UpdateQueueTest, status_UsedQueue_IsCorrect) {
     q0.pushUpdate(u0);
     q0.pushUpdate(u1);
 
-    EXPECT_EQ(2lu, q0.size()) << "With two updates, update queue returns size " << q0.size() << " not 2";
-    EXPECT_EQ(false, q0.empty()) << "With two updates, update queue returns empty() as true";
+    EXPECT_EQ(q0.size(), 2lu) << "With two updates, update queue returns size " << q0.size() << " not 2";
+    EXPECT_EQ(q0.empty(), false) << "With two updates, update queue returns empty() as true";
 }
 
 TEST_F(UpdateQueueTest, popUpdate_UsedQueue_DataAndOrderCorrect) {
@@ -86,31 +86,31 @@ TEST_F(UpdateQueueTest, popUpdate_UsedQueue_DataAndOrderCorrect) {
     q0.pushUpdate(u1);
     q0.pushUpdate(u2);
 
-    EXPECT_EQ(3lu, q0.size()) << "With 3 updates, update queue returns size " << q0.size() << " not 3";
+    EXPECT_EQ(q0.size(), 3lu) << "With 3 updates, update queue returns size " << q0.size() << " not 3";
 
     std::shared_ptr<Update<int>> r0 = q0.popUpdate();
-    EXPECT_EQ(2lu, q0.size()) << "With 2 updates remaining, update queue returns size " << q0.size() << " not 2";
-    EXPECT_EQ(0ul, r0->getOverrides()) << "Update 0 override counter (" << r0->getOverrides() << ") not 0";
-    EXPECT_EQ(ts0, r0->getTimeStamp()) << "Update 0 timestamp is not as before";
-    EXPECT_EQ(ProcessReason::incomingData, r0->getType()) << "Update 0 ProcessReason is not as before";
+    EXPECT_EQ(q0.size(), 2lu) << "With 2 updates remaining, update queue returns size " << q0.size() << " not 2";
+    EXPECT_EQ(r0->getOverrides(), 0ul) << "Update 0 override counter (" << r0->getOverrides() << ") not 0";
+    EXPECT_EQ(r0->getTimeStamp(), ts0) << "Update 0 timestamp is not as before";
+    EXPECT_EQ(r0->getType(), ProcessReason::incomingData) << "Update 0 ProcessReason is not as before";
     i = r0->getData();
-    EXPECT_EQ(0, i) << "Update 0 data (" << i << ") differs from original data (0)";
+    EXPECT_EQ(i, 0) << "Update 0 data (" << i << ") differs from original data (0)";
 
     r0 = q0.popUpdate();
-    EXPECT_EQ(1lu, q0.size()) << "With 1 update remaining, update queue returns size " << q0.size() << " not 1";
-    EXPECT_EQ(0ul, r0->getOverrides()) << "Update 1 override counter (" << r0->getOverrides() << ") not 0";
-    EXPECT_EQ(ts1, r0->getTimeStamp()) << "Update 1 timestamp is not as before";
-    EXPECT_EQ(ProcessReason::writeComplete, r0->getType()) << "Update 1 ProcessReason is not as before";
+    EXPECT_EQ(q0.size(), 1lu) << "With 1 update remaining, update queue returns size " << q0.size() << " not 1";
+    EXPECT_EQ(r0->getOverrides(), 0ul) << "Update 1 override counter (" << r0->getOverrides() << ") not 0";
+    EXPECT_EQ(r0->getTimeStamp(), ts1) << "Update 1 timestamp is not as before";
+    EXPECT_EQ(r0->getType(), ProcessReason::writeComplete) << "Update 1 ProcessReason is not as before";
     i = r0->getData();
-    EXPECT_EQ(1, i) << "Update 1 data (" << i << ") differs from original data (1)";
+    EXPECT_EQ(i, 1) << "Update 1 data (" << i << ") differs from original data (1)";
 
     r0 = q0.popUpdate();
-    EXPECT_EQ(0lu, q0.size()) << "With 0 updates remaining, update queue returns size " << q0.size() << " not 0";
-    EXPECT_EQ(0ul, r0->getOverrides()) << "Update 2 override counter (" << r0->getOverrides() << ") not 0";
-    EXPECT_EQ(ts2, r0->getTimeStamp()) << "Update 2 timestamp is not as before";
-    EXPECT_EQ(ProcessReason::readComplete, r0->getType()) << "Update 2 ProcessReason is not as before";
+    EXPECT_EQ(q0.size(), 0lu) << "With 0 updates remaining, update queue returns size " << q0.size() << " not 0";
+    EXPECT_EQ(r0->getOverrides(), 0ul) << "Update 2 override counter (" << r0->getOverrides() << ") not 0";
+    EXPECT_EQ(r0->getTimeStamp(), ts2) << "Update 2 timestamp is not as before";
+    EXPECT_EQ(r0->getType(), ProcessReason::readComplete) << "Update 2 ProcessReason is not as before";
     i = r0->getData();
-    EXPECT_EQ(2, i) << "Update 2 data (" << i << ") differs from original data (2)";
+    EXPECT_EQ(i, 2) << "Update 2 data (" << i << ") differs from original data (2)";
 }
 
 TEST_F(UpdateQueueTest, popUpdate_UsedQueue_nextReasonIsCorrect) {
@@ -126,9 +126,9 @@ TEST_F(UpdateQueueTest, popUpdate_UsedQueue_nextReasonIsCorrect) {
     q0.pushUpdate(u1);
 
     r0 = q0.popUpdate(&nextReason);
-    EXPECT_EQ(ProcessReason::writeComplete, nextReason) << "Second-to-last pop does not set nextReason = writeComplete";
+    EXPECT_EQ(nextReason, ProcessReason::writeComplete) << "Second-to-last pop does not set nextReason = writeComplete";
     r0 = q0.popUpdate(&nextReason);
-    EXPECT_EQ(ProcessReason::none, nextReason) << "Last pop does not set nextReason = none";
+    EXPECT_EQ(nextReason, ProcessReason::none) << "Last pop does not set nextReason = none";
 }
 
 TEST_F(UpdateQueueTest, pushUpdate_FullQueueOldest_OverrideAtOldEnd) {
@@ -145,19 +145,19 @@ TEST_F(UpdateQueueTest, pushUpdate_FullQueueOldest_OverrideAtOldEnd) {
     q1.pushUpdate(u2);
 
     r0 = q1.popUpdate();
-    EXPECT_EQ(2lu, q1.size()) << "After pop 1/3, update queue returns size " << q1.size() << " not 2";
-    EXPECT_EQ(3ul, r0->getOverrides()) << "Pop 1/3 override counter (" << r0->getOverrides() << ") not 3";
-    EXPECT_EQ(ts0, r0->getTimeStamp()) << "Pop 1/3 timestamp is not as from first added Update";
+    EXPECT_EQ(q1.size(), 2lu) << "After pop 1/3, update queue returns size " << q1.size() << " not 2";
+    EXPECT_EQ(r0->getOverrides(), 3ul) << "Pop 1/3 override counter (" << r0->getOverrides() << ") not 3";
+    EXPECT_EQ(r0->getTimeStamp(), ts0) << "Pop 1/3 timestamp is not as from first added Update";
 
     r0 = q1.popUpdate();
-    EXPECT_EQ(1lu, q1.size()) << "After pop 2/3, update queue returns size " << q1.size() << " not 1";
-    EXPECT_EQ(0ul, r0->getOverrides()) << "Pop 2/3 override counter (" << r0->getOverrides() << ") not 0";
-    EXPECT_EQ(ts1, r0->getTimeStamp()) << "Pop 2/3 timestamp is not as from 2nd added Update";
+    EXPECT_EQ(q1.size(), 1lu) << "After pop 2/3, update queue returns size " << q1.size() << " not 1";
+    EXPECT_EQ(r0->getOverrides(), 0ul) << "Pop 2/3 override counter (" << r0->getOverrides() << ") not 0";
+    EXPECT_EQ(r0->getTimeStamp(), ts1) << "Pop 2/3 timestamp is not as from 2nd added Update";
 
     r0 = q1.popUpdate();
-    EXPECT_EQ(0lu, q1.size()) << "After pop 3/3, update queue returns size " << q1.size() << " not 0";
-    EXPECT_EQ(0ul, r0->getOverrides()) << "Pop 3/3 override counter (" << r0->getOverrides() << ") not 0";
-    EXPECT_EQ(ts2, r0->getTimeStamp()) << "Pop 3/3 timestamp is not as from 3rd added Update";
+    EXPECT_EQ(q1.size(), 0lu) << "After pop 3/3, update queue returns size " << q1.size() << " not 0";
+    EXPECT_EQ(r0->getOverrides(), 0ul) << "Pop 3/3 override counter (" << r0->getOverrides() << ") not 0";
+    EXPECT_EQ(r0->getTimeStamp(), ts2) << "Pop 3/3 timestamp is not as from 3rd added Update";
 }
 
 TEST_F(UpdateQueueTest, pushUpdate_FullQueueNewest_OverrideAtNewEnd) {
@@ -174,19 +174,19 @@ TEST_F(UpdateQueueTest, pushUpdate_FullQueueNewest_OverrideAtNewEnd) {
     q2.pushUpdate(u2);
 
     r0 = q2.popUpdate();
-    EXPECT_EQ(2lu, q2.size()) << "After pop 1/3, update queue returns size " << q2.size() << " not 2";
-    EXPECT_EQ(0ul, r0->getOverrides()) << "Pop 1/3 override counter (" << r0->getOverrides() << ") not 0";
-    EXPECT_EQ(ts00, r0->getTimeStamp()) << "Pop 1/3 timestamp is not as from first original Update";
+    EXPECT_EQ(q2.size(), 2lu) << "After pop 1/3, update queue returns size " << q2.size() << " not 2";
+    EXPECT_EQ(r0->getOverrides(), 0ul) << "Pop 1/3 override counter (" << r0->getOverrides() << ") not 0";
+    EXPECT_EQ(r0->getTimeStamp(), ts00) << "Pop 1/3 timestamp is not as from first original Update";
 
     r0 = q2.popUpdate();
-    EXPECT_EQ(1lu, q2.size()) << "After pop 2/3, update queue returns size " << q2.size() << " not 1";
-    EXPECT_EQ(0ul, r0->getOverrides()) << "Pop 2/3 override counter (" << r0->getOverrides() << ") not 0";
-    EXPECT_EQ(ts01, r0->getTimeStamp()) << "Pop 2/3 timestamp is not as from 2nd original Update";
+    EXPECT_EQ(q2.size(), 1lu) << "After pop 2/3, update queue returns size " << q2.size() << " not 1";
+    EXPECT_EQ(r0->getOverrides(), 0ul) << "Pop 2/3 override counter (" << r0->getOverrides() << ") not 0";
+    EXPECT_EQ(r0->getTimeStamp(), ts01) << "Pop 2/3 timestamp is not as from 2nd original Update";
 
     r0 = q2.popUpdate();
-    EXPECT_EQ(0lu, q2.size()) << "After pop 3/3, update queue returns size " << q2.size() << " not 0";
-    EXPECT_EQ(3ul, r0->getOverrides()) << "Pop 3/3 override counter (" << r0->getOverrides() << ") not 3";
-    EXPECT_EQ(ts2, r0->getTimeStamp()) << "Pop 3/3 timestamp is not as from 3rd added Update";
+    EXPECT_EQ(q2.size(), 0lu) << "After pop 3/3, update queue returns size " << q2.size() << " not 0";
+    EXPECT_EQ(r0->getOverrides(), 3ul) << "Pop 3/3 override counter (" << r0->getOverrides() << ") not 3";
+    EXPECT_EQ(r0->getTimeStamp(), ts2) << "Pop 3/3 timestamp is not as from 3rd added Update";
 }
 
 TEST_F(UpdateQueueTest, pushUpdate_EmptyQueue_wasFirstIsCorrect) {
@@ -198,9 +198,9 @@ TEST_F(UpdateQueueTest, pushUpdate_EmptyQueue_wasFirstIsCorrect) {
     bool wasFirst = false;
 
     q0.pushUpdate(u0, &wasFirst);
-    EXPECT_EQ(true, wasFirst) << "First push does not set wasFirst = true";
+    EXPECT_EQ(wasFirst, true) << "First push does not set wasFirst = true";
     q0.pushUpdate(u1, &wasFirst);
-    EXPECT_EQ(false, wasFirst) << "Second push does not set wasFirst = false";
+    EXPECT_EQ(wasFirst, false) << "Second push does not set wasFirst = false";
 }
 
 } // namespace
