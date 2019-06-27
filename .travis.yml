@@ -1,6 +1,6 @@
 language: cpp
 compiler: gcc
-dist: trusty
+dist: xenial
 
 install:
 - ./.ci-local/travis-install.sh
@@ -12,16 +12,16 @@ script:
 matrix:
   include:
 
-  - env: BRBASE=7.0 UASDK=1.5.6
-    addons: { apt: { packages: ["libgtest-dev"] } }
+  - env: BASE_BRANCH=7.0 UASDK=1.5.6
+    dist: trusty
 
-  - env: BRBASE=3.15 UASDK=1.5.6
-    addons: { apt: { packages: ["libgtest-dev"] } }
+  - env: BASE_BRANCH=3.15 UASDK=1.5.6
+    dist: trusty
 
-  - env: BRBASE=7.0 UASDK=1.6.3 CMPLR=gcc-6
-    dist: xenial
-    addons: { apt: { packages: ["g++-6", "libgtest-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+  - env: BASE_BRANCH=7.0 UASDK=1.6.3
+    compiler: gcc-6
+    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
 
-  - env: BRBASE=3.15 UASDK=1.6.3 CMPLR=gcc-6
-    dist: xenial
-    addons: { apt: { packages: ["g++-6", "libgtest-dev"], sources: ["ubuntu-toolchain-r-test"] } }
+  - env: BASE_BRANCH=3.15 UASDK=1.6.3
+    compiler: gcc-6
+    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }

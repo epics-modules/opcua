@@ -4,17 +4,37 @@ set -e -x
 CURDIR="$PWD"
 
 cat << EOF > $CURDIR/configure/CONFIG_SITE.local
+GTEST_HOME = $CURDIR/googletest
+
 UASDK = $HOME/.source/sdk
 UASDK_USE_CRYPTO = YES
 UASDK_USE_XMLPARSER = YES
 EOF
+
+HOST_CCMPLR_NAME=`echo "$TRAVIS_COMPILER" | sed -E 's/^([[:alpha:]][^-]*(-[[:alpha:]][^-]*)*)+(-[0-9\.]+)?$/\1/g'`
+HOST_CMPLR_VER_SUFFIX=`echo "$TRAVIS_COMPILER" | sed -E 's/^([[:alpha:]][^-]*(-[[:alpha:]][^-]*)*)+(-[0-9\.]+)?$/\3/g'`
+HOST_CMPLR_VER=`echo "$HOST_CMPLR_VER_SUFFIX" | cut -c 2-`
+HOST_CPPCMPLR_NAME=$(echo "$HOST_CCMPLR_NAME" | sed 's/gcc/g++/g')
+
+CC=${HOST_CCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX
+CXX=${HOST_CPPCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX
+
+# Build GoogleTest
+
+cd $CURDIR/googletest/googletest
+cmake . && cmake --build .
+
+cd $CURDIR/googletest/googlemock
+cmake . && cmake --build .
+
+# Install UA SDK
 
 install -d "$HOME/.source"
 cd "$HOME/.source"
 
 uasdkcc=gcc4.7.2
 
-if [ "$CMPLR" = "gcc-6" ]
+if [ "$CC" = "gcc-6" ]
 then
   uasdkcc=gcc6.3.0
   wget http://mirrors.edge.kernel.org/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb
