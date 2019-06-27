@@ -4,10 +4,20 @@ set -e -x
 CURDIR="$PWD"
 
 cat << EOF > $CURDIR/configure/CONFIG_SITE.local
+GTEST_HOME = $CURDIR/googletest
+
 UASDK = $HOME/.source/sdk
 UASDK_USE_CRYPTO = YES
 UASDK_USE_XMLPARSER = YES
 EOF
+
+# Build GoogleTest
+
+cd googletest
+cmake .
+cmake --build .
+
+# Install UA SDK
 
 install -d "$HOME/.source"
 cd "$HOME/.source"
