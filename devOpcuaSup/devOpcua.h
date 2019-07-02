@@ -68,6 +68,21 @@ enum ProcessReason { none, incomingData, connectionLoss,
                      readComplete, readFailure,
                      writeComplete, writeFailure };
 
+inline const char *
+processReasonString (const ProcessReason type)
+{
+    switch(type) {
+        case none:            return "none";
+        case incomingData:    return "incomingData";
+        case connectionLoss:  return "connectionLoss";
+        case readComplete:    return "readComplete";
+        case readFailure:     return "readFailure";
+        case writeComplete:   return "writeComplete";
+        case writeFailure:    return "writeFailure";
+    }
+    return "Illegal Value";
+}
+
 template<typename R>
 struct dset6 {
     long N;
