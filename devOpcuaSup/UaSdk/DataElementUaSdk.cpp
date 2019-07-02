@@ -67,8 +67,8 @@ variantTypeString (const OpcUa_BuiltInType type)
         case OpcUaType_DataValue:       return "OpcUa_DataValue";
         case OpcUaType_Variant:         return "OpcUa_Variant";
         case OpcUaType_DiagnosticInfo:  return "OpcUa_DiagnosticInfo";
-        default: return "Illegal Value";
     }
+    return "Illegal Value";
 }
 
 DataElementUaSdk::DataElementUaSdk (const std::string &name,
@@ -239,15 +239,16 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
         Update<UaVariant> *u(new Update<UaVariant>(getIncomingTimeStamp(), reason, value));
         incomingData.pushUpdate(std::shared_ptr<Update<UaVariant>>(u), &wasFirst);
         if (debug() >= 5)
-            std::cout << "Element " << name << " set incoming data for record "
-                      << pconnector->getRecordName()
+            std::cout << "Element " << name << " set data ("
+                      << processReasonString(reason)
+                      << ") for record " << pconnector->getRecordName()
                       << " (queue use " << incomingData.size()
                       << "/" << incomingData.capacity() << ")" << std::endl;
         if (wasFirst)
             pconnector->requestRecordProcessing(reason);
     } else {
         if (debug() >= 5)
-            std::cout << "Element " << name << " splitting incoming data structure to "
+            std::cout << "Element " << name << " splitting data structure to "
                       << elements.size() << " child elements" << std::endl;
 
         if (value.type() == OpcUaType_ExtensionObject) {
@@ -305,9 +306,10 @@ DataElementUaSdk::setIncomingEvent (ProcessReason reason)
         Update<UaVariant> *u(new Update<UaVariant>(getIncomingTimeStamp(), reason));
         incomingData.pushUpdate(std::shared_ptr<Update<UaVariant>>(u), &wasFirst);
         if (debug() >= 5)
-            std::cout << "Element " << name << " set event for record "
-                      << pconnector->getRecordName()
-                      << " (queue uses " << incomingData.size()
+            std::cout << "Element " << name << " set event ("
+                      << processReasonString(reason)
+                      << ") for record " << pconnector->getRecordName()
+                      << " (queue use " << incomingData.size()
                       << "/" << incomingData.capacity() << ")" << std::endl;
         if (wasFirst)
             pconnector->requestRecordProcessing(reason);
@@ -335,14 +337,17 @@ DataElementUaSdk::logReadScalar (const Update<UaVariant> *upd,
         UaVariant &data = upd->getData();
         upd->getTimeStamp().strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f");
         std::cout << pconnector->getRecordName() << ": ("
-                  << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device") << " timestamp "
+                  << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device") << " time "
                   << time_buf << ") reading ";
         if (data.type() == OpcUaType_String)
             std::cout << "'" << data.toString().toUtf8() << "'";
         else
             std::cout << data.toString().toUtf8();
         std::cout << " (" << variantTypeString(data.type()) << ")"
-                  << " as " << targetTypeName << std::endl;
+                  << " as " << targetTypeName
+                  << " (remaining queue " << incomingData.size()
+                  << "/" << incomingData.capacity() << ")" << std::endl;
+
     }
 }
 
@@ -363,11 +368,13 @@ DataElementUaSdk::checkReadArray (const Update<UaVariant> *upd,
         char time_buf[40];
         upd->getTimeStamp().strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f");
         std::cout << pconnector->getRecordName() << ": ("
-                  << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device") << " timestamp "
+                  << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device") << " time "
                   << time_buf << ") reading "
                   << "array of " << variantTypeString(data.type())
                   << "[" << data.arraySize() << "]"
-                  << " into " << targetTypeName << "[" << targetSize << "]" << std::endl;
+                  << " into " << targetTypeName << "[" << targetSize << "]"
+                  << " (remaining queue " << incomingData.size()
+                  << "/" << incomingData.capacity() << ")" << std::endl;
     }
 }
 
