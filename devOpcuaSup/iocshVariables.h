@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -33,10 +33,12 @@ extern double opcua_DefaultPublishInterval;    /**< publishing interval [ms] */
 
 // monitored item
 extern double opcua_DefaultSamplingInterval;   /**< sampling interval [ms] (-1 = use publishing interval) */
-extern int opcua_DefaultQueueSize;             /**< server side queue size (1 = no queuing) */
+extern int opcua_DefaultServerQueueSize;       /**< server side queue size (1 = no queuing) */
 extern int opcua_DefaultDiscardOldest;         /**< discard policy on queue overrun (1 = discard oldest; 0 = newest) */
 extern int opcua_DefaultUseServerTime;         /**< timestamp selection (1 = use server time; 0 use source time) */
 extern int opcua_DefaultOutputReadback;        /**< output record handling (1 = bidirectional) */
+extern double opcua_ClientQueueSizeFactor;     /**< client queue size factor (* server side size) */
+extern int opcua_MinimumClientQueueSize;       /**< minimum client queue size */
 
 } // namespace DevOpcua
 

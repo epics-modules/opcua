@@ -77,6 +77,7 @@ ItemUaSdk::show (int level) const
               << "@" << session->getName()
               << " sampling=" << linkinfo.samplingInterval
               << " qsize=" << linkinfo.queueSize
+              << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
               << " output=" << (linkinfo.isOutput ? "y" : "n")
