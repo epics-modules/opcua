@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -29,26 +29,33 @@ namespace DevOpcua {
 
 // Configurable defaults
 
+// session
 double opcua_ConnectTimeout = 5.0;               // [s]
 int opcua_MaxOperationsPerServiceCall = 0;       // no limit (do not batch)
 
+// subscription
 double opcua_DefaultPublishInterval = 100.0;     // [ms]
 
+// monitored item
 double opcua_DefaultSamplingInterval = -1.0;     // use publish interval [ms]
-int opcua_DefaultQueueSize = 1;                  // no queueing
+int opcua_DefaultServerQueueSize = 1;            // no queueing
 int opcua_DefaultDiscardOldest = 1;              // discard oldest value in case of overrun
 int opcua_DefaultUseServerTime = 1;              // use server timestamp
 int opcua_DefaultOutputReadback = 1;             // make outputs bidirectional
+double opcua_ClientQueueSizeFactor = 1.5;        // client queue size factor (* server side size)
+int opcua_MinimumClientQueueSize = 3;            // minimum client queue size
 
 extern "C" {
 epicsExportAddress(double, opcua_ConnectTimeout);
 epicsExportAddress(int, opcua_MaxOperationsPerServiceCall);
 epicsExportAddress(double, opcua_DefaultPublishInterval);
 epicsExportAddress(double, opcua_DefaultSamplingInterval);
-epicsExportAddress(int, opcua_DefaultQueueSize);
+epicsExportAddress(int, opcua_DefaultServerQueueSize);
 epicsExportAddress(int, opcua_DefaultDiscardOldest);
 epicsExportAddress(int, opcua_DefaultUseServerTime);
 epicsExportAddress(int, opcua_DefaultOutputReadback);
+epicsExportAddress(double, opcua_ClientQueueSizeFactor);
+epicsExportAddress(int, opcua_MinimumClientQueueSize);
 }
 
 } // namespace DevOpcua

@@ -77,7 +77,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
     : DataElement(pconnector, name)
     , pitem(item)
     , mapped(false)
-    , incomingData(pconnector->plinkinfo->queueSize * 2 + 3, pconnector->plinkinfo->discardOldest)
+    , incomingData(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
     , incomingType(OpcUaType_Null)
     , incomingIsArray(false)
 {}

@@ -52,6 +52,7 @@ typedef struct linkInfo {
 
     double samplingInterval;
     epicsUInt32 queueSize;
+    epicsUInt32 clientQueueSize;
     bool discardOldest = true;
 
     std::string element;
