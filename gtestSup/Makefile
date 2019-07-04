@@ -12,9 +12,11 @@ ifdef GTEST_HOME
 
 LIBRARY_HOST += epics_gtest_main
 epics_gtest_main_SRCS += gtest_main.cc
+epics_gtest_main_LIBS += gtest
 
 ifneq ($(GTEST_HOME),SYSTEM)
 USR_INCLUDES += -I$(GTEST_HOME)/googletest/include
+gtest_DIR = $(GTEST_HOME)/googletest
 endif
 
 CFG += RULES_GTEST
