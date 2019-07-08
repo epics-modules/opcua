@@ -245,6 +245,12 @@ private:
      */
     void invalidateAllNodes();
 
+    /**
+     * @brief Issue read request for one batch of nodes.
+     */
+    void readBatchOfNodes (std::vector<ItemUaSdk *>::iterator from,
+                           std::vector<ItemUaSdk *>::iterator to);
+
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
     const std::string name;                                   /**< unique session name */

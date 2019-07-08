@@ -229,9 +229,9 @@ SessionUaSdk::isConnected () const
         return false;
 }
 
-//TODO: Push to queue for worker thread (instead of doing an explicit request)
 void
-SessionUaSdk::readAllNodes ()
+SessionUaSdk::readBatchOfNodes (std::vector<ItemUaSdk *>::iterator from,
+                                std::vector<ItemUaSdk *>::iterator to)
 {
     UaStatus status;
     UaReadValueIds nodesToRead;
@@ -239,13 +239,13 @@ SessionUaSdk::readAllNodes ()
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToRead.create(static_cast<OpcUa_UInt32>(items.size()));
+    nodesToRead.create(static_cast<OpcUa_UInt32>(to - from));
     OpcUa_UInt32 i = 0;
-    for (auto &it : items) {
-        it->getNodeId().copyTo(&nodesToRead[i].NodeId);
+    for (auto it = from; it != to; it++) {
+        (*it)->getNodeId().copyTo(&nodesToRead[i].NodeId);
         nodesToRead[i].AttributeId = OpcUa_Attributes_Value;
         i++;
-        itemsToRead->push_back(it);
+        itemsToRead->push_back(*it);
     }
 
     Guard G(opslock);
@@ -256,12 +256,12 @@ SessionUaSdk::readAllNodes ()
                                    id);                            // Transaction id
 
     if (status.isBad()) {
-        errlogPrintf("OPC UA session %s: (readAllNodes) beginRead service failed with status %s\n",
+        errlogPrintf("OPC UA session %s: (readBatchOfNodes) beginRead service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
     } else {
         if (debug)
             std::cout << "OPC UA session " << name.c_str()
-                      << ": (readAllNodes) beginRead service ok"
+                      << ": (readBatchOfNodes) beginRead service ok"
                       << " (transaction id " << id
                       << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
         outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
@@ -269,7 +269,25 @@ SessionUaSdk::readAllNodes ()
     }
 }
 
+//TODO: Push to queue for worker thread (instead of doing an explicit request)
+void
+SessionUaSdk::readAllNodes ()
+{
+    OpcUa_UInt32 numberPerBatch = connectInfo.nMaxOperationsPerServiceCall;
+
+    if (numberPerBatch == 0 || items.size() <= numberPerBatch) {
+        readBatchOfNodes(items.begin(), items.end());
+    } else {
+        std::vector<ItemUaSdk *>::iterator it;
+        for (it = items.begin(); (items.end() - it) > numberPerBatch; it += numberPerBatch) {
+            readBatchOfNodes(it, it + numberPerBatch);
+        }
+        if (it < items.end()) readBatchOfNodes(it, items.end());
+    }
+}
+
 //TODO: Push to queue for worker thread (instead of doing a single item request)
+//      remember to apply connectInfo.nMaxOperationsPerServiceCall
 void
 SessionUaSdk::requestRead (ItemUaSdk &item)
 {
@@ -309,6 +327,7 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
 }
 
 //TODO: Push to queue for worker thread (instead of doing a single item request)
+//      remember to apply connectInfo.nMaxOperationsPerServiceCall
 void
 SessionUaSdk::requestWrite (ItemUaSdk &item)
 {
