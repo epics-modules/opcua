@@ -168,6 +168,20 @@ public:
     void setIncomingEvent(ProcessReason reason) const;
 
     /**
+     * @brief Setter for the revised sampling interval.
+     * @param status  status code received by the client library
+     */
+    void setRevisedSamplingInterval(const OpcUa_Double &interval)
+    { revisedSamplingInterval = interval; }
+
+    /**
+     * @brief Setter for the revised sampling interval.
+     * @param status  status code received by the client library
+     */
+    void setRevisedQueueSize(const OpcUa_UInt32 &qsize)
+    { revisedQueueSize = qsize; }
+
+    /**
      * @brief Convert OPC UA time stamp to EPICS time stamp.
      * @param dt time stamp in UaDateTime format
      * @param pico10 10 picosecond resolution counter
@@ -182,15 +196,17 @@ public:
     int debug() const;
 
 private:
-    SubscriptionUaSdk *subscription;   /**< raw pointer to subscription (if monitored) */
-    SessionUaSdk *session;             /**< raw pointer to session */
-    std::unique_ptr<UaNodeId> nodeid;  /**< node id of this item */
-    bool registered;                   /**< flag for registration status */
+    SubscriptionUaSdk *subscription;       /**< raw pointer to subscription (if monitored) */
+    SessionUaSdk *session;                 /**< raw pointer to session */
+    std::unique_ptr<UaNodeId> nodeid;      /**< node id of this item */
+    bool registered;                       /**< flag for registration status */
+    OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
+    OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
     std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
-    UaStatusCode readStatus;           /**< status code of last read service */
-    UaStatusCode writeStatus;          /**< status code of last write service */
-    epicsTime tsServer;                /**< server time stamp */
-    epicsTime tsSource;                /**< device time stamp */
+    UaStatusCode readStatus;               /**< status code of last read service */
+    UaStatusCode writeStatus;              /**< status code of last write service */
+    epicsTime tsServer;                    /**< server time stamp */
+    epicsTime tsSource;                    /**< device time stamp */
 };
 
 } // namespace DevOpcua

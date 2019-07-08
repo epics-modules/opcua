@@ -180,6 +180,10 @@ SubscriptionUaSdk::addMonitoredItems ()
         errlogPrintf("OPC UA subscription %s@%s: createMonitoredItems failed with status %s\n",
                      name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
     } else {
+        for (i = 0; i < items.size(); i++) {
+            items[i]->setRevisedSamplingInterval(monitoredItemCreateResults[i].RevisedSamplingInterval);
+            items[i]->setRevisedQueueSize(monitoredItemCreateResults[i].RevisedQueueSize);
+        }
         if (debug)
             std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
                       << ": created " << items.size() << " monitored items ("
@@ -190,6 +194,8 @@ SubscriptionUaSdk::addMonitoredItems ()
                 if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode))
                     std::cout << "** Monitored item " << node.toXmlString().toUtf8()
                               << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
+                              << " revised sampling interval " << monitoredItemCreateResults[i].RevisedSamplingInterval
+                              << " revised queue size " << monitoredItemCreateResults[i].RevisedQueueSize
                               << std::endl;
                 else
                     std::cout << "** Monitored item " << node.toXmlString().toUtf8()
