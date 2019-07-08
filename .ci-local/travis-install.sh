@@ -19,14 +19,6 @@ HOST_CPPCMPLR_NAME=$(echo "$HOST_CCMPLR_NAME" | sed 's/gcc/g++/g')
 CC=${HOST_CCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX
 CXX=${HOST_CPPCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX
 
-# Build GoogleTest
-
-cd $CURDIR/googletest/googletest
-cmake . && cmake --build .
-
-cd $CURDIR/googletest/googlemock
-cmake . && cmake --build .
-
 # Install UA SDK
 
 install -d "$HOME/.source"
