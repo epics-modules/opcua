@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2019 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -15,6 +15,7 @@
 #include <string>
 #include <cstring>
 #include <cstddef>
+#include <cmath>
 #include <algorithm>
 
 #include <dbCommon.h>
@@ -72,7 +73,7 @@ parseLink (dbCommon *prec, DBEntry &ent)
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:QSIZE'='" << s << "'" << std::endl;
     if (s[0] == '\0')
-        pinfo->queueSize = static_cast<epicsUInt32>(opcua_DefaultQueueSize);
+        pinfo->queueSize = static_cast<epicsUInt32>(opcua_DefaultServerQueueSize);
     else
         if (epicsParseUInt32(s, &pinfo->queueSize, 0, nullptr))
             throw std::runtime_error(SB() << "error converting '" << s << "' to UInt32");
@@ -197,6 +198,9 @@ parseLink (dbCommon *prec, DBEntry &ent)
             } else if (optname == "qsize") {
                 if (epicsParseUInt32(optval.c_str(), &pinfo->queueSize, 0, nullptr))
                     throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
+            } else if (optname == "cqsize") {
+                if (epicsParseUInt32(optval.c_str(), &pinfo->clientQueueSize, 0, nullptr))
+                    throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
             } else if (optname == "discard") {
                 if (optval == "new")
                     pinfo->discardOldest = false;
@@ -212,7 +216,7 @@ parseLink (dbCommon *prec, DBEntry &ent)
                 }
             }
         }
-        // Record/data element related options
+        // Item/node or Record/data element related options
         if (optname == "timestamp") {
             if (optval == "server")
                 pinfo->useServerTimestamp = true;
@@ -233,6 +237,12 @@ parseLink (dbCommon *prec, DBEntry &ent)
         sep = linkstr.find_first_not_of("; \t", send);
     }
 
+    if (!pinfo->clientQueueSize) {
+        pinfo->clientQueueSize = static_cast<epicsUInt32>(ceil(abs(opcua_ClientQueueSizeFactor) * pinfo->queueSize));
+        epicsUInt32 mini = static_cast<epicsUInt32>(abs(opcua_MinimumClientQueueSize));
+        if (pinfo->clientQueueSize < mini) pinfo->clientQueueSize = mini;
+    }
+
     if (debug > 4) {
         std::cout << prec->name << " :";
         if (pinfo->linkedToItem) {
@@ -247,6 +257,7 @@ parseLink (dbCommon *prec, DBEntry &ent)
                 std::cout << " id(s)=" << pinfo->identifierString;
             std::cout << " sampling=" << pinfo->samplingInterval
                       << " qsize=" << pinfo->queueSize
+                      << " cqsize=" << pinfo->clientQueueSize
                       << " discard=" << (pinfo->discardOldest ? "old" : "new");
         } else {
             std::cout << " element=" << pinfo->element;

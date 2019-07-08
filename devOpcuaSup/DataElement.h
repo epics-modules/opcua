@@ -77,52 +77,56 @@ public:
     virtual void show(const int level, const unsigned int indent) const = 0;
 
     /**
-     * @brief Read the time stamp of the incoming data.
-     *
-     * The server flag selects the time stamp to read:
-     * true = read server time stamp
-     * false = device time stamp
-     *
-     * @param server  select server time stamp
-     * @return EPICS time stamp
-     */
-    virtual epicsTimeStamp readTimeStamp(bool server = true) const = 0;
-
-    /**
      * @brief Read incoming data as Int32.
+     *
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
      *
      * @return value as epicsInt32
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsInt32 readInt32() const = 0;
+    virtual epicsInt32 readInt32(ProcessReason *nextReason = nullptr,
+                                 epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as Int64.
+     *
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
      *
      * @return value as epicsInt64
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsInt64 readInt64() const = 0;
+    virtual epicsInt64 readInt64(ProcessReason *nextReason = nullptr,
+                                 epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as UInt32.
+     *
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
      *
      * @return value as epicsUInt32
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readUInt32() const = 0;
+    virtual epicsUInt32 readUInt32(ProcessReason *nextReason = nullptr,
+                                   epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as Float64.
+     *
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
      *
      * @return value as epicsFloat64
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsFloat64 readFloat64() const = 0;
+    virtual epicsFloat64 readFloat64(ProcessReason *nextReason = nullptr,
+                                     epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as classic C string (char[]).
@@ -131,131 +135,190 @@ public:
      *
      * @param value  pointer to target string buffer
      * @param num  target buffer size (incl. NULL byte)
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual void readCString(char *value, const size_t num) const = 0;
+    virtual void readCString(char *value, const size_t num,
+                             ProcessReason *nextReason,
+                             epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of Int8.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num,
+                                      ProcessReason *nextReason,
+                                      epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of UInt8.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num,
+                                       ProcessReason *nextReason,
+                                       epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of Int16.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num,
+                                       ProcessReason *nextReason,
+                                       epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of UInt16.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num,
+                                        ProcessReason *nextReason = nullptr,
+                                        epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of Int32.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num,
+                                       ProcessReason *nextReason = nullptr,
+                                       epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of UInt32.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num,
+                                        ProcessReason *nextReason = nullptr,
+                                        epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of Int64.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num,
+                                       ProcessReason *nextReason = nullptr,
+                                       epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of UInt64.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num,
+                                        ProcessReason *nextReason = nullptr,
+                                        epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of Float32.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num,
+                                         ProcessReason *nextReason = nullptr,
+                                         epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of Float64.
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num,
+                                         ProcessReason *nextReason = nullptr,
+                                         epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Read incoming data as array of EPICS Old String (fixed size).
      *
      * @param value  pointer to target array
      * @param num  target array size
+     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
+     * @param[out] ts  set to the EPICS time stamp of the update
+     *
      * @return  number of elements written
      *
      * @throws std::runtime_error if no data present or on conversion error
      */
-    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num) const = 0;
+    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num,
+                                           ProcessReason *nextReason = nullptr,
+                                           epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Check status of last read service.
@@ -426,18 +489,6 @@ public:
      * @return true = last write service ok
      */
     virtual bool writeWasOk() const = 0;
-
-    /**
-     * @brief Clear (discard) the current incoming data.
-     *
-     * Called by the device support (still holding the RecordConnector lock!)
-     * after it is done accessing the data in the context of processing.
-     *
-     * In case an implementation uses a queue, this should remove the
-     * current (= oldest) element from the queue, allowing access to the
-     * next element with the next processing.
-     */
-    virtual void clearIncomingData() = 0;
 
     /**
      * @brief Create processing requests for record(s) attached to this element.

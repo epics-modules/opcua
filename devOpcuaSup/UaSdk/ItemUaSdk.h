@@ -127,12 +127,6 @@ public:
     { return session->structureDefinition(dataTypeId); }
 
     /**
-     * @brief Create processing requests for record(s) attached to this item.
-     * See DevOpcua::DataElement::requestRecordProcessing
-     */
-    void requestRecordProcessing(const ProcessReason reason) const;
-
-    /**
      * @brief Get the outgoing data value.
      *
      * Called from the OPC UA client worker thread when data is being
@@ -159,8 +153,19 @@ public:
      * received from the OPC UA session.
      *
      * @param value  new value for this data element
+     * @param reason  reason for this value update
      */
-    void setIncomingData(const OpcUa_DataValue &value);
+    void setIncomingData(const OpcUa_DataValue &value, ProcessReason reason);
+
+    /**
+     * @brief Push an incoming event down the root element.
+     *
+     * Called from the OPC UA client worker thread when an out-of-band
+     * event was received (connection loss).
+     *
+     * @param reason  reason for this value update
+     */
+    void setIncomingEvent(ProcessReason reason) const;
 
     /**
      * @brief Convert OPC UA time stamp to EPICS time stamp.
@@ -168,7 +173,7 @@ public:
      * @param pico10 10 picosecond resolution counter
      * @return EPICS time stamp
      */
-    static epicsTimeStamp uaToEpicsTimeStamp(const UaDateTime &dt, const OpcUa_UInt16 pico10);
+    static epicsTime uaToEpicsTime(const UaDateTime &dt, const OpcUa_UInt16 pico10);
 
     /**
      * @brief Get debug level (from itemRecord or via TOP DataElement)
@@ -184,8 +189,8 @@ private:
     std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
     UaStatusCode readStatus;           /**< status code of last read service */
     UaStatusCode writeStatus;          /**< status code of last write service */
-    epicsTimeStamp tsServer;           /**< server time stamp */
-    epicsTimeStamp tsSource;           /**< device time stamp */
+    epicsTime tsServer;                /**< server time stamp */
+    epicsTime tsSource;                /**< device time stamp */
 };
 
 } // namespace DevOpcua

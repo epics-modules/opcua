@@ -17,6 +17,7 @@
 #endif
 
 #include <iostream>
+#include <memory>
 #include <limits>
 #include <string>
 #include <cstring>
@@ -31,6 +32,7 @@
 
 #include "ItemUaSdk.h"
 #include "DataElementUaSdk.h"
+#include "UpdateQueue.h"
 #include "RecordConnector.h"
 
 namespace DevOpcua {
@@ -65,8 +67,8 @@ variantTypeString (const OpcUa_BuiltInType type)
         case OpcUaType_DataValue:       return "OpcUa_DataValue";
         case OpcUaType_Variant:         return "OpcUa_Variant";
         case OpcUaType_DiagnosticInfo:  return "OpcUa_DiagnosticInfo";
-        default: return "Illegal Value";
     }
+    return "Illegal Value";
 }
 
 DataElementUaSdk::DataElementUaSdk (const std::string &name,
@@ -75,6 +77,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
     : DataElement(pconnector, name)
     , pitem(item)
     , mapped(false)
+    , incomingData(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
     , incomingType(OpcUaType_Null)
     , incomingIsArray(false)
 {}
@@ -85,6 +88,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
     : DataElement(name)
     , pitem(item)
     , mapped(false)
+    , incomingData(0ul)
     , incomingType(OpcUaType_Null)
     , incomingIsArray(false)
 {
@@ -223,20 +227,28 @@ DataElementUaSdk::addElementChain (ItemUaSdk *item,
 }
 
 void
-DataElementUaSdk::setIncomingData (const UaVariant &value)
+DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
 {
     incomingType = value.type();
     incomingIsArray = value.isArray();
 
     if (isLeaf()) {
-        if (debug() >= 5)
-            std::cout << "Element " << name << " setting incoming data for record "
-                      << pconnector->getRecordName() << std::endl;
         Guard(pconnector->lock);
-        incomingData = value;
+        bool wasFirst = false;
+        // Make a copy of the value for this element and put it on the queue
+        Update<UaVariant> *u(new Update<UaVariant>(getIncomingTimeStamp(), reason, value));
+        incomingData.pushUpdate(std::shared_ptr<Update<UaVariant>>(u), &wasFirst);
+        if (debug() >= 5)
+            std::cout << "Element " << name << " set data ("
+                      << processReasonString(reason)
+                      << ") for record " << pconnector->getRecordName()
+                      << " (queue use " << incomingData.size()
+                      << "/" << incomingData.capacity() << ")" << std::endl;
+        if (wasFirst)
+            pconnector->requestRecordProcessing(reason);
     } else {
         if (debug() >= 5)
-            std::cout << "Element " << name << " splitting incoming data structure to "
+            std::cout << "Element " << name << " splitting data structure to "
                       << elements.size() << " child elements" << std::endl;
 
         if (value.type() == OpcUaType_ExtensionObject) {
@@ -260,7 +272,7 @@ DataElementUaSdk::setIncomingData (const UaVariant &value)
                             for (int i = 0; i < definition.childrenCount(); i++) {
                                 if (pelem->name == definition.child(i).name().toUtf8()) {
                                     elementMap.insert({i, it});
-                                    pelem->setIncomingData(genericValue.value(i));
+                                    pelem->setIncomingData(genericValue.value(i), reason);
                                 }
                             }
                         }
@@ -272,7 +284,7 @@ DataElementUaSdk::setIncomingData (const UaVariant &value)
                     } else {
                         for (auto &it : elementMap) {
                             auto pelem = it.second.lock();
-                            pelem->setIncomingData(genericValue.value(it.first));
+                            pelem->setIncomingData(genericValue.value(it.first), reason);
                         }
                     }
                 }
@@ -284,274 +296,381 @@ DataElementUaSdk::setIncomingData (const UaVariant &value)
     }
 }
 
-epicsTimeStamp
-DataElementUaSdk::readTimeStamp (bool server) const
+void
+DataElementUaSdk::setIncomingEvent (ProcessReason reason)
 {
-    epicsTimeStamp *ts;
+    if (isLeaf()) {
+        Guard(pconnector->lock);
+        bool wasFirst = false;
+        // Put the event on the queue
+        Update<UaVariant> *u(new Update<UaVariant>(getIncomingTimeStamp(), reason));
+        incomingData.pushUpdate(std::shared_ptr<Update<UaVariant>>(u), &wasFirst);
+        if (debug() >= 5)
+            std::cout << "Element " << name << " set event ("
+                      << processReasonString(reason)
+                      << ") for record " << pconnector->getRecordName()
+                      << " (queue use " << incomingData.size()
+                      << "/" << incomingData.capacity() << ")" << std::endl;
+        if (wasFirst)
+            pconnector->requestRecordProcessing(reason);
+    } else {
+        for (auto &it : elements) {
+            auto pelem = it.lock();
+            pelem->setIncomingEvent(reason);
+        }
+    }
+}
 
-    if (server)
-        ts = &pitem->tsServer;
-    else
-        ts = &pitem->tsSource;
+void
+DataElementUaSdk::checkIncomingEmpty () const
+{
+    if (incomingData.empty())
+        throw std::runtime_error(SB() << "no incoming data");
+}
 
+void
+DataElementUaSdk::logReadScalar (const Update<UaVariant> *upd,
+                                 const std::string &targetTypeName) const
+{
     if (isLeaf() && debug()) {
         char time_buf[40];
-        epicsTimeToStrftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f", ts);
-        std::cout << pconnector->getRecordName() << ": reading "
-                  << (server ? "server" : "device") << " timestamp ("
-                  << time_buf << ")" << std::endl;
-    }
-
-    return *ts;
-}
-
-
-void
-DataElementUaSdk::checkScalar (const std::string &name) const
-{
-    if (incomingData.isEmpty())
-        throw std::runtime_error(SB() << "no incoming data");
-
-    if (isLeaf() && debug()) {
-        std::cout << pconnector->getRecordName() << ": reading ";
-        if (incomingData.type() == OpcUaType_String)
-            std::cout << "'" << incomingData.toString().toUtf8() << "'";
+        UaVariant &data = upd->getData();
+        upd->getTimeStamp().strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f");
+        std::cout << pconnector->getRecordName() << ": ("
+                  << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device") << " time "
+                  << time_buf << ") reading ";
+        if (data.type() == OpcUaType_String)
+            std::cout << "'" << data.toString().toUtf8() << "'";
         else
-            std::cout << incomingData.toString().toUtf8();
-        std::cout << " (" << variantTypeString(incomingData.type()) << ")"
-                  << " as " << name << std::endl;
+            std::cout << data.toString().toUtf8();
+        std::cout << " (" << variantTypeString(data.type()) << ")"
+                  << " as " << targetTypeName
+                  << " (remaining queue " << incomingData.size()
+                  << "/" << incomingData.capacity() << ")" << std::endl;
+
     }
 }
 
 void
-DataElementUaSdk::checkReadArray (OpcUa_BuiltInType expectedType,
-                                  const epicsUInt32 num,
-                                  const std::string &name) const
+DataElementUaSdk::checkReadArray (const Update<UaVariant> *upd,
+                                  OpcUa_BuiltInType expectedType,
+                                  const epicsUInt32 targetSize,
+                                  const std::string &targetTypeName) const
 {
-    if (incomingData.isEmpty())
-        throw std::runtime_error(SB() << "no incoming data");
+    UaVariant &data = upd->getData();
     if (!incomingIsArray)
         throw std::runtime_error(SB() << "incoming data is not an array");
     if (incomingType != expectedType)
         throw std::runtime_error(SB() << "incoming array data type ("
-                                 << variantTypeString(incomingData.type()) << ")"
-                                 << " does not match EPICS array type (" << name << ")");
+                                 << variantTypeString(data.type()) << ")"
+                                 << " does not match EPICS array type (" << targetTypeName << ")");
     if (isLeaf() && debug()) {
-        std::cout << pconnector->getRecordName() << ": reading"
-                  << " array of " << variantTypeString(incomingData.type())
-                  << "[" << incomingData.arraySize() << "]"
-                  << " into " << name << "[" << num << "]" << std::endl;
+        char time_buf[40];
+        upd->getTimeStamp().strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S.%09f");
+        std::cout << pconnector->getRecordName() << ": ("
+                  << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device") << " time "
+                  << time_buf << ") reading "
+                  << "array of " << variantTypeString(data.type())
+                  << "[" << data.arraySize() << "]"
+                  << " into " << targetTypeName << "[" << targetSize << "]"
+                  << " (remaining queue " << incomingData.size()
+                  << "/" << incomingData.capacity() << ")" << std::endl;
     }
 }
 
 epicsInt32
-DataElementUaSdk::readInt32 () const
+DataElementUaSdk::readInt32 (ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkScalar("Int32");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    logReadScalar(upd.get(), "Int32");
 
     OpcUa_Int32 v;
-    if (OpcUa_IsNotGood(incomingData.toInt32(v)))
+    if (OpcUa_IsNotGood(upd->getData().toInt32(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    if (ts) *ts = upd->getTimeStamp();
     return v;
 }
 
 epicsInt64
-DataElementUaSdk::readInt64 () const
+DataElementUaSdk::readInt64 (ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkScalar("Int64");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    logReadScalar(upd.get(), "Int64");
 
     OpcUa_Int64 v;
-    if (OpcUa_IsNotGood(incomingData.toInt64(v)))
+    if (OpcUa_IsNotGood(upd->getData().toInt64(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    if (ts) *ts = upd->getTimeStamp();
     return v;
 }
 
 epicsUInt32
-DataElementUaSdk::readUInt32 () const
+DataElementUaSdk::readUInt32 (ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkScalar("UInt32");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    logReadScalar(upd.get(), "UInt32");
 
     OpcUa_UInt32 v;
-    if (OpcUa_IsNotGood(incomingData.toUInt32(v)))
+    if (OpcUa_IsNotGood(upd->getData().toUInt32(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    if (ts) *ts = upd->getTimeStamp();
     return v;
 }
 
 epicsFloat64
-DataElementUaSdk::readFloat64 () const
+DataElementUaSdk::readFloat64 (ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkScalar("Float64");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    logReadScalar(upd.get(), "Float64");
 
     OpcUa_Double v;
-    if (OpcUa_IsNotGood(incomingData.toDouble(v)))
+    if (OpcUa_IsNotGood(upd->getData().toDouble(v)))
         throw std::runtime_error(SB() << "incoming data out-of-bounds");
+    if (ts) *ts = upd->getTimeStamp();
     return v;
 }
 
 void
-DataElementUaSdk::readCString (char *value, const size_t num) const
+DataElementUaSdk::readCString (char *value, const size_t num,
+                               ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    if (incomingData.isEmpty())
-        throw std::runtime_error(SB() << "no incoming data");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
 
     if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": reading ";
-        if (incomingData.type() == OpcUaType_String)
-            std::cout << "'" << incomingData.toString().toUtf8() << "'";
+        if (upd->getData().type() == OpcUaType_String)
+            std::cout << "'" << upd->getData().toString().toUtf8() << "'";
         else
-            std::cout << incomingData.toString().toUtf8();
-        std::cout << " (" << variantTypeString(incomingData.type()) << ")"
+            std::cout << upd->getData().toString().toUtf8();
+        std::cout << " (" << variantTypeString(upd->getData().type()) << ")"
                   << " as CString [" << num << "]" << std::endl;
     }
 
     if (num > 0) {
-        strncpy(value, incomingData.toString().toUtf8(), num);
+        strncpy(value, upd->getData().toString().toUtf8(), num);
         value[num-1] = '\0';
     }
+
+    if (ts) *ts = upd->getTimeStamp();
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayInt8 (epicsInt8 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayInt8 (epicsInt8 *value, epicsUInt32 num,
+                                 ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_SByte, num, "epicsInt8");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_SByte, num, "epicsInt8");
 
     UaSByteArray arr;
-    incomingData.toSByteArray(arr);
+    upd->getData().toSByteArray(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsInt8) * no_elems);
+
+    if (ts) *ts = upd->getTimeStamp();
 
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayUInt8 (epicsUInt8 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayUInt8 (epicsUInt8 *value, epicsUInt32 num,
+                                  ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_Byte, num, "epicsUInt8");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_Byte, num, "epicsUInt8");
 
     UaByteArray arr;
-    incomingData.toByteArray(arr);
+    upd->getData().toByteArray(arr);
     epicsUInt32 no_elems = static_cast<epicsUInt32>(arr.size());
     if (num < no_elems) no_elems = num;
     memcpy(value, arr.data(), sizeof(epicsUInt8) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayInt16 (epicsInt16 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayInt16 (epicsInt16 *value, epicsUInt32 num,
+                                  ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_Int16, num, "epicsInt16");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_Int16, num, "epicsInt16");
 
     UaInt16Array arr;
-    incomingData.toInt16Array(arr);
+    upd->getData().toInt16Array(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsInt16) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayUInt16 (epicsUInt16 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayUInt16 (epicsUInt16 *value, epicsUInt32 num,
+                                   ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_UInt16, num, "epicsUInt16");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_UInt16, num, "epicsUInt16");
 
     UaUInt16Array arr;
-    incomingData.toUInt16Array(arr);
+    upd->getData().toUInt16Array(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsUInt16) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayInt32 (epicsInt32 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayInt32 (epicsInt32 *value, epicsUInt32 num,
+                                  ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_Int32, num, "epicsInt32");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_Int32, num, "epicsInt32");
 
     UaInt32Array arr;
-    incomingData.toInt32Array(arr);
+    upd->getData().toInt32Array(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsInt32) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayUInt32 (epicsUInt32 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayUInt32 (epicsUInt32 *value, epicsUInt32 num,
+                                   ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_UInt32, num, "epicsUInt32");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_UInt32, num, "epicsUInt32");
 
     UaUInt32Array arr;
-    incomingData.toUInt32Array(arr);
+    upd->getData().toUInt32Array(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsUInt32) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayInt64 (epicsInt64 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayInt64 (epicsInt64 *value, epicsUInt32 num,
+                                  ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_Int64, num, "epicsInt64");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_Int64, num, "epicsInt64");
 
     UaInt64Array arr;
-    incomingData.toInt64Array(arr);
+    upd->getData().toInt64Array(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsInt64) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayUInt64 (epicsUInt64 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayUInt64 (epicsUInt64 *value, epicsUInt32 num,
+                                   ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_UInt64, num, "epicsUInt64");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_UInt64, num, "epicsUInt64");
 
     UaUInt64Array arr;
-    incomingData.toUInt64Array(arr);
+    upd->getData().toUInt64Array(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsUInt64) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayFloat32 (epicsFloat32 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayFloat32 (epicsFloat32 *value, epicsUInt32 num,
+                                    ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_Float, num, "epicsFloat32");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_Float, num, "epicsFloat32");
 
     UaFloatArray arr;
-    incomingData.toFloatArray(arr);
+    upd->getData().toFloatArray(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsFloat32) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayFloat64 (epicsFloat64 *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayFloat64 (epicsFloat64 *value, epicsUInt32 num,
+                                    ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_Double, num, "epicsFloat64");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_Double, num, "epicsFloat64");
 
     UaDoubleArray arr;
-    incomingData.toDoubleArray(arr);
+    upd->getData().toDoubleArray(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     memcpy(value, arr.rawData(), sizeof(epicsFloat64) * no_elems);
 
+    if (ts) *ts = upd->getTimeStamp();
+
     return no_elems;
 }
 
 epicsUInt32
-DataElementUaSdk::readArrayOldString (epicsOldString *value, epicsUInt32 num) const
+DataElementUaSdk::readArrayOldString (epicsOldString *value, epicsUInt32 num,
+                                      ProcessReason *nextReason, epicsTimeStamp *ts)
 {
-    checkReadArray(OpcUaType_String, num, "epicsOldString");
+    checkIncomingEmpty();
+    std::shared_ptr<Update<UaVariant>> upd = incomingData.popUpdate(nextReason);
+
+    checkReadArray(upd.get(), OpcUaType_String, num, "epicsOldString");
 
     UaStringArray arr;
-    incomingData.toStringArray(arr);
+    upd->getData().toStringArray(arr);
     epicsUInt32 no_elems = num < arr.length() ? num : arr.length();
     for (epicsUInt32 i = 0; i < num; i++) {
         strncpy(value[i], UaString(arr[i]).toUtf8(), MAX_STRING_SIZE);
     }
+
+    if (ts) *ts = upd->getTimeStamp();
 
     return no_elems;
 }
@@ -579,13 +698,6 @@ DataElementUaSdk::writeWasOk () const
                   << pitem->getWriteStatus().toString().toUtf8() << "'"
                   << std::endl;
     return status;
-}
-
-void DataElementUaSdk::clearIncomingData()
-{
-    incomingData.clear();
-    if (isLeaf())
-        pconnector->reason = ProcessReason::none;
 }
 
 template<typename FROM, typename TO>
@@ -932,23 +1044,23 @@ DataElementUaSdk::writeCString(const char *value, const size_t num)
 }
 
 void
-DataElementUaSdk::checkWriteArray (OpcUa_BuiltInType expectedType, const std::string &name) const
+DataElementUaSdk::checkWriteArray (OpcUa_BuiltInType expectedType, const std::string &targetTypeName) const
 {
     if (!incomingIsArray)
         throw std::runtime_error(SB() << "OPC UA data is not an array");
     if (incomingType != expectedType)
         throw std::runtime_error(SB() << "OPC UA array data type (" << variantTypeString(incomingType) << ")"
                                  << " does not match expected type (" << variantTypeString(expectedType) << ")"
-                                 << " for EPICS array type (" << name << ")");
+                                 << " for EPICS array type (" << targetTypeName << ")");
 }
 
 inline
 void
-DataElementUaSdk::logWriteArray (const epicsUInt32 num, const std::string &name) const
+DataElementUaSdk::logWriteArray (const epicsUInt32 targetSize, const std::string &targetTypeName) const
 {
     if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": writing array of "
-                  << name << "[" << num << "] as "
+                  << targetTypeName << "[" << targetSize << "] as "
                   << variantTypeString(outgoingData.type()) << "["<< outgoingData.arraySize() << "]"
                   << std::endl;
     }

@@ -77,6 +77,7 @@ ItemUaSdk::show (int level) const
               << "@" << session->getName()
               << " sampling=" << linkinfo.samplingInterval
               << " qsize=" << linkinfo.queueSize
+              << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
               << " output=" << (linkinfo.isOutput ? "y" : "n")
@@ -103,14 +104,6 @@ int ItemUaSdk::debug() const
         return 0;
 }
 
-void
-ItemUaSdk::requestRecordProcessing (const ProcessReason reason) const
-{
-    if (auto pd = rootElement.lock()) {
-        pd->requestRecordProcessing(reason);
-    }
-}
-
 const UaVariant &
 ItemUaSdk::getOutgoingData() const
 {
@@ -129,27 +122,35 @@ ItemUaSdk::clearOutgoingData()
     }
 }
 
-epicsTimeStamp
-ItemUaSdk::uaToEpicsTimeStamp (const UaDateTime &dt, const OpcUa_UInt16 pico10)
+epicsTime
+ItemUaSdk::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 {
     epicsTimeStamp ts;
     ts.secPastEpoch = static_cast<epicsUInt32>(dt.toTime_t()) - POSIX_TIME_AT_EPICS_EPOCH;
     ts.nsec         = static_cast<epicsUInt32>(dt.msec()) * 1000000 + pico10 / 100;
-    return ts;
+    return epicsTime(ts);
 }
 
 void
-ItemUaSdk::setIncomingData(const OpcUa_DataValue &value)
+ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 {
-    tsSource = uaToEpicsTimeStamp(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
-    tsServer = uaToEpicsTimeStamp(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+    tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
+    tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
 
     readStatus = value.StatusCode;
 
     if (auto pd = rootElement.lock()) {
-        return pd->setIncomingData(value.Value);
+        return pd->setIncomingData(value.Value, reason);
     } else {
         throw std::runtime_error(SB() << "stale pointer to root data element");
+    }
+}
+
+void
+ItemUaSdk::setIncomingEvent(const ProcessReason reason) const
+{
+    if (auto pd = rootElement.lock()) {
+        pd->requestRecordProcessing(reason);
     }
 }
 

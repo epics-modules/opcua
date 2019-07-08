@@ -313,7 +313,7 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
         errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
         item.setReadStatus(status.code());
-        item.requestRecordProcessing(ProcessReason::readComplete);
+        item.setIncomingEvent(ProcessReason::readFailure);
 
     } else {
         if (debug)
@@ -353,7 +353,7 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
         errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
         item.setWriteStatus(status.code());
-        item.requestRecordProcessing(ProcessReason::writeComplete);
+        item.setIncomingEvent(ProcessReason::writeFailure);
 
     } else {
         if (debug)
@@ -433,13 +433,6 @@ SessionUaSdk::rebuildNodeIds ()
 }
 
 void
-SessionUaSdk::invalidateAllNodes ()
-{
-    for (auto &it : items)
-        it->requestRecordProcessing(ProcessReason::connectionLoss);
-}
-
-void
 SessionUaSdk::show (const int level) const
 {
     std::cout << "session="      << name
@@ -511,7 +504,8 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::ServerShutdown:
         // "The connection to the server is deactivated by the user of the client API."
     case UaClient::Disconnected:
-        invalidateAllNodes();
+        for (auto &it : items)
+            it->setIncomingEvent(ProcessReason::connectionLoss);
         break;
 
         // "The monitoring of the connection to the server indicated
@@ -568,8 +562,7 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             item->setReadStatus(values[i].StatusCode);
-            item->setIncomingData(values[i]);
-            item->requestRecordProcessing(ProcessReason::readComplete);
+            item->setIncomingData(values[i], ProcessReason::readComplete);
             i++;
         }
         outstandingOps.erase(it);
@@ -602,7 +595,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             item->setWriteStatus(results[i]);
-            item->requestRecordProcessing(ProcessReason::writeComplete);
+            item->setIncomingEvent(ProcessReason::writeComplete);
             i++;
         }
         outstandingOps.erase(it);

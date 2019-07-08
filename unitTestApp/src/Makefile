@@ -5,24 +5,25 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
+USR_INCLUDES += -I$(TOP)/devOpcuaSup
+
 #==================================================
-# build a support library
+# Build tests executables
 
-LIBRARY_IOC += unitTest
+GTESTPROD_HOST += UpdateTest
+UpdateTest_SRCS += UpdateTest.cpp
+TESTS += UpdateTest
 
-# xxxRecord.h will be created from xxxRecord.dbd
-#DBDINC += xxxRecord
-# install unitTest.dbd into <top>/dbd
-#DBD += unitTest.dbd
+GTESTPROD_HOST += UpdateQueueTest
+UpdateQueueTest_SRCS += UpdateQueueTest.cpp
+TESTS += UpdateQueueTest
 
-# specify all source files to be compiled and added to the library
-#unitTest_SRCS += xxx
+TESTSCRIPTS_HOST += $(TESTS:%=%.t)
 
-unitTest_LIBS += $(EPICS_BASE_IOC_LIBS)
+USR_LIBS += Com
 
 #===========================
 
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
-
