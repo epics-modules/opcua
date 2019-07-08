@@ -32,6 +32,8 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , subscription(nullptr)
     , session(nullptr)
     , registered(false)
+    , revisedSamplingInterval(0.0)
+    , revisedQueueSize(0)
 {
     rebuildNodeId();
 
@@ -75,8 +77,10 @@ ItemUaSdk::show (int level) const
         std::cout << " record=" << itemRecord->name;
     std::cout << " context=" << linkinfo.subscription
               << "@" << session->getName()
-              << " sampling=" << linkinfo.samplingInterval
-              << " qsize=" << linkinfo.queueSize
+              << " sampling=" << revisedSamplingInterval
+              << "(" << linkinfo.samplingInterval << ")"
+              << " qsize=" << revisedQueueSize
+              << "(" << linkinfo.queueSize << ")"
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
