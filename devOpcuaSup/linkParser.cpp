@@ -55,6 +55,7 @@ parseLink (dbCommon *prec, DBEntry &ent)
 
     pinfo->isOutput = ent.isOutput();
     pinfo->isItemRecord = ent.isItemRecord();
+    pinfo->clientQueueSize = 0;
 
     if (debug > 4)
         std::cerr << prec->name << " parsing info items" << std::endl;
