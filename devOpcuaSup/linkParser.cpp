@@ -270,8 +270,8 @@ parseLink (dbCommon *prec, DBEntry &ent)
     }
 
     // consistency checks
-    if (pinfo->isOutput && pinfo->monitor && !pinfo->subscription.length())
-        throw std::runtime_error(SB() << "monitoring an output requires a valid subscription");
+    if (pinfo->monitor && !pinfo->subscription.length())
+        throw std::runtime_error(SB() << "monitor requires link to a subscription");
 
     return pinfo;
 }
