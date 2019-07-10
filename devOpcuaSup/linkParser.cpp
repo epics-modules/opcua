@@ -182,43 +182,41 @@ parseLink (dbCommon *prec, DBEntry &ent)
         }
 
         // Item/node related options
-        if (pinfo->linkedToItem) {
-            if (optname == "ns") {
-                if (epicsParseUInt16(optval.c_str(), &pinfo->namespaceIndex, 0, nullptr))
-                    throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt16");
-            } else if (optname == "s") {
-                pinfo->identifierString = optval;
-                pinfo->identifierIsNumeric = false;
-            } else if (optname == "i") {
-                if (epicsParseUInt32(optval.c_str(), &pinfo->identifierNumber, 0, nullptr))
-                    throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
-                pinfo->identifierIsNumeric = true;
-            } else if (optname == "sampling") {
-                if (epicsParseDouble(optval.c_str(), &pinfo->samplingInterval, nullptr))
-                    throw std::runtime_error(SB() << "error converting '" << optval << "' to Double");
-            } else if (optname == "qsize") {
-                if (epicsParseUInt32(optval.c_str(), &pinfo->queueSize, 0, nullptr))
-                    throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
-            } else if (optname == "cqsize") {
-                if (epicsParseUInt32(optval.c_str(), &pinfo->clientQueueSize, 0, nullptr))
-                    throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
-            } else if (optname == "discard") {
-                if (optval == "new")
-                    pinfo->discardOldest = false;
-                else if (optval == "old")
-                    pinfo->discardOldest = true;
-                else
-                    throw std::runtime_error(SB() << "illegal value '" << optval << "'");
-            } else if (optname == "register") {
-                if (optval.length() > 0) {
-                    pinfo->registerNode = getYesNo(optval[0]);
-                } else {
-                    throw std::runtime_error(SB() << "no value for option '" << optname << "'");
-                }
+        if (pinfo->linkedToItem && optname == "ns") {
+            if (epicsParseUInt16(optval.c_str(), &pinfo->namespaceIndex, 0, nullptr))
+                throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt16");
+        } else if (pinfo->linkedToItem && optname == "s") {
+            pinfo->identifierString = optval;
+            pinfo->identifierIsNumeric = false;
+        } else if (pinfo->linkedToItem && optname == "i") {
+            if (epicsParseUInt32(optval.c_str(), &pinfo->identifierNumber, 0, nullptr))
+                throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
+            pinfo->identifierIsNumeric = true;
+        } else if (pinfo->linkedToItem && optname == "sampling") {
+            if (epicsParseDouble(optval.c_str(), &pinfo->samplingInterval, nullptr))
+                throw std::runtime_error(SB() << "error converting '" << optval << "' to Double");
+        } else if (pinfo->linkedToItem && optname == "qsize") {
+            if (epicsParseUInt32(optval.c_str(), &pinfo->queueSize, 0, nullptr))
+                throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
+        } else if (pinfo->linkedToItem && optname == "cqsize") {
+            if (epicsParseUInt32(optval.c_str(), &pinfo->clientQueueSize, 0, nullptr))
+                throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
+        } else if (pinfo->linkedToItem && optname == "discard") {
+            if (optval == "new")
+                pinfo->discardOldest = false;
+            else if (optval == "old")
+                pinfo->discardOldest = true;
+            else
+                throw std::runtime_error(SB() << "illegal value '" << optval << "'");
+        } else if (pinfo->linkedToItem && optname == "register") {
+            if (optval.length() > 0) {
+                pinfo->registerNode = getYesNo(optval[0]);
+            } else {
+                throw std::runtime_error(SB() << "no value for option '" << optname << "'");
             }
-        }
+
         // Item/node or Record/data element related options
-        if (optname == "timestamp") {
+        } else if (optname == "timestamp") {
             if (optval == "server")
                 pinfo->useServerTimestamp = true;
             else if (optval == "source")
@@ -233,6 +231,8 @@ parseLink (dbCommon *prec, DBEntry &ent)
             }
         } else if (optname == "element") {
             pinfo->element = optval;
+        } else {
+            throw std::runtime_error(SB() << "invalid option '" << optname << "'");
         }
 
         sep = linkstr.find_first_not_of("; \t", send);
