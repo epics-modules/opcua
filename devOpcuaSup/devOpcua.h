@@ -153,6 +153,11 @@ public:
 
 typedef std::unique_ptr<linkInfo> (*linkParserFunc)(dbCommon*, DBEntry&);
 
+/**
+ * @brief Return the name of the low level client library.
+ */
+const std::string &opcuaGetDriverName();
+
 } // namespace DevOpcua
 
 #endif // DEVOPCUA_H

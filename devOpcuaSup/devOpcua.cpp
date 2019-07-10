@@ -65,6 +65,7 @@
 #include "opcuaItemRecord.h"
 #include "devOpcuaVersion.h"
 #include "devOpcua.h"
+#include "devOpcuaVersion.h"
 #include "RecordConnector.h"
 #include "linkParser.h"
 #include "ItemUaSdk.h"
@@ -123,6 +124,18 @@ dsxt opcua_dsxt = { opcua_add_record, opcua_del_record };
 long
 opcua_init (int pass)
 {
+    static bool blurp = false;
+
+    if (!blurp) {
+        errlogPrintf("OPC UA Client Device Support v%u.%u.%u%s; using %s\n",
+                     EPICS_OPCUA_MAJOR_VERSION,
+                     EPICS_OPCUA_MINOR_VERSION,
+                     EPICS_OPCUA_MAINTENANCE_VERSION,
+                     (EPICS_OPCUA_DEVELOPMENT_FLAG ? "-dev" : ""),
+                     opcuaGetDriverName().c_str());
+        blurp = true;
+    }
+
     if (pass == 0) devExtend(&opcua_dsxt);
     return 0;
 }
