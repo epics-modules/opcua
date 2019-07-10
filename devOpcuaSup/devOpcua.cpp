@@ -581,6 +581,52 @@ opcua_write_enum (REC *prec)
     return ret;
 }
 
+// bo output
+
+template<typename REC>
+long
+opcua_write_bo (REC *prec)
+{
+    long ret = 0;
+    TRY {
+        Guard G(pvt->lock);
+        ProcessReason nextReason = ProcessReason::none;
+        if (pvt->reason == ProcessReason::incomingData
+                || pvt->reason == ProcessReason::readComplete) {
+            prec->rval = pvt->readUInt32(&nextReason, &prec->time);
+            if (prec->rval == 0) prec->val = 0;
+            else prec->val = 1;
+            prec->udf = FALSE;
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read -> VAL=%u (RVAL=%#010x)\n",
+                             prec->name, prec->val, prec->rval);
+            }
+            pvt->checkReadStatus();
+        } else if (pvt->reason == ProcessReason::writeComplete) {
+            pvt->checkWriteStatus();
+        } else if (pvt->reason == ProcessReason::connectionLoss) {
+            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else {
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
+                             prec->name, prec->rval, prec->rval);
+            }
+            pvt->writeUInt32(prec->rval);
+            prec->pact = true;
+            pvt->requestOpcuaWrite();
+        }
+        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+    } CATCH();
+    return ret;
+}
+
 // string to/from VAL
 
 template<typename REC>
@@ -986,7 +1032,7 @@ opcua_write_array (REC *prec)
 SUP (devLiOpcua,             longin,   int32_val, read)
 SUP (devLoOpcua,            longout,   int32_val, write)
 SUP (devBiOpcua,                 bi, uint32_rval, read)
-SUP (devBoOpcua,                 bo, uint32_rval, write)
+SUP (devBoOpcua,                 bo,          bo, write)
 SUPM(devMbbiOpcua,             mbbi, uint32_rval, read)
 SUPM(devMbboOpcua,             mbbo,        enum, write)
 SUPM(devMbbiDirectOpcua, mbbiDirect, uint32_rval, read)
