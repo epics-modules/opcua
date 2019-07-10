@@ -66,4 +66,11 @@ Session::showOptionHelp ()
               << std::endl;
 }
 
+const std::string &
+opcuaGetDriverName ()
+{
+    static const std::string sdk("Unified Automation C++ Based OPC UA Client SDK");
+    return sdk;
+}
+
 } // namespace DevOpcua
