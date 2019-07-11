@@ -78,7 +78,6 @@ init_record (dbCommon *pdbc, int pass)
             pitem->itemRecord = prec;
             pvt->pitem = pitem;
             prec->dpvt = pvt.release();
-            std::cout << "item record: set pitem to " << pitem << " in connector at pvt " << prec->dpvt << std::endl;
         } catch(std::exception& e) {
             std::cerr << prec->name << " Error in init_record : " << e.what() << std::endl;
             return S_dbLib_badLink;
