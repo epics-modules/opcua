@@ -155,7 +155,7 @@ parseLink (dbCommon *prec, DBEntry &ent)
         sep = linkstr.find_first_not_of("; \t", send);
         dbFinishEntry(&entry);
     } else {
-        throw std::runtime_error(SB() << "unknown session or subscription '" << name << "'");
+        throw std::runtime_error(SB() << "unknown subscription/session/opcuaItemRecord '" << name << "'");
     }
 
     sep = linkstr.find_first_not_of("; \t", send);
