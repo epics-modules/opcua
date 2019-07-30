@@ -193,21 +193,23 @@ void
 DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
 {
     if (isLeaf()) {
-        Guard(pconnector->lock);
-        bool wasFirst = false;
-        // Make a copy of this element and cache it
-        incomingData = value;
-        // Make another copy of the value for this element and put it on the queue
-        UpdateUaSdk *u(new UpdateUaSdk(getIncomingTimeStamp(), reason, value, getIncomingReadStatus()));
-        incomingQueue.pushUpdate(std::shared_ptr<UpdateUaSdk>(u), &wasFirst);
-        if (debug() >= 5)
-            std::cout << "Element " << name << " set data ("
-                      << processReasonString(reason)
-                      << ") for record " << pconnector->getRecordName()
-                      << " (queue use " << incomingQueue.size()
-                      << "/" << incomingQueue.capacity() << ")" << std::endl;
-        if (wasFirst)
-            pconnector->requestRecordProcessing(reason);
+        if (reason == ProcessReason::readComplete || pconnector->plinkinfo->monitor) {
+            Guard(pconnector->lock);
+            bool wasFirst = false;
+            // Make a copy of this element and cache it
+            incomingData = value;
+            // Make another copy of the value for this element and put it on the queue
+            UpdateUaSdk *u(new UpdateUaSdk(getIncomingTimeStamp(), reason, value, getIncomingReadStatus()));
+            incomingQueue.pushUpdate(std::shared_ptr<UpdateUaSdk>(u), &wasFirst);
+            if (debug() >= 5)
+                std::cout << "Element " << name << " set data ("
+                          << processReasonString(reason)
+                          << ") for record " << pconnector->getRecordName()
+                          << " (queue use " << incomingQueue.size()
+                          << "/" << incomingQueue.capacity() << ")" << std::endl;
+            if (wasFirst)
+                pconnector->requestRecordProcessing(reason);
+        }
     } else {
         if (debug() >= 5)
             std::cout << "Element " << name << " splitting data structure to "
