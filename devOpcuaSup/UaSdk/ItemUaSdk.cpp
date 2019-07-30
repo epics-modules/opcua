@@ -34,6 +34,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
+    , lastStatus(0x800D0000)  // BadServerNotConnected
 {
     rebuildNodeId();
 
@@ -75,7 +76,8 @@ ItemUaSdk::show (int level) const
         std::cout << ";s=" << linkinfo.identifierString;
     if (linkinfo.isItemRecord)
         std::cout << " record=" << itemRecord->name;
-    std::cout << " context=" << linkinfo.subscription
+    std::cout << " status=" << UaStatus(lastStatus).toString().toUtf8()
+              << " context=" << linkinfo.subscription
               << "@" << session->getName()
               << " sampling=" << revisedSamplingInterval
               << "(" << linkinfo.samplingInterval << ")"
@@ -143,7 +145,7 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
     tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
     tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
     setReason(reason);
-    setReadStatus(value.StatusCode);
+    setLastStatus(value.StatusCode);
 
     if (auto pd = rootElement.lock())
         pd->setIncomingData(value.Value, reason);
@@ -154,6 +156,8 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
     setReason(reason);
+    if (reason == ProcessReason::connectionLoss)
+        setLastStatus(0x800D0000); // BadServerNotConnected
 
     if (auto pd = rootElement.lock()) {
         pd->setIncomingEvent(reason);

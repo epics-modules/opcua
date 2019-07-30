@@ -637,7 +637,7 @@ private:
     }
 
     // Get the read status from the incoming object
-    OpcUa_StatusCode getIncomingReadStatus() const { return pitem->getReadStatus().code(); }
+    OpcUa_StatusCode getIncomingReadStatus() const { return pitem->getLastStatus().code(); }
 
     // Overloaded helper functions that wrap the UaVariant::toXxx() and UaVariant::setXxx methods
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_Int32 &value) { return variant.toInt32(value); }
