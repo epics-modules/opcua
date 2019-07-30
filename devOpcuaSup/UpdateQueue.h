@@ -15,158 +15,11 @@
 #include <utility>
 #include <queue>
 
-#include <epicsTime.h>
+#include <epicsMutex.h>
 
 #include "devOpcua.h"
 
 namespace DevOpcua {
-
-/**
- * @brief An update (incoming data, connection loss, etc).
- *
- * Consists of a mandatory (EPICS) time stamp,
- * a mandatory type (reason for this update),
- * and a data object (of implementation dependent type)
- *
- * Uses C++11 unique_ptr. The data is owned
- * by the Update object while being on the queue.
- */
-template<class T>
-class Update
-{
-public:
-    /**
-     * @brief Constructor with const reference for data.
-     *
-     * This constructor creates a new unique_ptr managed data object,
-     * creating a copy of the data.
-     *
-     * @param time  EPICS time stamp of this update
-     * @param type  type of the update (process reason)
-     * @param data  const reference to the data to put in the update
-     */
-    Update(const epicsTime &time, ProcessReason reason, const T &newdata)
-        : overrides(0)
-        , ts(time)
-        , type(reason)
-        , data(std::unique_ptr<T>(new T(newdata)))
-    {}
-    /**
-     * @brief Constructor with unique_ptr for data.
-     *
-     * This constructor takes a unique_ptr managed data rvalue.
-     *
-     * @param ts  EPICS time stamp of this update
-     * @param type  type of the update (process reason)
-     * @param newdata  data to put in the update
-     */
-    Update(const epicsTime &time, const ProcessReason reason, std::unique_ptr<T> newdata)
-        : overrides(0)
-        , ts(time)
-        , type(reason)
-        , data(std::move(newdata))
-    {}
-    /**
-     * @brief Constructor with no data, for connection and status events.
-     *
-     * @param ts  EPICS time stamp of this update
-     * @param type  type of the update (process reason)
-     */
-    Update(const epicsTime &time, const ProcessReason reason)
-        : overrides(0)
-        , ts(time)
-        , type(reason)
-    {}
-
-    /**
-     * @brief Override an update with data.
-     *
-     * Overrides the update object, increasing the overrides counter,
-     * replacing its data and time stamp with a copy of the specified
-     * other update and moving the other update's data into this
-     *
-     * This is used to drop this update, replacing it with the
-     * (newer) update behind it.
-     *
-     * @param other  update whose data is used to replace this
-     */
-    void override(Update<T> &other)
-    {
-        ts = other.getTimeStamp();
-        type = other.getType();
-        overrides += other.getOverrides() + 1;
-        data = other.releaseData();
-    }
-
-    /**
-     * @brief Override an update without data.
-     *
-     * Adds the argument to its overrides counter.
-     *
-     * This is used to carry over the overrides counter if the
-     * (older) update in front of this one was dropped.
-     *
-     * @param count  number to step up the overrides counter
-     */
-    void override(unsigned long count)
-    {
-        overrides += count + 1;
-    }
-
-    /**
-     * @brief Getter for the update's EPICS time stamp.
-     *
-     * @return  EPICS time stamp of the update
-     */
-    epicsTime getTimeStamp() const { return ts; }
-
-    /**
-     * @brief Getter for the update's type.
-     *
-     * @return  type of the update
-     */
-    ProcessReason getType() const { return type; }
-
-    /**
-     * @brief Mover for the update's data.
-     *
-     * Ownership is moved from update to the caller.
-     *
-     * @return  unique_ptr to the update data
-     */
-    std::unique_ptr<T> releaseData() { return std::move(data); }
-
-    /**
-     * @brief Getter for the update's data.
-     *
-     * Ownership is retained by the update.
-     * Undefined if the Update has no data.
-     *
-     * @return  reference to the update's data
-     */
-    T& getData() const { return *data; }
-
-    /**
-     * @brief Getter for the update's overrides counter.
-     *
-     * @return  overrides counter
-     */
-    unsigned long getOverrides() const { return overrides; }
-
-    /**
-     * @brief Checks if the update contains data.
-     *
-     * Checks if this->data stores a pointer, i.e. whether getData() is
-     * defined.
-     */
-    explicit operator bool() const noexcept { return bool(data); }
-
-private:
-    unsigned long overrides;
-    epicsTime ts;
-    ProcessReason type;
-    std::unique_ptr<T> data;
-};
 
 /**
  * @brief A fixed size queue for handling incoming updates (data and events).
@@ -179,9 +32,11 @@ private:
  * This allows to e.g. always cache a pointer to the latest update
  * while all updates go through the queue and are consumed at
  * the other end.
-
+ *
+ * The template parameter T is expected to be an instance of the Update class,
+ * i.e. it must provide the override(), getOverrides() and getType() methods.
  */
-template<class T>
+template<typename T>
 class UpdateQueue
 {
 public:
@@ -198,7 +53,7 @@ public:
      * @param update  the update to push
      * @param[out] wasFirst  `true` if pushed element was the first one, `false` otherwise
      */
-    void pushUpdate(std::shared_ptr<Update<T>> update, bool *wasFirst = nullptr)
+    void pushUpdate(std::shared_ptr<T> update, bool *wasFirst = nullptr)
     {
         Guard G(lock);
         if (wasFirst) *wasFirst = false;
@@ -207,7 +62,7 @@ public:
             updq.push(update);
         } else {
             if (discardOldest) {
-                std::shared_ptr<Update<T>> drop = updq.front();
+                std::shared_ptr<T> drop = updq.front();
                 updq.pop();
                 updq.front()->override(drop->getOverrides());
                 updq.push(update);
@@ -229,10 +84,10 @@ public:
      *
      * @return  reference to the removed update
      */
-    std::shared_ptr<Update<T>> popUpdate(ProcessReason *nextReason = nullptr)
+    std::shared_ptr<T> popUpdate(ProcessReason *nextReason = nullptr)
     {
         Guard G(lock);
-        std::shared_ptr<Update<T>> drop = updq.front();
+        std::shared_ptr<T> drop = updq.front();
         updq.pop();
         if (nextReason) {
             if (updq.empty()) *nextReason = ProcessReason::none;
@@ -274,7 +129,7 @@ private:
     size_t maxElements;
     bool discardOldest;
     epicsMutex lock;
-    std::queue<std::shared_ptr<Update<T>>> updq;
+    std::queue<std::shared_ptr<T>> updq;
 };
 
 } // namespace DevOpcua

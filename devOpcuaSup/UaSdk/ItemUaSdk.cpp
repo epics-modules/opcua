@@ -15,6 +15,7 @@
 
 #include <uaclientsdk.h>
 #include <uanodeid.h>
+#include <opcua_statuscodes.h>
 
 #include "RecordConnector.h"
 #include "opcuaItemRecord.h"
@@ -34,6 +35,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
+    , lastStatus(OpcUa_BadServerNotConnected)
 {
     rebuildNodeId();
 
@@ -75,7 +77,8 @@ ItemUaSdk::show (int level) const
         std::cout << ";s=" << linkinfo.identifierString;
     if (linkinfo.isItemRecord)
         std::cout << " record=" << itemRecord->name;
-    std::cout << " context=" << linkinfo.subscription
+    std::cout << " status=" << UaStatus(lastStatus).toString().toUtf8()
+              << " context=" << linkinfo.subscription
               << "@" << session->getName()
               << " sampling=" << revisedSamplingInterval
               << "(" << linkinfo.samplingInterval << ")"
@@ -139,19 +142,35 @@ ItemUaSdk::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 void
 ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 {
+    tsClient = epicsTime::getCurrent();
     tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
     tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+    setReason(reason);
+    if (getLastStatus() == OpcUa_BadServerNotConnected && value.StatusCode == OpcUa_BadNodeIdUnknown)
+        errlogPrintf("OPC UA session %s: item ns=%d;%s%.*d%s : BadNodeIdUnknown\n",
+                     session->getName().c_str(),
+                     linkinfo.namespaceIndex,
+                     (linkinfo.identifierIsNumeric ? "i=" : "s="),
+                     (linkinfo.identifierIsNumeric ? 1 : 0),
+                     (linkinfo.identifierIsNumeric ? linkinfo.identifierNumber : 0),
+                     (linkinfo.identifierIsNumeric ? "" : linkinfo.identifierString.c_str()));
 
-    readStatus = value.StatusCode;
+    setLastStatus(value.StatusCode);
 
-    if (auto pd = rootElement.lock()) pd->setIncomingData(value.Value, reason);
+    if (auto pd = rootElement.lock())
+        pd->setIncomingData(value.Value, reason);
 }
 
 void
-ItemUaSdk::setIncomingEvent(const ProcessReason reason) const
+ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 {
+    tsClient = epicsTime::getCurrent();
+    setReason(reason);
+    if (reason == ProcessReason::connectionLoss)
+        setLastStatus(OpcUa_BadServerNotConnected);
+
     if (auto pd = rootElement.lock()) {
-        pd->requestRecordProcessing(reason);
+        pd->setIncomingEvent(reason);
     }
 }
 

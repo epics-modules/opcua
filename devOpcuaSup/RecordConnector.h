@@ -16,11 +16,14 @@
 
 #include <memory>
 #include <cstddef>
+#include <iostream>
 
 #include <epicsMutex.h>
 #include <dbCommon.h>
 #include <dbScan.h>
+#include <recGbl.h>
 #include <callback.h>
+#include <alarm.h>
 
 #include "devOpcua.h"
 #include "DataElement.h"
@@ -33,90 +36,35 @@ class RecordConnector
 public:
     RecordConnector(dbCommon *prec);
 
-    epicsInt32 readInt32(ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) const {
-        return pdataelement->readInt32(nextReason, ts);
+    template <typename T>
+    long int readScalar(T *val, ProcessReason *nextReason = nullptr)
+    {
+        return pdataelement->readScalar(val, prec, nextReason);
     }
-    void writeInt32(const epicsInt32 val) const { pdataelement->writeInt32(val); }
 
-    epicsInt64 readInt64(ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) const {
-        return pdataelement->readInt64(nextReason, ts);
+    long int readScalar(char *val, const epicsUInt32 num, ProcessReason *nextReason = nullptr)
+    {
+        return pdataelement->readScalar(val, num, prec, nextReason);
     }
-    void writeInt64(const epicsInt64 val) const { pdataelement->writeInt64(val); }
 
-    epicsUInt32 readUInt32(ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) const {
-        return pdataelement->readUInt32(nextReason, ts);
+    template <typename T>
+    long int writeScalar(const T val) const
+    {
+        return pdataelement->writeScalar(val, prec);
     }
-    void writeUInt32(const epicsUInt32 val) const { pdataelement->writeUInt32(val); }
 
-    epicsFloat64 readFloat64(ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) const {
-        return pdataelement->readFloat64(nextReason, ts);
+    template <typename T>
+    long int readArray(T *val, const epicsUInt32 num,
+                          epicsUInt32 *numRead, ProcessReason *nextReason = nullptr)
+    {
+        return pdataelement->readArray(val, num, numRead, prec, nextReason);
     }
-    void writeFloat64(const epicsFloat64 val) const { pdataelement->writeFloat64(val); }
 
-    void readCString(char *val, const size_t num,
-                     ProcessReason *nextReason, epicsTimeStamp *ts = nullptr) const {
-        pdataelement->readCString(val, num, nextReason, ts);
+    template <typename T>
+    long int writeArray(const T *val, const epicsUInt32 num)
+    {
+        return pdataelement->writeArray(val, num, prec);
     }
-    void writeCString(const char *val, const size_t num) const { pdataelement->writeCString(val, num); }
-
-    epicsUInt32 readArrayInt8(epicsInt8 *val, epicsUInt32 num,
-                              ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayInt8(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayUInt8(epicsUInt8 *val, epicsUInt32 num,
-                               ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayUInt8(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayInt16(epicsInt16 *val, epicsUInt32 num,
-                               ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayInt16(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayUInt16(epicsUInt16 *val, epicsUInt32 num,
-                                ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayUInt16(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayInt32(epicsInt32 *val, epicsUInt32 num,
-                               ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayInt32(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayUInt32(epicsUInt32 *val, epicsUInt32 num,
-                                ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayUInt32(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayInt64(epicsInt64 *val, epicsUInt32 num,
-                               ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayInt64(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayUInt64(epicsUInt64 *val, epicsUInt32 num,
-                                ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayUInt64(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayFloat32(epicsFloat32 *val, epicsUInt32 num,
-                                 ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayFloat32(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayFloat64(epicsFloat64 *val, epicsUInt32 num,
-                                 ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayFloat64(val, num, nextReason, ts);
-    }
-    epicsUInt32 readArrayOldString(epicsOldString *val, epicsUInt32 num,
-                                   ProcessReason *nextReason = nullptr, epicsTimeStamp *ts = nullptr) {
-        return pdataelement->readArrayOldString(val, num, nextReason, ts);
-    }
-    void writeArrayInt8(const epicsInt8 *val, const epicsUInt32 num) { pdataelement->writeArrayInt8(val, num); }
-    void writeArrayUInt8(const epicsUInt8 *val, const epicsUInt32 num) { pdataelement->writeArrayUInt8(val, num); }
-    void writeArrayInt16(const epicsInt16 *val, const epicsUInt32 num) { pdataelement->writeArrayInt16(val, num); }
-    void writeArrayUInt16(const epicsUInt16 *val, const epicsUInt32 num) { pdataelement->writeArrayUInt16(val, num); }
-    void writeArrayInt32(const epicsInt32 *val, const epicsUInt32 num) { pdataelement->writeArrayInt32(val, num); }
-    void writeArrayUInt32(const epicsUInt32 *val, const epicsUInt32 num) { pdataelement->writeArrayUInt32(val, num); }
-    void writeArrayInt64(const epicsInt64 *val, const epicsUInt32 num) { pdataelement->writeArrayInt64(val, num); }
-    void writeArrayUInt64(const epicsUInt64 *val, const epicsUInt32 num) { pdataelement->writeArrayUInt64(val, num); }
-    void writeArrayFloat32(const epicsFloat32 *val, const epicsUInt32 num) { pdataelement->writeArrayFloat32(val, num); }
-    void writeArrayFloat64(const epicsFloat64 *val, const epicsUInt32 num) { pdataelement->writeArrayFloat64(val, num); }
-    void writeArrayOldString(const epicsOldString *val, const epicsUInt32 num) { pdataelement->writeArrayOldString(val, num); }
-
-    void checkWriteStatus() const;
-    void checkReadStatus() const;
 
     void setDataElement(std::shared_ptr<DataElement> data) { pdataelement = data; }
     void clearDataElement() { pdataelement = nullptr; }

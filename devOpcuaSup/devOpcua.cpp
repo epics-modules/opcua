@@ -178,29 +178,19 @@ opcua_read_int32_val (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            prec->val = pvt->readInt32(&nextReason, &prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%d (%#010x)\n",
-                             prec->name, prec->val,
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->val, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%d (%#010x)\n",
+                             prec->name, ret, prec->val,
                              static_cast<unsigned int>(prec->val));
-            }
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -213,38 +203,24 @@ opcua_write_int32_val (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            prec->val = pvt->readInt32(&nextReason, &prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%d (%#010x)\n",
-                             prec->name, prec->val,
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->val, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%d (%#010x)\n",
+                             prec->name, ret, prec->val,
                              static_cast<unsigned int>(prec->val));
-            }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
         } else {
-            if (prec->tpro > 1) {
+            if (prec->tpro > 1)
                 errlogPrintf("%s: write <- VAL=%d (%#010x)\n",
                              prec->name, prec->val,
                              static_cast<unsigned int>(prec->val));
-            }
-            pvt->writeInt32(prec->val);
+            pvt->writeScalar(prec->val);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -257,29 +233,19 @@ opcua_read_int64_val (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            prec->val = pvt->readInt64(&nextReason, &prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%lld (%#010x)\n",
-                             prec->name, prec->val,
-                             static_cast<unsigned int>(prec->val));
-            }
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->val, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%lld (%#018llx)\n",
+                             prec->name, ret, prec->val,
+                             static_cast<unsigned long long int>(prec->val));
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -292,38 +258,24 @@ opcua_write_int64_val (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            prec->val = pvt->readInt64(&nextReason, &prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%lld (%#010x)\n",
-                             prec->name, prec->val,
-                             static_cast<unsigned int>(prec->val));
-            }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->val, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%lld (%#018llx)\n",
+                             prec->name, ret, prec->val,
+                             static_cast<unsigned long long int>(prec->val));
         } else {
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- VAL=%lld (%#010x)\n",
+            if (prec->tpro > 1)
+                errlogPrintf("%s: write <- VAL=%lld (%#018llx)\n",
                              prec->name, prec->val,
-                             static_cast<unsigned int>(prec->val));
-            }
-            pvt->writeInt64(prec->val);
+                             static_cast<unsigned long long int>(prec->val));
+            pvt->writeScalar(prec->val);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -338,28 +290,19 @@ opcua_read_uint32_rval (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            prec->rval = pvt->readUInt32(&nextReason, &prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> RVAL=%u (%#010x)\n",
-                             prec->name, prec->rval, prec->rval);
-            }
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->rval, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> RVAL=%u (%#010x)\n",
+                             prec->name, ret, prec->val,
+                             prec->rval);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -372,36 +315,22 @@ opcua_write_uint32_rval (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            prec->rval = pvt->readUInt32(&nextReason, &prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> RVAL=%u (%#010x)\n",
-                             prec->name, prec->rval, prec->rval);
-            }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->rval, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> RVAL=%u (%#010x)\n",
+                             prec->name, ret, prec->rval, prec->rval);
         } else {
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
+            if (prec->tpro > 1)
+                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
-            }
-            pvt->writeUInt32(prec->rval);
+            pvt->writeScalar(prec->rval);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -416,46 +345,38 @@ opcua_read_analog (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
+
+        if (pvt->reason) {
             if (prec->linr == menuConvertNO_CONVERSION) {
-                double value = pvt->readFloat64(&nextReason, &prec->time);
-                // Do ASLO/AOFF conversion and smoothing
-                if (prec->aslo != 0.0) value *= prec->aslo;
-                value += prec->aoff;
-                if (prec->smoo == 0.0 || prec->udf || !std::isfinite(prec->val))
-                    prec->val = value;
-                else
-                    prec->val = prec->val * prec->smoo + value * (1.0 - prec->smoo);
-                prec->udf = 0;
-                ret = 2;     // don't convert
-                if (prec->tpro > 1) {
-                    errlogPrintf("%s: read -> VAL=%g\n",
-                                 prec->name, prec->val);
+                double value = 0.;
+                ret = pvt->readScalar(&value, &nextReason);
+                if (ret == 0) {
+                    // Do ASLO/AOFF conversion and smoothing
+                    if (prec->aslo != 0.0) value *= prec->aslo;
+                    value += prec->aoff;
+                    if (prec->smoo == 0.0 || prec->udf || !std::isfinite(prec->val))
+                        prec->val = value;
+                    else
+                        prec->val = prec->val * prec->smoo + value * (1.0 - prec->smoo);
+                    prec->udf = 0;
+                    ret = 2;     // don't convert
                 }
+                if (prec->tpro > 1)
+                    errlogPrintf("%s: read (status %ld) -> VAL=%g\n",
+                                 prec->name, ret, prec->val);
             } else {
-                prec->rval = pvt->readInt32(&nextReason, &prec->time);
-                if (prec->tpro > 1) {
-                    errlogPrintf("%s: read -> RVAL=%d (%#010x)\n",
-                                 prec->name, prec->rval,
+                pvt->readScalar(&prec->rval, &nextReason);
+                if (prec->tpro > 1)
+                    errlogPrintf("%s: read (status %ld) -> RVAL=%d (%#010x)\n",
+                                 prec->name, ret, prec->rval,
                                  static_cast<unsigned int>(prec->rval));
-                }
             }
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -467,68 +388,64 @@ opcua_write_analog (REC *prec)
     long ret = 0;
     TRY {
         Guard G(pvt->lock);
-        //TODO: ignore incoming data when output rate limit active
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
+
+        //TODO: ignore incoming data when output rate limit active
+        if (pvt->reason) {
             double value;
             bool useValue = true;
             if (prec->linr == menuConvertNO_CONVERSION) {
-                value = pvt->readFloat64(&nextReason, &prec->time);
-                if (prec->aslo != 0.0) value *= prec->aslo;
-                value += prec->aoff;
-            } else {
-                prec->rval = pvt->readInt32();
-                value = static_cast<double>(prec->rval)
-                        + static_cast<double>(prec->roff);
-                if (prec->aslo != 0.0) value *= prec->aslo;
-                value += prec->aoff;
-                if (prec->linr == menuConvertLINEAR || prec->linr == menuConvertSLOPE) {
-                    value = value * prec->eslo + prec->eoff;
-                } else {
-                    if (cvtRawToEngBpt(&value, prec->linr, prec->init,
-                                       static_cast<void **>(&prec->pbrk), &prec->lbrk) != 0)
-                        useValue = false;
+                ret = pvt->readScalar(&value, &nextReason);
+                if (ret == 0) {
+                    if (prec->aslo != 0.0) value *= prec->aslo;
+                    value += prec->aoff;
                 }
+                if (prec->tpro > 1)
+                    errlogPrintf("%s: read (status %ld) -> VAL=%g\n",
+                                 prec->name, ret, prec->val);
+            } else {
+                ret = pvt->readScalar(&prec->rval, &nextReason);
+                if (ret == 0) {
+                    value = static_cast<double>(prec->rval)
+                            + static_cast<double>(prec->roff);
+                    if (prec->aslo != 0.0) value *= prec->aslo;
+                    value += prec->aoff;
+                    if (prec->linr == menuConvertLINEAR || prec->linr == menuConvertSLOPE) {
+                        value = value * prec->eslo + prec->eoff;
+                    } else {
+                        if (cvtRawToEngBpt(&value, prec->linr, prec->init,
+                                           static_cast<void **>(&prec->pbrk), &prec->lbrk) != 0)
+                            useValue = false;
+                    }
+                }
+                if (prec->tpro > 1)
+                    errlogPrintf("%s: read (status %ld) -> VAL=%g converted from RVAL=%d (%#010x)\n",
+                                 prec->name, ret, value, prec->rval,
+                                 static_cast<unsigned int>(prec->rval));
             }
             if (useValue)
                 prec->val = value;
             prec->udf = isnan(prec->val);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%g\n",
-                             prec->name, prec->val);
-            }
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
         } else {
             if (prec->linr == menuConvertNO_CONVERSION) {
                 if (prec->tpro > 1) {
                     errlogPrintf("%s: write <- VAL=%g\n",
                                  prec->name, prec->val);
                 }
-                pvt->writeFloat64(prec->val);
+                ret = pvt->writeScalar(prec->val);
             } else {
                 if (prec->tpro > 1) {
                     errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
                                  prec->name, prec->rval,
                                  static_cast<unsigned int>(prec->rval));
                 }
-                pvt->writeInt32(prec->rval);
+                ret = pvt->writeScalar(prec->rval);
             }
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -543,54 +460,42 @@ opcua_write_enum (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            epicsUInt32 rval = prec->rval =
-                    pvt->readUInt32(&nextReason, &prec->time) & prec->mask;
-            if (prec->shft > 0)
-                rval >>= prec->shft;
-            if (prec->sdef) {
-                epicsUInt32 *pstate_values = &prec->zrvl;
-                epicsUInt16 i;
-                prec->val = 65535;   // unknown state
-                for (i = 0; i < 16; i++) {
-                    if (*pstate_values == rval) {
-                        prec->val = i;
-                        break;
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->rval, &nextReason);
+            if (ret == 0) {
+                epicsUInt32 rval = prec->rval &= prec->mask;
+                if (prec->shft > 0)
+                    rval >>= prec->shft;
+                if (prec->sdef) {
+                    epicsUInt32 *pstate_values = &prec->zrvl;
+                    epicsUInt16 i;
+                    prec->val = 65535;   // unknown state
+                    for (i = 0; i < 16; i++) {
+                        if (*pstate_values == rval) {
+                            prec->val = i;
+                            break;
+                        }
+                        pstate_values++;
                     }
-                    pstate_values++;
+                } else {
+                    // no defined states
+                    prec->val = static_cast<epicsEnum16>(rval);
                 }
-            } else {
-                // no defined states
-                prec->val = static_cast<epicsEnum16>(rval);
             }
-            prec->udf = FALSE;
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%u (RVAL=%#010x)\n",
-                             prec->name, prec->val, prec->rval);
-            }
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%u converted from RVAL=%u (%#010x)\n",
+                             prec->name, ret, prec->val, prec->rval, prec->rval);
         } else {
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
+            if (prec->tpro > 1)
+                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
-            }
-            pvt->writeUInt32(prec->rval);
+            pvt->writeScalar(prec->rval);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -605,38 +510,26 @@ opcua_write_bo (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            prec->rval = pvt->readUInt32(&nextReason, &prec->time);
-            if (prec->rval == 0) prec->val = 0;
-            else prec->val = 1;
-            prec->udf = FALSE;
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%u (RVAL=%#010x)\n",
-                             prec->name, prec->val, prec->rval);
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->rval, &nextReason);
+            if (ret == 0) {
+                if (prec->rval == 0) prec->val = 0;
+                else prec->val = 1;
             }
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%u (RVAL=%#010x)\n",
+                             prec->name, ret, prec->val, prec->rval);
         } else {
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
+            if (prec->tpro > 1)
+                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
-            }
-            pvt->writeUInt32(prec->rval);
+            pvt->writeScalar(prec->rval);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -651,50 +544,39 @@ opcua_write_mbbod (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            prec->rval = pvt->readUInt32(&nextReason, &prec->time);
-            epicsUInt32 rval = prec->rval;
-            if (prec->shft > 0)
-                rval >>= prec->shft;
-            prec->val = rval;
-            prec->udf = FALSE;
-            if (!prec->udf &&
-                prec->omsl == menuOmslsupervisory) {
-                /* Set B0 - Bnn from VAL */
-                epicsUInt32 val = prec->val;
-                epicsUInt8 *pBn = &prec->b0;
-                for (int i = 0; i < static_cast<int>(8 * sizeof(prec->val)); i++) {
-                    *pBn++ = !! (val & 1);
-                    val >>= 1;
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(&prec->rval, &nextReason);
+            if (ret == 0) {
+                epicsUInt32 rval = prec->rval;
+                if (prec->shft > 0)
+                    rval >>= prec->shft;
+                prec->val = rval;
+                prec->udf = FALSE;
+                if (!prec->udf &&
+                        prec->omsl == menuOmslsupervisory) {
+                    /* Set B0 - Bnn from VAL */
+                    epicsUInt32 val = prec->val;
+                    epicsUInt8 *pBn = &prec->b0;
+                    for (int i = 0; i < static_cast<int>(8 * sizeof(prec->val)); i++) {
+                        *pBn++ = !! (val & 1);
+                        val >>= 1;
+                    }
                 }
             }
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL=%u (RVAL=%#010x)\n",
-                             prec->name, prec->val, prec->rval);
-            }
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%u converted from RVAL=%u (%#010x)\n",
+                             prec->name, ret, prec->val, prec->rval, prec->rval);
         } else {
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
+            if (prec->tpro > 1)
+                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
-            }
-            pvt->writeUInt32(prec->rval);
+            pvt->writeScalar(prec->rval);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -709,29 +591,18 @@ opcua_read_string_val (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            pvt->readCString(prec->val, MAX_STRING_SIZE, &nextReason, &prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL='%s'\n",
-                             prec->name, prec->val);
-            }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(prec->val, MAX_STRING_SIZE, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
+                             prec->name, ret, prec->val);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -744,36 +615,23 @@ opcua_write_string_val (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            pvt->readCString(prec->val, MAX_STRING_SIZE, &nextReason, &prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL='%s'\n",
-                             prec->name, prec->val);
-            }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(prec->val, MAX_STRING_SIZE, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
+                             prec->name, ret, prec->val);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL='%s'\n",
                              prec->name, prec->val);
             }
-            pvt->writeCString(prec->val, MAX_STRING_SIZE);
+            ret = pvt->writeScalar(prec->val);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -788,30 +646,19 @@ opcua_read_lstring_val (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            pvt->readCString(prec->val, prec->sizv, &nextReason, &prec->time);
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(prec->val, prec->sizv, &nextReason);
             prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL='%s'\n",
-                             prec->name, prec->val);
-            }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
+                             prec->name, ret, prec->val);
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -824,37 +671,24 @@ opcua_write_lstring_val (REC *prec)
     TRY {
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
-            pvt->readCString(prec->val, prec->sizv, &nextReason, &prec->time);
+
+        if (pvt->reason) {
+            ret = pvt->readScalar(prec->val, prec->sizv, &nextReason);
             prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> VAL='%s'\n",
-                             prec->name, prec->val);
-            }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
+                             prec->name, ret, prec->val);
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL='%s'\n",
                              prec->name, prec->val);
             }
-            pvt->writeCString(prec->val, prec->sizv);
+            ret = pvt->writeScalar(prec->val);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -870,83 +704,73 @@ opcua_read_array (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
         epicsUInt32 nord = prec->nord;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
+
+        if (pvt->reason) {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
-                prec->nord = pvt->readArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nelm,
-                                                     &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsOldString *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeCHAR:
-                prec->nord = pvt->readArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nelm,
-                                                &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsInt8 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeUCHAR:
-                prec->nord = pvt->readArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm,
-                                                 &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeSHORT:
-                prec->nord = pvt->readArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nelm,
-                                                 &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsInt16 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeUSHORT:
-                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm,
-                                                  &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeLONG:
-                prec->nord = pvt->readArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nelm,
-                                                 &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsInt32 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeULONG:
-                prec->nord = pvt->readArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm,
-                                                  &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
 #ifdef DBR_INT64
             case menuFtypeINT64:
-                prec->nord = pvt->readArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nelm,
-                                                 &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsInt64 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeUINT64:
-                prec->nord = pvt->readArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm,
-                                                  &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
 #endif
             case menuFtypeFLOAT:
-                prec->nord = pvt->readArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm,
-                                                   &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeDOUBLE:
-                prec->nord = pvt->readArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm,
-                                                   &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeENUM:
-                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm,
-                                                  &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             }
             if (nord != prec->nord)
                 db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
 
             if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> %d array elements read\n",
-                             prec->name, prec->nord);
+                errlogPrintf("%s: read (status %ld) -> %d array elements read\n",
+                             prec->name, ret, prec->nord);
             }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -960,80 +784,67 @@ opcua_write_array (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
         epicsUInt32 nord = prec->nord;
-        if (pvt->reason == ProcessReason::incomingData
-                || pvt->reason == ProcessReason::readComplete) {
+
+        if (pvt->reason) {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
-                prec->nord = pvt->readArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nelm,
-                                                     &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsOldString *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeCHAR:
-                prec->nord = pvt->readArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nelm,
-                                                &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsInt8 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeUCHAR:
-                prec->nord = pvt->readArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm,
-                                                 &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt8 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeSHORT:
-                prec->nord = pvt->readArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nelm,
-                                                 &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsInt16 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeUSHORT:
-                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm,
-                                                  &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeLONG:
-                prec->nord = pvt->readArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nelm,
-                                                 &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsInt32 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeULONG:
-                prec->nord = pvt->readArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm,
-                                                  &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt32 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
 #ifdef DBR_INT64
             case menuFtypeINT64:
-                prec->nord = pvt->readArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nelm,
-                                                 &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsInt64 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeUINT64:
-                prec->nord = pvt->readArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm,
-                                                  &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt64 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
 #endif
             case menuFtypeFLOAT:
-                prec->nord = pvt->readArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm,
-                                                   &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsFloat32 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeDOUBLE:
-                prec->nord = pvt->readArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm,
-                                                   &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsFloat64 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             case menuFtypeENUM:
-                prec->nord = pvt->readArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm,
-                                                  &nextReason, &prec->time);
+                ret = pvt->readArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nelm,
+                                     &prec->nord, &nextReason);
                 break;
             }
             if (nord != prec->nord)
                 db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
 
             if (prec->tpro > 1) {
-                errlogPrintf("%s: read -> %d array elements\n",
-                             prec->name, prec->nord);
+                errlogPrintf("%s: read (status %ld) -> %d array elements\n",
+                             prec->name, ret, prec->nord);
             }
-            prec->udf = false;
-            pvt->checkReadStatus();
-        } else if (pvt->reason == ProcessReason::writeComplete) {
-            pvt->checkWriteStatus();
-        } else if (pvt->reason == ProcessReason::connectionLoss) {
-            (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            if (prec->tse == epicsTimeEventDeviceTime)
-                epicsTimeGetCurrent(&prec->time);
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
-                             prec->name);
-            }
-            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- %d array elements\n",
@@ -1041,48 +852,49 @@ opcua_write_array (REC *prec)
             }
             switch (prec->ftvl) {
             case menuFtypeSTRING:
-                pvt->writeArrayOldString(static_cast<epicsOldString *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsOldString *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeCHAR:
-                pvt->writeArrayInt8(static_cast<epicsInt8 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsInt8 *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeUCHAR:
-                pvt->writeArrayUInt8(static_cast<epicsUInt8 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsUInt8 *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeSHORT:
-                pvt->writeArrayInt16(static_cast<epicsInt16 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsInt16 *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeUSHORT:
-                pvt->writeArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeLONG:
-                pvt->writeArrayInt32(static_cast<epicsInt32 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsInt32 *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeULONG:
-                pvt->writeArrayUInt32(static_cast<epicsUInt32 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsUInt32 *>(prec->bptr), prec->nord);
                 break;
 #ifdef DBR_INT64
             case menuFtypeINT64:
-                pvt->writeArrayInt64(static_cast<epicsInt64 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsInt64 *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeUINT64:
-                pvt->writeArrayUInt64(static_cast<epicsUInt64 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsUInt64 *>(prec->bptr), prec->nord);
                 break;
 #endif
             case menuFtypeFLOAT:
-                pvt->writeArrayFloat32(static_cast<epicsFloat32 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsFloat32 *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeDOUBLE:
-                pvt->writeArrayFloat64(static_cast<epicsFloat64 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsFloat64 *>(prec->bptr), prec->nord);
                 break;
             case menuFtypeENUM:
-                pvt->writeArrayUInt16(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
                 break;
             }
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
-        if (nextReason != ProcessReason::none) pvt->requestRecordProcessing(nextReason);
+        if (nextReason != ProcessReason::none)
+            pvt->requestRecordProcessing(nextReason);
     } CATCH();
     return ret;
 }
@@ -1090,15 +902,15 @@ opcua_write_array (REC *prec)
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-  {6, nullptr, opcua_init, nullptr, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
+{6, nullptr, opcua_init, nullptr, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
 #define SUPM(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-  {6, nullptr, opcua_init, opcua_init_mask_##DIR<REC##Record>, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
+{6, nullptr, opcua_init, opcua_init_mask_##DIR<REC##Record>, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
 #define SUPI(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-  {6, NULL, NULL, NULL, opcua_get_ioint, NULL, NULL}; \
+{6, NULL, NULL, NULL, opcua_get_ioint, NULL, NULL}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
 SUP (devLiOpcua,             longin,   int32_val, read)
