@@ -312,7 +312,6 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
     if (status.isBad()) {
         errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
-        item.setReadStatus(status.code());
         item.setIncomingEvent(ProcessReason::readFailure);
 
     } else {
@@ -352,7 +351,6 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
     if (status.isBad()) {
         errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
                      name.c_str(), status.toString().toUtf8());
-        item.setWriteStatus(status.code());
         item.setIncomingEvent(ProcessReason::writeFailure);
 
     } else {
@@ -548,7 +546,7 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
         errlogPrintf("OPC UA session %s: (readComplete) received a callback "
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
-    } else {
+    } else if (result.isGood()) {
         if (debug)
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) getting data for read service"
@@ -561,9 +559,26 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                           << ": (readComplete) getting data for item "
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
-            item->setReadStatus(values[i].StatusCode);
-            item->setIncomingData(values[i], ProcessReason::readComplete);
+            ProcessReason reason = ProcessReason::readComplete;
+            if (OpcUa_IsNotGood(values[i].StatusCode))
+                reason = ProcessReason::readFailure;
+            item->setIncomingData(values[i], reason);
             i++;
+        }
+        outstandingOps.erase(it);
+    } else {
+        if (debug)
+            std::cout << "Session " << name.c_str()
+                      << ": (readComplete) for read service"
+                      << " (transaction id " << transactionId
+                      << ") failed with status " << result.toString() << std::endl;
+        for (auto item : (*it->second)) {
+            if (debug >= 5) {
+                std::cout << "** Session " << name.c_str()
+                          << ": (readComplete) filing read error (no data) for item "
+                          << item->getNodeId().toXmlString().toUtf8() << std::endl;
+            }
+            item->setIncomingEvent(ProcessReason::readFailure);
         }
         outstandingOps.erase(it);
     }
@@ -581,7 +596,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
         errlogPrintf("OPC UA session %s: (writeComplete) received a callback "
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
-    } else {
+    } else if (result.isGood()) {
         if (debug)
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) getting results for write service"
@@ -594,9 +609,26 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
                           << ": (writeComplete) getting results for item "
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
-            item->setWriteStatus(results[i]);
-            item->setIncomingEvent(ProcessReason::writeComplete);
+            ProcessReason reason = ProcessReason::writeComplete;
+            if (OpcUa_IsBad(results[i]))
+                reason = ProcessReason::writeFailure;
+            item->setIncomingEvent(reason);
             i++;
+        }
+        outstandingOps.erase(it);
+    } else {
+        if (debug)
+            std::cout << "Session " << name.c_str()
+                      << ": (writeComplete) for write service"
+                      << " (transaction id " << transactionId
+                      << ") failed with status " << result.toString() << std::endl;
+        for (auto item : (*it->second)) {
+            if (debug >= 5) {
+                std::cout << "** Session " << name.c_str()
+                          << ": (writeComplete) filing write error for item "
+                          << item->getNodeId().toXmlString().toUtf8() << std::endl;
+            }
+            item->setIncomingEvent(ProcessReason::writeFailure);
         }
         outstandingOps.erase(it);
     }
