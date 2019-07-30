@@ -139,19 +139,24 @@ ItemUaSdk::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 void
 ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 {
+    tsClient = epicsTime::getCurrent();
     tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
     tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+    setReason(reason);
+    setReadStatus(value.StatusCode);
 
-    readStatus = value.StatusCode;
-
-    if (auto pd = rootElement.lock()) pd->setIncomingData(value.Value, reason);
+    if (auto pd = rootElement.lock())
+        pd->setIncomingData(value.Value, reason);
 }
 
 void
-ItemUaSdk::setIncomingEvent(const ProcessReason reason) const
+ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 {
+    tsClient = epicsTime::getCurrent();
+    setReason(reason);
+
     if (auto pd = rootElement.lock()) {
-        pd->requestRecordProcessing(reason);
+        pd->setIncomingEvent(reason);
     }
 }
 

@@ -77,418 +77,665 @@ public:
     virtual void show(const int level, const unsigned int indent) const = 0;
 
     /**
-     * @brief Read incoming data as Int32.
+     * @brief Read incoming data as a scalar epicsInt32.
      *
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target EPICS type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and returns the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return value as epicsInt32
+     * @param[out] value  set to value
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsInt32 readInt32(ProcessReason *nextReason = nullptr,
-                                 epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readScalar(epicsInt32 *value,
+                            dbCommon *prec,
+                            ProcessReason *nextReason = nullptr,
+
+                            epicsUInt32 *statusCode = nullptr,
+                            epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as Int64.
+     * @brief Read incoming data as a scalar epicsInt64.
      *
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target EPICS type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and returns the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return value as epicsInt64
+     * @param[out] value  set to value
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsInt64 readInt64(ProcessReason *nextReason = nullptr,
-                                 epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readScalar(epicsInt64 *value,
+                            dbCommon *prec,
+                            ProcessReason *nextReason = nullptr,
+                            epicsUInt32 *statusCode = nullptr,
+                            epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as UInt32.
+     * @brief Read incoming data as a scalar epicsUInt32.
      *
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target EPICS type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and returns the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return value as epicsUInt32
+     * @param[out] value  set to value
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readUInt32(ProcessReason *nextReason = nullptr,
-                                   epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readScalar(epicsUInt32 *value,
+                            dbCommon *prec,
+                            ProcessReason *nextReason = nullptr,
+                            epicsUInt32 *statusCode = nullptr,
+                            epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as Float64.
+     * @brief Read incoming data as a scalar epicsFloat64.
      *
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target EPICS type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and returns the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return value as epicsFloat64
+     * @param[out] value  set to value
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsFloat64 readFloat64(ProcessReason *nextReason = nullptr,
-                                     epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readScalar(epicsFloat64 *value,
+                            dbCommon *prec,
+                            ProcessReason *nextReason = nullptr,
+                            epicsUInt32 *statusCode = nullptr,
+                            epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as classic C string (char[]).
+     * @brief Read incoming data as a classic C string (null terminated array of char).
      *
-     * The result (string in the target buffer) will be NULL terminated.
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and returns the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @param value  pointer to target string buffer
-     * @param num  target buffer size (incl. NULL byte)
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * @param[out] value  target string buffer
+     * @param[in] num  length of target string buffer (including null byte)
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void readCString(char *value, const size_t num,
-                             ProcessReason *nextReason,
-                             epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readScalar(char *value, const size_t num,
+                            dbCommon *prec,
+                            ProcessReason *nextReason = nullptr,
+                            epicsUInt32 *statusCode = nullptr,
+                            epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of Int8.
+     * @brief Read incoming data as array of epicsInt8.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayInt8(epicsInt8 *value, epicsUInt32 num,
-                                      ProcessReason *nextReason,
-                                      epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsInt8 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of UInt8.
+     * @brief Read incoming data as array of epicsUInt8.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayUInt8(epicsUInt8 *value, epicsUInt32 num,
-                                       ProcessReason *nextReason,
-                                       epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsUInt8 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of Int16.
+     * @brief Read incoming data as array of epicsInt16.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayInt16(epicsInt16 *value, epicsUInt32 num,
-                                       ProcessReason *nextReason,
-                                       epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsInt16 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of UInt16.
+     * @brief Read incoming data as array of epicsUInt16.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayUInt16(epicsUInt16 *value, epicsUInt32 num,
-                                        ProcessReason *nextReason = nullptr,
-                                        epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsUInt16 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of Int32.
+     * @brief Read incoming data as array of epicsInt32.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayInt32(epicsInt32 *value, epicsUInt32 num,
-                                       ProcessReason *nextReason = nullptr,
-                                       epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsInt32 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of UInt32.
+     * @brief Read incoming data as array of epicsUInt32.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayUInt32(epicsUInt32 *value, epicsUInt32 num,
-                                        ProcessReason *nextReason = nullptr,
-                                        epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsUInt32 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of Int64.
+     * @brief Read incoming data as array of epicsInt64.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayInt64(epicsInt64 *value, epicsUInt32 num,
-                                       ProcessReason *nextReason = nullptr,
-                                       epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsInt64 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of UInt64.
+     * @brief Read incoming data as array of epicsUInt64.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayUInt64(epicsUInt64 *value, epicsUInt32 num,
-                                        ProcessReason *nextReason = nullptr,
-                                        epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsUInt64 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of Float32.
+     * @brief Read incoming data as array of epicsFloat32.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayFloat32(epicsFloat32 *value, epicsUInt32 num,
-                                         ProcessReason *nextReason = nullptr,
-                                         epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsFloat32 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of Float64.
+     * @brief Read incoming data as array of epicsFloat64.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayFloat64(epicsFloat64 *value, epicsUInt32 num,
-                                         ProcessReason *nextReason = nullptr,
-                                         epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsFloat64 *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Read incoming data as array of EPICS Old String (fixed size).
+     * @brief Read incoming data as array of epicsOldString.
      *
-     * @param value  pointer to target array
-     * @param num  target array size
-     * @param[out] nextReason  ProcessReason for the next update in the queue, `none` if last element
-     * @param[out] ts  set to the EPICS time stamp of the update
+     * Takes the next element off the queue of incoming data, converts it to the
+     * target type, sets the record's STAT/SEVR according to the ProcessReason,
+     * status code and success of the conversion, and writes the value, the ProcessReason
+     * of the next queue element, the time stamp, the status code and text of
+     * the OPC UA status of the item related to this DataElement.
      *
-     * @return  number of elements written
+     * @param[out] value  pointer to target array
+     * @param[in] num  target array size
+     * @param[out] numRead  number of elements written
+     * @param[in] prec  pointer to EPICS record
+     * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] statusCode  set to the OPC UA status code of the update
+     * @param[out] statusText  set to the OPC UA status text of the update
      *
-     * @throws std::runtime_error if no data present or on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual epicsUInt32 readArrayOldString(epicsOldString *value, epicsUInt32 num,
-                                           ProcessReason *nextReason = nullptr,
-                                           epicsTimeStamp *ts = nullptr) = 0;
+    virtual long readArray(epicsOldString *value, const epicsUInt32 num,
+                           epicsUInt32 *numRead,
+                           dbCommon *prec,
+                           ProcessReason *nextReason = nullptr,
+                           epicsUInt32 *statusCode = nullptr,
+                           epicsOldString *statusText = nullptr) = 0;
 
     /**
-     * @brief Check status of last read service.
+     * @brief Write outgoing scalar epicsInt32 data.
      *
-     * @return true = last read service ok
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
+     *
+     * @param value  set to value
+     * @param prec  pointer to EPICS record
+     *
+     * @return status  0 = ok, 1 = error
      */
-    virtual bool readWasOk() const = 0;
+    virtual long writeScalar(const epicsInt32 &value,
+                             dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing Int32 data.
+     * @brief Write outgoing scalar epicsInt64 data.
      *
-     * @param value  value to write
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
-     * @throws std::runtime_error on conversion error
+     * @param value  set to value
+     * @param prec  pointer to EPICS record
+     *
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeInt32(const epicsInt32 &value) = 0;
+    virtual long writeScalar(const epicsInt64 &value,
+                             dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing Int64 data.
+     * @brief Write outgoing scalar epicsUInt32 data.
      *
-     * @param value  value to write
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
-     * @throws std::runtime_error on conversion error
+     * @param value  set to value
+     * @param prec  pointer to EPICS record
+     *
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeInt64(const epicsInt64 &value) = 0;
+    virtual long writeScalar(const epicsUInt32 &value,
+                             dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing UInt32 data.
+     * @brief Write outgoing scalar epicsFloat64 data.
      *
-     * @param value  value to write
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
-     * @throws std::runtime_error on conversion error
+     * @param value  set to value
+     * @param prec  pointer to EPICS record
+     *
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeUInt32(const epicsUInt32 &value) = 0;
-
-    /**
-     * @brief Write outgoing Float64 data.
-     *
-     * @param value  value to write
-     *
-     * @throws std::runtime_error on conversion error
-     */
-    virtual void writeFloat64(const epicsFloat64 &value) = 0;
+    virtual long writeScalar(const epicsFloat64 &value,
+                             dbCommon *prec) = 0;
 
     /**
      * @brief Write outgoing classic C string (char[]) data.
      *
-     * @param value  pointer to source string buffer
-     * @param num  max no. of bytes to copy (incl. NULL byte)
+     * @param value  pointer to null terminated source string
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeCString(const char *value, const size_t num) = 0;
+    virtual long writeScalar(const char *value,
+                             dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of Int8 data.
+     * @brief Write outgoing array of epicsInt8 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayInt8(const epicsInt8 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsInt8 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of UInt8 data.
+     * @brief Write outgoing array of epicsUInt8 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayUInt8(const epicsUInt8 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsUInt8 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of Int16 data.
+     * @brief Write outgoing array of epicsInt16 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayInt16(const epicsInt16 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsInt16 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of UInt16 data.
+     * @brief Write outgoing array of epicsUInt16 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayUInt16(const epicsUInt16 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsUInt16 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of Int32 data.
+     * @brief Write outgoing array of epicsInt32 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayInt32(const epicsInt32 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsInt32 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of UInt32 data.
+     * @brief Write outgoing array of epicsUInt32 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayUInt32(const epicsUInt32 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsUInt32 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of Int64 data.
+     * @brief Write outgoing array of epicsInt64 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayInt64(const epicsInt64 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsInt64 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of UInt64 data.
+     * @brief Write outgoing array of epicsUInt64 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayUInt64(const epicsUInt64 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsUInt64 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of Float32 data.
+     * @brief Write outgoing array of epicsFloat32 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayFloat32(const epicsFloat32 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsFloat32 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of Float64 data.
+     * @brief Write outgoing array of epicsFloat64 data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayFloat64(const epicsFloat64 *value, const epicsUInt32 num) = 0;
+    virtual long writeArray(const epicsFloat64 *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of OldString (40 char fixed size) data.
+     * @brief Write outgoing array of epicsOldString data.
+     *
+     * Takes the provided data value, converts it to the target OPC UA type,
+     * sets the record's STAT/SEVR according to the success of the conversion,
+     * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
      * @param num  source array size
+     * @param prec  pointer to EPICS record
      *
-     * @throws std::runtime_error on conversion error
+     * @return status  0 = ok, 1 = error
      */
-    virtual void writeArrayOldString(const epicsOldString *value, const epicsUInt32 num) = 0;
-
-    /**
-     * @brief Check status of last write service.
-     *
-     * @return true = last write service ok
-     */
-    virtual bool writeWasOk() const = 0;
+    virtual long writeArray(const epicsOldString *value,
+                            const epicsUInt32 num,
+                            dbCommon *prec) = 0;
 
     /**
      * @brief Create processing requests for record(s) attached to this element.
@@ -496,6 +743,7 @@ public:
     virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
     const std::string name;                     /**< element name */
+    //TODO: make separator configurable
     static const char separator = '.';
 
 protected:
