@@ -65,7 +65,7 @@ typedef struct linkInfo {
 /**
  * @brief Enum marking the reason for processing a record
  */
-enum ProcessReason { none, incomingData, connectionLoss,
+enum ProcessReason { none = 0, incomingData, connectionLoss,
                      readComplete, readFailure,
                      writeComplete, writeFailure };
 
