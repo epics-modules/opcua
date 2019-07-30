@@ -103,7 +103,7 @@ public:
      * @brief Getter for the status of the last read operation.
      * @return read status
      */
-    const UaStatusCode &getLastStatus() { return lastStatus; }
+    UaStatusCode getLastStatus() { return lastStatus; }
 
     /**
      * @brief Setter for the reason of an operation.
