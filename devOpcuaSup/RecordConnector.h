@@ -115,8 +115,6 @@ public:
     void writeArrayFloat64(const epicsFloat64 *val, const epicsUInt32 num) { pdataelement->writeArrayFloat64(val, num); }
     void writeArrayOldString(const epicsOldString *val, const epicsUInt32 num) { pdataelement->writeArrayOldString(val, num); }
 
-    void checkWriteStatus() const;
-    void checkReadStatus() const;
 
     void setDataElement(std::shared_ptr<DataElement> data) { pdataelement = data; }
     void clearDataElement() { pdataelement = nullptr; }

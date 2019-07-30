@@ -169,28 +169,6 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
     }
 }
 
-void
-RecordConnector::checkWriteStatus() const
-{
-    if (!pdataelement->writeWasOk()) {
-        if (debug() >= 2)
-            errlogPrintf("%s: write returned an error -> setting to WRITE/INVALID\n",
-                         prec->name);
-        (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-    }
-}
-
-void
-RecordConnector::checkReadStatus() const
-{
-    if (!pdataelement->readWasOk()) {
-        if (debug() >= 2)
-            errlogPrintf("%s: read returned an error -> setting to READ/INVALID\n",
-                         prec->name);
-        (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-    }
-}
-
 RecordConnector *
 RecordConnector::findRecordConnector (const std::string &name)
 {
