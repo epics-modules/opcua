@@ -15,6 +15,7 @@
 
 #include <uaclientsdk.h>
 #include <uanodeid.h>
+#include <opcua_statuscodes.h>
 
 #include "RecordConnector.h"
 #include "opcuaItemRecord.h"
@@ -34,7 +35,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
-    , lastStatus(0x800D0000)  // BadServerNotConnected
+    , lastStatus(OpcUa_BadServerNotConnected)
 {
     rebuildNodeId();
 
@@ -145,6 +146,15 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
     tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
     tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
     setReason(reason);
+    if (getLastStatus() == OpcUa_BadServerNotConnected && value.StatusCode == OpcUa_BadNodeIdUnknown)
+        errlogPrintf("OPC UA session %s: item ns=%d;%s%.*d%s : BadNodeIdUnknown\n",
+                     session->getName().c_str(),
+                     linkinfo.namespaceIndex,
+                     (linkinfo.identifierIsNumeric ? "i=" : "s="),
+                     (linkinfo.identifierIsNumeric ? 1 : 0),
+                     (linkinfo.identifierIsNumeric ? linkinfo.identifierNumber : 0),
+                     (linkinfo.identifierIsNumeric ? "" : linkinfo.identifierString.c_str()));
+
     setLastStatus(value.StatusCode);
 
     if (auto pd = rootElement.lock())
@@ -157,7 +167,7 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
     tsClient = epicsTime::getCurrent();
     setReason(reason);
     if (reason == ProcessReason::connectionLoss)
-        setLastStatus(0x800D0000); // BadServerNotConnected
+        setLastStatus(OpcUa_BadServerNotConnected);
 
     if (auto pd = rootElement.lock()) {
         pd->setIncomingEvent(reason);
