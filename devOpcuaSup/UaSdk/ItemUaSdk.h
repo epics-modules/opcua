@@ -97,25 +97,13 @@ public:
      * @brief Setter for the status of a read operation.
      * @param status  status code received by the client library
      */
-    void setReadStatus(const OpcUa_StatusCode &status) { lastReadStatus = status; }
+    void setLastStatus(const OpcUa_StatusCode &status) { lastStatus = status; }
 
     /**
      * @brief Getter for the status of the last read operation.
      * @return read status
      */
-    const UaStatusCode &getReadStatus() { return lastReadStatus; }
-
-    /**
-     * @brief Setter for the status of a write operation.
-     * @param status  status code received by the client library
-     */
-    void setWriteStatus(const OpcUa_StatusCode &status) { lastWriteStatus = status; }
-
-    /**
-     * @brief Getter for the status of the last write operation.
-     * @return write status
-     */
-    const UaStatusCode &getWriteStatus() { return lastWriteStatus; }
+    const UaStatusCode &getLastStatus() { return lastStatus; }
 
     /**
      * @brief Setter for the reason of an operation.
@@ -214,8 +202,7 @@ private:
     OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
     OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
     std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
-    UaStatusCode lastReadStatus;           /**< status code of most recent read service */
-    UaStatusCode lastWriteStatus;          /**< status code of most recent write service */
+    UaStatusCode lastStatus;               /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
     epicsTime tsClient;                    /**< client (local) time stamp */
     epicsTime tsServer;                    /**< server time stamp */
