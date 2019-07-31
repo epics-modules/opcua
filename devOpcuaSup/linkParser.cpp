@@ -274,7 +274,8 @@ parseLink (dbCommon *prec, DBEntry &ent)
     if (pinfo->monitor && pinfo->linkedToItem && !pinfo->subscription.length())
         throw std::runtime_error(SB() << "monitor=y requires link to a subscription");
     if (pinfo->monitor && !pinfo->linkedToItem && !pinfo->item->linkinfo.monitor)
-        throw std::runtime_error(SB() << "monitor=y requires link to opcuaItemRecord with monitor=y");
+        throw std::runtime_error(SB() << "monitor=y requires link to monitored opcuaItemRecord (but "
+                                 << pinfo->item->itemRecordConnector->getRecordName() << " is not)");
 
     return pinfo;
 }
