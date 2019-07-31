@@ -1,5 +1,5 @@
 #*************************************************************************
-# Copyright (c) 2018 ITER Organization.
+# Copyright (c) 2018-2019 ITER Organization.
 # This module is distributed subject to a Software License Agreement found
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
@@ -30,11 +30,11 @@ recordtype(opcuaItem) {
         interest(1)
         size(41)
     }
-    field(ELEM,DBF_STRING) {
-        prompt("Element Specification")
-        promptgroup("40 - Input")
+    field(DEFACTN,DBF_MENU) {
+        prompt("Default Action")
+        promptgroup("30 - Action")
         interest(1)
-        size(81)
+        menu(menuDefAction)
     }
     field(SIML,DBF_INLINK) {
         prompt("Simulation Mode Link")

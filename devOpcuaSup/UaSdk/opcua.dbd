@@ -1,3 +1,4 @@
+include "menuDefAction.dbd"
 include "opcuaItemRecord.dbd"
 include "devOpcua.dbd"
 include "opcuaUaSdk.dbd"
