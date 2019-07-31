@@ -30,8 +30,9 @@ endif
 
 LIBRARY_IOC += opcua
 
-# xxxRecord.h will be created from xxxRecord.dbd
+# generate headers and html from .dbd
 DBDINC += opcuaItemRecord
+DBDINC += menuDefAction.h
 
 DBD_INSTALLS += $(COMMON_DIR)/devOpcua.dbd
 
@@ -53,6 +54,8 @@ opcua_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 INC += devOpcuaVersion.h
 INC += devOpcuaVersionNum.h
+
+HTMLS += menuDefAction.html
 
 #==================================================
 # Implementations for different client libraries

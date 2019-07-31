@@ -1,0 +1,19 @@
+#*************************************************************************
+# Copyright (c) 2019 ITER Organization.
+# This module is distributed subject to a Software License Agreement found
+# in file LICENSE that is included with this distribution.
+#*************************************************************************
+
+=head1 Menu menuDefAction
+
+This menu defines the default action for an (opcuaItem) record that can
+read or write an OPC UA item.
+
+=menu menuDefAction
+
+=cut
+
+menu(menuDefAction) {
+	choice(menuDefActionREAD, "read")
+	choice(menuDefActionWRITE, "write")
+}
