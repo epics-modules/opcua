@@ -13,9 +13,9 @@
 #ifndef DEVOPCUA_ITEM_H
 #define DEVOPCUA_ITEM_H
 
-struct opcuaItemRecord;
-
 namespace DevOpcua {
+
+#include <epicsTypes.h>
 
 struct linkInfo;
 class RecordConnector;
@@ -39,6 +39,15 @@ public:
      * @brief Schedule a write request (using beginWrite service).
      */
     virtual void requestWrite() = 0;
+
+    /**
+     * @brief Get the cached status of the last item operation.
+     *
+     * @param[out] code  OPC UA status code
+     * @param[out] text  OPC UA status text (will be null terminated)
+     * @param[in]  len  Length of text buffer
+     */
+    virtual void getStatus(epicsUInt32 *code, char *text = nullptr, const epicsUInt32 len = 0) = 0;
 
     /**
      * @brief Print configuration and status on stdout.

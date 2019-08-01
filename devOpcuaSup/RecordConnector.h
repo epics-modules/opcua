@@ -82,6 +82,8 @@ public:
         return pdataelement->writeArray(val, len, num, prec);
     }
 
+    void getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len) { pitem->getStatus(code, text, len); }
+
     void setDataElement(std::shared_ptr<DataElement> data) { pdataelement = data; }
     void clearDataElement() { pdataelement = nullptr; }
 
