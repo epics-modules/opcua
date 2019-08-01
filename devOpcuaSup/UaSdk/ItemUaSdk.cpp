@@ -12,6 +12,7 @@
  */
 
 #include <memory>
+#include <cstring>
 
 #include <uaclientsdk.h>
 #include <uanodeid.h>
@@ -159,6 +160,9 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 
     if (auto pd = rootElement.lock())
         pd->setIncomingData(value.Value, reason);
+
+    if (itemRecordConnector)
+        itemRecordConnector->requestRecordProcessing(reason);
 }
 
 void
@@ -175,6 +179,16 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 
     if (itemRecordConnector)
         itemRecordConnector->requestRecordProcessing(reason);
+}
+
+void
+ItemUaSdk::getStatus(epicsUInt32 *code, epicsOldString *text)
+{
+    *code = lastStatus.code();
+    if (text) {
+        strncpy(*text, lastStatus.toString().toUtf8(), MAX_STRING_SIZE);
+        *text[MAX_STRING_SIZE-1] = '\0';
+    }
 }
 
 } // namespace DevOpcua

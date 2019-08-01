@@ -22,6 +22,7 @@
 #include <errMdef.h>
 #include <menuPost.h>
 #include <menuYesNo.h>
+#include <devSup.h>
 #include <recSup.h>
 #include <recGbl.h>
 #include <special.h>
@@ -51,16 +52,6 @@ namespace {
 using namespace DevOpcua;
 
 long readValue(opcuaItemRecord *prec);
-
-#define TRY \
-    if (!prec->dpvt) return 0; \
-    RecordConnector *pvt = static_cast<RecordConnector*>(prec->dpvt); \
-    try
-#define CATCH() catch(std::exception& e) { \
-    std::cerr << prec->name << " Error : " << e.what() << std::endl; \
-    (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM); \
-    return 0; }
-
 void monitor(opcuaItemRecord *);
 
 long
@@ -78,6 +69,10 @@ init_record (dbCommon *pdbc, int pass)
             pitem->itemRecordConnector = pvt.get();
             pvt->pitem = pitem;
             prec->dpvt = pvt.release();
+            strncpy(prec->sess, pitem->linkinfo.session.c_str(), MAX_STRING_SIZE);
+            prec->sess[MAX_STRING_SIZE] = '\0';
+            strncpy(prec->subs, pitem->linkinfo.subscription.c_str(), MAX_STRING_SIZE);
+            prec->subs[MAX_STRING_SIZE] = '\0';
         } catch(std::exception& e) {
             std::cerr << prec->name << " Error in init_record : " << e.what() << std::endl;
             return S_dbLib_badLink;
@@ -90,22 +85,30 @@ init_record (dbCommon *pdbc, int pass)
 long
 process (dbCommon *pdbc)
 {
-    opcuaItemRecord *prec = reinterpret_cast<opcuaItemRecord *>(pdbc);
+    auto prec  = reinterpret_cast<opcuaItemRecord *>(pdbc);
+    auto pdset = reinterpret_cast<struct dset6<opcuaItemRecord> *>(prec->dset);
+
     int pact = prec->pact;
     long status = 0;
+
+    if( (pdset == nullptr) || (pdset->readwrite == nullptr) ) {
+        prec->pact = true;
+        recGblRecordError(S_dev_missingSup, static_cast<void *>(prec), "readwrite");
+        return S_dev_missingSup;
+    }
 
     status = readValue(prec); /* read the new value */
     if (!pact && prec->pact)
         return 0;
 
-    prec->pact = TRUE;
+    prec->pact = true;
     recGblGetTimeStamp(prec);
 
     monitor(prec);
 
     /* Wrap up */
     recGblFwdLink(prec);
-    prec->pact = FALSE;
+    prec->pact = false;
     return status;
 }
 
@@ -133,6 +136,7 @@ monitor (opcuaItemRecord *prec)
 long
 readValue (opcuaItemRecord *prec)
 {
+    auto pdset = reinterpret_cast<struct dset6<opcuaItemRecord> *>(prec->dset);
     long status = 0;
 
     if (prec->pact)
@@ -145,7 +149,7 @@ readValue (opcuaItemRecord *prec)
     switch (prec->simm) {
     case menuYesNoNO:
 read:
-//        status = pdset->read_string(prec);
+        status = pdset->readwrite(prec);
         break;
 
     case menuYesNoYES:

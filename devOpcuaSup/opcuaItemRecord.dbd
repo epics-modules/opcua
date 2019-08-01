@@ -15,18 +15,18 @@ recordtype(opcuaItem) {
     }
     field(INP,DBF_INLINK) {
         prompt("NodeId Specification")
-        promptgroup("40 - Input")
+        promptgroup("40 - I/O Address")
         interest(1)
     }
     field(SESS,DBF_STRING) {
         prompt("Session Specification")
-        promptgroup("40 - Input")
+        promptgroup("40 - I/O Address")
         interest(1)
         size(41)
     }
     field(SUBS,DBF_STRING) {
         prompt("Subscription Specification")
-        promptgroup("40 - Input")
+        promptgroup("40 - I/O Address")
         interest(1)
         size(41)
     }
@@ -35,6 +35,14 @@ recordtype(opcuaItem) {
         promptgroup("30 - Action")
         interest(1)
         menu(menuDefAction)
+    }
+    field(STATCODE,DBF_ULONG) {
+        prompt("OPC UA status code")
+        base(HEX)
+    }
+    field(STATTEXT,DBF_STRING) {
+        prompt("OPC UA status string")
+        size(40)
     }
     field(SIML,DBF_INLINK) {
         prompt("Simulation Mode Link")

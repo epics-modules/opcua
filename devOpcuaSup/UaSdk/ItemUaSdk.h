@@ -77,6 +77,12 @@ public:
     virtual bool isMonitored() const override { return !!subscription; }
 
     /**
+     * @brief Return OPC UA status code and text.
+     * See DevOpcua::Item::getStatus
+     */
+    virtual void getStatus(epicsUInt32 *code, epicsOldString *text = nullptr) override;
+
+    /**
      * @brief Return registered status.
      */
     bool isRegistered() const { return registered; }

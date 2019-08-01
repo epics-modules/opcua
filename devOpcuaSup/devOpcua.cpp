@@ -63,6 +63,7 @@
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
 #include "opcuaItemRecord.h"
+#include "menuDefAction.h"
 #include "devOpcua.h"
 #include "devOpcuaVersion.h"
 #include "RecordConnector.h"
@@ -899,6 +900,48 @@ opcua_write_array (REC *prec)
     return ret;
 }
 
+// opcuaItemRecord
+
+template<typename REC>
+long
+opcua_action_item (REC *prec)
+{
+    long ret = 0;
+    TRY {
+        Guard G(pvt->lock);
+
+        switch (pvt->reason) {
+        case ProcessReason::readFailure:
+            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            ret = 1;
+            break;
+        case ProcessReason::writeFailure:
+            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            ret = 1;
+            break;
+        case ProcessReason::connectionLoss:
+            (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            ret = 1;
+            break;
+        case ProcessReason::none:
+            prec->pact = true;
+            if (prec->defactn == menuDefActionREAD)
+                pvt->requestOpcuaRead();
+            else {
+                pvt->requestOpcuaWrite();
+            }
+            break;
+        default:
+            break;
+        }
+        pvt->getStatus(&prec->statcode, &prec->stattext);
+        if (prec->tpro > 1)
+            errlogPrintf("%s: processed -> status code %#10x (%s)\n",
+                         prec->name, prec->statcode, prec->stattext);
+    } CATCH();
+    return ret;
+}
+
 } // namespace
 
 #define SUP(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
@@ -910,7 +953,7 @@ opcua_write_array (REC *prec)
     extern "C" { epicsExportAddress(dset, NAME); }
 
 #define SUPI(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-{6, NULL, NULL, NULL, opcua_get_ioint, NULL, NULL}; \
+{6, nullptr, nullptr, nullptr, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
 SUP (devLiOpcua,             longin,   int32_val, read)
@@ -934,4 +977,4 @@ SUP (devAaoOpcua,               aao,       array, write)
 SUP (devInt64inOpcua,       int64in,   int64_val, read)
 SUP (devInt64outOpcua,     int64out,   int64_val, write)
 #endif
-SUPI(devItemOpcua,        opcuaItem,        item, dummy)
+SUPI(devItemOpcua,        opcuaItem,        item, action)
