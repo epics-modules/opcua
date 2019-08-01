@@ -75,8 +75,8 @@ ItemUaSdk::show (int level) const
         std::cout << ";i=" << linkinfo.identifierNumber;
     else
         std::cout << ";s=" << linkinfo.identifierString;
-    if (linkinfo.isItemRecord)
-        std::cout << " record=" << itemRecord->name;
+    if (itemRecordConnector)
+        std::cout << " record=" << itemRecordConnector->getRecordName();
     std::cout << " status=" << UaStatus(lastStatus).toString().toUtf8()
               << " context=" << linkinfo.subscription
               << "@" << session->getName()
@@ -103,8 +103,8 @@ ItemUaSdk::show (int level) const
 
 int ItemUaSdk::debug() const
 {
-    if (linkinfo.isItemRecord)
-        return itemRecord->tpro;
+    if (itemRecordConnector)
+        return itemRecordConnector->debug();
     else if (auto pd = rootElement.lock())
         return pd->debug();
     else
@@ -172,6 +172,9 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
     if (auto pd = rootElement.lock()) {
         pd->setIncomingEvent(reason);
     }
+
+    if (itemRecordConnector)
+        itemRecordConnector->requestRecordProcessing(reason);
 }
 
 } // namespace DevOpcua

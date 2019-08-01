@@ -18,6 +18,7 @@ struct opcuaItemRecord;
 namespace DevOpcua {
 
 struct linkInfo;
+class RecordConnector;
 
 /**
  * @brief The Item interface for an OPC UA item.
@@ -57,8 +58,8 @@ public:
      */
     virtual bool isMonitored() const = 0;
 
-    const linkInfo &linkinfo;     /**< configuration of the item as parsed from the EPICS record */
-    opcuaItemRecord *itemRecord;  /**< pointer to the itemRecord (if linked to one) */
+    const linkInfo &linkinfo;              /**< configuration of the item as parsed from the EPICS record */
+    RecordConnector *itemRecordConnector;  /**< pointer to the itemRecord connector (if linked to one) */
 
 protected:
     /**
@@ -66,7 +67,10 @@ protected:
      *
      * @param info  Item configuration as parsed from EPICS database
      */
-    Item(const linkInfo &info) : linkinfo(info) {}
+    Item(const linkInfo &info)
+        : linkinfo(info)
+        , itemRecordConnector(nullptr)
+    {}
 };
 
 } // namespace DevOpcua
