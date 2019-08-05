@@ -40,6 +40,10 @@ recordtype(opcuaItem) {
         prompt("OPC UA status code")
         base(HEX)
     }
+    field(OSTATCODE,DBF_ULONG) {
+        prompt("Old status code")
+        base(HEX)
+    }
     field(STATTEXT,DBF_STRING) {
         prompt("OPC UA status string")
         size(41)

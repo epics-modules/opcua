@@ -128,8 +128,11 @@ monitor (opcuaItemRecord *prec)
 {
     epicsUInt16 events = recGblResetAlarms(prec);
 
-    if (events)
-        db_post_events(prec, prec->val, events);
+    if (prec->ostatcode != prec->statcode) {
+        db_post_events(prec, &prec->statcode, events|DBE_VALUE|DBE_LOG);
+        db_post_events(prec, &prec->stattext, events|DBE_VALUE|DBE_LOG);
+        prec->ostatcode = prec->statcode;
+    }
 }
 
 long

@@ -20,6 +20,8 @@
 #include <opcua_builtintypes.h>
 #include <uastructuredefinition.h>
 
+#include <epicsTime.h>
+
 #include "Item.h"
 #include "opcuaItemRecord.h"
 #include "devOpcua.h"
@@ -80,7 +82,10 @@ public:
      * @brief Return OPC UA status code and text.
      * See DevOpcua::Item::getStatus
      */
-    virtual void getStatus(epicsUInt32 *code, char *text = nullptr, const epicsUInt32 len = 0) override;
+    virtual void getStatus(epicsUInt32 *code,
+                           char *text = nullptr,
+                           const epicsUInt32 len = 0,
+                           epicsTimeStamp *ts = nullptr) override;
 
     /**
      * @brief Return registered status.
