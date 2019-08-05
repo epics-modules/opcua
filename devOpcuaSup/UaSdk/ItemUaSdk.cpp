@@ -36,7 +36,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
-    , lastStatus(OpcUa_BadServerNotConnected)
+    , lastStatus(OpcUa_BadServerNotConnected)    
 {
     rebuildNodeId();
 
@@ -144,8 +144,13 @@ void
 ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
-    tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
-    tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+    if (OpcUa_IsNotBad(value.StatusCode)) {
+        tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
+        tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+    } else {
+        tsSource = tsClient;
+        tsServer = tsClient;
+    }
     setReason(reason);
     if (getLastStatus() == OpcUa_BadServerNotConnected && value.StatusCode == OpcUa_BadNodeIdUnknown)
         errlogPrintf("OPC UA session %s: item ns=%d;%s%.*d%s : BadNodeIdUnknown\n",
@@ -170,8 +175,11 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
     setReason(reason);
-    if (reason == ProcessReason::connectionLoss)
+    if (reason == ProcessReason::connectionLoss) {
+        tsSource = tsClient;
+        tsServer = tsClient;
         setLastStatus(OpcUa_BadServerNotConnected);
+    }
 
     if (auto pd = rootElement.lock()) {
         pd->setIncomingEvent(reason);
@@ -182,12 +190,19 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 }
 
 void
-ItemUaSdk::getStatus(epicsUInt32 *code, epicsOldString *text)
+ItemUaSdk::getStatus(epicsUInt32 *code, epicsOldString *text, epicsTimeStamp *ts)
 {
     *code = lastStatus.code();
     if (text) {
         strncpy(*text, lastStatus.toString().toUtf8(), MAX_STRING_SIZE);
         *text[MAX_STRING_SIZE-1] = '\0';
+    }
+
+    if (ts && itemRecordConnector) {
+        if (itemRecordConnector->plinkinfo->useServerTimestamp)
+            *ts = tsServer;
+        else
+            *ts = tsSource;
     }
 }
 

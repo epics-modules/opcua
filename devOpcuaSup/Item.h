@@ -16,6 +16,7 @@
 namespace DevOpcua {
 
 #include <epicsTypes.h>
+#include <epicsTime.h>
 
 struct linkInfo;
 class RecordConnector;
@@ -46,7 +47,9 @@ public:
      * @param[out] statuscode  OPC UA status code
      * @param[out] statustext  OPC UA status text
      */
-    virtual void getStatus(epicsUInt32 *code, epicsOldString *text = nullptr) = 0;
+    virtual void getStatus(epicsUInt32 *code,
+                           epicsOldString *text = nullptr,
+                           epicsTimeStamp *ts = nullptr) = 0;
 
     /**
      * @brief Print configuration and status on stdout.
