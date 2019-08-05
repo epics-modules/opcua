@@ -44,25 +44,4 @@ recordtype(opcuaItem) {
         prompt("OPC UA status string")
         size(40)
     }
-    field(SIML,DBF_INLINK) {
-        prompt("Simulation Mode Link")
-        promptgroup("90 - Simulate")
-        interest(2)
-    }
-    field(SIMM,DBF_MENU) {
-        prompt("Simulation Mode")
-        interest(2)
-        menu(menuYesNo)
-    }
-    field(SIMS,DBF_MENU) {
-        prompt("Simulation Mode Severity")
-        promptgroup("90 - Simulate")
-        interest(2)
-        menu(menuAlarmSevr)
-    }
-    field(SIOL,DBF_INLINK) {
-        prompt("Sim Input Specifctn")
-        promptgroup("90 - Simulate")
-        interest(2)
-    }
 }

@@ -58,7 +58,6 @@ long
 init_record (dbCommon *pdbc, int pass)
 {
     opcuaItemRecord *prec = reinterpret_cast<opcuaItemRecord *>(pdbc);
-    dbLoadLink(&prec->siml, DBF_USHORT, &prec->simm);
 
     if (pass == 0) {
         try {
@@ -139,28 +138,7 @@ readwrite (opcuaItemRecord *prec)
     auto pdset = reinterpret_cast<struct dset6<opcuaItemRecord> *>(prec->dset);
     long status = 0;
 
-    if (prec->pact)
-        goto read;
-
-    status = dbGetLink(&prec->siml, DBR_USHORT, &prec->simm, nullptr, nullptr);
-    if (status)
-        return status;
-
-    switch (prec->simm) {
-    case menuYesNoNO:
-read:
-        status = pdset->readwrite(prec);
-        break;
-
-    case menuYesNoYES:
-        recGblSetSevr(prec, SIMM_ALARM, prec->sims);
-//        status = dbGetLinkLS(&prec->siol, prec->val, prec->sizv, &prec->len);
-        break;
-
-    default:
-        recGblSetSevr(prec, SOFT_ALARM, INVALID_ALARM);
-        status = -1;
-    }
+    status = pdset->readwrite(prec);
 
     if (!status)
         prec->udf = FALSE;
