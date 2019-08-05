@@ -51,7 +51,7 @@ namespace {
 
 using namespace DevOpcua;
 
-long readValue(opcuaItemRecord *prec);
+long readwrite(opcuaItemRecord *prec);
 void monitor(opcuaItemRecord *);
 
 long
@@ -97,7 +97,7 @@ process (dbCommon *pdbc)
         return S_dev_missingSup;
     }
 
-    status = readValue(prec); /* read the new value */
+    status = readwrite(prec);
     if (!pact && prec->pact)
         return 0;
 
@@ -134,7 +134,7 @@ monitor (opcuaItemRecord *prec)
 }
 
 long
-readValue (opcuaItemRecord *prec)
+readwrite (opcuaItemRecord *prec)
 {
     auto pdset = reinterpret_cast<struct dset6<opcuaItemRecord> *>(prec->dset);
     long status = 0;
