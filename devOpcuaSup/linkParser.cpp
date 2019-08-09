@@ -162,17 +162,17 @@ parseLink (dbCommon *prec, DBEntry &ent)
     sep = linkstr.find_first_not_of("; \t", send);
 
     // everything else is "key=value ..." options
-    while (sep < linkstr.size()) {
+    while (sep != std::string::npos && sep < linkstr.size()) {
         send = linkstr.find_first_of("; \t", sep);
         size_t seq = linkstr.find_first_of('=', sep);
 
         // allow escaping separators
-        while (linkstr[send-1] == '\\') {
+        while (send != std::string::npos && linkstr[send-1] == '\\') {
                 linkstr.erase(send-1, 1);
                 send = linkstr.find_first_of("; \t", send);
         }
 
-        if (seq >= send)
+        if (seq == std::string::npos || (send != std::string::npos && seq >= send))
             throw std::runtime_error(SB() << "expected '=' in '" << linkstr.substr(0, send) << "'");
 
         std::string optname(linkstr.substr(sep, seq-sep)),
