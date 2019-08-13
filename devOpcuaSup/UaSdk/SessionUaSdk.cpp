@@ -303,27 +303,36 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
     itemsToRead->push_back(&item);
 
     Guard G(opslock);
-    status = puasession->beginRead(serviceSettings,                // Use default settings
-                                   0,                              // Max age
-                                   OpcUa_TimestampsToReturn_Both,  // Time stamps to return
-                                   nodesToRead,                    // Array of nodes to read
-                                   id);                            // Transaction id
+    if(puasession->isConnected())
+    {
+        status = puasession->beginRead(serviceSettings,                // Use default settings
+                                       0,                              // Max age
+                                       OpcUa_TimestampsToReturn_Both,  // Time stamps to return
+                                       nodesToRead,                    // Array of nodes to read
+                                       id);                            // Transaction id
 
-    if (status.isBad()) {
-        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
-                     name.c_str(), status.toString().toUtf8());
-        item.setReadStatus(status.code());
-        item.setIncomingEvent(ProcessReason::readFailure);
+        if (status.isBad()) {
+            errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
+                         name.c_str(), status.toString().toUtf8());
+            item.setReadStatus(status.code());
+            item.setIncomingEvent(ProcessReason::readFailure);
 
-    } else {
-        if (debug)
-            std::cout << "Session " << name.c_str()
-                      << ": (requestRead) beginRead service ok"
-                      << " (transaction id " << id
-                      << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
-        outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
-                              (id, std::move(itemsToRead)));
+        } else {
+            if (debug)
+                std::cout << "Session " << name.c_str()
+                          << ": (requestRead) beginRead service ok"
+                          << " (transaction id " << id
+                          << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
+            outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
+                                  (id, std::move(itemsToRead)));
+        }
     }
+    else
+    {
+        item.setReadStatus(OpcUa_BadServerNotConnected);
+        item.setIncomingEvent(ProcessReason::none);
+    }
+
 }
 
 //TODO: Push to queue for worker thread (instead of doing a single item request)
