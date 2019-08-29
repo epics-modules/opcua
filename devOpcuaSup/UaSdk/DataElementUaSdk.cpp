@@ -704,7 +704,7 @@ DataElementUaSdk::writeWasOk () const
 
 template<typename FROM, typename TO>
 void checkRange (const FROM &value) {
-    if (value < std::numeric_limits<TO>::min() || value > std::numeric_limits<TO>::max())
+    if (value < std::numeric_limits<TO>::lowest() || value > std::numeric_limits<TO>::max())
         throw std::runtime_error(SB() << "outgoing data out-of-bounds");
 }
 
