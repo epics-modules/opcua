@@ -233,6 +233,8 @@ opcua_write_int32_val (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -339,6 +341,8 @@ opcua_write_int64_val (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -445,6 +449,8 @@ opcua_write_uint32_rval (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -590,6 +596,8 @@ opcua_write_analog (REC *prec)
             }
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -679,6 +687,8 @@ opcua_write_enum (REC *prec)
             }
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -743,6 +753,8 @@ opcua_write_bo (REC *prec)
             }
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -819,6 +831,8 @@ opcua_write_mbbod (REC *prec)
             }
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -925,6 +939,8 @@ opcua_write_string_val (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -1033,6 +1049,8 @@ opcua_write_lstring_val (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
@@ -1249,6 +1267,8 @@ opcua_write_array (REC *prec)
             prec->udf = false;
             pvt->checkReadStatus();
         } else if (pvt->reason == ProcessReason::writeComplete) {
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
             pvt->checkWriteStatus();
         } else if (pvt->reason == ProcessReason::connectionLoss) {
             (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
