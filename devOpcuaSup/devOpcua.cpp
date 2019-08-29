@@ -196,6 +196,15 @@ opcua_read_int32_val (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -231,6 +240,24 @@ opcua_write_int32_val (REC *prec)
                 epicsTimeGetCurrent(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
                              prec->name);
             }
             ret = 1;
@@ -275,6 +302,15 @@ opcua_read_int64_val (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -310,6 +346,24 @@ opcua_write_int64_val (REC *prec)
                 epicsTimeGetCurrent(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
                              prec->name);
             }
             ret = 1;
@@ -355,6 +409,15 @@ opcua_read_uint32_rval (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -389,6 +452,24 @@ opcua_write_uint32_rval (REC *prec)
                 epicsTimeGetCurrent(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
                              prec->name);
             }
             ret = 1;
@@ -451,6 +532,15 @@ opcua_read_analog (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -507,6 +597,24 @@ opcua_write_analog (REC *prec)
                 epicsTimeGetCurrent(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
                              prec->name);
             }
             ret = 1;
@@ -581,6 +689,24 @@ opcua_write_enum (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
@@ -624,6 +750,24 @@ opcua_write_bo (REC *prec)
                 epicsTimeGetCurrent(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
                              prec->name);
             }
             ret = 1;
@@ -685,6 +829,24 @@ opcua_write_mbbod (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
@@ -727,6 +889,15 @@ opcua_read_string_val (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -761,6 +932,24 @@ opcua_write_string_val (REC *prec)
                 epicsTimeGetCurrent(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
                              prec->name);
             }
             ret = 1;
@@ -807,6 +996,15 @@ opcua_read_lstring_val (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -842,6 +1040,24 @@ opcua_write_lstring_val (REC *prec)
                 epicsTimeGetCurrent(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
                              prec->name);
             }
             ret = 1;
@@ -942,6 +1158,15 @@ opcua_read_array (REC *prec)
                              prec->name);
             }
             ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
         } else {
             prec->pact = true;
             pvt->requestOpcuaRead();
@@ -1031,6 +1256,24 @@ opcua_write_array (REC *prec)
                 epicsTimeGetCurrent(&prec->time);
             if (prec->tpro > 1) {
                 errlogPrintf("%s: connection loss - set to COMM/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::readFailure) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: read failure - set to READ/INVALID\n",
+                             prec->name);
+            }
+            ret = 1;
+        } else if (pvt->reason == ProcessReason::writeFailure) {
+            (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            if (prec->tse == epicsTimeEventDeviceTime)
+                epicsTimeGetCurrent(&prec->time);
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write failure - set to WRITE/INVALID\n",
                              prec->name);
             }
             ret = 1;
