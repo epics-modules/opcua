@@ -148,7 +148,8 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
 {
     if (debug() > 5)
         std::cout << "Registering record " << getRecordName()
-                  << " for processing" << std::endl;
+                  << " for processing (" << processReasonString(reason) << ")"
+                  << std::endl;
     if (isIoIntrScanned &&
             (reason == ProcessReason::incomingData || reason == ProcessReason::connectionLoss)) {
         this->reason = reason;
