@@ -89,7 +89,7 @@ variantTypeString (const OpcUa_BuiltInType type)
 // Template for range check when writing
 template<typename TO, typename FROM>
 inline bool isWithinRange (const FROM &value) {
-    return !(value < std::numeric_limits<TO>::min() || value > std::numeric_limits<TO>::max());
+    return !(value < std::numeric_limits<TO>::lowest() || value > std::numeric_limits<TO>::max());
 }
 
 // Specializations for signed/unsigned to avoid compiler warnings
