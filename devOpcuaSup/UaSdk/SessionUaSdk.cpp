@@ -403,26 +403,28 @@ SessionUaSdk::registerNodes ()
     nodesToRegister.resize(i);
     registeredItemsNo = i;
 
-    status = puasession->registerNodes(serviceSettings,     // Use default settings
-                                       nodesToRegister,     // Array of nodeIds to register
-                                       registeredNodes);    // Returns an array of registered nodeIds
+    if (registeredItemsNo) {
+        status = puasession->registerNodes(serviceSettings,     // Use default settings
+                                           nodesToRegister,     // Array of nodeIds to register
+                                           registeredNodes);    // Returns an array of registered nodeIds
 
-    if (status.isBad()) {
-        errlogPrintf("OPC UA session %s: (registerNodes) registerNodes service failed with status %s\n",
-                     name.c_str(), status.toString().toUtf8());
-    } else {
-        if (debug)
-            std::cout << "OPC UA session " << name.c_str()
-                      << ": (registerNodes) registerNodes service ok"
-                      << " (" << registeredNodes.length() << " nodes registered)" << std::endl;
-        i = 0;
-        for (auto &it : items) {
-            if (it->linkinfo.registerNode) {
-                it->setRegisteredNodeId(registeredNodes[i]);
-                i++;
+        if (status.isBad()) {
+            errlogPrintf("OPC UA session %s: (registerNodes) registerNodes service failed with status %s\n",
+                         name.c_str(), status.toString().toUtf8());
+        } else {
+            if (debug)
+                std::cout << "OPC UA session " << name.c_str()
+                          << ": (registerNodes) registerNodes service ok"
+                          << " (" << registeredNodes.length() << " nodes registered)" << std::endl;
+            i = 0;
+            for (auto &it : items) {
+                if (it->linkinfo.registerNode) {
+                    it->setRegisteredNodeId(registeredNodes[i]);
+                    i++;
+                }
             }
+            registeredItemsNo = i;
         }
-        registeredItemsNo = i;
     }
 }
 
