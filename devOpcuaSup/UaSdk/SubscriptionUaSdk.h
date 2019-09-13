@@ -170,6 +170,7 @@ private:
     SessionUaSdk *psessionuasdk;                /**< pointer to session */
     std::vector<ItemUaSdk *> items;             /**< items on this subscription */
     SubscriptionSettings subscriptionSettings;  /**< subscription specific settings */
+    SubscriptionSettings requestedSettings;     /**< requested subscription specific settings */
     bool enable;                                /**< subscription enable flag */
 };
 

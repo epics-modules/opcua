@@ -43,9 +43,9 @@ SubscriptionUaSdk::SubscriptionUaSdk (const std::string &name, SessionUaSdk *ses
 {
     // keep the default timeout
     double deftimeout = subscriptionSettings.publishingInterval * subscriptionSettings.lifetimeCount;
-    subscriptionSettings.publishingInterval = publishingInterval;
-    subscriptionSettings.lifetimeCount = static_cast<OpcUa_UInt32>(deftimeout / publishingInterval);
-    subscriptionSettings.priority = priority;
+    subscriptionSettings.publishingInterval = requestedSettings.publishingInterval = publishingInterval;
+    subscriptionSettings.lifetimeCount = requestedSettings.lifetimeCount = static_cast<OpcUa_UInt32>(deftimeout / publishingInterval);
+    subscriptionSettings.priority = requestedSettings.priority = priority;
 
     subscriptions[name] = this;
     psessionuasdk->subscriptions[name] = this;
@@ -61,13 +61,13 @@ SubscriptionUaSdk::show (int level) const
         std::cout << puasubscription->publishingInterval();
     else
         std::cout << "?";
-    std::cout << "(" << subscriptionSettings.publishingInterval << ")"
+    std::cout << "(" << requestedSettings.publishingInterval << ")"
               << " prio=";
     if (puasubscription)
         std::cout << static_cast<int>(puasubscription->priority());
     else
         std::cout << "?";
-    std::cout << "(" << static_cast<int>(subscriptionSettings.priority) << ")"
+    std::cout << "(" << static_cast<int>(requestedSettings.priority) << ")"
               << " enable=" << (puasubscription ? (puasubscription->publishingEnabled() ? "y" : "n") : "?")
               << "(" << (enable ? "Y" : "N") << ")"
               << " debug=" << debug
