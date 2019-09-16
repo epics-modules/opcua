@@ -19,6 +19,12 @@ include $(TOP)/configure/CONFIG
 OPCUA = $(TOP)/devOpcuaSup
 SRC_DIRS += $(OPCUA)
 
+ifeq ($(shell git rev-parse --is-inside-work-tree),true)
+  EPICS_OPCUA_GIT_COMMIT := $(shell git describe --long --dirty)
+else
+  EPICS_OPCUA_GIT_COMMIT := -
+endif
+
 #==================================================
 # build a support library
 
@@ -63,6 +69,7 @@ EXPANDVARS += EPICS_OPCUA_MAJOR_VERSION
 EXPANDVARS += EPICS_OPCUA_MINOR_VERSION
 EXPANDVARS += EPICS_OPCUA_MAINTENANCE_VERSION
 EXPANDVARS += EPICS_OPCUA_DEVELOPMENT_FLAG
+EXPANDVARS += EPICS_OPCUA_GIT_COMMIT
 
 EXPANDFLAGS += $(foreach var,$(EXPANDVARS),-D$(var)="$(strip $($(var)))")
 
@@ -82,5 +89,8 @@ endif
 
 # Can't use EXPAND as generated headers must appear
 # in O.Common, but EXPAND emits rules for O.$(T_A)
-../O.Common/devOpcuaVersionNum.h: ../devOpcuaVersionNum.h@
+../O.Common/devOpcuaVersionNum.h: ../devOpcuaVersionNum.h@ redo-version
+	@$(RM) $@
 	$(EXPAND_TOOL) $(EXPANDFLAGS) $($@_EXPANDFLAGS) $< $@
+
+.PHONY: redo-version
