@@ -39,7 +39,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
 {
     rebuildNodeId();
 
-    if (linkinfo.subscription != "") {
+    if (linkinfo.subscription != "" && linkinfo.monitor) {
         subscription = &SubscriptionUaSdk::findSubscription(linkinfo.subscription);
         subscription->addItemUaSdk(this);
         session = &subscription->getSessionUaSdk();
