@@ -27,6 +27,8 @@ UASDK_LIBS = $(notdir $(wildcard $(foreach module, $(UASDK_MODULES), \
     $(UASDK)/include/$(module) $(UASDK)/include/$(module)cpp)))
 
 USR_INCLUDES += $(foreach lib, $(UASDK_LIBS), -I$(UASDK)/include/$(lib))
+# SDK libraries are not built with correct RUNPATH - rely on executable
+USR_LDFLAGS += -Wl,--disable-new-dtags
 
 ifeq ($(UASDK_DEPLOY_MODE),SYSTEM)
 USR_SYS_LIBS += $(UASDK_LIBS)
