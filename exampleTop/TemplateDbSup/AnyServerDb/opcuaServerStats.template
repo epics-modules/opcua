@@ -8,9 +8,10 @@
 # SUBS  subscription name
 
 # dynamic information (read on subscription)
-record(stringin, "$(P)$(R)CurrentTime") {
+record(stringin, "$(P)$(R)ServerCurrentTime") {
   field(DTYP, "OPCUA")
   field(INP, "@$(SUBS) i=2258")
+  field(SCAN, "I/O Intr")
 }
 record(mbbi, "$(P)$(R)ServerState") {
   field(DTYP, "OPCUA")
@@ -23,26 +24,31 @@ record(mbbi, "$(P)$(R)ServerState") {
   field(FVST, "Test")
   field(SXST, "CommunicationFault")
   field(SVST, "Unknown")
+  field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)$(R)CurrentSessionCount") {
   field(DTYP, "OPCUA")
   field(INP, "@$(SUBS) i=2277")
+  field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)$(R)CurrentSubscriptionCount") {
   field(DTYP, "OPCUA")
   field(INP, "@$(SUBS) i=2285")
+  field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)$(R)CumulatedSessionCount") {
   field(DTYP, "OPCUA")
   field(INP, "@$(SUBS) i=2278")
+  field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)$(R)CumulatedSubscriptionCount") {
   field(DTYP, "OPCUA")
   field(INP, "@$(SUBS) i=2286")
+  field(SCAN, "I/O Intr")
 }
 
 # static information (always read when connecting)
-record(stringin, "$(P)$(R)StartTime") {
+record(stringin, "$(P)$(R)ServerStartTime") {
   field(DTYP, "OPCUA")
-  field(INP, "@$(SESS) i=2257")
+  field(INP, "@$(SUBS) i=2257")
 }

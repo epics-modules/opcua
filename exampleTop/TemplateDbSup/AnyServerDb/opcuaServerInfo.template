@@ -4,18 +4,18 @@
 # Macros:
 # P     device prefix
 # R     device suffix
-# SESS  session name
+# SUBS  subscription name
 
 # static information (always read when connecting)
 record(stringin, "$(P)$(R)ManufacturerName") {
   field(DTYP, "OPCUA")
-  field(INP, "@$(SESS) i=2263")
+  field(INP, "@$(SUBS) i=2263")
 }
 record(stringin, "$(P)$(R)ProductName") {
   field(DTYP, "OPCUA")
-  field(INP, "@$(SESS) i=2261")
+  field(INP, "@$(SUBS) i=2261")
 }
 record(stringin, "$(P)$(R)SoftwareVersion") {
   field(DTYP, "OPCUA")
-  field(INP, "@$(SESS) i=2264")
+  field(INP, "@$(SUBS) i=2264")
 }
