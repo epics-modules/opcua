@@ -5,6 +5,9 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
+
+ifdef GTEST_HOME
+
 USR_INCLUDES += -I$(TOP)/devOpcuaSup
 
 #==================================================
@@ -22,6 +25,7 @@ TESTSCRIPTS_HOST += $(TESTS:%=%.t)
 
 USR_LIBS += Com
 
+endif
 #===========================
 
 include $(TOP)/configure/RULES

@@ -8,6 +8,8 @@ include $(TOP)/configure/CONFIG
 #================================================
 # Build GoogleTest libraries gtest and gtest_main
 
+ifdef GTEST_HOME
+
 GTEST = $(TOP)/googletest/googletest
 
 LIBRARY_HOST += gtest
@@ -21,6 +23,7 @@ gtest_main_SRCS += gtest_main.cc
 
 SHARED_LIBRARIES = NO
 
+endif
 #===========================
 
 include $(TOP)/configure/RULES

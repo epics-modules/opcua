@@ -20,7 +20,6 @@ gtest_DIR = $(GTEST_HOME)/googletest
 endif
 
 CFG += RULES_GTEST
-CFG += CONFIG_GTEST
 
 endif
 
