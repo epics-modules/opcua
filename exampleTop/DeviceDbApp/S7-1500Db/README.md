@@ -43,7 +43,7 @@ inside EPICS database field values.
 
 When developing, using a professional GUI client for OPC UA is strongly
 suggested.
-The free UaExpert tool from Unified Automation is a good choice.
+The free [UaExpert][uaexpert] tool from Unified Automation is a good choice.
 
 ## S7-1500 Firmware versions
 
@@ -56,7 +56,15 @@ Regularly check the [detailed release notes][release_notes_1500] to see what
 things were fixed.
 
 Known issues:
+
 *   Firmware V2.6.0 is needed for subscriptions on registered items to work.
+
+*   All known firmware versions have a limit of 1000 items per low-level
+    OPC UA service call. To enforce this limit in the client IOC, call
+    ```
+    opcuaSetOption <session_name> batch-nodes 1000
+    ```
+    for every S7-1500 session that you want to use for more than 1000 items.
 
 ## OPC UA Device Support Documentation
 
@@ -82,4 +90,5 @@ in file LICENSE that is included with its distribution.
 <!-- Links -->
 [requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
 [cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
+[uaexpert]: https://www.unified-automation.com/products/development-tools/uaexpert.html
 [release_notes_1500]: https://support.industry.siemens.com/cs/document/109478459/firmware-update-s7-1500-cpus-incl-displays-and-et200-cpus-(et200sp-et200pro)?dti=0&lc=en-WW
