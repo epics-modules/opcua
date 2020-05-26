@@ -108,6 +108,7 @@ int ItemUaSdk::debug() const
         return 0;
 }
 
+//FIXME: in case of itemRecord there might be no rootElement
 const UaVariant &
 ItemUaSdk::getOutgoingData() const
 {
@@ -143,11 +144,7 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 
     readStatus = value.StatusCode;
 
-    if (auto pd = rootElement.lock()) {
-        return pd->setIncomingData(value.Value, reason);
-    } else {
-        throw std::runtime_error(SB() << "stale pointer to root data element");
-    }
+    if (auto pd = rootElement.lock()) pd->setIncomingData(value.Value, reason);
 }
 
 void

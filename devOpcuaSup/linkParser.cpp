@@ -155,7 +155,7 @@ parseLink (dbCommon *prec, DBEntry &ent)
         sep = linkstr.find_first_not_of("; \t", send);
         dbFinishEntry(&entry);
     } else {
-        throw std::runtime_error(SB() << "unknown session or subscription '" << name << "'");
+        throw std::runtime_error(SB() << "unknown subscription/session/opcuaItemRecord '" << name << "'");
     }
 
     sep = linkstr.find_first_not_of("; \t", send);
@@ -270,8 +270,10 @@ parseLink (dbCommon *prec, DBEntry &ent)
     }
 
     // consistency checks
-    if (pinfo->monitor && !pinfo->subscription.length())
-        throw std::runtime_error(SB() << "monitor requires link to a subscription");
+    if (pinfo->monitor && pinfo->linkedToItem && !pinfo->subscription.length())
+        throw std::runtime_error(SB() << "monitor=y requires link to a subscription");
+    if (pinfo->monitor && !pinfo->linkedToItem && !pinfo->item->linkinfo.monitor)
+        throw std::runtime_error(SB() << "monitor=y requires link to opcuaItemRecord with monitor=y");
 
     return pinfo;
 }

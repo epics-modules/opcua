@@ -103,7 +103,9 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
     if (isLeaf()) {
         std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")="
                   << pconnector->getRecordName()
-                  << " type=" << variantTypeString(incomingType) << "\n";
+                  << " type=" << variantTypeString(incomingType)
+                  << " timestamp=" << (pconnector->plinkinfo->useServerTimestamp ? "server" : "source")
+                  << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
     } else {
         std::cout << "node=" << name << " children=" << elements.size()
                   << " mapped=" << (mapped ? "y" : "n") << "\n";
