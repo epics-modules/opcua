@@ -25,6 +25,9 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
 *   [EPICS Base](https://epics-controls.org/resources-and-support/base/)
     3.15.5 (and up; EPICS 7 is supported).
 
+*   The [gtest module](https://github.com/epics-modules/gtest) to compile and
+    run the Google Test based tests.
+
 ### Using the Unified Automation Client SDK
 
 *   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk] 1.5
@@ -43,7 +46,8 @@ This is a standard EPICS module.
 
 Inside the `configure` subdirectory or one level above the TOP location
 (TOP is where this README file resides), create a file `RELEASE.local`
-that sets `EPICS_BASE` to the absolute path of your EPICS installation.
+that sets `EPICS_BASE` and `GTEST` to the absolute paths inside your EPICS
+installation.
 
 The configuration necessary when building against a specific client library
 is documented in the `README.md` file inside the respective subdirectory of
