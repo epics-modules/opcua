@@ -295,7 +295,7 @@ opcua_read_uint32_rval (REC *prec)
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> RVAL=%u (%#010x)\n",
-                             prec->name, ret, prec->val,
+                             prec->name, ret, prec->rval,
                              prec->rval);
         } else {
             prec->pact = true;
