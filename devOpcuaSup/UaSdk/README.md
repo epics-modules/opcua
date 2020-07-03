@@ -71,6 +71,10 @@ Note: On Windows, paths must include "short names" where needed, e.g.
 UASDK = C:/PROGRA~2/UnifiedAutomation/UaSdkCppBundleEval
 ```
 
+The SDK related configuration only has to be done in this module,
+which creates a `CONFIG_OPCUA` file that is automatically included by all
+downstream modules, so that the configuration is always consistent.
+
 ## Feedback / Reporting issues
 
 Please use the GitHub project's
