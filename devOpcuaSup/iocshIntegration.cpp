@@ -167,7 +167,7 @@ void opcuaSetOptionCallFunc (const iocshArgBuf *args)
             }
 
             if (args[2].sval == nullptr) {
-                if (strcmp(args[1].sval, "help") == 0) {
+                if (args[1].sval && strcmp(args[1].sval, "help") == 0) {
                     help = true;
                 } else {
                     errlogPrintf("missing argument #3 (value)\n");
@@ -183,8 +183,6 @@ void opcuaSetOptionCallFunc (const iocshArgBuf *args)
                 Session &sess = Session::findSession(args[0].sval);
                 sess.setOption(args[1].sval, args[2].sval);
             }
-        } else {
-            errlogPrintf("ERROR - no soption set\n");
         }
     }
     catch(std::exception& e) {
