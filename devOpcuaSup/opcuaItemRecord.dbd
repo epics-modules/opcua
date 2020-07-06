@@ -1,5 +1,5 @@
 #*************************************************************************
-# Copyright (c) 2018-2019 ITER Organization.
+# Copyright (c) 2018-2020 ITER Organization.
 # This module is distributed subject to a Software License Agreement found
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
@@ -35,6 +35,18 @@ recordtype(opcuaItem) {
         promptgroup("30 - Action")
         interest(1)
         menu(menuDefAction)
+    }
+    field(READ,DBF_UCHAR) {
+        prompt("Force Read Processing")
+        pp(TRUE)
+        special(SPC_MOD)
+        interest(3)
+    }
+    field(WRITE,DBF_UCHAR) {
+        prompt("Force Write Processing")
+        pp(TRUE)
+        special(SPC_MOD)
+        interest(3)
     }
     field(STATCODE,DBF_ULONG) {
         prompt("OPC UA status code")

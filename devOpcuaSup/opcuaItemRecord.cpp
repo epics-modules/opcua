@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -86,6 +86,7 @@ process (dbCommon *pdbc)
 {
     auto prec  = reinterpret_cast<opcuaItemRecord *>(pdbc);
     auto pdset = reinterpret_cast<struct dset6<opcuaItemRecord> *>(prec->dset);
+    auto preason = &(reinterpret_cast<RecordConnector *>(prec->dpvt)->reason);
 
     int pact = prec->pact;
     long status = 0;
@@ -97,6 +98,8 @@ process (dbCommon *pdbc)
     }
 
     status = readwrite(prec);
+    *preason = ProcessReason::none;
+
     if (!pact && prec->pact)
         return 0;
 
@@ -114,12 +117,19 @@ process (dbCommon *pdbc)
 long
 special (DBADDR *paddr, int after)
 {
-    opcuaItemRecord *prec = reinterpret_cast<opcuaItemRecord *>(paddr->precord);
-
     if (!after)
         return 0;
 
-    (void) prec;
+    if (paddr->special == SPC_MOD) {
+        int fieldIndex = dbGetFieldIndex(paddr);
+        auto preason = &(reinterpret_cast<RecordConnector *>(paddr->precord->dpvt)->reason);
+        if (fieldIndex == opcuaItemRecordWRITE) {
+            *preason = ProcessReason::writeRequest;
+        } else if (fieldIndex == opcuaItemRecordREAD) {
+            *preason = ProcessReason::readRequest;
+        }
+    }
+
     return 0;
 }
 
