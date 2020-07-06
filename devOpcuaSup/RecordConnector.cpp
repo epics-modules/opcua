@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -122,6 +122,16 @@ void processWriteFailureCallback (CALLBACK *pcallback)
     processCallback(pcallback, ProcessReason::writeFailure);
 }
 
+void processReadRequestCallback (CALLBACK *pcallback)
+{
+    processCallback(pcallback, ProcessReason::readRequest);
+}
+
+void processWriteRequestCallback (CALLBACK *pcallback)
+{
+    processCallback(pcallback, ProcessReason::writeRequest);
+}
+
 RecordConnector::RecordConnector (dbCommon *prec)
     : pitem(nullptr)
     , isIoIntrScanned(false)
@@ -141,6 +151,10 @@ RecordConnector::RecordConnector (dbCommon *prec)
     callbackSetUser(prec, &readFailureCallback);
     callbackSetCallback(DevOpcua::processWriteFailureCallback, &writeFailureCallback);
     callbackSetUser(prec, &writeFailureCallback);
+    callbackSetCallback(DevOpcua::processReadRequestCallback, &readRequestCallback);
+    callbackSetUser(prec, &readRequestCallback);
+    callbackSetCallback(DevOpcua::processWriteRequestCallback, &writeRequestCallback);
+    callbackSetUser(prec, &writeRequestCallback);
 }
 
 void
@@ -163,6 +177,8 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
         case ProcessReason::connectionLoss : callback = &connectionLossCallback; break;
         case ProcessReason::readFailure : callback = &readFailureCallback; break;
         case ProcessReason::writeFailure : callback = &writeFailureCallback; break;
+        case ProcessReason::readRequest : callback = &readRequestCallback; break;
+        case ProcessReason::writeRequest : callback = &writeRequestCallback; break;
         }
         callbackSetPriority(prec->prio, callback);
         callbackRequest(callback);

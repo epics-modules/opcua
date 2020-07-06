@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -921,6 +921,14 @@ opcua_action_item (REC *prec)
         case ProcessReason::connectionLoss:
             (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             ret = 1;
+            break;
+        case ProcessReason::readRequest:
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+            break;
+        case ProcessReason::writeRequest:
+            prec->pact = true;
+            pvt->requestOpcuaWrite();
             break;
         case ProcessReason::none:
             prec->pact = true;

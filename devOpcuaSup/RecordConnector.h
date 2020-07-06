@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -118,6 +118,8 @@ private:
     CALLBACK connectionLossCallback;
     CALLBACK readFailureCallback;
     CALLBACK writeFailureCallback;
+    CALLBACK readRequestCallback;
+    CALLBACK writeRequestCallback;
 };
 
 } // namespace DevOpcua
