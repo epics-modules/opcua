@@ -61,7 +61,7 @@ Known issues:
 
 *   All known firmware versions have a limit of 1000 items per low-level
     OPC UA service call. To enforce this limit in the client IOC, call
-    ```
+    ```sh
     opcuaSetOption <session_name> batch-nodes 1000
     ```
     for every S7-1500 session that you want to use for more than 1000 items.
