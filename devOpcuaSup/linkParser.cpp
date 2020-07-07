@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -43,7 +43,7 @@ getYesNo (const char c)
 }
 
 std::unique_ptr<linkInfo>
-parseLink (dbCommon *prec, DBEntry &ent)
+parseLink (dbCommon *prec, const DBEntry &ent)
 {
     const char *s;
     std::unique_ptr<linkInfo> pinfo (new linkInfo);
