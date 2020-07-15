@@ -89,7 +89,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -98,7 +99,8 @@ public:
                             ProcessReason *nextReason = nullptr,
 
                             epicsUInt32 *statusCode = nullptr,
-                            epicsOldString *statusText = nullptr) = 0;
+                            char *statusText = nullptr,
+                            const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as a scalar epicsInt64.
@@ -113,7 +115,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -121,7 +124,8 @@ public:
                             dbCommon *prec,
                             ProcessReason *nextReason = nullptr,
                             epicsUInt32 *statusCode = nullptr,
-                            epicsOldString *statusText = nullptr) = 0;
+                            char *statusText = nullptr,
+                            const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as a scalar epicsUInt32.
@@ -136,7 +140,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -144,7 +149,8 @@ public:
                             dbCommon *prec,
                             ProcessReason *nextReason = nullptr,
                             epicsUInt32 *statusCode = nullptr,
-                            epicsOldString *statusText = nullptr) = 0;
+                            char *statusText = nullptr,
+                            const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as a scalar epicsFloat64.
@@ -159,7 +165,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -167,7 +174,8 @@ public:
                             dbCommon *prec,
                             ProcessReason *nextReason = nullptr,
                             epicsUInt32 *statusCode = nullptr,
-                            epicsOldString *statusText = nullptr) = 0;
+                            char *statusText = nullptr,
+                            const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as a classic C string (null terminated array of char).
@@ -183,7 +191,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -191,7 +200,8 @@ public:
                             dbCommon *prec,
                             ProcessReason *nextReason = nullptr,
                             epicsUInt32 *statusCode = nullptr,
-                            epicsOldString *statusText = nullptr) = 0;
+                            char *statusText = nullptr,
+                            const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsInt8.
@@ -208,7 +218,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -217,7 +228,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsUInt8.
@@ -234,7 +246,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -243,7 +256,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsInt16.
@@ -260,7 +274,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -269,7 +284,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsUInt16.
@@ -286,7 +302,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -295,7 +312,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsInt32.
@@ -312,7 +330,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -321,7 +340,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsUInt32.
@@ -338,7 +358,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -347,7 +368,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsInt64.
@@ -364,7 +386,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -373,7 +396,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsUInt64.
@@ -390,7 +414,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -399,7 +424,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsFloat32.
@@ -416,7 +442,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -425,7 +452,8 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Read incoming data as array of epicsFloat64.
@@ -442,7 +470,8 @@ public:
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
@@ -451,10 +480,11 @@ public:
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
-     * @brief Read incoming data as array of epicsOldString.
+     * @brief Read incoming data as array of EPICS String type (char[MAX_STRING_SIZE]).
      *
      * Takes the next element off the queue of incoming data, converts it to the
      * target type, sets the record's STAT/SEVR according to the ProcessReason,
@@ -463,21 +493,25 @@ public:
      * the OPC UA status of the item related to this DataElement.
      *
      * @param[out] value  pointer to target array
+     * @param[in] len  length of an EPICS String element
      * @param[in] num  target array size
      * @param[out] numRead  number of elements written
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
      * @param[out] statusCode  set to the OPC UA status code of the update
-     * @param[out] statusText  set to the OPC UA status text of the update
+     * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
+     * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
-    virtual long readArray(epicsOldString *value, const epicsUInt32 num,
+    virtual long readArray(char *value, const epicsUInt32 len,
+                           const epicsUInt32 num,
                            epicsUInt32 *numRead,
                            dbCommon *prec,
                            ProcessReason *nextReason = nullptr,
                            epicsUInt32 *statusCode = nullptr,
-                           epicsOldString *statusText = nullptr) = 0;
+                           char *statusText = nullptr,
+                           const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
 
     /**
      * @brief Write outgoing scalar epicsInt32 data.
@@ -543,11 +577,13 @@ public:
      * @brief Write outgoing classic C string (char[]) data.
      *
      * @param value  pointer to null terminated source string
+     * @param num  source string size
      * @param prec  pointer to EPICS record
      *
      * @return status  0 = ok, 1 = error
      */
     virtual long writeScalar(const char *value,
+                             const epicsUInt32 num,
                              dbCommon *prec) = 0;
 
     /**
@@ -721,19 +757,21 @@ public:
                             dbCommon *prec) = 0;
 
     /**
-     * @brief Write outgoing array of epicsOldString data.
+     * @brief Write outgoing array of EPICS String (char[MAX_STRING_SIZE]) data.
      *
      * Takes the provided data value, converts it to the target OPC UA type,
      * sets the record's STAT/SEVR according to the success of the conversion,
      * and triggers an OPC UA write operation.
      *
      * @param value  pointer to source array
+     * @param len  length of an EPICS String element
      * @param num  source array size
      * @param prec  pointer to EPICS record
      *
      * @return status  0 = ok, 1 = error
      */
-    virtual long writeArray(const epicsOldString *value,
+    virtual long writeArray(const char *value,
+                            const epicsUInt32 len,
                             const epicsUInt32 num,
                             dbCommon *prec) = 0;
 

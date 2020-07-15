@@ -625,7 +625,7 @@ opcua_write_string_val (REC *prec)
                 errlogPrintf("%s: write <- VAL='%s'\n",
                              prec->name, prec->val);
             }
-            ret = pvt->writeScalar(prec->val);
+            ret = pvt->writeScalar(prec->val, MAX_STRING_SIZE);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
@@ -682,7 +682,7 @@ opcua_write_lstring_val (REC *prec)
                 errlogPrintf("%s: write <- VAL='%s'\n",
                              prec->name, prec->val);
             }
-            ret = pvt->writeScalar(prec->val);
+            ret = pvt->writeScalar(prec->val, prec->sizv);
             prec->pact = true;
             pvt->requestOpcuaWrite();
         }
@@ -707,7 +707,7 @@ opcua_read_array (REC *prec)
         if (pvt->reason) {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
-                ret = pvt->readArray(static_cast<epicsOldString *>(prec->bptr), prec->nelm,
+                ret = pvt->readArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nelm,
                                      &prec->nord, &nextReason);
                 break;
             case menuFtypeCHAR:
@@ -787,7 +787,7 @@ opcua_write_array (REC *prec)
         if (pvt->reason) {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
-                ret = pvt->readArray(static_cast<epicsOldString *>(prec->bptr), prec->nelm,
+                ret = pvt->readArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nelm,
                                      &prec->nord, &nextReason);
                 break;
             case menuFtypeCHAR:
@@ -851,7 +851,7 @@ opcua_write_array (REC *prec)
             }
             switch (prec->ftvl) {
             case menuFtypeSTRING:
-                ret = pvt->writeArray(static_cast<epicsOldString *>(prec->bptr), prec->nord);
+                ret = pvt->writeArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nord);
                 break;
             case menuFtypeCHAR:
                 ret = pvt->writeArray(static_cast<epicsInt8 *>(prec->bptr), prec->nord);

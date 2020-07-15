@@ -50,7 +50,7 @@ inline const char *epicsTypeString (const epicsInt64 &) { return "epicsInt64"; }
 inline const char *epicsTypeString (const epicsUInt64 &) { return "epicsUInt64"; }
 inline const char *epicsTypeString (const epicsFloat32 &) { return "epicsFloat32"; }
 inline const char *epicsTypeString (const epicsFloat64 &) { return "epicsFloat64"; }
-inline const char *epicsTypeString (const epicsOldString &) { return "epicsOldString"; }
+inline const char *epicsTypeString (const char* &) { return "epicsString"; }
 
 inline const char *
 variantTypeString (const OpcUa_BuiltInType type)
@@ -233,205 +233,222 @@ public:
      * @brief Read incoming data as a scalar epicsInt32.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readScalar(epicsInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readScalar(epicsInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readScalar(epicsInt32 *value,
                                 dbCommon *prec,
                                 ProcessReason *nextReason = nullptr,
                                 epicsUInt32 *statusCode = nullptr,
-                                epicsOldString *statusText = nullptr) override;
+                                char *statusText = nullptr,
+                                const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as a scalar epicsInt64.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readScalar(epicsInt64*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readScalar(epicsInt64*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readScalar(epicsInt64 *value,
                                 dbCommon *prec,
                                 ProcessReason *nextReason = nullptr,
                                 epicsUInt32 *statusCode = nullptr,
-                                epicsOldString *statusText = nullptr) override;
+                                char *statusText = nullptr,
+                                const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as a scalar epicsUInt32.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readScalar(epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readScalar(epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readScalar(epicsUInt32 *value,
                                 dbCommon *prec,
                                 ProcessReason *nextReason = nullptr,
                                 epicsUInt32 *statusCode = nullptr,
-                                epicsOldString *statusText = nullptr) override;
+                                char *statusText = nullptr,
+                                const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as a scalar epicsFloat64.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readScalar(epicsFloat64*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readScalar(epicsFloat64*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readScalar(epicsFloat64 *value,
                                 dbCommon *prec,
                                 ProcessReason *nextReason = nullptr,
                                 epicsUInt32 *statusCode = nullptr,
-                                epicsOldString *statusText = nullptr) override;
+                                char *statusText = nullptr,
+                                const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as classic C string (char[]).
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readScalar(char*,const size_t,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readScalar(char*,const size_t,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
 
     virtual long int readScalar(char *value, const size_t num,
                                 dbCommon *prec,
                                 ProcessReason *nextReason = nullptr,
                                 epicsUInt32 *statusCode = nullptr,
-                                epicsOldString *statusText = nullptr) override;
+                                char *statusText = nullptr,
+                                const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsInt8.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsInt8*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsInt8*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsInt8 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsUInt8.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsUInt8*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsUInt8*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsUInt8 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsInt16.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsInt16*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsInt16*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsInt16 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsUInt16.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsUInt16*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsUInt16*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsUInt16 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsInt32.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsInt32*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsInt32*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsInt32 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsUInt32.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsUInt32*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsUInt32*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsUInt32 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsInt64.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsInt64*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsInt64*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsInt64 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsUInt64.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsUInt64*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsUInt64*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsUInt64 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsFloat32.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsFloat32*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsFloat32*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsFloat32 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Read incoming data as array of epicsFloat64.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsFloat64*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(epicsFloat64*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
     virtual long int readArray(epicsFloat64 *value, const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
-     * @brief Read incoming data as array of epicsOldString.
+     * @brief Read incoming data as array of EPICS String (char[40]).
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readArray(epicsOldString*,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,epicsOldString*)
+     * DevOpcua::DataElement::readArray(char*,const epicsUInt32,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
-    virtual long int readArray(epicsOldString *value, const epicsUInt32 num,
+    virtual long int readArray(char *value, const epicsUInt32 len,
+                               const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
                                ProcessReason *nextReason = nullptr,
                                epicsUInt32 *statusCode = nullptr,
-                               epicsOldString *statusText = nullptr) override;
+                               char *statusText = nullptr,
+                               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
 
     /**
      * @brief Write outgoing scalar epicsInt32 data.
@@ -473,9 +490,10 @@ public:
      * @brief Write outgoing classic C string (char[]) data.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::writeScalar(const char*,const size_t,dbCommon*)
+     * DevOpcua::DataElement::writeScalar(const char*,const epicsUInt32,dbCommon*)
      */
     virtual long int writeScalar(const char *value,
+                                 const epicsUInt32 num,
                                  dbCommon *prec) override;
 
     /**
@@ -579,12 +597,12 @@ public:
                                 dbCommon *prec) override;
 
     /**
-     * @brief Write outgoing array of epicsOldString data.
+     * @brief Write outgoing array of EPICS String (char[MAX_STRING_SIZE]) data.
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::writeArray(const epicsOldString*,const epicsUInt32,dbCommon*)
+     * DevOpcua::DataElement::writeArray(const char*,const epicsUInt32,dbCommon*)
      */
-    virtual long int writeArray(const epicsOldString *value,
+    virtual long int writeArray(const char *value, const epicsUInt32 len,
                                 const epicsUInt32 num,
                                 dbCommon *prec) override;
 
@@ -676,7 +694,8 @@ private:
                 dbCommon *prec,
                 ProcessReason *nextReason,
                 epicsUInt32 *statusCode,
-                epicsOldString *statusText)
+                char *statusText,
+                const epicsUInt32 statusTextLen)
     {
         long ret = 0;
 
@@ -723,7 +742,10 @@ private:
                 }
             }
             if (statusCode) *statusCode = stat;
-            if (statusText) strncpy(*statusText, UaStatus(stat).toString().toUtf8(), MAX_STRING_SIZE);
+            if (statusText) {
+                strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+                statusText[statusTextLen-1] = '\0';
+            }
             break;
         }
         default:
@@ -737,7 +759,7 @@ private:
 
     // Read array value as templated function on EPICS type and OPC UA type
     // (latter *must match* OPC UA type enum argument)
-    // CAVEAT: changes must also be reflected in the specialization (in DataElementUaSdk.cpp)
+    // CAVEAT: changes must also be reflected in specializations (in DataElementUaSdk.cpp)
     template<typename ET, typename OT>
     long
     readArray (ET *value, const epicsUInt32 num,
@@ -746,7 +768,8 @@ private:
                dbCommon *prec,
                ProcessReason *nextReason,
                epicsUInt32 *statusCode,
-               epicsOldString *statusText)
+               char *statusText,
+               const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1)
     {
         long ret = 0;
         epicsUInt32 elemsWritten = 0;
@@ -802,7 +825,10 @@ private:
                 }
             }
             if (statusCode) *statusCode = stat;
-            if (statusText) strncpy(*statusText, UaStatus(stat).toString().toUtf8(), MAX_STRING_SIZE);
+            if (statusText) {
+                strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+                statusText[statusTextLen-1] = '\0';
+            }
             break;
         }
         default:
@@ -814,6 +840,18 @@ private:
         *numRead = elemsWritten;
         return ret;
     }
+
+    // Read array value for EPICS String / OpcUa_String
+    long
+    readArray (char **value, const epicsUInt32 len,
+               const epicsUInt32 num,
+               epicsUInt32 *numRead,
+               OpcUa_BuiltInType expectedType,
+               dbCommon *prec,
+               ProcessReason *nextReason,
+               epicsUInt32 *statusCode,
+               char *statusText,
+               const epicsUInt32 statusTextLen);
 
     // Write scalar value as templated function on EPICS type
     template<typename ET>
@@ -922,6 +960,13 @@ private:
         dbgWriteScalar();
         return ret;
     }
+
+    // Write array value for EPICS String / OpcUa_String
+    long
+    writeArray (const char **value, const epicsUInt32 len,
+                const epicsUInt32 num,
+                OpcUa_BuiltInType targetType,
+                dbCommon *prec);
 
     // Write array value as templated function on EPICS type, OPC UA container and simple (element) types
     // (latter *must match* OPC UA type enum argument)

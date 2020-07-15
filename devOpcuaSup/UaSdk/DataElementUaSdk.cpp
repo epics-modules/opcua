@@ -322,9 +322,10 @@ DataElementUaSdk::readScalar (epicsInt32 *value,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
-                              epicsOldString *statusText)
+                              char *statusText,
+                              const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsInt32, OpcUa_Int32>(value, prec, nextReason, statusCode, statusText);
+    return readScalar<epicsInt32, OpcUa_Int32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -332,9 +333,10 @@ DataElementUaSdk::readScalar (epicsInt64 *value,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
-                              epicsOldString *statusText)
+                              char *statusText,
+                              const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsInt64, OpcUa_Int64>(value, prec, nextReason, statusCode, statusText);
+    return readScalar<epicsInt64, OpcUa_Int64>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -342,9 +344,10 @@ DataElementUaSdk::readScalar (epicsUInt32 *value,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
-                              epicsOldString *statusText)
+                              char *statusText,
+                              const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsUInt32, OpcUa_UInt32>(value, prec, nextReason, statusCode, statusText);
+    return readScalar<epicsUInt32, OpcUa_UInt32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -352,9 +355,10 @@ DataElementUaSdk::readScalar (epicsFloat64 *value,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
-                              epicsOldString *statusText)
+                              char *statusText,
+                              const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsFloat64, OpcUa_Double>(value, prec, nextReason, statusCode, statusText);
+    return readScalar<epicsFloat64, OpcUa_Double>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 // CString type needs specialization
@@ -363,7 +367,8 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
-                              epicsOldString *statusText)
+                              char *statusText,
+                              const epicsUInt32 statusTextLen)
 {
     long ret = 0;
 
@@ -405,7 +410,10 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
             }
         }
         if (statusCode) *statusCode = stat;
-        if (statusText) strncpy(*statusText, UaStatus(stat).toString().toUtf8(), MAX_STRING_SIZE);
+        if (statusText) {
+            strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+            statusText[statusTextLen-1] = '\0';
+        }
         break;
     }
     default:
@@ -444,17 +452,17 @@ DataElementUaSdk::dbgReadArray (const UpdateUaSdk *upd,
     }
 }
 
-// Specialization for epicsOldString / OpcUa_String
-// CAVEAT: changes in the template (in DataElementUaSdk.h) must be reflected here
-template<>
-long
-DataElementUaSdk::readArray<epicsOldString, UaStringArray> (epicsOldString *value, const epicsUInt32 num,
-                                                            epicsUInt32 *numRead,
-                                                            OpcUa_BuiltInType expectedType,
-                                                            dbCommon *prec,
-                                                            ProcessReason *nextReason,
-                                                            epicsUInt32 *statusCode,
-                                                            epicsOldString *statusText)
+// Read array for EPICS String / OpcUa_String
+long int
+DataElementUaSdk::readArray (char **value, const epicsUInt32 len,
+                             const epicsUInt32 num,
+                             epicsUInt32 *numRead,
+                             OpcUa_BuiltInType expectedType,
+                             dbCommon *prec,
+                             ProcessReason *nextReason,
+                             epicsUInt32 *statusCode,
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
     long ret = 0;
     epicsUInt32 elemsWritten = 0;
@@ -467,7 +475,7 @@ DataElementUaSdk::readArray<epicsOldString, UaStringArray> (epicsOldString *valu
 
     ProcessReason nReason;
     std::shared_ptr<UpdateUaSdk> upd = incomingQueue.popUpdate(&nReason);
-    dbgReadArray(upd.get(), num, epicsTypeString(*value));
+    dbgReadArray(upd.get(), num, epicsTypeString(**value));
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -495,7 +503,7 @@ DataElementUaSdk::readArray<epicsOldString, UaStringArray> (epicsOldString *valu
                 ret = 1;
             } else if (data.type() != expectedType) {
                 errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                             prec->name, variantTypeString(data.type()), epicsTypeString(*value));
+                             prec->name, variantTypeString(data.type()), epicsTypeString(**value));
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                 ret = 1;
             } else {
@@ -505,13 +513,18 @@ DataElementUaSdk::readArray<epicsOldString, UaStringArray> (epicsOldString *valu
                 UaStringArray arr;
                 UaVariant_to(upd->getData(), arr);
                 elemsWritten = num < arr.length() ? num : arr.length();
-                for (epicsUInt32 i = 0; i < elemsWritten; i++)
-                    strncpy(value[i], UaString(arr[i]).toUtf8(), MAX_STRING_SIZE);
+                for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                    strncpy(value[i], UaString(arr[i]).toUtf8(), len);
+                    value[i][len-1] = '\0';
+                }
                 prec->udf = false;
             }
         }
         if (statusCode) *statusCode = stat;
-        if (statusText) strncpy(*statusText, UaStatus(stat).toString().toUtf8(), MAX_STRING_SIZE);
+        if (statusText) {
+            strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+            statusText[statusTextLen-1] = '\0';
+        }
         break;
     }
     default:
@@ -535,7 +548,8 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
                                                       dbCommon *prec,
                                                       ProcessReason *nextReason,
                                                       epicsUInt32 *statusCode,
-                                                      epicsOldString *statusText)
+                                                      char *statusText,
+                                                      const epicsUInt32 statusTextLen)
 {
     long ret = 0;
     epicsUInt32 elemsWritten = 0;
@@ -592,7 +606,10 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
             }
         }
         if (statusCode) *statusCode = stat;
-        if (statusText) strncpy(*statusText, UaStatus(stat).toString().toUtf8(), MAX_STRING_SIZE);
+        if (statusText) {
+            strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+            statusText[statusTextLen-1] = '\0';
+        }
         break;
     }
     default:
@@ -611,9 +628,10 @@ DataElementUaSdk::readArray (epicsInt8 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt8, UaSByteArray>(value, num, numRead, OpcUaType_SByte, prec, nextReason, statusCode, statusText);
+    return readArray<epicsInt8, UaSByteArray>(value, num, numRead, OpcUaType_SByte, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -622,9 +640,10 @@ DataElementUaSdk::readArray (epicsUInt8 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt8, UaByteArray>(value, num, numRead, OpcUaType_Byte, prec, nextReason, statusCode, statusText);
+    return readArray<epicsUInt8, UaByteArray>(value, num, numRead, OpcUaType_Byte, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -633,9 +652,10 @@ DataElementUaSdk::readArray (epicsInt16 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt16, UaInt16Array>(value, num, numRead, OpcUaType_Int16, prec, nextReason, statusCode, statusText);
+    return readArray<epicsInt16, UaInt16Array>(value, num, numRead, OpcUaType_Int16, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -644,9 +664,10 @@ DataElementUaSdk::readArray (epicsUInt16 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt16, UaUInt16Array>(value, num, numRead, OpcUaType_UInt16, prec, nextReason, statusCode, statusText);
+    return readArray<epicsUInt16, UaUInt16Array>(value, num, numRead, OpcUaType_UInt16, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -655,9 +676,10 @@ DataElementUaSdk::readArray (epicsInt32 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt32, UaInt32Array>(value, num, numRead, OpcUaType_Int32, prec, nextReason, statusCode, statusText);
+    return readArray<epicsInt32, UaInt32Array>(value, num, numRead, OpcUaType_Int32, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -666,9 +688,10 @@ DataElementUaSdk::readArray (epicsUInt32 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt32, UaUInt32Array>(value, num, numRead, OpcUaType_UInt32, prec, nextReason, statusCode, statusText);
+    return readArray<epicsUInt32, UaUInt32Array>(value, num, numRead, OpcUaType_UInt32, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -677,9 +700,10 @@ DataElementUaSdk::readArray (epicsInt64 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt64, UaInt64Array>(value, num, numRead, OpcUaType_Int64, prec, nextReason, statusCode, statusText);
+    return readArray<epicsInt64, UaInt64Array>(value, num, numRead, OpcUaType_Int64, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -688,9 +712,10 @@ DataElementUaSdk::readArray (epicsUInt64 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt64, UaUInt64Array>(value, num, numRead, OpcUaType_UInt64, prec, nextReason, statusCode, statusText);
+    return readArray<epicsUInt64, UaUInt64Array>(value, num, numRead, OpcUaType_UInt64, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -699,9 +724,10 @@ DataElementUaSdk::readArray (epicsFloat32 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsFloat32, UaFloatArray>(value, num, numRead, OpcUaType_Float, prec, nextReason, statusCode, statusText);
+    return readArray<epicsFloat32, UaFloatArray>(value, num, numRead, OpcUaType_Float, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -710,20 +736,23 @@ DataElementUaSdk::readArray (epicsFloat64 *value, const epicsUInt32 num,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsFloat64, UaDoubleArray>(value, num, numRead, OpcUaType_Double, prec, nextReason, statusCode, statusText);
+    return readArray<epicsFloat64, UaDoubleArray>(value, num, numRead, OpcUaType_Double, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
-DataElementUaSdk::readArray (epicsOldString *value, const epicsUInt32 num,
+DataElementUaSdk::readArray (char *value, const epicsUInt32 len,
+                             const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
-                             epicsOldString *statusText)
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsOldString, UaStringArray>(value, num, numRead, OpcUaType_String, prec, nextReason, statusCode, statusText);
+    return readArray(&value, len, num, numRead, OpcUaType_String, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 inline
@@ -766,7 +795,7 @@ DataElementUaSdk::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 }
 
 long
-DataElementUaSdk::writeScalar (const char *value, dbCommon *prec)
+DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
 {
     long ret = 0;
     long l;
@@ -890,13 +919,12 @@ DataElementUaSdk::dbgWriteArray (const epicsUInt32 targetSize, const std::string
     }
 }
 
-// Specialization for epicsOldString / OpcUa_String
-// CAVEAT: changes in the template (in DataElementUaSdk.h) must be reflected here
-template<>
+// Write array for EPICS String / OpcUa_String
 long
-DataElementUaSdk::writeArray<epicsOldString, UaStringArray, OpcUa_String> (const epicsOldString *value, const epicsUInt32 num,
-                                                                           OpcUa_BuiltInType targetType,
-                                                                           dbCommon *prec)
+DataElementUaSdk::writeArray (const char **value, const epicsUInt32 len,
+                              const epicsUInt32 num,
+                              OpcUa_BuiltInType targetType,
+                              dbCommon *prec)
 {
     long ret = 0;
 
@@ -909,27 +937,30 @@ DataElementUaSdk::writeArray<epicsOldString, UaStringArray, OpcUa_String> (const
                      prec->name,
                      variantTypeString(incomingData.type()),
                      variantTypeString(targetType),
-                     epicsTypeString(*value));
+                     epicsTypeString(**value));
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     } else {
         UaStringArray arr;
         arr.create(static_cast<OpcUa_UInt32>(num));
         for (epicsUInt32 i = 0; i < num; i++) {
-            // add zero termination if necessary
-            char val[MAX_STRING_SIZE+1] = { 0 };
+            char *val = nullptr;
             const char *pval;
-            if (memchr(value[i], '\0', MAX_STRING_SIZE) == nullptr) {
-                strncpy(val, value[i], MAX_STRING_SIZE);
+            // add zero termination if necessary
+            if (memchr(value[i], '\0', len) == nullptr) {
+                val = new char[len+1];
+                strncpy(val, value[i], len);
+                val[len] = '\0';
                 pval = val;
             } else {
                 pval = value[i];
             }
             UaString(pval).copyTo(&arr[i]);
+            delete[] val;
         }
         UaVariant_set(outgoingData, arr);
 
-        dbgWriteArray(num, epicsTypeString(*value));
+        dbgWriteArray(num, epicsTypeString(**value));
     }
     return ret;
 }
@@ -1027,9 +1058,9 @@ DataElementUaSdk::writeArray (const epicsFloat64 *value, const epicsUInt32 num, 
 }
 
 long
-DataElementUaSdk::writeArray (const epicsOldString *value, const epicsUInt32 num, dbCommon *prec)
+DataElementUaSdk::writeArray (const char *value, const epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsOldString, UaStringArray, OpcUa_String>(value, num, OpcUaType_String, prec);
+    return writeArray(&value, len, num, OpcUaType_String, prec);
 }
 
 void

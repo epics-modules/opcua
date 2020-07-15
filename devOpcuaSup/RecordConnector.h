@@ -53,6 +53,11 @@ public:
         return pdataelement->writeScalar(val, prec);
     }
 
+    long int writeScalar(const char* val, const epicsUInt32 num)
+    {
+        return pdataelement->writeScalar(val, num, prec);
+    }
+
     template <typename T>
     long int readArray(T *val, const epicsUInt32 num,
                           epicsUInt32 *numRead, ProcessReason *nextReason = nullptr)
@@ -60,10 +65,21 @@ public:
         return pdataelement->readArray(val, num, numRead, prec, nextReason);
     }
 
+    long int readArray(char *val, const epicsUInt32 len, const epicsUInt32 num,
+                       epicsUInt32 *numRead, ProcessReason *nextReason = nullptr)
+    {
+        return pdataelement->readArray(val, len, num, numRead, prec, nextReason);
+    }
+
     template <typename T>
     long int writeArray(const T *val, const epicsUInt32 num)
     {
         return pdataelement->writeArray(val, num, prec);
+    }
+
+    long int writeArray(const char *val, const epicsUInt32 len, const epicsUInt32 num)
+    {
+        return pdataelement->writeArray(val, len, num, prec);
     }
 
     void setDataElement(std::shared_ptr<DataElement> data) { pdataelement = data; }
