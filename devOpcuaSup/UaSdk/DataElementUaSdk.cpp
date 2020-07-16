@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -192,13 +192,14 @@ DataElementUaSdk::addElementChain (ItemUaSdk *item,
 void
 DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
 {
+    // Make a copy of this element and cache it
+    incomingData = value;
+
     if (isLeaf()) {
         if (reason == ProcessReason::readComplete || pconnector->plinkinfo->monitor) {
             Guard(pconnector->lock);
             bool wasFirst = false;
-            // Make a copy of this element and cache it
-            incomingData = value;
-            // Make another copy of the value for this element and put it on the queue
+            // Make a copy of the value for this element and put it on the queue
             UpdateUaSdk *u(new UpdateUaSdk(getIncomingTimeStamp(), reason, value, getIncomingReadStatus()));
             incomingQueue.pushUpdate(std::shared_ptr<UpdateUaSdk>(u), &wasFirst);
             if (debug() >= 5)
@@ -212,7 +213,7 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
         }
     } else {
         if (debug() >= 5)
-            std::cout << "Element " << name << " splitting data structure to "
+            std::cout << "Element " << name << " splitting structured data to "
                       << elements.size() << " child elements" << std::endl;
 
         if (value.type() == OpcUaType_ExtensionObject) {
@@ -283,6 +284,67 @@ DataElementUaSdk::setIncomingEvent (ProcessReason reason)
             pelem->setIncomingEvent(reason);
         }
     }
+}
+
+const UaVariant &
+DataElementUaSdk::getOutgoingData ()
+{
+    if (!isLeaf()) {
+        if (debug() >= 5)
+            std::cout << "Element " << name << " updating structured data from "
+                      << elements.size() << " child elements" << std::endl;
+
+        outgoingData = incomingData;
+        if (outgoingData.type() == OpcUaType_ExtensionObject) {
+            UaExtensionObject extensionObject;
+            outgoingData.toExtensionObject(extensionObject);
+
+            // Try to get the structure definition from the dictionary
+            UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
+            if (!definition.isNull()) {
+                if (!definition.isUnion()) {
+                    // ExtensionObject is a structure
+                    // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
+                    UaGenericStructureValue genericValue;
+                    genericValue.setGenericValue(extensionObject, definition);
+
+                    if (!mapped) {
+                        if (debug() >= 5)
+                            std::cout << " ** creating index-to-element map for child elements" << std::endl;
+                        for (auto &it : elements) {
+                            auto pelem = it.lock();
+                            for (int i = 0; i < definition.childrenCount(); i++) {
+                                if (pelem->name == definition.child(i).name().toUtf8()) {
+                                    elementMap.insert({i, it});
+                                    genericValue.setField(i, pelem->getOutgoingData());
+                                }
+                            }
+                        }
+                        if (debug() >= 5)
+                            std::cout << " ** " << elementMap.size() << "/" << elements.size()
+                                      << " child elements mapped to a "
+                                      << "structure of " << definition.childrenCount() << " elements" << std::endl;
+                        mapped = true;
+                    } else {
+                        for (auto &it : elementMap) {
+                            auto pelem = it.second.lock();
+                            genericValue.setField(it.first, pelem->getOutgoingData());
+                        }
+                    }
+                    if (debug() >= 5)
+                        std::cout << "Encoding element data from " << elements.size()
+                                  << " child elements to outgoingData of element " << name
+                                  << std::endl;
+                    genericValue.toExtensionObject(extensionObject);
+                    outgoingData.setExtensionObject(extensionObject, OpcUa_True);
+                }
+
+            } else
+                errlogPrintf("Cannot get a structure definition for %s - check access to type dictionary\n",
+                             extensionObject.dataTypeId().toString().toUtf8());
+        }
+    }
+    return outgoingData;
 }
 
 void

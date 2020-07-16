@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -227,7 +227,7 @@ public:
      *
      * @return  reference to outgoing data
      */
-    const UaVariant &getOutgoingData() { return outgoingData; }
+    const UaVariant &getOutgoingData();
 
     /**
      * @brief Read incoming data as a scalar epicsInt32.
