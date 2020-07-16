@@ -211,8 +211,10 @@ opcua_write_int32_val (REC *prec)
                              prec->name, prec->val,
                              static_cast<unsigned int>(prec->val));
             pvt->writeScalar(prec->val);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             ret = pvt->readScalar(&prec->val, &nextReason);
             if (prec->tpro > 1)
@@ -266,8 +268,10 @@ opcua_write_int64_val (REC *prec)
                              prec->name, prec->val,
                              static_cast<unsigned long long int>(prec->val));
             pvt->writeScalar(prec->val);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             ret = pvt->readScalar(&prec->val, &nextReason);
             if (prec->tpro > 1)
@@ -321,8 +325,10 @@ opcua_write_uint32_rval (REC *prec)
                 errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             pvt->writeScalar(prec->rval);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (prec->tpro > 1)
@@ -406,8 +412,10 @@ opcua_write_analog (REC *prec)
                 }
                 ret = pvt->writeScalar(prec->rval);
             }
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             double value;
             bool useValue = true;
@@ -466,8 +474,10 @@ opcua_write_enum (REC *prec)
                 errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             pvt->writeScalar(prec->rval);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (ret == 0) {
@@ -516,8 +526,10 @@ opcua_write_bo (REC *prec)
                 errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             pvt->writeScalar(prec->rval);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (ret == 0) {
@@ -550,8 +562,10 @@ opcua_write_mbbod (REC *prec)
                 errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             pvt->writeScalar(prec->rval);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (ret == 0) {
@@ -622,8 +636,10 @@ opcua_write_string_val (REC *prec)
                              prec->name, prec->val);
             }
             ret = pvt->writeScalar(prec->val, MAX_STRING_SIZE);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             ret = pvt->readScalar(prec->val, MAX_STRING_SIZE, &nextReason);
             if (prec->tpro > 1)
@@ -678,8 +694,10 @@ opcua_write_lstring_val (REC *prec)
                              prec->name, prec->val);
             }
             ret = pvt->writeScalar(prec->val, prec->sizv);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             ret = pvt->readScalar(prec->val, prec->sizv, &nextReason);
             prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
@@ -830,8 +848,10 @@ opcua_write_array (REC *prec)
                 ret = pvt->writeArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
                 break;
             }
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
         } else {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
