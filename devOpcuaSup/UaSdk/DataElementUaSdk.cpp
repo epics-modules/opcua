@@ -41,6 +41,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
+    , isdirty(false)
 {}
 
 DataElementUaSdk::DataElementUaSdk (const std::string &name,
@@ -50,6 +51,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(0ul)
+    , isdirty(false)
 {
     elements.push_back(child);
 }
@@ -286,11 +288,37 @@ DataElementUaSdk::setIncomingEvent (ProcessReason reason)
     }
 }
 
+// Helper to update one data structure element from pointer to child
+void
+DataElementUaSdk::updateDataInGenericValue (UaGenericStructureValue &value,
+                                            const int index,
+                                            std::shared_ptr<DataElementUaSdk> pelem)
+{
+    bool updated = false;
+    { // Scope of Guard G
+        Guard G(pelem->outgoingLock);
+        if (pelem->isDirty()) {
+            value.setField(index, pelem->getOutgoingData());
+            pelem->isdirty = false;
+            updated = true;
+        }
+    }
+    if (debug() >= 4) {
+        if (updated) {
+            std::cout << "Data from child element " << pelem->name
+                      << " inserted into data structure" << std::endl;
+        } else {
+            std::cout << "Data from child element " << pelem->name
+                      << " ignored (not dirty)" << std::endl;
+        }
+    }
+}
+
 const UaVariant &
 DataElementUaSdk::getOutgoingData ()
 {
     if (!isLeaf()) {
-        if (debug() >= 5)
+        if (debug() >= 4)
             std::cout << "Element " << name << " updating structured data from "
                       << elements.size() << " child elements" << std::endl;
 
@@ -316,7 +344,7 @@ DataElementUaSdk::getOutgoingData ()
                             for (int i = 0; i < definition.childrenCount(); i++) {
                                 if (pelem->name == definition.child(i).name().toUtf8()) {
                                     elementMap.insert({i, it});
-                                    genericValue.setField(i, pelem->getOutgoingData());
+                                    updateDataInGenericValue(genericValue, i, pelem);
                                 }
                             }
                         }
@@ -328,12 +356,11 @@ DataElementUaSdk::getOutgoingData ()
                     } else {
                         for (auto &it : elementMap) {
                             auto pelem = it.second.lock();
-                            genericValue.setField(it.first, pelem->getOutgoingData());
+                            updateDataInGenericValue(genericValue, it.first, pelem);
                         }
                     }
-                    if (debug() >= 5)
-                        std::cout << "Encoding element data from " << elements.size()
-                                  << " child elements to outgoingData of element " << name
+                    if (debug() >= 4)
+                        std::cout << "Encoding data structure to outgoingData of element " << name
                                   << std::endl;
                     genericValue.toExtensionObject(extensionObject);
                     outgoingData.setExtensionObject(extensionObject, OpcUa_True);
@@ -866,17 +893,27 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
 
     switch (incomingData.type()) {
     case OpcUaType_String:
+    { // Scope of Guard G
+        Guard G(outgoingLock);
+        isdirty = true;
         outgoingData.setString(static_cast<UaString>(value));
         break;
+    }
     case OpcUaType_Boolean:
+    { // Scope of Guard G
+        Guard G(outgoingLock);
+        isdirty = true;
         if (strchr("YyTt1", *value))
             outgoingData.setBoolean(true);
         else
             outgoingData.setBoolean(false);
         break;
+    }
     case OpcUaType_Byte:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<OpcUa_Byte>(ul)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setByte(static_cast<OpcUa_Byte>(ul));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -886,6 +923,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_SByte:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<OpcUa_SByte>(l)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setSByte(static_cast<OpcUa_SByte>(l));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -895,6 +934,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_UInt16:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<OpcUa_UInt16>(ul)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setUInt16(static_cast<OpcUa_UInt16>(ul));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -904,6 +945,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_Int16:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<OpcUa_Int16>(l)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setInt16(static_cast<OpcUa_Int16>(l));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -913,6 +956,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_UInt32:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<OpcUa_UInt32>(ul)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setUInt32(static_cast<OpcUa_UInt32>(ul));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -922,6 +967,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_Int32:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<OpcUa_Int32>(l)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setInt32(static_cast<OpcUa_Int32>(l));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -931,6 +978,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_UInt64:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<OpcUa_UInt64>(ul)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setUInt64(static_cast<OpcUa_UInt64>(ul));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -940,6 +989,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_Int64:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<long, OpcUa_Int64>(l)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setInt64(static_cast<OpcUa_Int64>(l));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -949,6 +1000,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_Float:
         d = strtod(value, nullptr);
         if (isWithinRange<OpcUa_Float>(d)) {
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setFloat(static_cast<OpcUa_Float>(d));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -956,9 +1009,13 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         }
         break;
     case OpcUaType_Double:
+    {
         d = strtod(value, nullptr);
+        Guard G(outgoingLock);
+        isdirty = true;
         outgoingData.setDouble(static_cast<OpcUa_Double>(d));
         break;
+    }
     default:
         errlogPrintf("%s : unsupported conversion for outgoing data\n",
                      prec->name);
@@ -1020,7 +1077,11 @@ DataElementUaSdk::writeArray (const char **value, const epicsUInt32 len,
             UaString(pval).copyTo(&arr[i]);
             delete[] val;
         }
-        UaVariant_set(outgoingData, arr);
+        { // Scope of Guard G
+            Guard G(outgoingLock);
+            isdirty = true;
+            UaVariant_set(outgoingData, arr);
+        }
 
         dbgWriteArray(num, epicsTypeString(**value));
     }
@@ -1052,7 +1113,11 @@ DataElementUaSdk::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epicsUI
         ret = 1;
     } else {
         UaByteArray arr(reinterpret_cast<const char *>(value), static_cast<OpcUa_Int32>(num));
-        UaVariant_set(outgoingData, arr);
+        { // Scope of Guard G
+            Guard G(outgoingLock);
+            isdirty = true;
+            UaVariant_set(outgoingData, arr);
+        }
 
         dbgWriteArray(num, epicsTypeString(*value));
     }

@@ -640,6 +640,10 @@ private:
                       const std::string &targetTypeName) const;
     void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
+    void updateDataInGenericValue(UaGenericStructureValue &value,
+                                  const int index,
+                                  std::shared_ptr<DataElementUaSdk> pelem);
+    bool isDirty() const { return isdirty || !isleaf; }
 
     // Get the time stamp from the incoming object
     const epicsTime &getIncomingTimeStamp() const {
@@ -863,13 +867,19 @@ private:
 
         switch (incomingData.type()) {
         case OpcUaType_Boolean:
+        { // Scope of Guard G
+            Guard G(outgoingLock);
+            isdirty = true;
             if (value == 0)
                 outgoingData.setBoolean(false);
             else
                 outgoingData.setBoolean(true);
             break;
+        }
         case OpcUaType_Byte:
             if (isWithinRange<OpcUa_Byte>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setByte(static_cast<OpcUa_Byte>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -878,6 +888,8 @@ private:
             break;
         case OpcUaType_SByte:
             if (isWithinRange<OpcUa_SByte>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setSByte(static_cast<OpcUa_SByte>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -886,6 +898,8 @@ private:
             break;
         case OpcUaType_UInt16:
             if (isWithinRange<OpcUa_UInt16>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setUInt16(static_cast<OpcUa_UInt16>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -894,6 +908,8 @@ private:
             break;
         case OpcUaType_Int16:
             if (isWithinRange<OpcUa_Int16>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setInt16(static_cast<OpcUa_Int16>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -902,6 +918,8 @@ private:
             break;
         case OpcUaType_UInt32:
             if (isWithinRange<OpcUa_UInt32>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setUInt32(static_cast<OpcUa_UInt32>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -910,6 +928,8 @@ private:
             break;
         case OpcUaType_Int32:
             if (isWithinRange<OpcUa_Int32>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setInt32(static_cast<OpcUa_UInt32>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -918,6 +938,8 @@ private:
             break;
         case OpcUaType_UInt64:
             if (isWithinRange<OpcUa_UInt64>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setUInt64(static_cast<OpcUa_UInt64>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -926,6 +948,8 @@ private:
             break;
         case OpcUaType_Int64:
             if (isWithinRange<OpcUa_Int64>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setInt64(static_cast<OpcUa_Int64>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -934,6 +958,8 @@ private:
             break;
         case OpcUaType_Float:
             if (isWithinRange<OpcUa_Float>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setFloat(static_cast<OpcUa_Float>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -942,6 +968,8 @@ private:
             break;
         case OpcUaType_Double:
             if (isWithinRange<OpcUa_Double>(value)) {
+                Guard G(outgoingLock);
+                isdirty = true;
                 outgoingData.setDouble(static_cast<OpcUa_Double>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -949,8 +977,12 @@ private:
             }
             break;
         case OpcUaType_String:
+        { // Scope of Guard G
+            Guard G(outgoingLock);
+            isdirty = true;
             outgoingData.setString(static_cast<UaString>(std::to_string(value).c_str()));
             break;
+        }
         default:
             errlogPrintf("%s : unsupported conversion for outgoing data\n",
                          prec->name);
@@ -996,7 +1028,11 @@ private:
             // as the UA SDK API uses non-const parameters
             ST *val = const_cast<ST *>(reinterpret_cast<const ST *>(value));
             CT arr(static_cast<OpcUa_Int32>(num), val);
-            UaVariant_set(outgoingData, arr);
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                isdirty = true;
+                UaVariant_set(outgoingData, arr);
+            }
 
             dbgWriteArray(num, epicsTypeString(*value));
         }
@@ -1012,7 +1048,9 @@ private:
     bool mapped;                             /**< child name to index mapping done */
     UpdateQueue<UpdateUaSdk> incomingQueue;  /**< queue of incoming values */
     UaVariant incomingData;                  /**< cache of latest incoming value */
-    UaVariant outgoingData;                  /**< outgoing value */
+    epicsMutex outgoingLock;                 /**< data lock for outgoing value */
+    UaVariant outgoingData;                  /**< cache of latest outgoing value */
+    bool isdirty;                              /**< outgoing value has been (or needs to be) updated */
 };
 
 } // namespace DevOpcua
