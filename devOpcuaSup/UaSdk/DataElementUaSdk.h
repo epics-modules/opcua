@@ -625,7 +625,7 @@ public:
     virtual void requestRecordProcessing(const ProcessReason reason) const override;
 
     /**
-     * @brief Get debug level from record (via RecordConnector)`.
+     * @brief Get debug level from record (via RecordConnector).
      * @return debug level
      */
     int debug() const { return (isLeaf() ? pconnector->debug() : pitem->debug()); }
@@ -640,9 +640,10 @@ private:
                       const std::string &targetTypeName) const;
     void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
-    void updateDataInGenericValue(UaGenericStructureValue &value,
+    bool updateDataInGenericValue(UaGenericStructureValue &value,
                                   const int index,
                                   std::shared_ptr<DataElementUaSdk> pelem);
+    // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
 
     // Get the time stamp from the incoming object

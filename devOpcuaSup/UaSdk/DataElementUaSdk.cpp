@@ -289,7 +289,7 @@ DataElementUaSdk::setIncomingEvent (ProcessReason reason)
 }
 
 // Helper to update one data structure element from pointer to child
-void
+bool
 DataElementUaSdk::updateDataInGenericValue (UaGenericStructureValue &value,
                                             const int index,
                                             std::shared_ptr<DataElementUaSdk> pelem)
@@ -312,6 +312,7 @@ DataElementUaSdk::updateDataInGenericValue (UaGenericStructureValue &value,
                       << " ignored (not dirty)" << std::endl;
         }
     }
+    return updated;
 }
 
 const UaVariant &
@@ -323,6 +324,7 @@ DataElementUaSdk::getOutgoingData ()
                       << elements.size() << " child elements" << std::endl;
 
         outgoingData = incomingData;
+        isdirty = false;
         if (outgoingData.type() == OpcUaType_ExtensionObject) {
             UaExtensionObject extensionObject;
             outgoingData.toExtensionObject(extensionObject);
@@ -344,7 +346,8 @@ DataElementUaSdk::getOutgoingData ()
                             for (int i = 0; i < definition.childrenCount(); i++) {
                                 if (pelem->name == definition.child(i).name().toUtf8()) {
                                     elementMap.insert({i, it});
-                                    updateDataInGenericValue(genericValue, i, pelem);
+                                    if (updateDataInGenericValue(genericValue, i, pelem))
+                                        isdirty = true;
                                 }
                             }
                         }
@@ -356,14 +359,21 @@ DataElementUaSdk::getOutgoingData ()
                     } else {
                         for (auto &it : elementMap) {
                             auto pelem = it.second.lock();
-                            updateDataInGenericValue(genericValue, it.first, pelem);
+                            if (updateDataInGenericValue(genericValue, it.first, pelem))
+                               isdirty = true;
                         }
                     }
-                    if (debug() >= 4)
-                        std::cout << "Encoding data structure to outgoingData of element " << name
-                                  << std::endl;
-                    genericValue.toExtensionObject(extensionObject);
-                    outgoingData.setExtensionObject(extensionObject, OpcUa_True);
+                    if (isdirty) {
+                        if (debug() >= 4)
+                            std::cout << "Encoding changed data structure to outgoingData of element " << name
+                                      << std::endl;
+                        genericValue.toExtensionObject(extensionObject);
+                        outgoingData.setExtensionObject(extensionObject, OpcUa_True);
+                    } else {
+                        if (debug() >= 4)
+                            std::cout << "Returning unchanged outgoingData of element " << name
+                                      << std::endl;
+                    }
                 }
 
             } else
