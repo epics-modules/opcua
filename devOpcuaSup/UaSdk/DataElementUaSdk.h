@@ -92,17 +92,7 @@ inline bool isWithinRange (const FROM &value) {
     return !(value < std::numeric_limits<TO>::lowest() || value > std::numeric_limits<TO>::max());
 }
 
-// Specializations for signed/unsigned to avoid compiler warnings
-template<>
-inline bool isWithinRange<OpcUa_UInt32, epicsInt32> (const epicsInt32 &value) {
-    return !(value < 0);
-}
-
-template<>
-inline bool isWithinRange<OpcUa_UInt64, epicsInt32> (const epicsInt32 &value) {
-    return !(value < 0);
-}
-
+// Specializations for unsigned to signed to avoid compiler warnings
 template<>
 inline bool isWithinRange<OpcUa_SByte, epicsUInt32> (const epicsUInt32 &value) {
     return !(value > static_cast<OpcUa_UInt32>(std::numeric_limits<OpcUa_SByte>::max()));
@@ -119,9 +109,33 @@ inline bool isWithinRange<OpcUa_Int32, epicsUInt32> (const epicsUInt32 &value) {
 }
 
 template<>
-inline bool isWithinRange<OpcUa_UInt64, epicsInt64> (const epicsInt64 &value) {
-    return !(value < 0);
+inline bool isWithinRange<OpcUa_SByte, epicsUInt64> (const epicsUInt64 &value) {
+    return !(value > static_cast<OpcUa_UInt64>(std::numeric_limits<OpcUa_SByte>::max()));
 }
+
+template<>
+inline bool isWithinRange<OpcUa_Int16, epicsUInt64> (const epicsUInt64 &value) {
+    return !(value > static_cast<OpcUa_UInt64>(std::numeric_limits<OpcUa_Int16>::max()));
+}
+
+template<>
+inline bool isWithinRange<OpcUa_Int32, epicsUInt64> (const epicsUInt64 &value) {
+    return !(value > static_cast<OpcUa_UInt64>(std::numeric_limits<OpcUa_Int32>::max()));
+}
+
+template<>
+inline bool isWithinRange<OpcUa_Int64, epicsUInt64> (const epicsUInt64 &value) {
+    return !(value > static_cast<OpcUa_UInt64>(std::numeric_limits<OpcUa_Int64>::max()));
+}
+
+// Simple-check specializations for converting signed to unsigned of same or wider type
+template<> inline bool isWithinRange<OpcUa_UInt32, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<OpcUa_UInt32, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<OpcUa_UInt32, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<OpcUa_UInt64, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<OpcUa_UInt64, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<OpcUa_UInt64, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<OpcUa_UInt64, epicsInt64> (const epicsInt64 &value) { return !(value < 0); }
 
 // No-check-needed specializations for converting to same or wider type
 template<> inline bool isWithinRange<OpcUa_Int32, epicsInt32> (const epicsInt32 &) { return true; }
