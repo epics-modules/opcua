@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -63,6 +63,7 @@
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
 #include "opcuaItemRecord.h"
+#include "menuDefAction.h"
 #include "devOpcua.h"
 #include "devOpcuaVersion.h"
 #include "RecordConnector.h"
@@ -179,15 +180,15 @@ opcua_read_int32_val (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::readRequest) {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        } else {
             ret = pvt->readScalar(&prec->val, &nextReason);
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> VAL=%d (%#010x)\n",
                              prec->name, ret, prec->val,
                              static_cast<unsigned int>(prec->val));
-        } else {
-            prec->pact = true;
-            pvt->requestOpcuaRead();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -204,20 +205,22 @@ opcua_write_int32_val (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
-            ret = pvt->readScalar(&prec->val, &nextReason);
-            if (prec->tpro > 1)
-                errlogPrintf("%s: read (status %ld) -> VAL=%d (%#010x)\n",
-                             prec->name, ret, prec->val,
-                             static_cast<unsigned int>(prec->val));
-        } else {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
             if (prec->tpro > 1)
                 errlogPrintf("%s: write <- VAL=%d (%#010x)\n",
                              prec->name, prec->val,
                              static_cast<unsigned int>(prec->val));
             pvt->writeScalar(prec->val);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
+            ret = pvt->readScalar(&prec->val, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%d (%#010x)\n",
+                             prec->name, ret, prec->val,
+                             static_cast<unsigned int>(prec->val));
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -234,15 +237,15 @@ opcua_read_int64_val (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::readRequest) {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        } else {
             ret = pvt->readScalar(&prec->val, &nextReason);
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> VAL=%lld (%#018llx)\n",
                              prec->name, ret, prec->val,
                              static_cast<unsigned long long int>(prec->val));
-        } else {
-            prec->pact = true;
-            pvt->requestOpcuaRead();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -259,20 +262,22 @@ opcua_write_int64_val (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
-            ret = pvt->readScalar(&prec->val, &nextReason);
-            if (prec->tpro > 1)
-                errlogPrintf("%s: read (status %ld) -> VAL=%lld (%#018llx)\n",
-                             prec->name, ret, prec->val,
-                             static_cast<unsigned long long int>(prec->val));
-        } else {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
             if (prec->tpro > 1)
                 errlogPrintf("%s: write <- VAL=%lld (%#018llx)\n",
                              prec->name, prec->val,
                              static_cast<unsigned long long int>(prec->val));
             pvt->writeScalar(prec->val);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
+            ret = pvt->readScalar(&prec->val, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL=%lld (%#018llx)\n",
+                             prec->name, ret, prec->val,
+                             static_cast<unsigned long long int>(prec->val));
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -291,14 +296,14 @@ opcua_read_uint32_rval (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::readRequest) {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        } else {
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> RVAL=%u (%#010x)\n",
                              prec->name, ret, prec->rval, prec->rval);
-        } else {
-            prec->pact = true;
-            pvt->requestOpcuaRead();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -315,18 +320,20 @@ opcua_write_uint32_rval (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
-            ret = pvt->readScalar(&prec->rval, &nextReason);
-            if (prec->tpro > 1)
-                errlogPrintf("%s: read (status %ld) -> RVAL=%u (%#010x)\n",
-                             prec->name, ret, prec->rval, prec->rval);
-        } else {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
             if (prec->tpro > 1)
                 errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
                              prec->name, prec->rval, prec->rval);
             pvt->writeScalar(prec->rval);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
+            ret = pvt->readScalar(&prec->rval, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> RVAL=%u (%#010x)\n",
+                             prec->name, ret, prec->rval, prec->rval);
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -345,7 +352,10 @@ opcua_read_analog (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::readRequest) {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        } else {
             if (prec->linr == menuConvertNO_CONVERSION) {
                 double value = 0.;
                 ret = pvt->readScalar(&value, &nextReason);
@@ -370,9 +380,6 @@ opcua_read_analog (REC *prec)
                                  prec->name, ret, prec->rval,
                                  static_cast<unsigned int>(prec->rval));
             }
-        } else {
-            prec->pact = true;
-            pvt->requestOpcuaRead();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -390,7 +397,26 @@ opcua_write_analog (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         //TODO: ignore incoming data when output rate limit active
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
+            if (prec->linr == menuConvertNO_CONVERSION) {
+                if (prec->tpro > 1) {
+                    errlogPrintf("%s: write <- VAL=%g\n",
+                                 prec->name, prec->val);
+                }
+                ret = pvt->writeScalar(prec->val);
+            } else {
+                if (prec->tpro > 1) {
+                    errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
+                                 prec->name, prec->rval,
+                                 static_cast<unsigned int>(prec->rval));
+                }
+                ret = pvt->writeScalar(prec->rval);
+            }
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
             double value;
             bool useValue = true;
             if (prec->linr == menuConvertNO_CONVERSION) {
@@ -425,23 +451,6 @@ opcua_write_analog (REC *prec)
             if (useValue)
                 prec->val = value;
             prec->udf = isnan(prec->val);
-        } else {
-            if (prec->linr == menuConvertNO_CONVERSION) {
-                if (prec->tpro > 1) {
-                    errlogPrintf("%s: write <- VAL=%g\n",
-                                 prec->name, prec->val);
-                }
-                ret = pvt->writeScalar(prec->val);
-            } else {
-                if (prec->tpro > 1) {
-                    errlogPrintf("%s: write <- RVAL=%d (%#010x)\n",
-                                 prec->name, prec->rval,
-                                 static_cast<unsigned int>(prec->rval));
-                }
-                ret = pvt->writeScalar(prec->rval);
-            }
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -460,7 +469,16 @@ opcua_write_enum (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
+            if (prec->tpro > 1)
+                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
+                             prec->name, prec->rval, prec->rval);
+            pvt->writeScalar(prec->rval);
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (ret == 0) {
                 epicsUInt32 rval = prec->rval &= prec->mask;
@@ -485,13 +503,6 @@ opcua_write_enum (REC *prec)
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> VAL=%u converted from RVAL=%u (%#010x)\n",
                              prec->name, ret, prec->val, prec->rval, prec->rval);
-        } else {
-            if (prec->tpro > 1)
-                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
-                             prec->name, prec->rval, prec->rval);
-            pvt->writeScalar(prec->rval);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -510,7 +521,16 @@ opcua_write_bo (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
+            if (prec->tpro > 1)
+                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
+                             prec->name, prec->rval, prec->rval);
+            pvt->writeScalar(prec->rval);
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (ret == 0) {
                 if (prec->rval == 0) prec->val = 0;
@@ -519,13 +539,6 @@ opcua_write_bo (REC *prec)
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> VAL=%u (RVAL=%#010x)\n",
                              prec->name, ret, prec->val, prec->rval);
-        } else {
-            if (prec->tpro > 1)
-                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
-                             prec->name, prec->rval, prec->rval);
-            pvt->writeScalar(prec->rval);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -544,7 +557,16 @@ opcua_write_mbbod (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
+            if (prec->tpro > 1)
+                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
+                             prec->name, prec->rval, prec->rval);
+            pvt->writeScalar(prec->rval);
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
             ret = pvt->readScalar(&prec->rval, &nextReason);
             if (ret == 0) {
                 epicsUInt32 rval = prec->rval;
@@ -566,13 +588,6 @@ opcua_write_mbbod (REC *prec)
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> VAL=%u converted from RVAL=%u (%#010x)\n",
                              prec->name, ret, prec->val, prec->rval, prec->rval);
-        } else {
-            if (prec->tpro > 1)
-                errlogPrintf("%s: write <- RVAL=%u (%#010x)\n",
-                             prec->name, prec->rval, prec->rval);
-            pvt->writeScalar(prec->rval);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -591,14 +606,14 @@ opcua_read_string_val (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::readRequest) {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        } else {
             ret = pvt->readScalar(prec->val, MAX_STRING_SIZE, &nextReason);
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
                              prec->name, ret, prec->val);
-        } else {
-            prec->pact = true;
-            pvt->requestOpcuaRead();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -615,19 +630,21 @@ opcua_write_string_val (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
-            ret = pvt->readScalar(prec->val, MAX_STRING_SIZE, &nextReason);
-            if (prec->tpro > 1)
-                errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
-                             prec->name, ret, prec->val);
-        } else {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL='%s'\n",
                              prec->name, prec->val);
             }
             ret = pvt->writeScalar(prec->val, MAX_STRING_SIZE);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
+            ret = pvt->readScalar(prec->val, MAX_STRING_SIZE, &nextReason);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
+                             prec->name, ret, prec->val);
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -646,15 +663,15 @@ opcua_read_lstring_val (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::readRequest) {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        } else {
             ret = pvt->readScalar(prec->val, prec->sizv, &nextReason);
             prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
             if (prec->tpro > 1)
                 errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
                              prec->name, ret, prec->val);
-        } else {
-            prec->pact = true;
-            pvt->requestOpcuaRead();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -671,20 +688,22 @@ opcua_write_lstring_val (REC *prec)
         Guard G(pvt->lock);
         ProcessReason nextReason = ProcessReason::none;
 
-        if (pvt->reason) {
-            ret = pvt->readScalar(prec->val, prec->sizv, &nextReason);
-            prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
-            if (prec->tpro > 1)
-                errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
-                             prec->name, ret, prec->val);
-        } else {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
             if (prec->tpro > 1) {
                 errlogPrintf("%s: write <- VAL='%s'\n",
                              prec->name, prec->val);
             }
             ret = pvt->writeScalar(prec->val, prec->sizv);
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
+            ret = pvt->readScalar(prec->val, prec->sizv, &nextReason);
+            prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
+            if (prec->tpro > 1)
+                errlogPrintf("%s: read (status %ld) -> VAL='%s'\n",
+                             prec->name, ret, prec->val);
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -704,7 +723,10 @@ opcua_read_array (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
         epicsUInt32 nord = prec->nord;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::readRequest) {
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+        } else {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
                 ret = pvt->readArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nelm,
@@ -764,9 +786,6 @@ opcua_read_array (REC *prec)
                 errlogPrintf("%s: read (status %ld) -> %d array elements read\n",
                              prec->name, ret, prec->nord);
             }
-        } else {
-            prec->pact = true;
-            pvt->requestOpcuaRead();
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
@@ -784,7 +803,56 @@ opcua_write_array (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
         epicsUInt32 nord = prec->nord;
 
-        if (pvt->reason) {
+        if (pvt->reason == ProcessReason::none || pvt->reason == ProcessReason::writeRequest) {
+            if (prec->tpro > 1) {
+                errlogPrintf("%s: write <- %d array elements\n",
+                             prec->name, prec->nord);
+            }
+            switch (prec->ftvl) {
+            case menuFtypeSTRING:
+                ret = pvt->writeArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nord);
+                break;
+            case menuFtypeCHAR:
+                ret = pvt->writeArray(static_cast<epicsInt8 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeUCHAR:
+                ret = pvt->writeArray(static_cast<epicsUInt8 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeSHORT:
+                ret = pvt->writeArray(static_cast<epicsInt16 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeUSHORT:
+                ret = pvt->writeArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeLONG:
+                ret = pvt->writeArray(static_cast<epicsInt32 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeULONG:
+                ret = pvt->writeArray(static_cast<epicsUInt32 *>(prec->bptr), prec->nord);
+                break;
+#ifdef DBR_INT64
+            case menuFtypeINT64:
+                ret = pvt->writeArray(static_cast<epicsInt64 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeUINT64:
+                ret = pvt->writeArray(static_cast<epicsUInt64 *>(prec->bptr), prec->nord);
+                break;
+#endif
+            case menuFtypeFLOAT:
+                ret = pvt->writeArray(static_cast<epicsFloat32 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeDOUBLE:
+                ret = pvt->writeArray(static_cast<epicsFloat64 *>(prec->bptr), prec->nord);
+                break;
+            case menuFtypeENUM:
+                ret = pvt->writeArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
+                break;
+            }
+            if (pvt->plinkinfo->linkedToItem) {
+                prec->pact = true;
+                pvt->requestOpcuaWrite();
+            }
+        } else {
             switch (prec->ftvl) {
             case menuFtypeSTRING:
                 ret = pvt->readArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nelm,
@@ -844,56 +912,59 @@ opcua_write_array (REC *prec)
                 errlogPrintf("%s: read (status %ld) -> %d array elements\n",
                              prec->name, ret, prec->nord);
             }
-        } else {
-            if (prec->tpro > 1) {
-                errlogPrintf("%s: write <- %d array elements\n",
-                             prec->name, prec->nord);
-            }
-            switch (prec->ftvl) {
-            case menuFtypeSTRING:
-                ret = pvt->writeArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nord);
-                break;
-            case menuFtypeCHAR:
-                ret = pvt->writeArray(static_cast<epicsInt8 *>(prec->bptr), prec->nord);
-                break;
-            case menuFtypeUCHAR:
-                ret = pvt->writeArray(static_cast<epicsUInt8 *>(prec->bptr), prec->nord);
-                break;
-            case menuFtypeSHORT:
-                ret = pvt->writeArray(static_cast<epicsInt16 *>(prec->bptr), prec->nord);
-                break;
-            case menuFtypeUSHORT:
-                ret = pvt->writeArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
-                break;
-            case menuFtypeLONG:
-                ret = pvt->writeArray(static_cast<epicsInt32 *>(prec->bptr), prec->nord);
-                break;
-            case menuFtypeULONG:
-                ret = pvt->writeArray(static_cast<epicsUInt32 *>(prec->bptr), prec->nord);
-                break;
-#ifdef DBR_INT64
-            case menuFtypeINT64:
-                ret = pvt->writeArray(static_cast<epicsInt64 *>(prec->bptr), prec->nord);
-                break;
-            case menuFtypeUINT64:
-                ret = pvt->writeArray(static_cast<epicsUInt64 *>(prec->bptr), prec->nord);
-                break;
-#endif
-            case menuFtypeFLOAT:
-                ret = pvt->writeArray(static_cast<epicsFloat32 *>(prec->bptr), prec->nord);
-                break;
-            case menuFtypeDOUBLE:
-                ret = pvt->writeArray(static_cast<epicsFloat64 *>(prec->bptr), prec->nord);
-                break;
-            case menuFtypeENUM:
-                ret = pvt->writeArray(static_cast<epicsUInt16 *>(prec->bptr), prec->nord);
-                break;
-            }
-            prec->pact = true;
-            pvt->requestOpcuaWrite();
         }
         if (nextReason != ProcessReason::none)
             pvt->requestRecordProcessing(nextReason);
+    } CATCH();
+    return ret;
+}
+
+// opcuaItemRecord
+
+template<typename REC>
+long
+opcua_action_item (REC *prec)
+{
+    long ret = 0;
+    TRY {
+        Guard G(pvt->lock);
+
+        switch (pvt->reason) {
+        case ProcessReason::readFailure:
+            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            ret = 1;
+            break;
+        case ProcessReason::writeFailure:
+            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            ret = 1;
+            break;
+        case ProcessReason::connectionLoss:
+            (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            ret = 1;
+            break;
+        case ProcessReason::readRequest:
+            prec->pact = true;
+            pvt->requestOpcuaRead();
+            break;
+        case ProcessReason::writeRequest:
+            prec->pact = true;
+            pvt->requestOpcuaWrite();
+            break;
+        case ProcessReason::none:
+            prec->pact = true;
+            if (prec->defactn == menuDefActionREAD)
+                pvt->requestOpcuaRead();
+            else {
+                pvt->requestOpcuaWrite();
+            }
+            break;
+        default:
+            break;
+        }
+        pvt->getStatus(&prec->statcode, prec->stattext, MAX_STRING_SIZE+1);
+        if (prec->tpro > 1)
+            errlogPrintf("%s: processed -> status code %#10x (%s)\n",
+                         prec->name, prec->statcode, prec->stattext);
     } CATCH();
     return ret;
 }
@@ -909,7 +980,7 @@ opcua_write_array (REC *prec)
     extern "C" { epicsExportAddress(dset, NAME); }
 
 #define SUPI(NAME, REC, OP, DIR) static dset6<REC##Record> NAME = \
-{6, NULL, NULL, NULL, opcua_get_ioint, NULL, NULL}; \
+{6, nullptr, nullptr, nullptr, opcua_get_ioint, &opcua_##DIR##_##OP<REC##Record>, nullptr}; \
     extern "C" { epicsExportAddress(dset, NAME); }
 
 SUP (devLiOpcua,             longin,   int32_val, read)
@@ -933,4 +1004,4 @@ SUP (devAaoOpcua,               aao,       array, write)
 SUP (devInt64inOpcua,       int64in,   int64_val, read)
 SUP (devInt64outOpcua,     int64out,   int64_val, write)
 #endif
-SUPI(devItemOpcua,        opcuaItem,        item, dummy)
+SUPI(devItemOpcua,        opcuaItem,        item, action)

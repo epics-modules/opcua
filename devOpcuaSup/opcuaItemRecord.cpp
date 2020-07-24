@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -22,6 +22,7 @@
 #include <errMdef.h>
 #include <menuPost.h>
 #include <menuYesNo.h>
+#include <devSup.h>
 #include <recSup.h>
 #include <recGbl.h>
 #include <special.h>
@@ -50,24 +51,13 @@ namespace {
 
 using namespace DevOpcua;
 
-long readValue(opcuaItemRecord *prec);
-
-#define TRY \
-    if (!prec->dpvt) return 0; \
-    RecordConnector *pvt = static_cast<RecordConnector*>(prec->dpvt); \
-    try
-#define CATCH() catch(std::exception& e) { \
-    std::cerr << prec->name << " Error : " << e.what() << std::endl; \
-    (void)recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM); \
-    return 0; }
-
+long readwrite(opcuaItemRecord *prec);
 void monitor(opcuaItemRecord *);
 
 long
 init_record (dbCommon *pdbc, int pass)
 {
     opcuaItemRecord *prec = reinterpret_cast<opcuaItemRecord *>(pdbc);
-    dbLoadLink(&prec->siml, DBF_USHORT, &prec->simm);
 
     if (pass == 0) {
         try {
@@ -75,9 +65,13 @@ init_record (dbCommon *pdbc, int pass)
             std::unique_ptr<RecordConnector> pvt (new RecordConnector(pdbc));
             pvt->plinkinfo = parseLink(pdbc, ent);
             ItemUaSdk *pitem = new ItemUaSdk(*pvt->plinkinfo); //FIXME: replace item creation with factory call
-            pitem->itemRecord = prec;
+            pitem->itemRecordConnector = pvt.get();
             pvt->pitem = pitem;
             prec->dpvt = pvt.release();
+            strncpy(prec->sess, pitem->linkinfo.session.c_str(), MAX_STRING_SIZE);
+            prec->sess[MAX_STRING_SIZE] = '\0';
+            strncpy(prec->subs, pitem->linkinfo.subscription.c_str(), MAX_STRING_SIZE);
+            prec->subs[MAX_STRING_SIZE] = '\0';
         } catch(std::exception& e) {
             std::cerr << prec->name << " Error in init_record : " << e.what() << std::endl;
             return S_dbLib_badLink;
@@ -90,34 +84,52 @@ init_record (dbCommon *pdbc, int pass)
 long
 process (dbCommon *pdbc)
 {
-    opcuaItemRecord *prec = reinterpret_cast<opcuaItemRecord *>(pdbc);
+    auto prec  = reinterpret_cast<opcuaItemRecord *>(pdbc);
+    auto pdset = reinterpret_cast<struct dset6<opcuaItemRecord> *>(prec->dset);
+    auto preason = &(reinterpret_cast<RecordConnector *>(prec->dpvt)->reason);
+
     int pact = prec->pact;
     long status = 0;
 
-    status = readValue(prec); /* read the new value */
+    if( (pdset == nullptr) || (pdset->readwrite == nullptr) ) {
+        prec->pact = true;
+        recGblRecordError(S_dev_missingSup, static_cast<void *>(prec), "readwrite");
+        return S_dev_missingSup;
+    }
+
+    status = readwrite(prec);
+    *preason = ProcessReason::none;
+
     if (!pact && prec->pact)
         return 0;
 
-    prec->pact = TRUE;
+    prec->pact = true;
     recGblGetTimeStamp(prec);
 
     monitor(prec);
 
     /* Wrap up */
     recGblFwdLink(prec);
-    prec->pact = FALSE;
+    prec->pact = false;
     return status;
 }
 
 long
 special (DBADDR *paddr, int after)
 {
-    opcuaItemRecord *prec = reinterpret_cast<opcuaItemRecord *>(paddr->precord);
-
     if (!after)
         return 0;
 
-    (void) prec;
+    if (paddr->special == SPC_MOD) {
+        int fieldIndex = dbGetFieldIndex(paddr);
+        auto preason = &(reinterpret_cast<RecordConnector *>(paddr->precord->dpvt)->reason);
+        if (fieldIndex == opcuaItemRecordWRITE) {
+            *preason = ProcessReason::writeRequest;
+        } else if (fieldIndex == opcuaItemRecordREAD) {
+            *preason = ProcessReason::readRequest;
+        }
+    }
+
     return 0;
 }
 
@@ -126,37 +138,20 @@ monitor (opcuaItemRecord *prec)
 {
     epicsUInt16 events = recGblResetAlarms(prec);
 
-    if (events)
-        db_post_events(prec, prec->val, events);
+    if (prec->ostatcode != prec->statcode) {
+        db_post_events(prec, &prec->statcode, events|DBE_VALUE|DBE_LOG);
+        db_post_events(prec, &prec->stattext, events|DBE_VALUE|DBE_LOG);
+        prec->ostatcode = prec->statcode;
+    }
 }
 
 long
-readValue (opcuaItemRecord *prec)
+readwrite (opcuaItemRecord *prec)
 {
+    auto pdset = reinterpret_cast<struct dset6<opcuaItemRecord> *>(prec->dset);
     long status = 0;
 
-    if (prec->pact)
-        goto read;
-
-    status = dbGetLink(&prec->siml, DBR_USHORT, &prec->simm, nullptr, nullptr);
-    if (status)
-        return status;
-
-    switch (prec->simm) {
-    case menuYesNoNO:
-read:
-//        status = pdset->read_string(prec);
-        break;
-
-    case menuYesNoYES:
-        recGblSetSevr(prec, SIMM_ALARM, prec->sims);
-//        status = dbGetLinkLS(&prec->siol, prec->val, prec->sizv, &prec->len);
-        break;
-
-    default:
-        recGblSetSevr(prec, SOFT_ALARM, INVALID_ALARM);
-        status = -1;
-    }
+    status = pdset->readwrite(prec);
 
     if (!status)
         prec->udf = FALSE;

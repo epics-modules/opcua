@@ -12,6 +12,7 @@
  */
 
 #include <memory>
+#include <cstring>
 
 #include <uaclientsdk.h>
 #include <uanodeid.h>
@@ -35,7 +36,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
-    , lastStatus(OpcUa_BadServerNotConnected)
+    , lastStatus(OpcUa_BadServerNotConnected)    
 {
     rebuildNodeId();
 
@@ -75,8 +76,8 @@ ItemUaSdk::show (int level) const
         std::cout << ";i=" << linkinfo.identifierNumber;
     else
         std::cout << ";s=" << linkinfo.identifierString;
-    if (linkinfo.isItemRecord)
-        std::cout << " record=" << itemRecord->name;
+    if (itemRecordConnector)
+        std::cout << " record=" << itemRecordConnector->getRecordName();
     std::cout << " status=" << UaStatus(lastStatus).toString().toUtf8()
               << " context=" << linkinfo.subscription
               << "@" << session->getName()
@@ -103,8 +104,8 @@ ItemUaSdk::show (int level) const
 
 int ItemUaSdk::debug() const
 {
-    if (linkinfo.isItemRecord)
-        return itemRecord->tpro;
+    if (itemRecordConnector)
+        return itemRecordConnector->debug();
     else if (auto pd = rootElement.lock())
         return pd->debug();
     else
@@ -143,8 +144,13 @@ void
 ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
-    tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
-    tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+    if (OpcUa_IsNotBad(value.StatusCode)) {
+        tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
+        tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+    } else {
+        tsSource = tsClient;
+        tsServer = tsClient;
+    }
     setReason(reason);
     if (getLastStatus() == OpcUa_BadServerNotConnected && value.StatusCode == OpcUa_BadNodeIdUnknown)
         errlogPrintf("OPC UA session %s: item ns=%d;%s%.*d%s : BadNodeIdUnknown\n",
@@ -159,6 +165,9 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 
     if (auto pd = rootElement.lock())
         pd->setIncomingData(value.Value, reason);
+
+    if (itemRecordConnector)
+        itemRecordConnector->requestRecordProcessing(reason);
 }
 
 void
@@ -166,11 +175,34 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
     setReason(reason);
-    if (reason == ProcessReason::connectionLoss)
+    if (reason == ProcessReason::connectionLoss) {
+        tsSource = tsClient;
+        tsServer = tsClient;
         setLastStatus(OpcUa_BadServerNotConnected);
+    }
 
     if (auto pd = rootElement.lock()) {
         pd->setIncomingEvent(reason);
+    }
+
+    if (itemRecordConnector)
+        itemRecordConnector->requestRecordProcessing(reason);
+}
+
+void
+ItemUaSdk::getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len, epicsTimeStamp *ts)
+{
+    *code = lastStatus.code();
+    if (text && len) {
+        strncpy(text, lastStatus.toString().toUtf8(), len);
+        text[len-1] = '\0';
+    }
+
+    if (ts && itemRecordConnector) {
+        if (itemRecordConnector->plinkinfo->useServerTimestamp)
+            *ts = tsServer;
+        else
+            *ts = tsSource;
     }
 }
 

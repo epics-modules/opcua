@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -82,6 +82,8 @@ public:
         return pdataelement->writeArray(val, len, num, prec);
     }
 
+    void getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len) { pitem->getStatus(code, text, len); }
+
     void setDataElement(std::shared_ptr<DataElement> data) { pdataelement = data; }
     void clearDataElement() { pdataelement = nullptr; }
 
@@ -116,6 +118,8 @@ private:
     CALLBACK connectionLossCallback;
     CALLBACK readFailureCallback;
     CALLBACK writeFailureCallback;
+    CALLBACK readRequestCallback;
+    CALLBACK writeRequestCallback;
 };
 
 } // namespace DevOpcua

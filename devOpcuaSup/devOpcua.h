@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -67,19 +67,22 @@ typedef struct linkInfo {
  */
 enum ProcessReason { none = 0, incomingData, connectionLoss,
                      readComplete, readFailure,
-                     writeComplete, writeFailure };
+                     writeComplete, writeFailure,
+                     readRequest, writeRequest };
 
 inline const char *
 processReasonString (const ProcessReason type)
 {
     switch(type) {
-        case none:            return "none";
-        case incomingData:    return "incomingData";
-        case connectionLoss:  return "connectionLoss";
-        case readComplete:    return "readComplete";
-        case readFailure:     return "readFailure";
-        case writeComplete:   return "writeComplete";
-        case writeFailure:    return "writeFailure";
+    case none:            return "none";
+    case incomingData:    return "incomingData";
+    case connectionLoss:  return "connectionLoss";
+    case readComplete:    return "readComplete";
+    case readFailure:     return "readFailure";
+    case writeComplete:   return "writeComplete";
+    case writeFailure:    return "writeFailure";
+    case readRequest:     return "readRequest";
+    case writeRequest:    return "writeRequest";
     }
     return "Illegal Value";
 }

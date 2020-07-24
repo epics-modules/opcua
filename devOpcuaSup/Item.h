@@ -13,11 +13,13 @@
 #ifndef DEVOPCUA_ITEM_H
 #define DEVOPCUA_ITEM_H
 
-struct opcuaItemRecord;
-
 namespace DevOpcua {
 
+#include <epicsTypes.h>
+#include <epicsTime.h>
+
 struct linkInfo;
+class RecordConnector;
 
 /**
  * @brief The Item interface for an OPC UA item.
@@ -40,6 +42,18 @@ public:
     virtual void requestWrite() = 0;
 
     /**
+     * @brief Get the cached status of the last item operation.
+     *
+     * @param[out] code  OPC UA status code
+     * @param[out] text  OPC UA status text (will be null terminated)
+     * @param[in]  len  Length of text buffer
+     */
+    virtual void getStatus(epicsUInt32 *code,
+                           char *text = nullptr,
+                           const epicsUInt32 len = 0,
+                           epicsTimeStamp *ts = nullptr) = 0;
+
+    /**
      * @brief Print configuration and status on stdout.
      *
      * The verbosity level controls the amount of information:
@@ -57,8 +71,8 @@ public:
      */
     virtual bool isMonitored() const = 0;
 
-    const linkInfo &linkinfo;     /**< configuration of the item as parsed from the EPICS record */
-    opcuaItemRecord *itemRecord;  /**< pointer to the itemRecord (if linked to one) */
+    const linkInfo &linkinfo;              /**< configuration of the item as parsed from the EPICS record */
+    RecordConnector *itemRecordConnector;  /**< pointer to the itemRecord connector (if linked to one) */
 
 protected:
     /**
@@ -66,7 +80,10 @@ protected:
      *
      * @param info  Item configuration as parsed from EPICS database
      */
-    Item(const linkInfo &info) : linkinfo(info) {}
+    Item(const linkInfo &info)
+        : linkinfo(info)
+        , itemRecordConnector(nullptr)
+    {}
 };
 
 } // namespace DevOpcua
