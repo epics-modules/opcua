@@ -998,7 +998,7 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         break;
     case OpcUaType_Int64:
         l = strtol(value, nullptr, 0);
-        if (isWithinRange<long, OpcUa_Int64>(l)) {
+        if (isWithinRange<OpcUa_Int64>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
             outgoingData.setInt64(static_cast<OpcUa_Int64>(l));
