@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -13,11 +13,15 @@
 #include <iostream>
 
 #include <uaplatformlayer.h>
+#include <uabase.h>
 
 #include <epicsThread.h>
 
 #include "Session.h"
 #include "SessionUaSdk.h"
+
+#define st(s) #s
+#define str(s) st(s)
 
 namespace DevOpcua {
 
@@ -69,7 +73,9 @@ Session::showOptionHelp ()
 const std::string &
 opcuaGetDriverName ()
 {
-    static const std::string sdk("Unified Automation C++ Based OPC UA Client SDK");
+    static const std::string sdk("Unified Automation C++ Client SDK v"
+                                 str(PROD_MAJOR) "." str(PROD_MINOR) "."
+                                 str(PROD_PATCH) "-" str(PROD_BUILD));
     return sdk;
 }
 
