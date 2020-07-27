@@ -6,16 +6,16 @@
 # R     device suffix
 # SESS  session name
 
-# static information (always read when connecting)
+# static information (read when connecting)
 record(stringin, "$(P)$(R)ManufacturerName") {
   field(DTYP, "OPCUA")
-  field(INP, "@$(SESS) i=2263")
+  field(INP, "@$(SESS) i=2263 monitor=n")
 }
 record(stringin, "$(P)$(R)ProductName") {
   field(DTYP, "OPCUA")
-  field(INP, "@$(SESS) i=2261")
+  field(INP, "@$(SESS) i=2261 monitor=n")
 }
 record(stringin, "$(P)$(R)SoftwareVersion") {
   field(DTYP, "OPCUA")
-  field(INP, "@$(SESS) i=2264")
+  field(INP, "@$(SESS) i=2264 monitor=n")
 }
