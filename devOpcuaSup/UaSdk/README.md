@@ -10,7 +10,7 @@ Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 ## Prerequisites
 
 *   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk] 1.5
-    (and up; 1.6 is supported).
+    (and up; 1.6 and 1.7 are supported).
 
 *   For OPC UA security support (authentication/encryption), you need
     libcrypto on your system - both when compiling the SDK and when generating
@@ -79,6 +79,14 @@ downstream modules, so that the configuration is always consistent.
 
 Please use the GitHub project's
 [issue tracker](https://github.com/ralphlange/opcua/issues).
+
+## Known issues
+
+Reported by Shi Li (ASIPP): \
+The C++ SDK version 1.7.1 has a bug that shows as monitored items not
+getting updates anymore after the server has disconnected and reconnected.
+A reboot of the IOC restores good behaviour until the server disconnects
+again. Updating the C++ SDK to version 1.7.2 resolves the issue.
 
 ## Credits
 
