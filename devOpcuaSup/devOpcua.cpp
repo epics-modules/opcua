@@ -450,7 +450,7 @@ opcua_write_analog (REC *prec)
             }
             if (useValue)
                 prec->val = value;
-            prec->udf = isnan(prec->val);
+            prec->udf = std::isnan(prec->val);
         }
         if (nextReason)
             pvt->requestRecordProcessing(nextReason);
