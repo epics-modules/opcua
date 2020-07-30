@@ -47,7 +47,17 @@ This is a standard EPICS module.
 Inside the `configure` subdirectory or one level above the TOP location
 (TOP is where this README file resides), create a file `RELEASE.local`
 that sets `EPICS_BASE` and `GTEST` to the absolute paths inside your EPICS
-installation.
+installation. The `GTEST` module is needed to compile and run the tests.
+Not defining it produces a clean build, but without any tests.
+
+Configure the compiler on Linux to use the C++11 standard by adding
+```makefile
+USR_CXXFLAGS_Linux += -std=c++11
+```
+to the `CONFIG_SITE` file (or one of the host/target specific site
+configuration files). \
+It is preferable to set this option globally in EPICS Base.
+
 
 The configuration necessary when building against a specific client library
 is documented in the `README.md` file inside the respective subdirectory of
