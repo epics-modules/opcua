@@ -792,6 +792,7 @@ protected:
      */
     DataElement(const std::string &name = "")
         : name(name)
+        , pconnector(nullptr)
         , isleaf(false)
     {}
 
