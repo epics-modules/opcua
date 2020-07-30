@@ -31,7 +31,7 @@ fi
 git clone --quiet --depth 5 https://github.com/ralphlange/opcua-client-libs.git opcua-client-libs
 (cd opcua-client-libs && git log -n1 )
 
-openssl aes-256-cbc -K $encrypted_178ee45b7f75_key -iv $encrypted_178ee45b7f75_iv \
+openssl aes-256-cbc -md md5 -k $encrypted_178ee45b7f75_pass \
 -in opcua-client-libs/uasdk-x86_64-${uasdkcc}-${UASDK}.tar.gz.enc -out ./sdk.tar.gz -d
 tar xzf ./sdk.tar.gz
 
