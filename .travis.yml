@@ -1,27 +1,52 @@
+# .travis.yml for use with EPICS Base ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# This is YAML - indentation levels are crucial
+
 language: cpp
 compiler: gcc
 dist: xenial
 
+cache:
+  directories:
+  - $HOME/.cache
+
+env:
+  global:
+    - SETUP_PATH=.ci-local:.ci
+
+addons:
+  apt:
+    packages:
+    # for all EPICS builds
+    - libreadline6-dev
+    - libncurses5-dev
+    - perl
+
 install:
-- ./.ci-local/travis-install.sh
-- ./.ci/travis-prepare.sh
+  - ./.ci-local/travis-install.sh
+  - python .ci/cue.py prepare
 
 script:
-- ./.ci/travis-build.sh
+  - python .ci/cue.py build
+  - python .ci/cue.py test
+  - python .ci/cue.py test-results
 
-matrix:
+# Define build jobs
+
+jobs:
   include:
 
-  - env: BASE_BRANCH=7.0 UASDK=1.5.6
+  - env: BASE=7.0 UASDK=1.5.6
     dist: trusty
 
-  - env: BASE_BRANCH=3.15 UASDK=1.5.6
+  - env: BASE=3.15 UASDK=1.5.6
     dist: trusty
 
-  - env: BASE_BRANCH=7.0 UASDK=1.6.3
+  - env: BASE=7.0 UASDK=1.6.3
     compiler: gcc-6
     addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
 
-  - env: BASE_BRANCH=3.15 UASDK=1.6.3
+  - env: BASE=3.15 UASDK=1.6.3
     compiler: gcc-6
     addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
