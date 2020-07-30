@@ -16,7 +16,7 @@ env:
     - SETUP_PATH=.ci-local:.ci
     - MODULES=gtest
     - GTEST=v1.0.0
-    - EXTRA="CMD_CXXFLAGS=-std=c++11"
+    - BASE_HOOK=.ci-local/base.patch
 
 addons:
   apt:
