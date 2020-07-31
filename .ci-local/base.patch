@@ -1,5 +1,13 @@
-diff -ruN orig/configure/CONFIG_SITE.local 3.15/configure/CONFIG_SITE.local
---- orig/configure/CONFIG_SITE.local	1970-01-01 01:00:00.000000000 +0100
-+++ 3.15/configure/CONFIG_SITE.local	2020-07-30 13:40:43.732920623 +0200
-@@ -0,0 +1 @@
+diff -ruN orig/configure/CONFIG_SITE 3.15.5/configure/CONFIG_SITE
+--- orig/configure/CONFIG_SITE	2016-12-13 14:25:23.000000000 +0100
++++ 3.15.5/configure/CONFIG_SITE	2020-07-31 19:33:28.679579528 +0200
+@@ -136,6 +136,9 @@
+ #  Must be either YES or NO.
+ STATIC_BUILD=NO
+ 
++# Switch gcc to use c++11
 +USR_CXXFLAGS_Linux += -std=c++11
++
+ # Host build optimization.
+ #  Must be either YES or NO.
+ HOST_OPT=YES
