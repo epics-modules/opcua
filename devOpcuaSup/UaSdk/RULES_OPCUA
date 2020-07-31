@@ -23,10 +23,11 @@ USR_SYS_LIBS_Linux += crypto
 endif
 
 # Depending on SDK version, C++ modules may have a 'cpp' suffix
-UASDK_LIBS = $(notdir $(wildcard $(foreach module, $(UASDK_MODULES), \
-    $(UASDK)/include/$(module) $(UASDK)/include/$(module)cpp)))
+UASDK_LIBS = $(notdir $(foreach module, $(UASDK_MODULES), \
+$(firstword $(wildcard $(UASDK)/include/$(module)cpp $(UASDK)/include/$(module)))))
 
-USR_INCLUDES += $(foreach lib, $(UASDK_LIBS), -I$(UASDK)/include/$(lib))
+USR_INCLUDES += -I$(UASDK)/include
+USR_INCLUDES += $(foreach lib, $(UASDK_LIBS),-I$(UASDK)/include/$(lib))
 # SDK libraries are not built with correct RUNPATH - rely on executable
 USR_LDFLAGS += -Wl,--disable-new-dtags
 
