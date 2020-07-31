@@ -58,7 +58,6 @@ to the `CONFIG_SITE` file (or one of the host/target specific site
 configuration files). \
 It is preferable to set this option globally in EPICS Base.
 
-
 The configuration necessary when building against a specific client library
 is documented in the `README.md` file inside the respective subdirectory of
 `devOpcuaSup`.
