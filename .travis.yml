@@ -27,7 +27,7 @@ addons:
     - perl
 
 install:
-  - ./.ci-local/travis-install.sh
+  - python .ci-local/install-sdk.py
   - python .ci/cue.py prepare
 
 script:
