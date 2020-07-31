@@ -7,6 +7,9 @@ language: cpp
 compiler: gcc
 dist: bionic
 
+# Only build PRs for local heads
+if: NOT (type = pull_request AND head_repo != ralphlange/opcua)
+
 cache:
   directories:
   - $HOME/.cache
