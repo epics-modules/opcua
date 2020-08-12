@@ -42,6 +42,12 @@ Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
          # install
     ```
 
+*   Using the evaluation binary bundle of Unified Automation (free download)
+    is supported.
+    However, the EVAL bundle contains shared-only libraries (namely the stack
+    component, see above), so only shared builds of this Device Support will
+    work.
+
 ## Building the device support module
 
 Inside the `configure` subdirectory or one level above the TOP location,
