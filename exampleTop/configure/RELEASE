@@ -28,6 +28,9 @@
 
 # When used as an embedded TOP
 OPCUA = $(TOP)/..
+# NOTE: if the parent module sets INSTALL_LOCATION, OPCUA must be set
+# explicitly to the absolute path of that, preferably in a RELEASE.local
+# file. (See README and issue #63)
 
 # EPICS_BASE should appear last so earlier modules can override stuff:
 #EPICS_BASE = /opt/epics/3.15.5

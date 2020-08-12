@@ -20,6 +20,11 @@ There are two ways to build the example application:
     Obviously, you can also just `cd` into the example and rebuild it
     without touching the parent module.
 
+    Note: If you set `INSTALL_LOCATION` in the parent (Device Support) module,
+    you have to create a file `RELEASE.local` inside `configure` (or at one
+    of the other usual places) that sets `OPCUA` to the absolute path
+    (`INSTALL_LOCATION`) of the OPC UA Device Support
+
 2.  __As a standalone module.__
     After copying the `exampleTop` module into your workspace (feel free to
     rename it), you will have to adapt its configuration.
