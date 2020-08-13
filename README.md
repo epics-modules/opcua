@@ -30,8 +30,8 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
 
 ### Using the Unified Automation Client SDK
 
-*   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk] 1.5
-    (and up; 1.6 is supported).
+*   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk]
+    (1.5/1.6/1.7 are supported, as well as their evaluation bundle).
 
 *   For OPC UA security support (authentication/encryption), you need
     libcrypto on your system - both when compiling the SDK and when generating

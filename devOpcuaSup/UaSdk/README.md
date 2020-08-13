@@ -9,8 +9,8 @@ Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 
 ## Prerequisites
 
-*   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk] 1.5
-    (and up; 1.6 and 1.7 are supported).
+*   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk]
+    (1.5/1.6/1.7 are supported, as well as their evaluation bundle).
 
 *   For OPC UA security support (authentication/encryption), you need
     libcrypto on your system - both when compiling the SDK and when generating
@@ -80,6 +80,10 @@ UASDK = C:/PROGRA~2/UnifiedAutomation/UaSdkCppBundleEval
 The SDK related configuration only has to be done in this module,
 which creates a `CONFIG_OPCUA` file that is automatically included by all
 downstream modules, so that the configuration is always consistent.
+
+When using the evaluation bundle of the SDK, only regular (shared) builds
+are supported.
+Do not set `STATIC_BUILD = YES` in your configuration.
 
 ## Feedback / Reporting issues
 
