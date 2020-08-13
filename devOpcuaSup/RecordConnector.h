@@ -88,8 +88,8 @@ public:
     void clearDataElement() { pdataelement = nullptr; }
 
     void requestRecordProcessing(const ProcessReason reason);
-    void requestOpcuaRead() { pitem->requestRead(); }
-    void requestOpcuaWrite() { pitem->requestWrite(); }
+    void requestOpcuaRead() { pitem->requestRead(prec->prio); }
+    void requestOpcuaWrite() { pitem->requestWrite(prec->prio); }
 
     const char *getRecordName() const { return prec->name; }
     const char *getRecordType() const { return prec->rdes->name; }

@@ -115,14 +115,14 @@ public:
      *
      * @param item  item to request beginRead for
      */
-    void requestRead(ItemUaSdk &item);
+    void requestRead(ItemUaSdk &item, const unsigned short priority);
 
     /**
      * @brief Request a beginWrite service for an item
      *
      * @param item  item to request beginWrite for
      */
-    void requestWrite(ItemUaSdk &item);
+    void requestWrite(ItemUaSdk &item, const unsigned short priority);
 
     /**
      * @brief Initiate read of all nodes.

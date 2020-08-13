@@ -289,7 +289,7 @@ SessionUaSdk::readAllNodes ()
 //TODO: Push to queue for worker thread (instead of doing a single item request)
 //      remember to apply connectInfo.nMaxOperationsPerServiceCall
 void
-SessionUaSdk::requestRead (ItemUaSdk &item)
+SessionUaSdk::requestRead (ItemUaSdk &item, const unsigned short priority)
 {
     UaStatus status;
     UaReadValueIds nodesToRead;
@@ -330,7 +330,7 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
 //TODO: Push to queue for worker thread (instead of doing a single item request)
 //      remember to apply connectInfo.nMaxOperationsPerServiceCall
 void
-SessionUaSdk::requestWrite (ItemUaSdk &item)
+SessionUaSdk::requestWrite (ItemUaSdk &item, const unsigned short priority)
 {
     UaStatus status;
     UaWriteValues nodesToWrite;
