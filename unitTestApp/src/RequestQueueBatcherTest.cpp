@@ -124,6 +124,22 @@ TEST_F(RQBQueuePushOnlyTest, twicePerQueue_SizesRefCountsCorrect) {
     EXPECT_EQ(c2.use_count(), 3l) << "c2 does not have the correct reference count";
 }
 
+TEST_F(RQBQueuePushOnlyTest, twicePerQueue_ClearEmptiesQueues) {
+    b0.pushRequest(c0, menuPriorityLOW);
+    b0.pushRequest(c1, menuPriorityMEDIUM);
+    b0.pushRequest(c2, menuPriorityHIGH);
+
+    EXPECT_EQ(b0.size(menuPriorityLOW), 2lu) << "Queue[LOW] returns wrong size";
+    EXPECT_EQ(b0.size(menuPriorityMEDIUM), 2lu) << "Queue[MEDIUM] returns wrong size";
+    EXPECT_EQ(b0.size(menuPriorityHIGH), 2lu) << "Queue[HIGH] returns wrong size";
+
+    b0.clear();
+
+    EXPECT_EQ(b0.size(menuPriorityLOW), 0lu) << "Queue[LOW] returns wrong size";
+    EXPECT_EQ(b0.size(menuPriorityMEDIUM), 0lu) << "Queue[MEDIUM] returns wrong size";
+    EXPECT_EQ(b0.size(menuPriorityHIGH), 0lu) << "Queue[HIGH] returns wrong size";
+}
+
 const unsigned int minTimeout = 2;
 const unsigned int maxTimeout = 80;
 

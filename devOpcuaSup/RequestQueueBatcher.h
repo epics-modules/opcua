@@ -152,6 +152,18 @@ public:
      */
     size_t size(const menuPriority priority) const { return queue[priority].size(); }
 
+    /**
+     * @brief Clears all queues (removing all unprocessed requests).
+     */
+    void clear() {
+        for (int prio = menuPriority_NUM_CHOICES-1; prio >= menuPriorityLOW; prio--) {
+            Guard G(lock[prio]);
+            while (!queue[prio].empty()) {
+                queue[prio].pop();
+            }
+        }
+    }
+
     // epicsThreadRunable API
     // Worker thread body
     virtual void run () override {
