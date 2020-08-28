@@ -24,6 +24,7 @@
 #include <recGbl.h>
 #include <callback.h>
 #include <alarm.h>
+#include <menuPriority.h>
 
 #include "devOpcua.h"
 #include "DataElement.h"
@@ -93,6 +94,8 @@ public:
 
     const char *getRecordName() const { return prec->name; }
     const char *getRecordType() const { return prec->rdes->name; }
+    menuPriority getRecordPriority() const { return static_cast<menuPriority>(prec->prio); }
+
     int debug() const { return prec->tpro; }
 
     /**
