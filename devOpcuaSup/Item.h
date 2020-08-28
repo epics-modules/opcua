@@ -75,8 +75,8 @@ public:
      */
     virtual bool isMonitored() const = 0;
 
-    const linkInfo &linkinfo;              /**< configuration of the item as parsed from the EPICS record */
-    RecordConnector *itemRecordConnector;  /**< pointer to the itemRecord connector (if linked to one) */
+    const linkInfo &linkinfo;           /**< configuration of the item as parsed from the EPICS record */
+    RecordConnector *recConnector;      /**< pointer to the relevant recordConnector */
 
 protected:
     /**
@@ -86,7 +86,7 @@ protected:
      */
     Item(const linkInfo &info)
         : linkinfo(info)
-        , itemRecordConnector(nullptr)
+        , recConnector(nullptr)
     {}
 };
 

@@ -65,7 +65,7 @@ init_record (dbCommon *pdbc, int pass)
             std::unique_ptr<RecordConnector> pvt (new RecordConnector(pdbc));
             pvt->plinkinfo = parseLink(pdbc, ent);
             ItemUaSdk *pitem = new ItemUaSdk(*pvt->plinkinfo); //FIXME: replace item creation with factory call
-            pitem->itemRecordConnector = pvt.get();
+            pitem->recConnector = pvt.get();
             pvt->pitem = pitem;
             prec->dpvt = pvt.release();
             strncpy(prec->sess, pitem->linkinfo.session.c_str(), MAX_STRING_SIZE);

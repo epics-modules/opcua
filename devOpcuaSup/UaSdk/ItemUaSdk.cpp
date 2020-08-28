@@ -76,9 +76,8 @@ ItemUaSdk::show (int level) const
         std::cout << ";i=" << linkinfo.identifierNumber;
     else
         std::cout << ";s=" << linkinfo.identifierString;
-    if (itemRecordConnector)
-        std::cout << " record=" << itemRecordConnector->getRecordName();
-    std::cout << " status=" << UaStatus(lastStatus).toString().toUtf8()
+    std::cout << " record=" << recConnector->getRecordName()
+              << " status=" << UaStatus(lastStatus).toString().toUtf8()
               << " context=" << linkinfo.subscription
               << "@" << session->getName()
               << " sampling=" << revisedSamplingInterval
@@ -104,12 +103,7 @@ ItemUaSdk::show (int level) const
 
 int ItemUaSdk::debug() const
 {
-    if (itemRecordConnector)
-        return itemRecordConnector->debug();
-    else if (auto pd = rootElement.lock())
-        return pd->debug();
-    else
-        return 0;
+    return recConnector->debug();
 }
 
 //FIXME: in case of itemRecord there might be no rootElement
@@ -166,8 +160,8 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
     if (auto pd = rootElement.lock())
         pd->setIncomingData(value.Value, reason);
 
-    if (itemRecordConnector)
-        itemRecordConnector->requestRecordProcessing(reason);
+    if (linkinfo.isItemRecord)
+        recConnector->requestRecordProcessing(reason);
 }
 
 void
@@ -185,8 +179,8 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
         pd->setIncomingEvent(reason);
     }
 
-    if (itemRecordConnector)
-        itemRecordConnector->requestRecordProcessing(reason);
+    if (linkinfo.isItemRecord)
+        recConnector->requestRecordProcessing(reason);
 }
 
 void
@@ -198,8 +192,8 @@ ItemUaSdk::getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len, epics
         text[len-1] = '\0';
     }
 
-    if (ts && itemRecordConnector) {
-        if (itemRecordConnector->plinkinfo->useServerTimestamp)
+    if (ts && recConnector) {
+        if (recConnector->plinkinfo->useServerTimestamp)
             *ts = tsServer;
         else
             *ts = tsSource;
