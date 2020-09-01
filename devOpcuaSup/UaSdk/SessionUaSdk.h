@@ -26,6 +26,7 @@
 #include <epicsTypes.h>
 #include <initHooks.h>
 
+#include "RequestQueueBatcher.h"
 #include "Session.h"
 
 namespace DevOpcua {
@@ -34,6 +35,8 @@ using namespace UaClientSdk;
 
 class SubscriptionUaSdk;
 class ItemUaSdk;
+struct WriteRequest;
+struct ReadRequest;
 
 /**
  * @brief The SessionUaSdk implementation of an OPC UA client session.
@@ -49,7 +52,11 @@ class ItemUaSdk;
  * and freeing all related resources on both server and client.
  */
 
-class SessionUaSdk : public UaSessionCallback, public Session
+class SessionUaSdk
+        : public UaSessionCallback
+        , public Session
+        , public RequestConsumer<WriteRequest>
+        , public RequestConsumer<ReadRequest>
 {
     UA_DISABLE_COPY(SessionUaSdk);
     friend class SubscriptionUaSdk;
@@ -229,6 +236,10 @@ public:
             const UaStatusCodeArray &results,
             const UaDiagnosticInfos &diagnosticInfos) override;
 
+    // RequestConsumer<> interfaces
+    virtual void processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch) override;
+    virtual void processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch) override;
+
 private:
     /**
      * @brief Register all nodes that are configured to be registered.
@@ -261,7 +272,9 @@ private:
     int transactionId;                                        /**< next transaction id */
     /** itemUaSdk vectors of outstanding read or write operations, indexed by transaction id */
     std::map<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>> outstandingOps;
-    epicsMutex opslock;                                      /**< lock for outstandingOps map */
+    epicsMutex opslock;                                       /**< lock for outstandingOps map */
+    RequestQueueBatcher<WriteRequest> writer;                 /**< batcher for write requests */
+    RequestQueueBatcher<ReadRequest> reader;                  /**< batcher for read requests */
 };
 
 } // namespace DevOpcua
