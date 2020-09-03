@@ -260,7 +260,8 @@ parseLink (dbCommon *prec, const DBEntry &ent)
             std::cout << " sampling=" << pinfo->samplingInterval
                       << " qsize=" << pinfo->queueSize
                       << " cqsize=" << pinfo->clientQueueSize
-                      << " discard=" << (pinfo->discardOldest ? "old" : "new");
+                      << " discard=" << (pinfo->discardOldest ? "old" : "new")
+                      << " registered=" << (pinfo->registerNode ? "y" : "n");
         } else {
             std::cout << " element=" << pinfo->element;
         }
