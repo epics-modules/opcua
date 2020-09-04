@@ -12,6 +12,8 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <thread>
+#include <chrono>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -25,6 +27,11 @@
 
 #define TAG_FINISHED UINT_MAX
 
+static unsigned int nextTimeAdd = 2;
+static void *fixture;
+static epicsEvent nextTimeWait;
+static double lastHoldOff = 0.0;
+
 namespace {
 
 using namespace DevOpcua;
@@ -37,30 +44,32 @@ public:
     unsigned int tag;
 };
 
-class TestReceptor : public RequestConsumer<TestCargo> {
+class TestDumper : public RequestConsumer<TestCargo> {
 public:
-    TestReceptor() {}
-    virtual ~TestReceptor() {}
+    TestDumper() {}
+    virtual ~TestDumper() {}
     virtual void processRequests(std::vector<std::shared_ptr<TestCargo>> &batch) override;
     void reset() {
         noOfBatches = 0;
         batchSizes.clear();
         batchData.clear();
+        nextTimeAdd = 2;
     }
 
     epicsEvent finished;
     unsigned int noOfBatches;
     std::vector<unsigned int> batchSizes;
-    std::vector<std::vector<unsigned int>> batchData;
+    std::vector<std::pair<double, std::vector<unsigned int>>> batchData;
 };
 
 void
-TestReceptor::processRequests(std::vector<std::shared_ptr<TestCargo>> &batch)
+TestDumper::processRequests(std::vector<std::shared_ptr<TestCargo>> &batch)
 {
     noOfBatches++;
     batchSizes.push_back(batch.size());
     std::vector<unsigned int> data;
     bool done = false;
+
     for (const auto &p : batch) {
         if (p->tag == TAG_FINISHED) {
             done = true;
@@ -68,18 +77,18 @@ TestReceptor::processRequests(std::vector<std::shared_ptr<TestCargo>> &batch)
             data.push_back(p->tag);
         }
     }
-    batchData.push_back(std::move(data));
+    batchData.push_back(std::make_pair(lastHoldOff, std::move(data)));
     if (done)
         finished.signal();
 }
 
-TestReceptor dump;
+TestDumper dump;
 
 // Fixture for testing RequestQueueBatcher queues only (no worker thread)
 class RQBQueuePushOnlyTest : public ::testing::Test {
 protected:
     RQBQueuePushOnlyTest()
-        : b0("test batcher 0", dump, 0, false)
+        : b0("test batcher 0", dump, 0, 0, 0, false)
         , c0(std::make_shared<TestCargo>(0))
         , c1(std::make_shared<TestCargo>(1))
         , c2(std::make_shared<TestCargo>(2))
@@ -93,7 +102,7 @@ protected:
     std::shared_ptr<TestCargo> c0, c1, c2;
 };
 
-TEST_F(RQBQueuePushOnlyTest, status_OncePerQueue_SizesRefCountsCorrect) {
+TEST_F(RQBQueuePushOnlyTest, oncePerQueue_SizesRefCountsCorrect) {
     EXPECT_EQ(b0.size(menuPriorityLOW), 1lu) << "Queue LOW of size 1 returns wrong size";
     EXPECT_EQ(b0.size(menuPriorityMEDIUM), 1lu) << "Queue MEDIUM of size 1 returns wrong size";
     EXPECT_EQ(b0.size(menuPriorityHIGH), 1lu) << "Queue HIGH of size 1 returns wrong size";
@@ -102,7 +111,7 @@ TEST_F(RQBQueuePushOnlyTest, status_OncePerQueue_SizesRefCountsCorrect) {
     EXPECT_EQ(c2.use_count(), 2l) << "c2 does not have the correct reference count";
 }
 
-TEST_F(RQBQueuePushOnlyTest, status_TwicePerQueue_SizesRefCountsCorrect) {
+TEST_F(RQBQueuePushOnlyTest, twicePerQueue_SizesRefCountsCorrect) {
     b0.pushRequest(c0, menuPriorityLOW);
     b0.pushRequest(c1, menuPriorityMEDIUM);
     b0.pushRequest(c2, menuPriorityHIGH);
@@ -115,17 +124,28 @@ TEST_F(RQBQueuePushOnlyTest, status_TwicePerQueue_SizesRefCountsCorrect) {
     EXPECT_EQ(c2.use_count(), 3l) << "c2 does not have the correct reference count";
 }
 
+const unsigned int minTimeout = 2;
+const unsigned int maxTimeout = 80;
+
 // Fixture for testing the batcher (with worker thread)
 class RQBBatcherTest : public ::testing::Test {
+public:
+    void addB10hRequests(const unsigned int no)
+    {
+        addRequests(b10h, menuPriorityLOW, no);
+    }
+
 protected:
     RQBBatcherTest()
         : nextTag{2000000, 1000000, 0} // so that any batch must end up sorted
-        , b0("test batcher 0", dump, 0, false)
-        , b10("test batcher 10", dump, 10, false)
+        , b0("test batcher 0", dump, 0, 0, 0, false)
+        , b10("test batcher 10", dump, 10, 0, 0, false)
         , b100("test batcher 100", dump, 100)
+        , b10h("test batcher 10h", dump, 10, minTimeout * 1000, maxTimeout * 1000)
     {
         dump.reset();
         allSentCargo.clear();
+        ::fixture = &fixture();
     }
 
     virtual void TearDown() override
@@ -138,7 +158,8 @@ protected:
         EXPECT_EQ(wrong, 0u) << "members of cargo have use_count() not 1 after finish";
 
         // Strict PQ means each batch is sorted HIGH - MEDIUM - LOW and in the order of the queues
-        for ( auto data : dump.batchData ) {
+        for ( const auto &log : dump.batchData ) {
+            const auto &data = log.second;
             if (data.size() > 1) {
                 for ( unsigned int i = 0; i < data.size()-1; i++ ) {
                     EXPECT_LT(data[i], data[i+1]) << "Requests inside a batch out of order";
@@ -179,7 +200,7 @@ protected:
         virtual void run () override {
             for (unsigned int i = 0; i < no; i++) {
                 parent.addRequests(b, static_cast<menuPriority>(rand() % 3), 1);
-                if (!i % 100) epicsThreadSleep(0.0); // allow context switch
+                if (!i % 100) epicsThreadSleep(0.04); // allow context switch
             }
             done.signal();
         }
@@ -196,16 +217,16 @@ protected:
     {
         b.pushRequest(std::make_shared<TestCargo>(TAG_FINISHED), menuPriorityLOW);
         dump.finished.wait();
-        epicsThreadSleep(0.001); // to let the batcher drop the reference
+        epicsThread::sleep(0.001); // to let the batcher drop the reference
     }
 
     epicsMutex lock;
     unsigned int nextTag[menuPriority_NUM_CHOICES];
-    RequestQueueBatcher<TestCargo> b0, b10, b100;
+    RequestQueueBatcher<TestCargo> b0, b10, b100, b10h;
     std::vector<std::shared_ptr<TestCargo>> allSentCargo;
 };
 
-TEST_F(RQBBatcherTest, status_SizeUnlimited_90RequestsInOneBatch) {
+TEST_F(RQBBatcherTest, sizeUnlimited_90RequestsInOneBatch) {
     addRequests(b0, menuPriorityLOW, 15);
     addRequests(b0, menuPriorityMEDIUM, 15);
     addRequests(b0, menuPriorityLOW, 15);
@@ -229,7 +250,7 @@ TEST_F(RQBBatcherTest, status_SizeUnlimited_90RequestsInOneBatch) {
     EXPECT_EQ(dump.batchSizes[0], 91u) << "Batch[0] did not contain all cargo";
 }
 
-TEST_F(RQBBatcherTest, status_Size10_90RequestsManyBatches) {
+TEST_F(RQBBatcherTest, size10_90RequestsManyBatches) {
     addRequests(b10, menuPriorityLOW, 30);
     addRequests(b10, menuPriorityMEDIUM, 30);
     addRequests(b10, menuPriorityHIGH, 30);
@@ -246,7 +267,7 @@ TEST_F(RQBBatcherTest, status_Size10_90RequestsManyBatches) {
     EXPECT_THAT(dump.batchSizes, Each(Le(10u))) << "Some batches are exceeding the size limit";
 }
 
-TEST_F(RQBBatcherTest, status_Size100_100kRequests4ThreadsManyBatches) {
+TEST_F(RQBBatcherTest, size100_100kRequests4ThreadsManyBatches) {
     Adder a1(fixture(), b100, 25000);
     Adder a2(fixture(), b100, 25000);
     Adder a3(fixture(), b100, 25000);
@@ -266,6 +287,47 @@ TEST_F(RQBBatcherTest, status_Size100_100kRequests4ThreadsManyBatches) {
     EXPECT_EQ(allSentCargo.size(), 100000u) << "Not all cargo sent";
     EXPECT_GE(dump.noOfBatches, 1000u) << "Cargo processed < 1000 batches";
     EXPECT_THAT(dump.batchSizes, Each(Le(100u))) << "Some batches are exceeding the size limit";
+}
+
+TEST_F(RQBBatcherTest, size10HoldOff_20RequestsVaryingBatches) {
+    addRequests(b10h, menuPriorityLOW, 1);
+
+    nextTimeWait.wait();
+    // b10h is auto-started
+    finish_wait(b10h);
+
+    EXPECT_EQ(b10h.size(menuPriorityLOW), 0lu) << "Queue[LOW] returns wrong size";
+    EXPECT_EQ(b10h.size(menuPriorityMEDIUM), 0lu) << "Queue[MEDIUM] returns wrong size";
+    EXPECT_EQ(b10h.size(menuPriorityHIGH), 0lu) << "Queue[HIGH] of returns wrong size";
+
+    EXPECT_EQ(allSentCargo.size(), 55u) << "Not all cargo sent";
+    EXPECT_EQ(dump.noOfBatches, 11u) << "Cargo processed != 11 batches";
+    EXPECT_THAT(dump.batchSizes, Each(Le(10u))) << "Some batches are exceeding the size limit";
+    for (unsigned int i = 0; i < dump.batchData.size(); i++ ) {
+        if (i < dump.batchData.size() - 1) {
+            EXPECT_EQ(dump.batchData[i+1].first,
+                    minTimeout + (maxTimeout-minTimeout) / 10.0 * dump.batchData[i].second.size() )
+                    << "Wrong timeout period after batch " << i
+                    << " (size " << dump.batchData[i].second.size() << ")";
+        }
+    }
+}
+
+// Mocking libCom's epicsThreadSleep();
+// periods < 1.0s are passed through, the others are intercepted
+
+extern "C" void epicsThreadSleep(double seconds)
+{
+    if (seconds < 1.0) {
+        std::this_thread::sleep_for(std::chrono::duration<double>(seconds));
+    } else {
+        lastHoldOff = seconds;
+        if (nextTimeAdd < 11) {
+            static_cast<RQBBatcherTest*>(fixture)->addB10hRequests(nextTimeAdd++);
+        } else {
+            nextTimeWait.signal();
+        }
+    }
 }
 
 } // namespace
