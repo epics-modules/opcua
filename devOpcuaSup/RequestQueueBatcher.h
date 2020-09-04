@@ -26,6 +26,7 @@
 namespace DevOpcua {
 
 /**
+ * @class RequestQueueBatcher
  * @brief A queue + batcher for handling outgoing service requests.
  *
  * Items put requests (reads or writes) on the queue,
@@ -34,12 +35,13 @@ namespace DevOpcua {
  *
  * A worker thread pops requests from the queue and collects them into
  * a batch (std::vector<>), honoring the configured limit of items per service
- * request.
+ * request. The batch is delivered to the consumer (lower level library) followed
+ * by waiting the configured hold-off time (linear interpolation between a minimal
+ * time (after a batch of size 1) and a maximum (after a full batch).
  *
  * The template parameter T is the implementation specific request cargo class
  * (i.e., the class of the things to be queued).
  */
-
 
 /**
  * @brief Callback API for delivery of the request batches.
@@ -70,11 +72,27 @@ template<typename T>
 class RequestQueueBatcher : public epicsThreadRunable
 {
 public:
+    /**
+     * @brief Construct (and possibly start) a RequestQueueBatcher.
+     *
+     * @param name  name for the batcher thread
+     * @param consumer  callback interface of the request consumer
+     * @param maxRequestsPerBatch  limit of items per service call
+     * @param minHoldOff  minimal holdoff time (after a batch of 1) [msec]
+     * @param maxHoldOff  maximal holdoff time (after a full batch) [msec]
+     * @param startWorkerNow  true = start now; false = use start() method
+     */
     RequestQueueBatcher(const std::string &name,
                         RequestConsumer<T> &consumer,
-                        const unsigned maxRequestsPerBatch = 0,
+                        const unsigned int maxRequestsPerBatch = 0,
+                        const unsigned int minHoldOff = 0,
+                        const unsigned int maxHoldOff = 0,
                         const bool startWorkerNow = true)
         : maxBatchSize(maxRequestsPerBatch)
+        , holdOffVar(maxHoldOff > 0 ?
+                         (maxHoldOff - minHoldOff) / maxRequestsPerBatch / 1e3
+                       : 0)
+        , holdOffFix(minHoldOff / 1e3)
         , worker(*this, name.c_str(),
                  epicsThreadGetStackSize(epicsThreadStackSmall),
                  epicsThreadPriorityMedium)
@@ -139,27 +157,36 @@ public:
     virtual void run () override {
         bool allDone = true;
         do {
-            std::vector<std::shared_ptr<T>> batch;
+            double holdOff;
 
             if (allDone) workToDo.wait();
             if (workerShutdown) break;
 
-            // Plain priority queue algorithm (for the time being)
-            allDone = true;
-            for (int prio = menuPriority_NUM_CHOICES-1; prio >= menuPriorityLOW; prio--) {
-                if (!maxBatchSize || batch.size() < maxBatchSize) {
-                    Guard G(lock[prio]);
-                    while (queue[prio].size() && (!maxBatchSize || batch.size() < maxBatchSize)) {
-                        batch.emplace_back(std::move(queue[prio].front()));
-                        queue[prio].pop();
+            { // Scope for cargo vector
+                std::vector<std::shared_ptr<T>> batch;
+
+                // Plain priority queue algorithm (for the time being)
+                allDone = true;
+                for (int prio = menuPriority_NUM_CHOICES-1; prio >= menuPriorityLOW; prio--) {
+                    if (!maxBatchSize || batch.size() < maxBatchSize) {
+                        Guard G(lock[prio]);
+                        while (queue[prio].size() && (!maxBatchSize || batch.size() < maxBatchSize)) {
+                            batch.emplace_back(std::move(queue[prio].front()));
+                            queue[prio].pop();
+                        }
                     }
+                    if (!queue[prio].empty())
+                        allDone = false;
                 }
-                if (!queue[prio].empty())
-                    allDone = false;
+
+                if (!batch.empty())
+                    consumer.processRequests(batch);
+
+                holdOff = holdOffFix + holdOffVar * batch.size();
             }
 
-            if (!batch.empty())
-                consumer.processRequests(batch);
+            if (holdOff > 0.0)
+                epicsThread::sleep(holdOff);
 
         } while (true);
     }
@@ -168,6 +195,7 @@ private:
     epicsMutex lock[menuPriority_NUM_CHOICES];
     std::queue<std::shared_ptr<T>> queue[menuPriority_NUM_CHOICES];
     const unsigned maxBatchSize;
+    const double holdOffVar, holdOffFix;
     epicsThread worker;
     epicsEvent workToDo;
     bool workerShutdown;
