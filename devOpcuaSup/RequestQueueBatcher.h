@@ -88,11 +88,9 @@ public:
                         const unsigned int minHoldOff = 0,
                         const unsigned int maxHoldOff = 0,
                         const bool startWorkerNow = true)
-        : maxBatchSize(maxRequestsPerBatch)
-        , holdOffVar(maxHoldOff > 0 ?
-                         (maxHoldOff - minHoldOff) / maxRequestsPerBatch / 1e3
-                       : 0)
-        , holdOffFix(minHoldOff / 1e3)
+        : maxBatchSize(0)
+        , holdOffVar(0.0)
+        , holdOffFix(0.0)
         , worker(*this, name.c_str(),
                  epicsThreadGetStackSize(epicsThreadStackSmall),
                  epicsThreadPriorityMedium)
@@ -100,6 +98,7 @@ public:
         , workerShutdown(false)
         , consumer(consumer)
     {
+        setParams(maxRequestsPerBatch, minHoldOff, maxHoldOff);
         if (startWorkerNow)
             startWorker();
     }
@@ -164,12 +163,32 @@ public:
         }
     }
 
+    /**
+     * @brief Sets batcher parameters.
+     *
+     * @param maxRequestsPerBatch  limit of items per service call
+     * @param minHoldOff  minimal holdoff time (after a batch of 1) [msec]
+     * @param maxHoldOff  maximal holdoff time (after a full batch) [msec]
+     */
+    void setParams(const unsigned int maxRequestsPerBatch,
+                   const unsigned int minHoldOff = 0,
+                   const unsigned int maxHoldOff = 0)
+    {
+        Guard G(paramLock);
+        maxBatchSize = maxRequestsPerBatch;
+        if (maxRequestsPerBatch)
+            holdOffVar = maxHoldOff ? (maxHoldOff - minHoldOff) / maxRequestsPerBatch / 1e3
+                                    : 0.0;
+        holdOffFix = minHoldOff / 1e3;
+    }
+
     // epicsThreadRunable API
     // Worker thread body
     virtual void run () override {
         bool allDone = true;
         do {
             double holdOff;
+            unsigned int max;
 
             if (allDone) workToDo.wait();
             if (workerShutdown) break;
@@ -177,12 +196,17 @@ public:
             { // Scope for cargo vector
                 std::vector<std::shared_ptr<T>> batch;
 
+                { // Scope for parameter guard
+                    Guard G(paramLock);
+                    max = maxBatchSize;
+                }
+
                 // Plain priority queue algorithm (for the time being)
                 allDone = true;
                 for (int prio = menuPriority_NUM_CHOICES-1; prio >= menuPriorityLOW; prio--) {
-                    if (!maxBatchSize || batch.size() < maxBatchSize) {
+                    if (!max || batch.size() < max) {
                         Guard G(lock[prio]);
-                        while (queue[prio].size() && (!maxBatchSize || batch.size() < maxBatchSize)) {
+                        while (queue[prio].size() && (!max || batch.size() < max)) {
                             batch.emplace_back(std::move(queue[prio].front()));
                             queue[prio].pop();
                         }
@@ -194,7 +218,10 @@ public:
                 if (!batch.empty())
                     consumer.processRequests(batch);
 
-                holdOff = holdOffFix + holdOffVar * batch.size();
+                { // Scope for parameter guard
+                    Guard G(paramLock);
+                    holdOff = holdOffFix + holdOffVar * batch.size();
+                }
             }
 
             if (holdOff > 0.0)
@@ -206,8 +233,9 @@ public:
 private:
     epicsMutex lock[menuPriority_NUM_CHOICES];
     std::queue<std::shared_ptr<T>> queue[menuPriority_NUM_CHOICES];
-    const unsigned maxBatchSize;
-    const double holdOffVar, holdOffFix;
+    epicsMutex paramLock;
+    unsigned maxBatchSize;
+    double holdOffVar, holdOffFix;
     epicsThread worker;
     epicsEvent workToDo;
     bool workerShutdown;
