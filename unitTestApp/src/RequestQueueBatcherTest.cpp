@@ -29,7 +29,7 @@
 
 static unsigned int nextTimeAdd = 2;
 static void *fixture;
-static epicsEvent nextTimeWait;
+static epicsEvent allPushesDone;
 static double lastHoldOff = 0.0;
 
 namespace {
@@ -78,8 +78,10 @@ TestDumper::processRequests(std::vector<std::shared_ptr<TestCargo>> &batch)
         }
     }
     batchData.push_back(std::make_pair(lastHoldOff, std::move(data)));
-    if (done)
+    if (done) {
+        epicsThread::sleep(0.01); // make sure the main thread waits
         finished.signal();
+    }
 }
 
 TestDumper dump;
@@ -142,6 +144,8 @@ TEST_F(RQBQueuePushOnlyTest, twicePerQueue_ClearEmptiesQueues) {
 
 const unsigned int minTimeout = 2;
 const unsigned int maxTimeout = 80;
+const unsigned int minTimeout2 = 3;
+const unsigned int maxTimeout2 = 100;
 
 // Fixture for testing the batcher (with worker thread)
 class RQBBatcherTest : public ::testing::Test {
@@ -182,7 +186,6 @@ protected:
                 }
             }
         }
-
     }
 
     RQBBatcherTest &fixture() { return *this; }
@@ -216,7 +219,7 @@ protected:
         virtual void run () override {
             for (unsigned int i = 0; i < no; i++) {
                 parent.addRequests(b, static_cast<menuPriority>(rand() % 3), 1);
-                if (!i % 100) epicsThreadSleep(0.04); // allow context switch
+                if (!i % 10) epicsThreadSleep(0.04); // allow context switch
             }
             done.signal();
         }
@@ -229,7 +232,7 @@ protected:
         epicsThread t;
     };
 
-    void finish_wait(RequestQueueBatcher<TestCargo> &b)
+    void pushFinish_waitForDump(RequestQueueBatcher<TestCargo> &b)
     {
         b.pushRequest(std::make_shared<TestCargo>(TAG_FINISHED), menuPriorityLOW);
         dump.finished.wait();
@@ -249,13 +252,15 @@ TEST_F(RQBBatcherTest, sizeUnlimited_90RequestsInOneBatch) {
     addRequests(b0, menuPriorityHIGH, 15);
     addRequests(b0, menuPriorityMEDIUM, 15);
     addRequests(b0, menuPriorityHIGH, 15);
+    // push the finish marker
+    b0.pushRequest(std::make_shared<TestCargo>(TAG_FINISHED), menuPriorityLOW);
 
-    EXPECT_EQ(b0.size(menuPriorityLOW), 30u) << "Queue[LOW] returns wrong size";
+    EXPECT_EQ(b0.size(menuPriorityLOW), 31u) << "Queue[LOW] returns wrong size";
     EXPECT_EQ(b0.size(menuPriorityMEDIUM), 30u) << "Queue[MEDIUM] returns wrong size";
     EXPECT_EQ(b0.size(menuPriorityHIGH), 30u) << "Queue[HIGH] of returns wrong size";
 
     b0.startWorker();
-    finish_wait(b0);
+    dump.finished.wait();
 
     EXPECT_TRUE(b0.empty(menuPriorityLOW)) << "Queue[LOW] not empty";
     EXPECT_TRUE(b0.empty(menuPriorityMEDIUM)) << "Queue[MEDIUM] not empty";
@@ -272,7 +277,7 @@ TEST_F(RQBBatcherTest, size10_90RequestsManyBatches) {
     addRequests(b10, menuPriorityHIGH, 30);
 
     b10.startWorker();
-    finish_wait(b10);
+    pushFinish_waitForDump(b10);
 
     EXPECT_EQ(b10.size(menuPriorityLOW), 0u) << "Queue[LOW] returns wrong size";
     EXPECT_EQ(b10.size(menuPriorityMEDIUM), 0u) << "Queue[MEDIUM] returns wrong size";
@@ -294,7 +299,7 @@ TEST_F(RQBBatcherTest, size100_100kRequests4ThreadsManyBatches) {
     a4.done.wait();
 
     // b100 is auto-started
-    finish_wait(b100);
+    pushFinish_waitForDump(b100);
 
     EXPECT_EQ(b100.size(menuPriorityLOW), 0lu) << "Queue[LOW] returns wrong size";
     EXPECT_EQ(b100.size(menuPriorityMEDIUM), 0lu) << "Queue[MEDIUM] returns wrong size";
@@ -306,11 +311,12 @@ TEST_F(RQBBatcherTest, size100_100kRequests4ThreadsManyBatches) {
 }
 
 TEST_F(RQBBatcherTest, size10HoldOff_20RequestsVaryingBatches) {
-    addRequests(b10h, menuPriorityLOW, 1);
 
-    nextTimeWait.wait();
+    addRequests(b10h, menuPriorityLOW, 1);
+    allPushesDone.wait();
+
     // b10h is auto-started
-    finish_wait(b10h);
+    pushFinish_waitForDump(b10h);
 
     EXPECT_EQ(b10h.size(menuPriorityLOW), 0lu) << "Queue[LOW] returns wrong size";
     EXPECT_EQ(b10h.size(menuPriorityMEDIUM), 0lu) << "Queue[MEDIUM] returns wrong size";
@@ -329,6 +335,32 @@ TEST_F(RQBBatcherTest, size10HoldOff_20RequestsVaryingBatches) {
     }
 }
 
+TEST_F(RQBBatcherTest, size10HoldOff_20RequestsVaryingBatchesAfterParamChange) {
+    b10h.setParams(10, minTimeout2 * 1000, maxTimeout2 * 1000);
+
+    addRequests(b10h, menuPriorityLOW, 1);
+    allPushesDone.wait();
+
+    // b10h is auto-started
+    pushFinish_waitForDump(b10h);
+
+    EXPECT_EQ(b10h.size(menuPriorityLOW), 0lu) << "Queue[LOW] returns wrong size";
+    EXPECT_EQ(b10h.size(menuPriorityMEDIUM), 0lu) << "Queue[MEDIUM] returns wrong size";
+    EXPECT_EQ(b10h.size(menuPriorityHIGH), 0lu) << "Queue[HIGH] of returns wrong size";
+
+    EXPECT_EQ(allSentCargo.size(), 55u) << "Not all cargo sent";
+    EXPECT_EQ(dump.noOfBatches, 11u) << "Cargo processed != 11 batches";
+    EXPECT_THAT(dump.batchSizes, Each(Le(10u))) << "Some batches are exceeding the size limit";
+    for (unsigned int i = 0; i < dump.batchData.size(); i++ ) {
+        if (i < dump.batchData.size() - 1) {
+            EXPECT_EQ(dump.batchData[i+1].first,
+                    minTimeout2 + (maxTimeout2-minTimeout2) / 10.0 * dump.batchData[i].second.size() )
+                    << "Wrong timeout period after batch " << i
+                    << " (size " << dump.batchData[i].second.size() << ")";
+        }
+    }
+}
+
 // Mocking libCom's epicsThreadSleep();
 // periods < 1.0s are passed through, the others are intercepted
 
@@ -339,10 +371,11 @@ extern "C" void epicsThreadSleep(double seconds)
     } else {
         lastHoldOff = seconds;
         if (nextTimeAdd < 11) {
-            static_cast<RQBBatcherTest*>(fixture)->addB10hRequests(nextTimeAdd++);
-        } else {
-            nextTimeWait.signal();
+            static_cast<RQBBatcherTest*>(fixture)->addB10hRequests(nextTimeAdd);
+        } else if (nextTimeAdd == 11) {
+            allPushesDone.signal();
         }
+        nextTimeAdd++;
     }
 }
 
