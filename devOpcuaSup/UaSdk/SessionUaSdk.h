@@ -216,7 +216,7 @@ public:
      */
     static void atExit(void *junk);
 
-    // Get a new (unique) transaction id
+    // Get a new (unique per session) transaction id
     OpcUa_UInt32 getTransactionId();
 
     // UaSessionCallback interface
@@ -250,12 +250,6 @@ private:
      * @brief Rebuild nodeIds for all nodes that were registered.
      */
     void rebuildNodeIds();
-
-    /**
-     * @brief Issue read request for one batch of nodes.
-     */
-    void readBatchOfNodes (std::vector<ItemUaSdk *>::iterator from,
-                           std::vector<ItemUaSdk *>::iterator to);
 
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
