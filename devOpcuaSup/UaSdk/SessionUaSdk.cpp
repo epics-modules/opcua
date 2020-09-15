@@ -225,12 +225,12 @@ long
 SessionUaSdk::connect ()
 {
     if (!puasession) {
-        std::cerr << "OPC UA session " << name.c_str()
+        std::cerr << "Session " << name.c_str()
                   << ": invalid session, cannot connect" << std::endl;
         return -1;
     }
     if (isConnected()) {
-        if (debug) std::cerr << "OPC UA session " << name.c_str() << ": already connected ("
+        if (debug) std::cerr << "Session " << name.c_str() << ": already connected ("
                              << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
     } else {
@@ -240,10 +240,10 @@ SessionUaSdk::connect ()
                                               this);          // Callback interface
 
         if (result.isGood()) {
-            if (debug) std::cerr << "OPC UA session " << name.c_str()
+            if (debug) std::cerr << "Session " << name.c_str()
                                  << ": connect service ok" << std::endl;
         } else {
-            std::cerr << "OPC UA session " << name.c_str()
+            std::cerr << "Session " << name.c_str()
                       << ": connect service failed with status "
                       << result.toString().toUtf8() << std::endl;
         }
@@ -262,10 +262,10 @@ SessionUaSdk::disconnect ()
                                                  OpcUa_True);      // Delete subscriptions
 
         if (result.isGood()) {
-            if (debug) std::cerr << "OPC UA session " << name.c_str()
+            if (debug) std::cerr << "Session " << name.c_str()
                                  << ": disconnect service ok" << std::endl;
         } else {
-            std::cerr << "OPC UA session " << name.c_str()
+            std::cerr << "Session " << name.c_str()
                       << ": disconnect service failed with status "
                       << result.toString().toUtf8() << std::endl;
         }
@@ -275,7 +275,7 @@ SessionUaSdk::disconnect ()
         }
         return !result.isGood();
     } else {
-        if (debug) std::cerr << "OPC UA session " << name.c_str() << ": already disconnected ("
+        if (debug) std::cerr << "Session " << name.c_str() << ": already disconnected ("
                              << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
     }
@@ -450,7 +450,7 @@ SessionUaSdk::registerNodes ()
                          name.c_str(), status.toString().toUtf8());
         } else {
             if (debug)
-                std::cout << "OPC UA session " << name.c_str()
+                std::cout << "Session " << name.c_str()
                           << ": (registerNodes) registerNodes service ok"
                           << " (" << registeredNodes.length() << " nodes registered)" << std::endl;
             i = 0;
