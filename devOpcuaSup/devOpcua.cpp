@@ -97,6 +97,7 @@ opcua_add_record (dbCommon *prec)
         //TODO: Switch to implementation selection / factory
         if (pvt->plinkinfo->linkedToItem) {
             pitem = new ItemUaSdk(*pvt->plinkinfo);
+            pitem->recConnector = pvt.get();
         } else {
             pitem = static_cast<ItemUaSdk *>(pvt->plinkinfo->item);
         }

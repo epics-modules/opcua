@@ -26,6 +26,7 @@
 #include <epicsTypes.h>
 #include <initHooks.h>
 
+#include "RequestQueueBatcher.h"
 #include "Session.h"
 
 namespace DevOpcua {
@@ -34,6 +35,8 @@ using namespace UaClientSdk;
 
 class SubscriptionUaSdk;
 class ItemUaSdk;
+struct WriteRequest;
+struct ReadRequest;
 
 /**
  * @brief The SessionUaSdk implementation of an OPC UA client session.
@@ -49,7 +52,11 @@ class ItemUaSdk;
  * and freeing all related resources on both server and client.
  */
 
-class SessionUaSdk : public UaSessionCallback, public Session
+class SessionUaSdk
+        : public UaSessionCallback
+        , public Session
+        , public RequestConsumer<WriteRequest>
+        , public RequestConsumer<ReadRequest>
 {
     UA_DISABLE_COPY(SessionUaSdk);
     friend class SubscriptionUaSdk;
@@ -115,14 +122,14 @@ public:
      *
      * @param item  item to request beginRead for
      */
-    void requestRead(ItemUaSdk &item);
+    void requestRead(ItemUaSdk &item, const unsigned short priority);
 
     /**
      * @brief Request a beginWrite service for an item
      *
      * @param item  item to request beginWrite for
      */
-    void requestWrite(ItemUaSdk &item);
+    void requestWrite(ItemUaSdk &item, const unsigned short priority);
 
     /**
      * @brief Initiate read of all nodes.
@@ -209,7 +216,7 @@ public:
      */
     static void atExit(void *junk);
 
-    // Get a new (unique) transaction id
+    // Get a new (unique per session) transaction id
     OpcUa_UInt32 getTransactionId();
 
     // UaSessionCallback interface
@@ -229,6 +236,10 @@ public:
             const UaStatusCodeArray &results,
             const UaDiagnosticInfos &diagnosticInfos) override;
 
+    // RequestConsumer<> interfaces
+    virtual void processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch) override;
+    virtual void processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch) override;
+
 private:
     /**
      * @brief Register all nodes that are configured to be registered.
@@ -239,12 +250,6 @@ private:
      * @brief Rebuild nodeIds for all nodes that were registered.
      */
     void rebuildNodeIds();
-
-    /**
-     * @brief Issue read request for one batch of nodes.
-     */
-    void readBatchOfNodes (std::vector<ItemUaSdk *>::iterator from,
-                           std::vector<ItemUaSdk *>::iterator to);
 
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
@@ -261,7 +266,16 @@ private:
     int transactionId;                                        /**< next transaction id */
     /** itemUaSdk vectors of outstanding read or write operations, indexed by transaction id */
     std::map<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>> outstandingOps;
-    epicsMutex opslock;                                      /**< lock for outstandingOps map */
+    epicsMutex opslock;                                       /**< lock for outstandingOps map */
+
+    RequestQueueBatcher<WriteRequest> writer;                 /**< batcher for write requests */
+    unsigned int writeNodesMax;                          /**< max number of nodes per write request */
+    unsigned int writeTimeoutMin;                        /**< timeout after write request batch of 1 node [ms] */
+    unsigned int writeTimeoutMax;                        /**< timeout after write request of NodesMax nodes [ms] */
+    RequestQueueBatcher<ReadRequest> reader;                  /**< batcher for read requests */
+    unsigned int readNodesMax;                           /**< max number of nodes per read request */
+    unsigned int readTimeoutMin;                         /**< timeout after read request batch of 1 node [ms] */
+    unsigned int readTimeoutMax;                         /**< timeout after read request batch of NodesMax nodes [ms] */
 };
 
 } // namespace DevOpcua

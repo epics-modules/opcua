@@ -33,13 +33,17 @@ public:
 
     /**
      * @brief Schedule a read request (using beginRead service).
+     *
+     * @param priority  EPICS priority (menuPriority) for the request
      */
-    virtual void requestRead() = 0;
+    virtual void requestRead(const unsigned short priority) = 0;
 
     /**
      * @brief Schedule a write request (using beginWrite service).
+     *
+     * @param priority  EPICS priority (menuPriority) for the request
      */
-    virtual void requestWrite() = 0;
+    virtual void requestWrite(const unsigned short priority) = 0;
 
     /**
      * @brief Get the cached status of the last item operation.
@@ -71,8 +75,8 @@ public:
      */
     virtual bool isMonitored() const = 0;
 
-    const linkInfo &linkinfo;              /**< configuration of the item as parsed from the EPICS record */
-    RecordConnector *itemRecordConnector;  /**< pointer to the itemRecord connector (if linked to one) */
+    const linkInfo &linkinfo;           /**< configuration of the item as parsed from the EPICS record */
+    RecordConnector *recConnector;      /**< pointer to the relevant recordConnector */
 
 protected:
     /**
@@ -82,7 +86,7 @@ protected:
      */
     Item(const linkInfo &info)
         : linkinfo(info)
-        , itemRecordConnector(nullptr)
+        , recConnector(nullptr)
     {}
 };
 

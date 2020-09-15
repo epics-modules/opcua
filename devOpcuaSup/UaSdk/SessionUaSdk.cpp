@@ -36,6 +36,7 @@
 #define epicsExportSharedSymbols
 #include "Session.h"
 #include "RecordConnector.h"
+#include "RequestQueueBatcher.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
 #include "DataElementUaSdk.h"
@@ -49,6 +50,17 @@ static epicsThreadOnceId session_uasdk_ihooks_once = EPICS_THREAD_ONCE_INIT;
 static epicsThreadOnceId session_uasdk_atexit_once = EPICS_THREAD_ONCE_INIT;
 
 std::map<std::string, SessionUaSdk*> SessionUaSdk::sessions;
+
+// Cargo structure and batcher for write requests
+struct WriteRequest {
+    ItemUaSdk *item;
+    OpcUa_WriteValue wvalue;
+};
+
+// Cargo structure and batcher for read requests
+struct ReadRequest {
+    ItemUaSdk *item;
+};
 
 static
 void session_uasdk_ihooks_register (void *junk)
@@ -89,6 +101,8 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , puasession(new UaSession())
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
+    , writer("OPCwr-" + name, *this, batchNodes)
+    , reader("OPCrd-" + name, *this, batchNodes)
 {
     int status;
     char host[256] = { 0 };
@@ -147,16 +161,64 @@ SessionUaSdk::sessionExists (const std::string &name)
 void
 SessionUaSdk::setOption (const std::string &name, const std::string &value)
 {
+    bool updateReadBatcher = false;
+    bool updateWriteBatcher = false;
+
     if (name == "clientcert") {
         errlogPrintf("security not implemented\n");
     } else if (name == "clientkey") {
         errlogPrintf("security not implemented\n");
     } else if (name == "batch-nodes") {
+        errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         connectInfo.nMaxOperationsPerServiceCall = ul;
+        updateReadBatcher = true;
+        updateWriteBatcher = true;
+    } else if (name == "nodes-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        connectInfo.nMaxOperationsPerServiceCall = ul;
+    } else if (name == "read-nodes-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        readNodesMax = ul;
+        updateReadBatcher = true;
+    } else if (name == "read-timeout-min") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        readTimeoutMin = ul;
+        updateReadBatcher = true;
+    } else if (name == "read-timeout-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        readTimeoutMax = ul;
+        updateReadBatcher = true;
+    } else if (name == "write-nodes-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        writeNodesMax = ul;
+        updateWriteBatcher = true;
+    } else if (name == "write-timeout-min") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        writeTimeoutMin = ul;
+        updateWriteBatcher = true;
+    } else if (name == "write-timeout-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        writeTimeoutMax = ul;
+        updateWriteBatcher = true;
     } else {
         errlogPrintf("unknown option '%s' ignored\n", name.c_str());
     }
+
+    unsigned int max = 0;
+    if (connectInfo.nMaxOperationsPerServiceCall > 0 && readNodesMax > 0) {
+        max = std::min(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
+    } else {
+        max = connectInfo.nMaxOperationsPerServiceCall + readNodesMax;
+    }
+    if (updateReadBatcher) reader.setParams(max, readTimeoutMin, readTimeoutMax);
+
+    if (connectInfo.nMaxOperationsPerServiceCall > 0 && writeNodesMax > 0) {
+        max = std::min(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
+    } else {
+        max = connectInfo.nMaxOperationsPerServiceCall + writeNodesMax;
+    }
+    if (updateWriteBatcher) writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
 }
 
 long
@@ -230,66 +292,23 @@ SessionUaSdk::isConnected () const
 }
 
 void
-SessionUaSdk::readBatchOfNodes (std::vector<ItemUaSdk *>::iterator from,
-                                std::vector<ItemUaSdk *>::iterator to)
-{
-    UaStatus status;
-    UaReadValueIds nodesToRead;
-    std::unique_ptr<std::vector<ItemUaSdk *>> itemsToRead(new std::vector<ItemUaSdk *>);
-    ServiceSettings serviceSettings;
-    OpcUa_UInt32 id = getTransactionId();
-
-    nodesToRead.create(static_cast<OpcUa_UInt32>(to - from));
-    OpcUa_UInt32 i = 0;
-    for (auto it = from; it != to; it++) {
-        (*it)->getNodeId().copyTo(&nodesToRead[i].NodeId);
-        nodesToRead[i].AttributeId = OpcUa_Attributes_Value;
-        i++;
-        itemsToRead->push_back(*it);
-    }
-
-    Guard G(opslock);
-    status = puasession->beginRead(serviceSettings,                // Use default settings
-                                   0,                              // Max age
-                                   OpcUa_TimestampsToReturn_Both,  // Time stamps to return
-                                   nodesToRead,                    // Array of nodes to read
-                                   id);                            // Transaction id
-
-    if (status.isBad()) {
-        errlogPrintf("OPC UA session %s: (readBatchOfNodes) beginRead service failed with status %s\n",
-                     name.c_str(), status.toString().toUtf8());
-    } else {
-        if (debug)
-            std::cout << "OPC UA session " << name.c_str()
-                      << ": (readBatchOfNodes) beginRead service ok"
-                      << " (transaction id " << id
-                      << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
-        outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
-                              (id, std::move(itemsToRead)));
-    }
-}
-
-//TODO: Push to queue for worker thread (instead of doing an explicit request)
-void
 SessionUaSdk::readAllNodes ()
 {
-    OpcUa_UInt32 numberPerBatch = connectInfo.nMaxOperationsPerServiceCall;
-
-    if (numberPerBatch == 0 || items.size() <= numberPerBatch) {
-        readBatchOfNodes(items.begin(), items.end());
-    } else {
-        std::vector<ItemUaSdk *>::iterator it;
-        for (it = items.begin(); (items.end() - it) > numberPerBatch; it += numberPerBatch) {
-            readBatchOfNodes(it, it + numberPerBatch);
-        }
-        if (it < items.end()) readBatchOfNodes(it, items.end());
-    }
+    for (const auto &it : items)
+        requestRead(*it, it->recConnector->getRecordPriority());
 }
 
-//TODO: Push to queue for worker thread (instead of doing a single item request)
-//      remember to apply connectInfo.nMaxOperationsPerServiceCall
 void
-SessionUaSdk::requestRead (ItemUaSdk &item)
+SessionUaSdk::requestRead (ItemUaSdk &item, const unsigned short priority)
+{
+    auto cargo = std::make_shared<ReadRequest>();
+    cargo->item = &item;
+    reader.pushRequest(cargo, item.recConnector->getRecordPriority());
+}
+
+// Low level reader function called by the RequestQueueBatcher
+void
+SessionUaSdk::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
     UaStatus status;
     UaReadValueIds nodesToRead;
@@ -297,10 +316,14 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToRead.create(1);
-    item.getNodeId().copyTo(&nodesToRead[0].NodeId);
-    nodesToRead[0].AttributeId = OpcUa_Attributes_Value;
-    itemsToRead->push_back(&item);
+    nodesToRead.create(batch.size());
+    OpcUa_UInt32 i = 0;
+    for (auto c : batch) {
+        c->item->getNodeId().copyTo(&nodesToRead[i].NodeId);
+        nodesToRead[i].AttributeId = OpcUa_Attributes_Value;
+        itemsToRead->push_back(c->item);
+        i++;
+    }
 
     if (isConnected()) {
         Guard G(opslock);
@@ -313,7 +336,8 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
 	    if (status.isBad()) {
 	        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
 	                     name.c_str(), status.toString().toUtf8());
-	        item.setIncomingEvent(ProcessReason::readFailure);
+            //TODO: create writeFailure events for all items of the batch
+//	        item.setIncomingEvent(ProcessReason::readFailure);
 
         } else {
             if (debug)
@@ -327,10 +351,19 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
     }
 }
 
-//TODO: Push to queue for worker thread (instead of doing a single item request)
-//      remember to apply connectInfo.nMaxOperationsPerServiceCall
 void
-SessionUaSdk::requestWrite (ItemUaSdk &item)
+SessionUaSdk::requestWrite (ItemUaSdk &item, const unsigned short priority)
+{
+    auto cargo = std::make_shared<WriteRequest>();
+    cargo->item = &item;
+    item.getOutgoingData().copyTo(&cargo->wvalue.Value.Value);
+    item.clearOutgoingData();
+    writer.pushRequest(cargo, item.recConnector->getRecordPriority());
+}
+
+// Low level writer function called by the RequestQueueBatcher
+void
+SessionUaSdk::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
     UaStatus status;
     UaWriteValues nodesToWrite;
@@ -338,12 +371,15 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToWrite.create(1);
-    item.getNodeId().copyTo(&nodesToWrite[0].NodeId);
-    nodesToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    item.getOutgoingData().copyTo(&nodesToWrite[0].Value.Value);
-    item.clearOutgoingData();
-    itemsToWrite->push_back(&item);
+    nodesToWrite.create(batch.size());
+    OpcUa_UInt32 i = 0;
+    for (auto c : batch) {
+        c->item->getNodeId().copyTo(&nodesToWrite[i].NodeId);
+        nodesToWrite[i].AttributeId = OpcUa_Attributes_Value;
+        nodesToWrite[i].Value.Value = c->wvalue.Value.Value;
+        itemsToWrite->push_back(c->item);
+        i++;
+    }
 
     if (isConnected()) {
         Guard G(opslock);
@@ -354,7 +390,8 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
 	    if (status.isBad()) {
 	        errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
 	                     name.c_str(), status.toString().toUtf8());
-	        item.setIncomingEvent(ProcessReason::writeFailure);
+            //TODO: create writeFailure events for all items of the batch
+//	        item.setIncomingEvent(ProcessReason::writeFailure);
 
         } else {
             if (debug)
@@ -508,6 +545,8 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::ServerShutdown:
         // "The connection to the server is deactivated by the user of the client API."
     case UaClient::Disconnected:
+        reader.clear();
+        writer.clear();
         for (auto &it : items)
             it->setIncomingEvent(ProcessReason::connectionLoss);
         break;

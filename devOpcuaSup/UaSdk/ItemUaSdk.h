@@ -61,12 +61,12 @@ public:
     /**
      * @brief Request beginRead service. See DevOpcua::Item::requestRead
      */
-    virtual void requestRead() override { session->requestRead(*this); }
+    virtual void requestRead(const unsigned short priority) override { session->requestRead(*this, priority); }
 
     /**
      * @brief Request beginWrite service. See DevOpcua::Item::requestWrite
      */
-    virtual void requestWrite() override { session->requestWrite(*this); }
+    virtual void requestWrite(const unsigned short priority) override { session->requestWrite(*this, priority); }
 
     /**
      * @brief Print configuration and status. See DevOpcua::Item::show

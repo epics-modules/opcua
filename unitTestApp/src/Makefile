@@ -20,6 +20,10 @@ GTESTPROD_HOST += UpdateQueueTest
 UpdateQueueTest_SRCS += UpdateQueueTest.cpp
 GTESTS += UpdateQueueTest
 
+GTESTPROD_HOST += RequestQueueBatcherTest
+RequestQueueBatcherTest_SRCS += RequestQueueBatcherTest.cpp
+GTESTS += RequestQueueBatcherTest
+
 #==================================================
 # Tests for different client libraries
 # are in separate directories, added by reading
