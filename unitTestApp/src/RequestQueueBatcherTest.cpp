@@ -171,11 +171,11 @@ protected:
     virtual void TearDown() override
     {
         // use_count() = 1 for elements of allCargo => no reference lost
-        unsigned int wrong = 0;
+        unsigned int wrongUseCount = 0;
         for ( const auto &p : allSentCargo ) {
-            if (p.use_count() != 1) wrong++;
+            if (p.use_count() != 1) wrongUseCount++;
         }
-        EXPECT_EQ(wrong, 0u) << "members of cargo have use_count() not 1 after finish";
+        EXPECT_EQ(wrongUseCount, 0u) << "members of cargo have use_count() not 1 after finish";
 
         // Strict PQ means each batch is sorted HIGH - MEDIUM - LOW and in the order of the queues
         for ( const auto &log : dump.batchData ) {
@@ -236,7 +236,7 @@ protected:
     {
         b.pushRequest(std::make_shared<TestCargo>(TAG_FINISHED), menuPriorityLOW);
         dump.finished.wait();
-        epicsThread::sleep(0.001); // to let the batcher drop the reference
+        epicsThread::sleep(0.01); // to let the batcher drop the reference
     }
 
     epicsMutex lock;
