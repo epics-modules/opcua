@@ -598,17 +598,25 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                       << ": (readComplete) getting data for read service"
                       << " (transaction id " << transactionId
                       << "; data for " << values.length() << " items)" << std::endl;
+        if ((*it->second).size() != values.length())
+            errlogPrintf("OPC UA session %s: (readComplete) received a callback "
+                         "with %u values for a request containing %lu items\n",
+                         name.c_str(), values.length(), (*it->second).size());
         OpcUa_UInt32 i = 0;
         for (auto item : (*it->second)) {
-            if (debug >= 5) {
-                std::cout << "** Session " << name.c_str()
-                          << ": (readComplete) getting data for item "
-                          << item->getNodeId().toXmlString().toUtf8() << std::endl;
+            if (i >= values.length()) {
+                item->setIncomingEvent(ProcessReason::readFailure);
+            } else {
+                if (debug >= 5) {
+                    std::cout << "** Session " << name.c_str()
+                              << ": (readComplete) getting data for item "
+                              << item->getNodeId().toXmlString().toUtf8() << std::endl;
+                }
+                ProcessReason reason = ProcessReason::readComplete;
+                if (OpcUa_IsNotGood(values[i].StatusCode))
+                    reason = ProcessReason::readFailure;
+                item->setIncomingData(values[i], reason);
             }
-            ProcessReason reason = ProcessReason::readComplete;
-            if (OpcUa_IsNotGood(values[i].StatusCode))
-                reason = ProcessReason::readFailure;
-            item->setIncomingData(values[i], reason);
             i++;
         }
         outstandingOps.erase(it);
