@@ -101,8 +101,8 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , puasession(new UaSession())
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
-    , writer("writer", *this, batchNodes)
-    , reader("reader", *this, batchNodes)
+    , writer("OPCwr-" + name, *this, batchNodes)
+    , reader("OPCrd-" + name, *this, batchNodes)
 {
     int status;
     char host[256] = { 0 };
@@ -161,16 +161,64 @@ SessionUaSdk::sessionExists (const std::string &name)
 void
 SessionUaSdk::setOption (const std::string &name, const std::string &value)
 {
+    bool updateReadBatcher = false;
+    bool updateWriteBatcher = false;
+
     if (name == "clientcert") {
         errlogPrintf("security not implemented\n");
     } else if (name == "clientkey") {
         errlogPrintf("security not implemented\n");
     } else if (name == "batch-nodes") {
+        errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         connectInfo.nMaxOperationsPerServiceCall = ul;
+        updateReadBatcher = true;
+        updateWriteBatcher = true;
+    } else if (name == "nodes-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        connectInfo.nMaxOperationsPerServiceCall = ul;
+    } else if (name == "read-nodes-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        readNodesMax = ul;
+        updateReadBatcher = true;
+    } else if (name == "read-timeout-min") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        readTimeoutMin = ul;
+        updateReadBatcher = true;
+    } else if (name == "read-timeout-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        readTimeoutMax = ul;
+        updateReadBatcher = true;
+    } else if (name == "write-nodes-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        writeNodesMax = ul;
+        updateWriteBatcher = true;
+    } else if (name == "write-timeout-min") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        writeTimeoutMin = ul;
+        updateWriteBatcher = true;
+    } else if (name == "write-timeout-max") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        writeTimeoutMax = ul;
+        updateWriteBatcher = true;
     } else {
         errlogPrintf("unknown option '%s' ignored\n", name.c_str());
     }
+
+    unsigned int max = 0;
+    if (connectInfo.nMaxOperationsPerServiceCall > 0 && readNodesMax > 0) {
+        max = std::min(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
+    } else {
+        max = connectInfo.nMaxOperationsPerServiceCall + readNodesMax;
+    }
+    if (updateReadBatcher) reader.setParams(max, readTimeoutMin, readTimeoutMax);
+
+    if (connectInfo.nMaxOperationsPerServiceCall > 0 && writeNodesMax > 0) {
+        max = std::min(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
+    } else {
+        max = connectInfo.nMaxOperationsPerServiceCall + writeNodesMax;
+    }
+    if (updateWriteBatcher) writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
 }
 
 long
