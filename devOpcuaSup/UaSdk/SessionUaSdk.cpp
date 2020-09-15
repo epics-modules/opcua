@@ -558,7 +558,8 @@ void SessionUaSdk::connectionStatusChanged (
 
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
-        readAllNodes();
+        if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout)
+            readAllNodes();
         if (serverConnectionStatus == UaClient::Disconnected) {
             registerNodes();
             createAllSubscriptions();
