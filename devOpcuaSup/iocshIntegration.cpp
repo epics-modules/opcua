@@ -190,6 +190,53 @@ void opcuaSetOptionCallFunc (const iocshArgBuf *args)
     }
 }
 
+static const iocshArg opcuaMapNamespaceArg0 = {"session name", iocshArgString};
+static const iocshArg opcuaMapNamespaceArg1 = {"namespace index", iocshArgInt};
+static const iocshArg opcuaMapNamespaceArg2 = {"namespace URI", iocshArgString};
+
+static const iocshArg *const opcuaMapNamespaceArg[3] = {&opcuaMapNamespaceArg0, &opcuaMapNamespaceArg1,
+                                                        &opcuaMapNamespaceArg2};
+
+static const iocshFuncDef opcuaMapNamespaceFuncDef = {"opcuaMapNamespace", 3, opcuaMapNamespaceArg};
+
+static
+void opcuaMapNamespaceCallFunc (const iocshArgBuf *args)
+{
+    try {
+        bool ok = true;
+        unsigned short index = 0;
+
+        if (args[0].sval == nullptr) {
+            errlogPrintf("missing argument #1 (session name)\n");
+            ok = false;
+        } else if (!Session::sessionExists(args[0].sval)) {
+            errlogPrintf("'%s' - no such session\n",
+                         args[0].sval);
+            ok = false;
+        }
+
+        if (args[1].ival < 0 || args[1].ival > USHRT_MAX) {
+            errlogPrintf("invalid argument #2 (namespace index) '%d'\n",
+                         args[1].ival);
+        } else {
+            index = static_cast<unsigned short>(args[1].ival);
+        }
+
+        if (args[2].sval == nullptr) {
+            errlogPrintf("missing argument #3 (namespace URI)\n");
+            ok = false;
+        }
+
+        if (ok) {
+            Session &sess = Session::findSession(args[0].sval);
+            sess.addNamespaceMapping(index, args[2].sval);
+        }
+    }
+    catch(std::exception& e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static const iocshArg opcuaShowSessionArg0 = {"session name", iocshArgString};
 static const iocshArg opcuaShowSessionArg1 = {"verbosity", iocshArgInt};
 
@@ -412,6 +459,7 @@ void opcuaIocshRegister ()
 {
     iocshRegister(&opcuaCreateSessionFuncDef, opcuaCreateSessionCallFunc);
     iocshRegister(&opcuaSetOptionFuncDef, opcuaSetOptionCallFunc);
+    iocshRegister(&opcuaMapNamespaceFuncDef, opcuaMapNamespaceCallFunc);
 
     iocshRegister(&opcuaConnectFuncDef, opcuaConnectCallFunc);
     iocshRegister(&opcuaDisconnectFuncDef, opcuaDisconnectCallFunc);

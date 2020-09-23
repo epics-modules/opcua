@@ -117,6 +117,14 @@ public:
     virtual void setOption(const std::string &name, const std::string &value) = 0;
 
     /**
+     * @brief Add namespace index mapping (local index -> URI).
+     *
+     * @param nsIndex  local namespace index
+     * @param uri  namespace URI
+     */
+    virtual void addNamespaceMapping(const unsigned short nsIndex, const std::string &uri) = 0;
+
+    /**
      * @brief Factory method to create a session (implementation specific).
      *
      * @param name         name of the new session

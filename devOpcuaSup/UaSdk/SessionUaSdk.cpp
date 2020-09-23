@@ -472,6 +472,23 @@ SessionUaSdk::rebuildNodeIds ()
         it->rebuildNodeId();
 }
 
+/* Add a mapping to the session's map, replacing any existing mappings with the same
+ * index or URI */
+void
+SessionUaSdk::addNamespaceMapping (const OpcUa_UInt16 nsIndex, const std::string &uri)
+{
+    for (auto &it : namespaceMap) {
+        if (it.second == nsIndex) {
+            namespaceMap.erase(it.first);
+            break;
+        }
+    }
+    auto it = namespaceMap.find(uri);
+    if (it != namespaceMap.end())
+        namespaceMap.erase(uri);
+    namespaceMap.insert({uri, nsIndex});
+}
+
 /* If a local namespaceMap exists, create a local->remote numerical index mapping
  * for every URI that is found both there and in the server's array */
 void

@@ -181,6 +181,11 @@ public:
      */
     virtual void setOption(const std::string &name, const std::string &value) override;
 
+    /**
+     * @brief Add namespace index mapping (local). See DevOpcua::Session::addNamespaceMapping
+     */
+    virtual void addNamespaceMapping(const OpcUa_UInt16 nsIndex, const std::string &uri) override;
+
     unsigned int noOfSubscriptions() const { return static_cast<unsigned int>(subscriptions.size()); }
     unsigned int noOfItems() const { return static_cast<unsigned int>(items.size()); }
 
