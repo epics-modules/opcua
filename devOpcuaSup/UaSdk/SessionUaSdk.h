@@ -199,6 +199,15 @@ public:
     void removeItemUaSdk(ItemUaSdk *item);
 
     /**
+     * @brief Map namespace index (local -> server)
+     *
+     * @param nsIndex  local namespace index
+     *
+     * @return server-side namespace index
+     */
+    OpcUa_UInt16 mapNamespaceIndex(const OpcUa_UInt16 nsIndex) const;
+
+    /**
      * @brief EPICS IOC Database initHook function.
      *
      * Hook function called when the EPICS IOC is being initialized.
@@ -251,6 +260,11 @@ private:
      */
     void rebuildNodeIds();
 
+    /**
+     * @brief Rebuild the namespace index map from the server's array.
+     */
+    void updateNamespaceMap(const UaStringArray &nsArray);
+
     static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
 
     const std::string name;                                   /**< unique session name */
@@ -259,6 +273,8 @@ private:
     std::map<std::string, SubscriptionUaSdk*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemUaSdk *> items;                           /**< items on this session */
     OpcUa_UInt32 registeredItemsNo;                           /**< number of registered items */
+    std::map<std::string, OpcUa_UInt16> namespaceMap;         /**< local namespace map (URI->index) */
+    std::map<OpcUa_UInt16, OpcUa_UInt16> nsIndexMap;          /**< namespace index map (local->server-side) */
     UaSession* puasession;                                    /**< pointer to low level session */
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */

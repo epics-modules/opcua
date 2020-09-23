@@ -38,8 +38,6 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , revisedQueueSize(0)
     , lastStatus(OpcUa_BadServerNotConnected)    
 {
-    rebuildNodeId();
-
     if (linkinfo.subscription != "" && linkinfo.monitor) {
         subscription = &SubscriptionUaSdk::findSubscription(linkinfo.subscription);
         subscription->addItemUaSdk(this);
@@ -59,10 +57,11 @@ ItemUaSdk::~ItemUaSdk ()
 void
 ItemUaSdk::rebuildNodeId ()
 {
+    OpcUa_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
     if (linkinfo.identifierIsNumeric) {
-        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierNumber, linkinfo.namespaceIndex));
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierNumber, ns));
     } else {
-        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierString.c_str(), linkinfo.namespaceIndex));
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierString.c_str(), ns));
     }
     registered = false;
 }
@@ -71,7 +70,11 @@ void
 ItemUaSdk::show (int level) const
 {
     std::cout << "item"
-              << " ns="     << linkinfo.namespaceIndex;
+              << " ns=";
+    if (nodeid && (nodeid->namespaceIndex() != linkinfo.namespaceIndex))
+        std::cout << nodeid->namespaceIndex() << "(" << linkinfo.namespaceIndex << ")";
+    else
+        std::cout << linkinfo.namespaceIndex;
     if (linkinfo.identifierIsNumeric)
         std::cout << ";i=" << linkinfo.identifierNumber;
     else
