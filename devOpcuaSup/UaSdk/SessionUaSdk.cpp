@@ -530,6 +530,17 @@ SessionUaSdk::show (const int level) const
               << " subscriptions=" << subscriptions.size()
               << std::endl;
 
+    if (level >= 3) {
+        if (namespaceMap.size()) {
+            std::cout << "Configured Namespace Mapping "
+                      << "(local -> Namespace URI -> server)" << std::endl;
+            for (auto p : namespaceMap) {
+                std::cout << " " << p.second << " -> " << p.first << " -> "
+                          << mapNamespaceIndex(p.second) << std::endl;
+            }
+        }
+    }
+
     if (level >= 1) {
         for (auto &it : subscriptions) {
             it.second->show(level-1);
