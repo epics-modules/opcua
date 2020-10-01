@@ -292,13 +292,6 @@ SessionUaSdk::isConnected () const
 }
 
 void
-SessionUaSdk::readAllNodes ()
-{
-    for (const auto &it : items)
-        requestRead(*it, it->recConnector->getRecordPriority());
-}
-
-void
 SessionUaSdk::requestRead (ItemUaSdk &item)
 {
     auto cargo = std::make_shared<ReadRequest>();
@@ -547,7 +540,7 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::Disconnected:
         reader.clear();
         writer.clear();
-        for (auto &it : items)
+        for (auto it : items)
             it->setIncomingEvent(ProcessReason::connectionLoss);
         break;
 
@@ -559,7 +552,8 @@ void SessionUaSdk::connectionStatusChanged (
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
         if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout)
-            readAllNodes();
+            for (auto it : items)
+                requestRead(*it);
         if (serverConnectionStatus == UaClient::Disconnected) {
             registerNodes();
             createAllSubscriptions();

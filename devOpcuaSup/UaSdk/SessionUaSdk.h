@@ -132,11 +132,6 @@ public:
     void requestWrite(ItemUaSdk &item);
 
     /**
-     * @brief Initiate read of all nodes.
-     */
-    void readAllNodes();
-
-    /**
      * @brief Create all subscriptions related to this session.
      */
     void createAllSubscriptions();
