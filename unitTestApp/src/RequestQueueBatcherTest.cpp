@@ -236,7 +236,6 @@ protected:
     {
         b.pushRequest(std::make_shared<TestCargo>(TAG_FINISHED), menuPriorityLOW);
         dump.finished.wait();
-        epicsThread::sleep(0.01); // to let the batcher drop the reference
     }
 
     epicsMutex lock;
