@@ -260,6 +260,7 @@ TEST_F(RQBBatcherTest, sizeUnlimited_90RequestsInOneBatch) {
 
     b0.startWorker();
     dump.finished.wait();
+    epicsThread::sleep(0.1); // to let the batcher drop the shared_ptr references
 
     EXPECT_TRUE(b0.empty(menuPriorityLOW)) << "Queue[LOW] not empty";
     EXPECT_TRUE(b0.empty(menuPriorityMEDIUM)) << "Queue[MEDIUM] not empty";
