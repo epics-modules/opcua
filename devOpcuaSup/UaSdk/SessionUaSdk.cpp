@@ -299,7 +299,7 @@ SessionUaSdk::readAllNodes ()
 }
 
 void
-SessionUaSdk::requestRead (ItemUaSdk &item, const unsigned short priority)
+SessionUaSdk::requestRead (ItemUaSdk &item)
 {
     auto cargo = std::make_shared<ReadRequest>();
     cargo->item = &item;
@@ -352,7 +352,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 }
 
 void
-SessionUaSdk::requestWrite (ItemUaSdk &item, const unsigned short priority)
+SessionUaSdk::requestWrite (ItemUaSdk &item)
 {
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
