@@ -54,6 +54,7 @@ public:
         batchSizes.clear();
         batchData.clear();
         nextTimeAdd = 2;
+        finished.tryWait();
     }
 
     epicsEvent finished;
@@ -79,7 +80,6 @@ TestDumper::processRequests(std::vector<std::shared_ptr<TestCargo>> &batch)
     }
     batchData.push_back(std::make_pair(lastHoldOff, std::move(data)));
     if (done) {
-        epicsThread::sleep(0.01); // make sure the main thread waits
         finished.signal();
     }
 }
