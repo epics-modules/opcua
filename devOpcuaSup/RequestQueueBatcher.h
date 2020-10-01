@@ -185,12 +185,11 @@ public:
     // epicsThreadRunable API
     // Worker thread body
     virtual void run () override {
-        bool allDone = true;
         do {
             double holdOff;
             unsigned int max;
 
-            if (allDone) workToDo.wait();
+            workToDo.wait();
             if (workerShutdown) break;
 
             { // Scope for cargo vector
@@ -202,7 +201,6 @@ public:
                 }
 
                 // Plain priority queue algorithm (for the time being)
-                allDone = true;
                 for (int prio = menuPriority_NUM_CHOICES-1; prio >= menuPriorityLOW; prio--) {
                     if (!max || batch.size() < max) {
                         Guard G(lock[prio]);
@@ -212,7 +210,7 @@ public:
                         }
                     }
                     if (!queue[prio].empty())
-                        allDone = false;
+                        workToDo.signal();
                 }
 
                 if (!batch.empty())
