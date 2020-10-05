@@ -102,7 +102,13 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
     , writer("OPCwr-" + name, *this, batchNodes)
+    , writeNodesMax(0)
+    , writeTimeoutMin(0)
+    , writeTimeoutMax(0)
     , reader("OPCrd-" + name, *this, batchNodes)
+    , readNodesMax(0)
+    , readTimeoutMin(0)
+    , readTimeoutMax(0)
 {
     int status;
     char host[256] = { 0 };
