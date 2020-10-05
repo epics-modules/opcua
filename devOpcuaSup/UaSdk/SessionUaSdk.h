@@ -264,13 +264,13 @@ private:
     epicsMutex opslock;                                       /**< lock for outstandingOps map */
 
     RequestQueueBatcher<WriteRequest> writer;                 /**< batcher for write requests */
-    unsigned int writeNodesMax;                          /**< max number of nodes per write request */
-    unsigned int writeTimeoutMin;                        /**< timeout after write request batch of 1 node [ms] */
-    unsigned int writeTimeoutMax;                        /**< timeout after write request of NodesMax nodes [ms] */
+    unsigned int writeNodesMax;                               /**< max number of nodes per write request */
+    unsigned int writeTimeoutMin;                             /**< timeout after write request batch of 1 node [ms] */
+    unsigned int writeTimeoutMax;                             /**< timeout after write request of NodesMax nodes [ms] */
     RequestQueueBatcher<ReadRequest> reader;                  /**< batcher for read requests */
-    unsigned int readNodesMax;                           /**< max number of nodes per read request */
-    unsigned int readTimeoutMin;                         /**< timeout after read request batch of 1 node [ms] */
-    unsigned int readTimeoutMax;                         /**< timeout after read request batch of NodesMax nodes [ms] */
+    unsigned int readNodesMax;                                /**< max number of nodes per read request */
+    unsigned int readTimeoutMin;                              /**< timeout after read request batch of 1 node [ms] */
+    unsigned int readTimeoutMax;                              /**< timeout after read request batch of NodesMax nodes [ms] */
 };
 
 } // namespace DevOpcua
