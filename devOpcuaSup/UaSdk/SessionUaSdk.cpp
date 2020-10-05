@@ -177,6 +177,8 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
     } else if (name == "nodes-max") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         connectInfo.nMaxOperationsPerServiceCall = ul;
+        updateReadBatcher = true;
+        updateWriteBatcher = true;
     } else if (name == "read-nodes-max") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         readNodesMax = ul;
