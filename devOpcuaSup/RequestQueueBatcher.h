@@ -182,6 +182,26 @@ public:
         holdOffFix = minHoldOff / 1e3;
     }
 
+    /**
+     * @brief Get maxRequestsPerBatch parameter.
+     * @return current limit for requests per batch
+     */
+    unsigned int maxRequests() const { return maxBatchSize; }
+
+    /**
+     * @brief Get minimal holdoff time parameter.
+     * @return current minimal holdoff time [msec]
+     */
+    unsigned int minHoldOff() const { return static_cast<unsigned int>(holdOffFix * 1e3); }
+
+    /**
+     * @brief Get maximal holdoff time parameter.
+     * @return current maximal holdoff time [msec]
+     */
+    unsigned int maxHoldOff() const {
+        return static_cast<unsigned int>((holdOffFix + holdOffVar * maxBatchSize) * 1e3);
+    }
+
     // epicsThreadRunable API
     // Worker thread body
     virtual void run () override {
