@@ -177,7 +177,7 @@ public:
         Guard G(paramLock);
         maxBatchSize = maxRequestsPerBatch;
         if (maxRequestsPerBatch)
-            holdOffVar = maxHoldOff ? (maxHoldOff - minHoldOff) / maxRequestsPerBatch / 1e3
+            holdOffVar = maxHoldOff ? (static_cast<double>(maxHoldOff) - minHoldOff) / (maxRequestsPerBatch * 1e3)
                                     : 0.0;
         holdOffFix = minHoldOff / 1e3;
     }
