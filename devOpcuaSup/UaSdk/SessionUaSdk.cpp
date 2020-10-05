@@ -485,6 +485,10 @@ SessionUaSdk::show (const int level) const
               << " items=" << items.size()
               << " registered=" << registeredItemsNo
               << " subscriptions=" << subscriptions.size()
+              << " reader=" << reader.maxRequests() << "/"
+              << reader.minHoldOff() << "-" << reader.maxHoldOff() << "ms"
+              << " writer=" << writer.maxRequests() << "/"
+              << writer.minHoldOff() << "-" << writer.maxHoldOff() << "ms"
               << std::endl;
 
     if (level >= 1) {
