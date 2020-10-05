@@ -157,51 +157,53 @@ SubscriptionUaSdk::addMonitoredItems ()
     UaMonitoredItemCreateRequests monitoredItemCreateRequests;
     UaMonitoredItemCreateResults monitoredItemCreateResults;
 
-    monitoredItemCreateRequests.create(static_cast<OpcUa_UInt32>(items.size()));
-    i = 0;
-    for (auto &it : items) {
-        it->getNodeId().copyTo(&monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
-        monitoredItemCreateRequests[i].ItemToMonitor.AttributeId = OpcUa_Attributes_Value;
-        monitoredItemCreateRequests[i].MonitoringMode = OpcUa_MonitoringMode_Reporting;
-        monitoredItemCreateRequests[i].RequestedParameters.ClientHandle = i;
-        monitoredItemCreateRequests[i].RequestedParameters.SamplingInterval = it->linkinfo.samplingInterval;
-        monitoredItemCreateRequests[i].RequestedParameters.QueueSize = it->linkinfo.queueSize;
-        monitoredItemCreateRequests[i].RequestedParameters.DiscardOldest = it->linkinfo.discardOldest;
-        i++;
-    }
-
-    status = puasubscription->createMonitoredItems(
-                serviceSettings,               // Use default settings
-                OpcUa_TimestampsToReturn_Both, // Select timestamps to return
-                monitoredItemCreateRequests,   // monitored items to create
-                monitoredItemCreateResults);   // Returned monitored items create result
-
-    if (status.isBad()) {
-        errlogPrintf("OPC UA subscription %s@%s: createMonitoredItems failed with status %s\n",
-                     name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
-    } else {
-        for (i = 0; i < items.size(); i++) {
-            items[i]->setRevisedSamplingInterval(monitoredItemCreateResults[i].RevisedSamplingInterval);
-            items[i]->setRevisedQueueSize(monitoredItemCreateResults[i].RevisedQueueSize);
+    if (items.size()) {
+        monitoredItemCreateRequests.create(static_cast<OpcUa_UInt32>(items.size()));
+        i = 0;
+        for (auto &it : items) {
+            it->getNodeId().copyTo(&monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
+            monitoredItemCreateRequests[i].ItemToMonitor.AttributeId = OpcUa_Attributes_Value;
+            monitoredItemCreateRequests[i].MonitoringMode = OpcUa_MonitoringMode_Reporting;
+            monitoredItemCreateRequests[i].RequestedParameters.ClientHandle = i;
+            monitoredItemCreateRequests[i].RequestedParameters.SamplingInterval = it->linkinfo.samplingInterval;
+            monitoredItemCreateRequests[i].RequestedParameters.QueueSize = it->linkinfo.queueSize;
+            monitoredItemCreateRequests[i].RequestedParameters.DiscardOldest = it->linkinfo.discardOldest;
+            i++;
         }
-        if (debug)
-            std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
-                      << ": created " << items.size() << " monitored items ("
-                      << status.toString().toUtf8() << ")" << std::endl;
-        if (debug >= 5) {
+
+        status = puasubscription->createMonitoredItems(
+                    serviceSettings,               // Use default settings
+                    OpcUa_TimestampsToReturn_Both, // Select timestamps to return
+                    monitoredItemCreateRequests,   // monitored items to create
+                    monitoredItemCreateResults);   // Returned monitored items create result
+
+        if (status.isBad()) {
+            errlogPrintf("OPC UA subscription %s@%s: createMonitoredItems failed with status %s\n",
+                         name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
+        } else {
             for (i = 0; i < items.size(); i++) {
-                UaNodeId node(monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
-                if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode))
-                    std::cout << "** Monitored item " << node.toXmlString().toUtf8()
-                              << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
-                              << " revised sampling interval " << monitoredItemCreateResults[i].RevisedSamplingInterval
-                              << " revised queue size " << monitoredItemCreateResults[i].RevisedQueueSize
-                              << std::endl;
-                else
-                    std::cout << "** Monitored item " << node.toXmlString().toUtf8()
-                              << " failed with error "
-                              << UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8()
-                              << std::endl;
+                items[i]->setRevisedSamplingInterval(monitoredItemCreateResults[i].RevisedSamplingInterval);
+                items[i]->setRevisedQueueSize(monitoredItemCreateResults[i].RevisedQueueSize);
+            }
+            if (debug)
+                std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
+                          << ": created " << items.size() << " monitored items ("
+                          << status.toString().toUtf8() << ")" << std::endl;
+            if (debug >= 5) {
+                for (i = 0; i < items.size(); i++) {
+                    UaNodeId node(monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
+                    if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode))
+                        std::cout << "** Monitored item " << node.toXmlString().toUtf8()
+                                  << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
+                                  << " revised sampling interval " << monitoredItemCreateResults[i].RevisedSamplingInterval
+                                  << " revised queue size " << monitoredItemCreateResults[i].RevisedQueueSize
+                                  << std::endl;
+                    else
+                        std::cout << "** Monitored item " << node.toXmlString().toUtf8()
+                                  << " failed with error "
+                                  << UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8()
+                                  << std::endl;
+                }
             }
         }
     }
