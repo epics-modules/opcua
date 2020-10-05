@@ -245,6 +245,18 @@ protected:
     std::vector<std::shared_ptr<TestCargo>> allSentCargo;
 };
 
+TEST_F(RQBBatcherTest, setAndReadbackParameters) {
+    EXPECT_EQ(b10h.maxRequests(), 10u) << "initial max requests parameter wrong";
+    EXPECT_EQ(b10h.minHoldOff(), minTimeout * 1000) << "initial min holdoff time parameter wrong";
+    EXPECT_EQ(b10h.maxHoldOff(), maxTimeout * 1000) << "initial max holdoff time parameter wrong";
+
+    b10h.setParams(12, minTimeout2 * 1000, maxTimeout2 * 1000);
+
+    EXPECT_EQ(b10h.maxRequests(), 12u) << "max requests parameter wrong (after setParams)";
+    EXPECT_EQ(b10h.minHoldOff(), minTimeout2 * 1000) << "min holdoff time parameter wrong (after setParams)";
+    EXPECT_NEAR(b10h.maxHoldOff(), maxTimeout2 * 1000, 5) << "max holdoff time parameter wrong (after setParams)";
+}
+
 TEST_F(RQBBatcherTest, sizeUnlimited_90RequestsInOneBatch) {
     addRequests(b0, menuPriorityLOW, 15);
     addRequests(b0, menuPriorityMEDIUM, 15);
