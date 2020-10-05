@@ -33,17 +33,13 @@ public:
 
     /**
      * @brief Schedule a read request (using beginRead service).
-     *
-     * @param priority  EPICS priority (menuPriority) for the request
      */
-    virtual void requestRead(const unsigned short priority) = 0;
+    virtual void requestRead() = 0;
 
     /**
      * @brief Schedule a write request (using beginWrite service).
-     *
-     * @param priority  EPICS priority (menuPriority) for the request
      */
-    virtual void requestWrite(const unsigned short priority) = 0;
+    virtual void requestWrite() = 0;
 
     /**
      * @brief Get the cached status of the last item operation.
