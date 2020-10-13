@@ -42,6 +42,8 @@ CHECK_RELEASE = YES
 #   SYSTEM = shared libs are in a system location
 #   PROVIDED = shared libs are in $(UASDK_DIR)
 #   INSTALL = shared libs are installed (copied) into this module
+#   EMBED = link SDK code statically into libopcua,
+#           SDK libraries are not required on target system
 UASDK_DEPLOY_MODE = PROVIDED
 UASDK_DIR = $(UASDK)/lib
 # How the Unified Automation SDK libraries were built
@@ -60,6 +62,8 @@ USR_CXXFLAGS_Linux += -std=c++11
 -include $(TOP)/../../configure/CONFIG_SITE.local
 -include $(TOP)/../configure/CONFIG_SITE.local
 -include $(TOP)/configure/CONFIG_SITE.local
+# This not the Device Support, but an example using it
+OPCUA_DEVICE_SUPPORT=
 
 # Inside a standalone TOP, use the following definitions instead
 #-include $(TOP)/../CONFIG_SITE.local
