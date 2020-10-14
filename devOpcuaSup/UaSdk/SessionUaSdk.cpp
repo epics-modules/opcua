@@ -506,6 +506,13 @@ SessionUaSdk::updateNamespaceMap(const UaStringArray &nsArray)
             if (it != namespaceMap.end())
                 nsIndexMap.insert({it->second, i});
         }
+        // Report all local mappings that were not found on server
+        for (auto it : namespaceMap) {
+            if (nsIndexMap.find(it.second) == nsIndexMap.end()) {
+                errlogPrintf("OPC UA session %s: locally mapped namespace '%s' not found on server\n",
+                             name.c_str(), it.first.c_str());
+            }
+        }
     }
 }
 
