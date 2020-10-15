@@ -87,6 +87,7 @@ ItemUaSdk::show (int level) const
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
+              << " pini=" << linkOptionPiniString(linkinfo.pini)
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
               << " registered=" << (registered ? nodeid->toString().toUtf8() : "-" )

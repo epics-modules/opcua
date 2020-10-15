@@ -27,6 +27,22 @@ namespace DevOpcua {
 
 class Item;
 
+/**
+ * @brief Enum for the choices of the pini link option
+ */
+enum LinkOptionPini { read, ignore, write };
+
+inline const char *
+linkOptionPiniString (const LinkOptionPini choice)
+{
+    switch(choice) {
+    case read:   return "read";
+    case ignore: return "ignore";
+    case write:  return "write";
+    }
+    return "Illegal Value";
+}
+
 /** @brief Configuration data for a single record instance.
  *
  * This structure holds all configuration data for a single instance of
@@ -57,6 +73,7 @@ typedef struct linkInfo {
 
     std::string element;
     bool useServerTimestamp = true;
+    LinkOptionPini pini = LinkOptionPini::read;
 
     bool isOutput;
     bool monitor = true;

@@ -66,6 +66,7 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
                   << pconnector->getRecordName()
                   << " type=" << variantTypeString(incomingData.type())
                   << " timestamp=" << (pconnector->plinkinfo->useServerTimestamp ? "server" : "source")
+                  << " pini=" << linkOptionPiniString(pconnector->plinkinfo->pini)
                   << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
     } else {
         std::cout << "node=" << name << " children=" << elements.size()
