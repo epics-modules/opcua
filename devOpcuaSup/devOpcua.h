@@ -13,6 +13,7 @@
 #ifndef DEVOPCUA_H
 #define DEVOPCUA_H
 
+#include <iostream>
 #include <sstream>
 #include <cstring>
 #include <memory>
@@ -28,7 +29,7 @@ namespace DevOpcua {
 class Item;
 
 /**
- * @brief Enum for the choices of the pini link option
+ * @brief Enum for the choices of the pini link option.
  */
 enum LinkOptionPini { read, ignore, write };
 
@@ -41,6 +42,19 @@ linkOptionPiniString (const LinkOptionPini choice)
     case write:  return "write";
     }
     return "Illegal Value";
+}
+
+/**
+ * @brief Report that PINI is set for a record and clear it.
+ *
+ * @param prec  pointer to record
+ */
+inline void
+reportPiniAndClear (dbCommon *prec) {
+    std::cerr << prec->name << " uses PINI, which does not work with the OPC UA Device support"
+              << " - disabling it (check the 'pini' link option instead)"
+              << std::endl;
+    prec->pini = 0;
 }
 
 /** @brief Configuration data for a single record instance.
