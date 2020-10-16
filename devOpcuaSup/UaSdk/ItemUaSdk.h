@@ -117,6 +117,18 @@ public:
     UaStatusCode getLastStatus() { return lastStatus; }
 
     /**
+     * @brief Setter for the EPICS-related state of the item.
+     * @param newState  state to be set
+     */
+    void setState(const ConnectionStatus state) { connState = state; }
+
+    /**
+     * @brief Getter for EPICS-related state of the item.
+     * @return EPICS-related connection state
+     */
+    ConnectionStatus state() { return connState; }
+
+    /**
      * @brief Setter for the reason of an operation.
      * @param reason  new reason to be cached
      */
@@ -215,6 +227,7 @@ private:
     std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
     UaStatusCode lastStatus;               /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
+    ConnectionStatus connState;            /**< Connection state of the item */
     epicsTime tsClient;                    /**< client (local) time stamp */
     epicsTime tsServer;                    /**< server time stamp */
     epicsTime tsSource;                    /**< device time stamp */
