@@ -152,6 +152,11 @@ parseLink (dbCommon *prec, const DBEntry &ent)
         }
         pinfo->linkedToItem = false;
         RecordConnector *pconnector = static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+        if (!pconnector) {
+            dbFinishEntry(&entry);
+            throw std::runtime_error(SB() << "opcuaItemRecord '"
+                                     << name << "' was not initialized correctly");
+        }
         pinfo->item = pconnector->pitem;
         sep = linkstr.find_first_not_of("; \t", send);
         dbFinishEntry(&entry);
