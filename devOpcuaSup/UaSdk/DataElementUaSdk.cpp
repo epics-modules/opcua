@@ -201,18 +201,24 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
     if (isLeaf()) {
         if (reason == ProcessReason::readComplete || pconnector->plinkinfo->monitor) {
             Guard(pconnector->lock);
-            bool wasFirst = false;
-            // Make a copy of the value for this element and put it on the queue
-            UpdateUaSdk *u(new UpdateUaSdk(getIncomingTimeStamp(), reason, value, getIncomingReadStatus()));
-            incomingQueue.pushUpdate(std::shared_ptr<UpdateUaSdk>(u), &wasFirst);
-            if (debug() >= 5)
-                std::cout << "Element " << name << " set data ("
-                          << processReasonString(reason)
-                          << ") for record " << pconnector->getRecordName()
-                          << " (queue use " << incomingQueue.size()
-                          << "/" << incomingQueue.capacity() << ")" << std::endl;
-            if (wasFirst)
-                pconnector->requestRecordProcessing(reason);
+            if (pitem->state() != ConnectionStatus::initialRead ||
+                    pconnector->plinkinfo->pini == LinkOptionPini::read) {
+                bool wasFirst = false;
+                // Make a copy of the value for this element and put it on the queue
+                UpdateUaSdk *u(new UpdateUaSdk(getIncomingTimeStamp(), reason, value, getIncomingReadStatus()));
+                incomingQueue.pushUpdate(std::shared_ptr<UpdateUaSdk>(u), &wasFirst);
+                if (debug() >= 5)
+                    std::cout << "Element " << name << " set data ("
+                              << processReasonString(reason)
+                              << ") for record " << pconnector->getRecordName()
+                              << " (queue use " << incomingQueue.size()
+                              << "/" << incomingQueue.capacity() << ")" << std::endl;
+                if (wasFirst)
+                    pconnector->requestRecordProcessing(reason);
+            } else if (pconnector->plinkinfo->bini == LinkOptionBini::write) {
+                isdirty = true;
+                pconnector->requestRecordProcessing(ProcessReason::writeRequest);
+            }
         }
     } else {
         if (debug() >= 5)
