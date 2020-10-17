@@ -29,12 +29,12 @@ namespace DevOpcua {
 class Item;
 
 /**
- * @brief Enum for the choices of the pini link option.
+ * @brief Enum for the choices of the bini link option.
  */
-enum LinkOptionPini { read, ignore, write };
+enum LinkOptionBini { read, ignore, write };
 
 inline const char *
-linkOptionPiniString (const LinkOptionPini choice)
+linkOptionBiniString (const LinkOptionBini choice)
 {
     switch(choice) {
     case read:   return "read";
@@ -52,7 +52,7 @@ linkOptionPiniString (const LinkOptionPini choice)
 inline void
 reportPiniAndClear (dbCommon *prec) {
     std::cerr << prec->name << " uses PINI, which does not work with the OPC UA Device support"
-              << " - disabling it (check the 'pini' link option instead)"
+              << " - disabling it (check the 'bini' link option instead)"
               << std::endl;
     prec->pini = 0;
 }
@@ -87,7 +87,7 @@ typedef struct linkInfo {
 
     std::string element;
     bool useServerTimestamp = true;
-    LinkOptionPini pini = LinkOptionPini::read;
+    LinkOptionBini bini = LinkOptionBini::read;
 
     bool isOutput;
     bool monitor = true;

@@ -232,13 +232,13 @@ parseLink (dbCommon *prec, const DBEntry &ent)
             }
         } else if (optname == "element") {
             pinfo->element = optval;
-        } else if (optname == "pini") {
+        } else if (optname == "bini") {
             if (optval == "read")
-                pinfo->pini = LinkOptionPini::read;
+                pinfo->bini = LinkOptionBini::read;
             else if (optval == "ignore")
-                pinfo->pini = LinkOptionPini::ignore;
+                pinfo->bini = LinkOptionBini::ignore;
             else if ((pinfo->isItemRecord || pinfo->isOutput) && optval == "write")
-                pinfo->pini = LinkOptionPini::write;
+                pinfo->bini = LinkOptionBini::write;
             else
                 throw std::runtime_error(SB() << "illegal value '" << optval << "' for option '" << optname << "'");
         } else {
@@ -277,7 +277,7 @@ parseLink (dbCommon *prec, const DBEntry &ent)
         std::cout << " timestamp=" << (pinfo->useServerTimestamp ? "server" : "source")
                   << " output=" << (pinfo->isOutput ? "y" : "n")
                   << " monitor=" << (pinfo->monitor ? "y" : "n")
-                  << " pini=" << linkOptionPiniString(pinfo->pini)
+                  << " bini=" << linkOptionBiniString(pinfo->bini)
                   << std::endl;
     }
 

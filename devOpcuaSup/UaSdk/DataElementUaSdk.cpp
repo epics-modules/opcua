@@ -66,7 +66,7 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
                   << pconnector->getRecordName()
                   << " type=" << variantTypeString(incomingData.type())
                   << " timestamp=" << (pconnector->plinkinfo->useServerTimestamp ? "server" : "source")
-                  << " pini=" << linkOptionPiniString(pconnector->plinkinfo->pini)
+                  << " bini=" << linkOptionBiniString(pconnector->plinkinfo->bini)
                   << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
     } else {
         std::cout << "node=" << name << " children=" << elements.size()
@@ -202,7 +202,7 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
         if (reason == ProcessReason::readComplete || pconnector->plinkinfo->monitor) {
             Guard(pconnector->lock);
             if (pitem->state() != ConnectionStatus::initialRead ||
-                    pconnector->plinkinfo->pini == LinkOptionPini::read) {
+                    pconnector->plinkinfo->bini == LinkOptionBini::read) {
                 bool wasFirst = false;
                 // Make a copy of the value for this element and put it on the queue
                 UpdateUaSdk *u(new UpdateUaSdk(getIncomingTimeStamp(), reason, value, getIncomingReadStatus()));
