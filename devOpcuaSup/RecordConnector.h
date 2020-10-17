@@ -29,6 +29,7 @@
 #include "devOpcua.h"
 #include "DataElement.h"
 #include "Item.h"
+#include "opcuaItemRecord.h"
 
 namespace DevOpcua {
 
@@ -95,6 +96,12 @@ public:
     const char *getRecordName() const { return prec->name; }
     const char *getRecordType() const { return prec->rdes->name; }
     menuPriority getRecordPriority() const { return static_cast<menuPriority>(prec->prio); }
+    LinkOptionBini bini() const {
+        if (plinkinfo->isItemRecord)
+            return reinterpret_cast<opcuaItemRecord*>(prec)->bini;
+        else
+            return plinkinfo->bini;
+    }
 
     int debug() const { return prec->tpro; }
 
@@ -113,6 +120,7 @@ public:
     bool isIoIntrScanned;
     IOSCANPVT ioscanpvt;
     ProcessReason reason;
+
 private:
     dbCommon *prec;
     CALLBACK incomingDataCallback;

@@ -164,8 +164,18 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
     if (auto pd = rootElement.lock())
         pd->setIncomingData(value.Value, reason);
 
-    if (linkinfo.isItemRecord)
-        recConnector->requestRecordProcessing(reason);
+    if (linkinfo.isItemRecord) {
+        if (state() == ConnectionStatus::initialRead) {
+            if (recConnector->bini() == LinkOptionBini::write) {
+                setState(ConnectionStatus::initialWrite);
+                recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+            } else {
+                setState(ConnectionStatus::up);
+            }
+        } else {
+            recConnector->requestRecordProcessing(reason);
+        }
+    }
 }
 
 void
