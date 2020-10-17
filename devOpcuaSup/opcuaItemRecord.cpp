@@ -73,6 +73,8 @@ init_record (dbCommon *pdbc, int pass)
             prec->sess[MAX_STRING_SIZE] = '\0';
             strncpy(prec->subs, pitem->linkinfo.subscription.c_str(), MAX_STRING_SIZE);
             prec->subs[MAX_STRING_SIZE] = '\0';
+            if (!prec->bini)
+                prec->bini = pitem->linkinfo.bini;
         } catch(std::exception& e) {
             std::cerr << prec->name << " Error in init_record : " << e.what() << std::endl;
             return S_dbLib_badLink;

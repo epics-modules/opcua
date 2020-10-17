@@ -98,7 +98,7 @@ public:
     menuPriority getRecordPriority() const { return static_cast<menuPriority>(prec->prio); }
     LinkOptionBini bini() const {
         if (plinkinfo->isItemRecord)
-            return reinterpret_cast<opcuaItemRecord*>(prec)->bini;
+            return static_cast<LinkOptionBini>(reinterpret_cast<opcuaItemRecord*>(prec)->bini);
         else
             return plinkinfo->bini;
     }

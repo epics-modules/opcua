@@ -4,6 +4,13 @@
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
 
+# Menu for 'bini' parameter/field
+menu(menuBini) {
+        choice(menuBiniREAD, "read")
+        choice(menuBiniIGNORE, "ignore")
+        choice(menuBiniWRITE, "write")
+}
+
 recordtype(opcuaItem) {
     include "dbCommon.dbd"
     field(VAL,DBF_NOACCESS) {
@@ -35,6 +42,12 @@ recordtype(opcuaItem) {
         promptgroup("30 - Action")
         interest(1)
         menu(menuDefAction)
+    }
+    field(BINI,DBF_MENU) {
+        prompt("Behavior at Initialization")
+        promptgroup("20 - Scan")
+        interest(1)
+        menu(menuBini)
     }
     field(READ,DBF_UCHAR) {
         prompt("Force Read Processing")
