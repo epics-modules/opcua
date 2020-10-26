@@ -17,3 +17,8 @@ USR_INCLUDES += -I$(TOP)/devOpcuaSup/UaSdk
 GTESTPROD_HOST += RangeCheckTest
 RangeCheckTest_SRCS += RangeCheckTest.cpp
 GTESTS += RangeCheckTest
+
+GTESTPROD_HOST += NamespaceMapTest
+NamespaceMapTest_SRCS += NamespaceMapTest.cpp
+NamespaceMapTest_LIBS += opcua
+GTESTS += NamespaceMapTest

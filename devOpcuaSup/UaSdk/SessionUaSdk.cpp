@@ -471,7 +471,50 @@ SessionUaSdk::rebuildNodeIds ()
 {
     for (auto &it : items)
         it->rebuildNodeId();
-    registeredItemsNo = 0;
+}
+
+/* Add a mapping to the session's map, replacing any existing mappings with the same
+ * index or URI */
+void
+SessionUaSdk::addNamespaceMapping (const OpcUa_UInt16 nsIndex, const std::string &uri)
+{
+    for (auto &it : namespaceMap) {
+        if (it.second == nsIndex) {
+            namespaceMap.erase(it.first);
+            break;
+        }
+    }
+    auto it = namespaceMap.find(uri);
+    if (it != namespaceMap.end())
+        namespaceMap.erase(uri);
+    namespaceMap.insert({uri, nsIndex});
+}
+
+/* If a local namespaceMap exists, create a local->remote numerical index mapping
+ * for every URI that is found both there and in the server's array */
+void
+SessionUaSdk::updateNamespaceMap(const UaStringArray &nsArray)
+{
+    if (debug)
+        std::cout << "Session " << name.c_str()
+                  << ": (updateNamespaceMap) namespace array with " << nsArray.length()
+                  << " elements read; updating index map with " << namespaceMap.size()
+                  << " entries" << std::endl;
+    if (namespaceMap.size()) {
+        nsIndexMap.clear();
+        for (OpcUa_UInt16 i = 0; i < nsArray.length(); i++) {
+            auto it = namespaceMap.find(UaString(nsArray[i]).toUtf8());
+            if (it != namespaceMap.end())
+                nsIndexMap.insert({it->second, i});
+        }
+        // Report all local mappings that were not found on server
+        for (auto it : namespaceMap) {
+            if (nsIndexMap.find(it.second) == nsIndexMap.end()) {
+                errlogPrintf("OPC UA session %s: locally mapped namespace '%s' not found on server\n",
+                             name.c_str(), it.first.c_str());
+            }
+        }
+    }
 }
 
 void
@@ -498,6 +541,17 @@ SessionUaSdk::show (const int level) const
               << " writer=" << writer.maxRequests() << "/"
               << writer.minHoldOff() << "-" << writer.maxHoldOff() << "ms"
               << std::endl;
+
+    if (level >= 3) {
+        if (namespaceMap.size()) {
+            std::cout << "Configured Namespace Mapping "
+                      << "(local -> Namespace URI -> server)" << std::endl;
+            for (auto p : namespaceMap) {
+                std::cout << " " << p.second << " -> " << p.first << " -> "
+                          << mapNamespaceIndex(p.second) << std::endl;
+            }
+        }
+    }
 
     if (level >= 1) {
         for (auto &it : subscriptions) {
@@ -529,6 +583,18 @@ SessionUaSdk::removeItemUaSdk (ItemUaSdk *item)
         items.erase(it);
 }
 
+OpcUa_UInt16
+SessionUaSdk::mapNamespaceIndex (const OpcUa_UInt16 nsIndex) const
+{
+    OpcUa_UInt16 serverIndex = nsIndex;
+    if (nsIndexMap.size()) {
+        auto it = nsIndexMap.find(nsIndex);
+        if (it != nsIndexMap.end())
+            serverIndex = it->second;
+    }
+    return serverIndex;
+}
+
 // UaSessionCallback interface
 
 void SessionUaSdk::connectionStatusChanged (
@@ -556,6 +622,7 @@ void SessionUaSdk::connectionStatusChanged (
             it->setState(ConnectionStatus::down);
             it->setIncomingEvent(ProcessReason::connectionLoss);
         }
+        registeredItemsNo = 0;
         break;
 
         // "The monitoring of the connection to the server indicated
@@ -565,6 +632,13 @@ void SessionUaSdk::connectionStatusChanged (
 
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
+        if (serverConnectionStatus == UaClient::Disconnected) {
+            updateNamespaceMap(puasession->getNamespaceTable());
+            rebuildNodeIds();
+            registerNodes();
+            createAllSubscriptions();
+            addAllMonitoredItems();
+        }
         if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout) {
             if (debug) {
                 std::cout << "Session " << name.c_str()
@@ -580,11 +654,6 @@ void SessionUaSdk::connectionStatusChanged (
             }
             reader.pushRequest(cargo, menuPriorityHIGH);
         }
-        if (serverConnectionStatus == UaClient::Disconnected) {
-            registerNodes();
-            createAllSubscriptions();
-            addAllMonitoredItems();
-        }
         break;
 
         // "The client was not able to reuse the old session
@@ -592,6 +661,8 @@ void SessionUaSdk::connectionStatusChanged (
         // This requires to redo register nodes for the new session
         // or to read the namespace array."
     case UaClient::NewSessionCreated:
+        updateNamespaceMap(puasession->getNamespaceTable());
+        rebuildNodeIds();
         registerNodes();
         createAllSubscriptions();
         addAllMonitoredItems();
