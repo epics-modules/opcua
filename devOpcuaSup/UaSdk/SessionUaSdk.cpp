@@ -341,7 +341,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 //	        item.setIncomingEvent(ProcessReason::readFailure);
 
         } else {
-            if (debug)
+            if (debug >= 5)
                 std::cout << "Session " << name.c_str()
                           << ": (requestRead) beginRead service ok"
                           << " (transaction id " << id
@@ -395,7 +395,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch
 //	        item.setIncomingEvent(ProcessReason::writeFailure);
 
         } else {
-            if (debug)
+            if (debug >= 5)
                 std::cout << "Session " << name.c_str()
                           << ": (requestWrite) beginWrite service ok"
                           << " (transaction id " << id
@@ -566,7 +566,7 @@ void SessionUaSdk::connectionStatusChanged (
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
         if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout) {
-            if (debug >= 5) {
+            if (debug) {
                 std::cout << "Session " << name.c_str()
                           << ": triggering initial read for all "
                           << items.size() << " items" << std::endl;
@@ -613,7 +613,7 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
     } else if (result.isGood()) {
-        if (debug)
+        if (debug >= 2)
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) getting data for read service"
                       << " (transaction id " << transactionId
@@ -675,7 +675,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
     } else if (result.isGood()) {
-        if (debug)
+        if (debug >= 2)
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) getting results for write service"
                       << " (transaction id " << transactionId
