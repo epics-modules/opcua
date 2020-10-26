@@ -94,6 +94,7 @@ opcua_add_record (dbCommon *prec)
         std::unique_ptr<RecordConnector> pvt (new RecordConnector(prec));
         ItemUaSdk *pitem;
         pvt->plinkinfo = parseLink(prec, ent);
+        if (prec->pini) reportPiniAndClear(prec);
         //TODO: Switch to implementation selection / factory
         if (pvt->plinkinfo->linkedToItem) {
             pitem = new ItemUaSdk(*pvt->plinkinfo);

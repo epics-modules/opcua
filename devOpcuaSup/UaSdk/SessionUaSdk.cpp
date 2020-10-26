@@ -552,8 +552,10 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::Disconnected:
         reader.clear();
         writer.clear();
-        for (auto it : items)
+        for (auto it : items) {
+            it->setState(ConnectionStatus::down);
             it->setIncomingEvent(ProcessReason::connectionLoss);
+        }
         break;
 
         // "The monitoring of the connection to the server indicated
@@ -564,6 +566,11 @@ void SessionUaSdk::connectionStatusChanged (
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
         if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout) {
+            if (debug >= 5) {
+                std::cout << "Session " << name.c_str()
+                          << ": triggering initial read for all "
+                          << items.size() << " items" << std::endl;
+            }
             auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
             unsigned int i = 0;
             for (auto it : items) {
@@ -629,6 +636,8 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                 if (OpcUa_IsNotGood(values[i].StatusCode))
                     reason = ProcessReason::readFailure;
                 item->setIncomingData(values[i], reason);
+                if (item->state() != ConnectionStatus::initialWrite)
+                    item->setState(ConnectionStatus::up);
             }
             i++;
         }
@@ -646,6 +655,8 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             item->setIncomingEvent(ProcessReason::readFailure);
+            // Not doing initial write if the read has failed
+            item->setState(ConnectionStatus::up);
         }
         outstandingOps.erase(it);
     }
@@ -680,6 +691,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
             if (OpcUa_IsBad(results[i]))
                 reason = ProcessReason::writeFailure;
             item->setIncomingEvent(reason);
+            item->setState(ConnectionStatus::up);
             i++;
         }
         outstandingOps.erase(it);
@@ -696,6 +708,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             item->setIncomingEvent(ProcessReason::writeFailure);
+            item->setState(ConnectionStatus::up);
         }
         outstandingOps.erase(it);
     }

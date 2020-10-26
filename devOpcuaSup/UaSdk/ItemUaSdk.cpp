@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -36,7 +36,9 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
-    , lastStatus(OpcUa_BadServerNotConnected)    
+    , lastStatus(OpcUa_BadServerNotConnected)
+    , lastReason(ProcessReason::connectionLoss)
+    , connState(ConnectionStatus::down)
 {
     rebuildNodeId();
 
@@ -77,6 +79,7 @@ ItemUaSdk::show (int level) const
     else
         std::cout << ";s=" << linkinfo.identifierString;
     std::cout << " record=" << recConnector->getRecordName()
+              << " state=" << connectionStatusString(connState)
               << " status=" << UaStatus(lastStatus).toString().toUtf8()
               << " context=" << linkinfo.subscription
               << "@" << session->getName()
@@ -87,6 +90,7 @@ ItemUaSdk::show (int level) const
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
               << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
+              << " bini=" << linkOptionBiniString(linkinfo.bini)
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
               << " registered=" << (registered ? nodeid->toString().toUtf8() : "-" )
@@ -160,8 +164,18 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
     if (auto pd = rootElement.lock())
         pd->setIncomingData(value.Value, reason);
 
-    if (linkinfo.isItemRecord)
-        recConnector->requestRecordProcessing(reason);
+    if (linkinfo.isItemRecord) {
+        if (state() == ConnectionStatus::initialRead) {
+            if (recConnector->bini() == LinkOptionBini::write) {
+                setState(ConnectionStatus::initialWrite);
+                recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+            } else {
+                setState(ConnectionStatus::up);
+            }
+        } else {
+            recConnector->requestRecordProcessing(reason);
+        }
+    }
 }
 
 void

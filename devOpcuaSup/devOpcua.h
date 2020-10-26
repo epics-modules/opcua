@@ -13,6 +13,7 @@
 #ifndef DEVOPCUA_H
 #define DEVOPCUA_H
 
+#include <iostream>
 #include <sstream>
 #include <cstring>
 #include <memory>
@@ -26,6 +27,35 @@
 namespace DevOpcua {
 
 class Item;
+
+/**
+ * @brief Enum for the choices of the bini link option.
+ */
+enum LinkOptionBini { read, ignore, write };
+
+inline const char *
+linkOptionBiniString (const LinkOptionBini choice)
+{
+    switch(choice) {
+    case read:   return "read";
+    case ignore: return "ignore";
+    case write:  return "write";
+    }
+    return "Illegal Value";
+}
+
+/**
+ * @brief Report that PINI is set for a record and clear it.
+ *
+ * @param prec  pointer to record
+ */
+inline void
+reportPiniAndClear (dbCommon *prec) {
+    std::cerr << prec->name << " uses PINI, which does not work with the OPC UA Device support"
+              << " - disabling it (check the 'bini' link option instead)"
+              << std::endl;
+    prec->pini = 0;
+}
 
 /** @brief Configuration data for a single record instance.
  *
@@ -57,6 +87,7 @@ typedef struct linkInfo {
 
     std::string element;
     bool useServerTimestamp = true;
+    LinkOptionBini bini = LinkOptionBini::read;
 
     bool isOutput;
     bool monitor = true;
@@ -83,6 +114,22 @@ processReasonString (const ProcessReason type)
     case writeFailure:    return "writeFailure";
     case readRequest:     return "readRequest";
     case writeRequest:    return "writeRequest";
+    }
+    return "Illegal Value";
+}
+
+/**
+ * @brief Enum for the EPICS related state of an OPC UA variable
+ */
+enum ConnectionStatus { down, initialRead, initialWrite, up };
+
+inline const char *
+connectionStatusString (const ConnectionStatus status) {
+    switch(status) {
+    case down:         return "down";
+    case initialRead:  return "initialRead";
+    case initialWrite: return "initialWrite";
+    case up:           return "up";
     }
     return "Illegal Value";
 }
