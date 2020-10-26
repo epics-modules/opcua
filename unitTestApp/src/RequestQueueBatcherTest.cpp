@@ -201,6 +201,17 @@ protected:
         }
     }
 
+    void addRequestVector(RequestQueueBatcher<TestCargo> &b, const menuPriority priority, const unsigned int no)
+    {
+        Guard G(lock);
+        auto v = std::vector<std::shared_ptr<TestCargo>>(no);
+        for (unsigned int i = 0; i < no; i++)
+            v[i] = std::make_shared<TestCargo>(nextTag[priority]++);
+        b.pushRequest(v, priority);
+        for (unsigned int i = 0; i < no; i++)
+            allSentCargo.emplace_back(std::move(v[i]));
+    }
+
     class Adder : public epicsThreadRunable
     {
     public:
@@ -312,6 +323,23 @@ TEST_F(RQBBatcherTest, size10_90RequestsManyBatches) {
     addRequests(b10, menuPriorityLOW, 30);
     addRequests(b10, menuPriorityMEDIUM, 30);
     addRequests(b10, menuPriorityHIGH, 30);
+
+    b10.startWorker();
+    pushFinish_waitForDump(b10);
+
+    EXPECT_EQ(b10.size(menuPriorityLOW), 0u) << "Queue[LOW] returns wrong size";
+    EXPECT_EQ(b10.size(menuPriorityMEDIUM), 0u) << "Queue[MEDIUM] returns wrong size";
+    EXPECT_EQ(b10.size(menuPriorityHIGH), 0u) << "Queue[HIGH] of returns wrong size";
+
+    EXPECT_EQ(allSentCargo.size(), 90u) << "Not all cargo sent";
+    EXPECT_EQ(dump.noOfBatches, 10u) << "Cargo not processed in 10 batches";
+    EXPECT_THAT(dump.batchSizes, Each(Le(10u))) << "Some batches are exceeding the size limit";
+}
+
+TEST_F(RQBBatcherTest, size10_3Vectors90RequestsManyBatches) {
+    addRequestVector(b10, menuPriorityLOW, 30);
+    addRequestVector(b10, menuPriorityMEDIUM, 30);
+    addRequestVector(b10, menuPriorityHIGH, 30);
 
     b10.startWorker();
     pushFinish_waitForDump(b10);
