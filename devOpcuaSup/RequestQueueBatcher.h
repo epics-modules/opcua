@@ -132,6 +132,25 @@ public:
     }
 
     /**
+     * @brief Pushes a vector of requests to the appropriate queue.
+     *
+     * Pushes the cargo to the appropriate queue and signals the worker thread.
+     * Keeps the queue locked during the push operation (so that all requests may be
+     * handed to the worker at one time).
+     *
+     * @param cargo  vector of shared_ptr to the request
+     * @param priority  EPICS priority (0=low, 1=mid, 2=high)
+     */
+    void pushRequest(std::vector<std::shared_ptr<T>> &cargo,
+                     const menuPriority priority)
+    {
+        Guard G(lock[priority]);
+        for (auto it : cargo)
+            queue[priority].push(it);
+        workToDo.signal();
+    }
+
+    /**
      * @brief Checks whether a queue is empty.
      *
      * Checks if the queue has no elements for the specified priority.
