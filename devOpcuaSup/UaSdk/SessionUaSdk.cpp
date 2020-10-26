@@ -563,9 +563,16 @@ void SessionUaSdk::connectionStatusChanged (
 
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
-        if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout)
-            for (auto it : items)
-                requestRead(*it);
+        if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout) {
+            auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
+            unsigned int i = 0;
+            for (auto it : items) {
+                cargo[i] = std::make_shared<ReadRequest>();
+                cargo[i]->item = it;
+                i++;
+            }
+            reader.pushRequest(cargo, menuPriorityHIGH);
+        }
         if (serverConnectionStatus == UaClient::Disconnected) {
             registerNodes();
             createAllSubscriptions();
