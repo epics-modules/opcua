@@ -499,26 +499,26 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
     case ProcessReason::incomingData:
     case ProcessReason::readComplete:
     {
-        OpcUa_StatusCode stat = upd->getStatus();
-        if (OpcUa_IsNotGood(stat)) {
-            // No valid OPC UA value
-            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-            ret = 1;
-        } else {
-            // Valid OPC UA value, so copy over
-            if (OpcUa_IsUncertain(stat)) {
-                (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
-            }
-            if (num) {
+        if (num && value) {
+            OpcUa_StatusCode stat = upd->getStatus();
+            if (OpcUa_IsNotGood(stat)) {
+                // No valid OPC UA value
+                (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                ret = 1;
+            } else {
+                // Valid OPC UA value, so copy over
+                if (OpcUa_IsUncertain(stat)) {
+                    (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
+                }
                 strncpy(value, upd->getData().toString().toUtf8(), num);
                 value[num-1] = '\0';
                 prec->udf = false;
             }
-        }
-        if (statusCode) *statusCode = stat;
-        if (statusText) {
-            strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
-            statusText[statusTextLen-1] = '\0';
+            if (statusCode) *statusCode = stat;
+            if (statusText) {
+                strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+                statusText[statusTextLen-1] = '\0';
+            }
         }
         break;
     }
@@ -595,41 +595,43 @@ DataElementUaSdk::readArray (char **value, const epicsUInt32 len,
     case ProcessReason::incomingData:
     case ProcessReason::readComplete:
     {
-        OpcUa_StatusCode stat = upd->getStatus();
-        if (OpcUa_IsNotGood(stat)) {
-            // No valid OPC UA value
-            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-            ret = 1;
-        } else {
-            // Valid OPC UA value, so try to convert
-            UaVariant &data = upd->getData();
-            if (!data.isArray()) {
-                errlogPrintf("%s : incoming data is not an array\n", prec->name);
-                (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-                ret = 1;
-            } else if (data.type() != expectedType) {
-                errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                             prec->name, variantTypeString(data.type()), epicsTypeString(**value));
+        if (num && value) {
+            OpcUa_StatusCode stat = upd->getStatus();
+            if (OpcUa_IsNotGood(stat)) {
+                // No valid OPC UA value
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                 ret = 1;
             } else {
-                if (OpcUa_IsUncertain(stat)) {
-                    (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
+                // Valid OPC UA value, so try to convert
+                UaVariant &data = upd->getData();
+                if (!data.isArray()) {
+                    errlogPrintf("%s : incoming data is not an array\n", prec->name);
+                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                    ret = 1;
+                } else if (data.type() != expectedType) {
+                    errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
+                                 prec->name, variantTypeString(data.type()), epicsTypeString(**value));
+                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                    ret = 1;
+                } else {
+                    if (OpcUa_IsUncertain(stat)) {
+                        (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
+                    }
+                    UaStringArray arr;
+                    UaVariant_to(upd->getData(), arr);
+                    elemsWritten = num < arr.length() ? num : arr.length();
+                    for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                        strncpy(value[i], UaString(arr[i]).toUtf8(), len);
+                        value[i][len-1] = '\0';
+                    }
+                    prec->udf = false;
                 }
-                UaStringArray arr;
-                UaVariant_to(upd->getData(), arr);
-                elemsWritten = num < arr.length() ? num : arr.length();
-                for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                    strncpy(value[i], UaString(arr[i]).toUtf8(), len);
-                    value[i][len-1] = '\0';
-                }
-                prec->udf = false;
             }
-        }
-        if (statusCode) *statusCode = stat;
-        if (statusText) {
-            strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
-            statusText[statusTextLen-1] = '\0';
+            if (statusCode) *statusCode = stat;
+            if (statusText) {
+                strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+                statusText[statusTextLen-1] = '\0';
+            }
         }
         break;
     }
@@ -639,7 +641,8 @@ DataElementUaSdk::readArray (char **value, const epicsUInt32 len,
 
     prec->time = upd->getTimeStamp();
     if (nextReason) *nextReason = nReason;
-    *numRead = elemsWritten;
+    if (num && value)
+        *numRead = elemsWritten;
     return ret;
 }
 
@@ -682,39 +685,41 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
     case ProcessReason::incomingData:
     case ProcessReason::readComplete:
     {
-        OpcUa_StatusCode stat = upd->getStatus();
-        if (OpcUa_IsNotGood(stat)) {
-            // No valid OPC UA value
-            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-            ret = 1;
-        } else {
-            // Valid OPC UA value, so try to convert
-            UaVariant &data = upd->getData();
-            if (!data.isArray()) {
-                errlogPrintf("%s : incoming data is not an array\n", prec->name);
-                (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-                ret = 1;
-            } else if (data.type() != expectedType) {
-                errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                             prec->name, variantTypeString(data.type()), epicsTypeString(*value));
+        if (num && value) {
+            OpcUa_StatusCode stat = upd->getStatus();
+            if (OpcUa_IsNotGood(stat)) {
+                // No valid OPC UA value
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                 ret = 1;
             } else {
-                if (OpcUa_IsUncertain(stat)) {
-                    (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
+                // Valid OPC UA value, so try to convert
+                UaVariant &data = upd->getData();
+                if (!data.isArray()) {
+                    errlogPrintf("%s : incoming data is not an array\n", prec->name);
+                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                    ret = 1;
+                } else if (data.type() != expectedType) {
+                    errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
+                                 prec->name, variantTypeString(data.type()), epicsTypeString(*value));
+                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                    ret = 1;
+                } else {
+                    if (OpcUa_IsUncertain(stat)) {
+                        (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
+                    }
+                    UaByteArray arr;
+                    UaVariant_to(upd->getData(), arr);
+                    elemsWritten = static_cast<epicsUInt32>(arr.size());
+                    if (num < elemsWritten) elemsWritten = num;
+                    memcpy(value, arr.data(), sizeof(epicsUInt8) * elemsWritten);
+                    prec->udf = false;
                 }
-                UaByteArray arr;
-                UaVariant_to(upd->getData(), arr);
-                elemsWritten = static_cast<epicsUInt32>(arr.size());
-                if (num < elemsWritten) elemsWritten = num;
-                memcpy(value, arr.data(), sizeof(epicsUInt8) * elemsWritten);
-                prec->udf = false;
             }
-        }
-        if (statusCode) *statusCode = stat;
-        if (statusText) {
-            strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
-            statusText[statusTextLen-1] = '\0';
+            if (statusCode) *statusCode = stat;
+            if (statusText) {
+                strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+                statusText[statusTextLen-1] = '\0';
+            }
         }
         break;
     }
@@ -724,7 +729,8 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
 
     prec->time = upd->getTimeStamp();
     if (nextReason) *nextReason = nReason;
-    *numRead = elemsWritten;
+    if (num)
+        *numRead = elemsWritten;
     return ret;
 }
 
