@@ -168,15 +168,11 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
         pd->setIncomingData(value.Value, reason);
 
     if (linkinfo.isItemRecord) {
-        if (state() == ConnectionStatus::initialRead) {
-            if (recConnector->bini() == LinkOptionBini::write) {
-                setState(ConnectionStatus::initialWrite);
-                recConnector->requestRecordProcessing(ProcessReason::writeRequest);
-            } else {
-                setState(ConnectionStatus::up);
-            }
-        } else {
-            recConnector->requestRecordProcessing(reason);
+        if (state() == ConnectionStatus::initialRead
+                && reason == ProcessReason::readComplete
+                && recConnector->bini() == LinkOptionBini::write) {
+            setState(ConnectionStatus::initialWrite);
+            recConnector->requestRecordProcessing(ProcessReason::writeRequest);
         }
     }
 }
