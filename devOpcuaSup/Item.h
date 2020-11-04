@@ -18,6 +18,22 @@ namespace DevOpcua {
 #include <epicsTypes.h>
 #include <epicsTime.h>
 
+/**
+ * @brief Enum for the EPICS related state of an OPC UA item
+ */
+enum ConnectionStatus { down, initialRead, initialWrite, up };
+
+inline const char *
+connectionStatusString (const ConnectionStatus status) {
+    switch(status) {
+    case down:         return "down";
+    case initialRead:  return "initialRead";
+    case initialWrite: return "initialWrite";
+    case up:           return "up";
+    }
+    return "Illegal Value";
+}
+
 struct linkInfo;
 class RecordConnector;
 
@@ -52,6 +68,20 @@ public:
                            char *text = nullptr,
                            const epicsUInt32 len = 0,
                            epicsTimeStamp *ts = nullptr) = 0;
+
+    /**
+     * @brief Get the EPICS-related state of the item.
+     *
+     * @return connection state (EPICS-related)
+     */
+    virtual ConnectionStatus state() const = 0;
+
+    /**
+     * @brief Set the EPICS-related state of the item.
+     *
+     * @param newState  state to be set
+     */
+    virtual void setState(const ConnectionStatus state) = 0;
 
     /**
      * @brief Print configuration and status on stdout.
