@@ -653,6 +653,8 @@ void SessionUaSdk::connectionStatusChanged (
                 cargo[i]->item = it;
                 i++;
             }
+            // status needs to be updated before requests are being issued
+            serverConnectionStatus = serverStatus;
             reader.pushRequest(cargo, menuPriorityHIGH);
         }
         break;
