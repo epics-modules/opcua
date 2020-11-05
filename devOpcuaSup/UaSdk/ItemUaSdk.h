@@ -86,6 +86,17 @@ public:
                            char *text = nullptr,
                            const epicsUInt32 len = 0,
                            epicsTimeStamp *ts = nullptr) override;
+    /**
+     * @brief Get the EPICS-related state of the item.
+     * See DevOpcua::Item::state
+     */
+    virtual ConnectionStatus state() const override { return connState; }
+
+    /**
+     * @brief Set the EPICS-related state of the item.
+     * See DevOpcua::Item::setState
+     */
+    virtual void setState(const ConnectionStatus state) override { connState = state; }
 
     /**
      * @brief Return registered status.
@@ -115,18 +126,6 @@ public:
      * @return read status
      */
     UaStatusCode getLastStatus() { return lastStatus; }
-
-    /**
-     * @brief Setter for the EPICS-related state of the item.
-     * @param newState  state to be set
-     */
-    void setState(const ConnectionStatus state) { connState = state; }
-
-    /**
-     * @brief Getter for EPICS-related state of the item.
-     * @return EPICS-related connection state
-     */
-    ConnectionStatus state() { return connState; }
 
     /**
      * @brief Setter for the reason of an operation.

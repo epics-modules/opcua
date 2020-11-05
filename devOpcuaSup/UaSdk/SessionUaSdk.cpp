@@ -648,10 +648,13 @@ void SessionUaSdk::connectionStatusChanged (
             auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
             unsigned int i = 0;
             for (auto it : items) {
+                it->setState(ConnectionStatus::initialRead);
                 cargo[i] = std::make_shared<ReadRequest>();
                 cargo[i]->item = it;
                 i++;
             }
+            // status needs to be updated before requests are being issued
+            serverConnectionStatus = serverStatus;
             reader.pushRequest(cargo, menuPriorityHIGH);
         }
         break;
@@ -707,8 +710,6 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                 if (OpcUa_IsNotGood(values[i].StatusCode))
                     reason = ProcessReason::readFailure;
                 item->setIncomingData(values[i], reason);
-                if (item->state() != ConnectionStatus::initialWrite)
-                    item->setState(ConnectionStatus::up);
             }
             i++;
         }
