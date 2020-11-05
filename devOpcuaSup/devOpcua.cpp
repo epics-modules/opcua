@@ -176,14 +176,14 @@ opcua_get_ioint (int cmd, dbCommon *prec, IOSCANPVT *ppvt)
 
 inline bool
 useReadValue (RecordConnector *pcon) {
-    if (pcon->reason == ProcessReason::connectionLoss ||
-            pcon->reason == ProcessReason::readFailure ||
-            (pcon->state() == ConnectionStatus::initialRead &&
-             pcon->reason == ProcessReason::readComplete &&
-             pcon->bini() != LinkOptionBini::read))
-        return false;
-    else
+    if (pcon->reason == ProcessReason::incomingData ||
+            pcon->reason == ProcessReason::none ||
+            (pcon->reason == ProcessReason::readComplete &&
+             (pcon->state() != ConnectionStatus::initialRead ||
+              pcon->bini() == LinkOptionBini::read)))
         return true;
+    else
+        return false;
 }
 
 // helper: manage status and bini behavior
@@ -219,32 +219,35 @@ itemActionString (const ItemAction choice)
 }
 
 inline void
-traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsInt32 value) {
+traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsInt32 value, const char*field = "VAL") {
     if (pdbc->tpro > 1)
-        errlogPrintf("%s: write (state=%s, reason=%s) <- VAL=%d (%#010x)\n",
+        errlogPrintf("%s: write (state=%s, reason=%s) <- %s=%d (%#010x)\n",
                      pdbc->name,
                      connectionStatusString(pcon->state()),
                      processReasonString(pcon->reason),
+                     field,
                      value, static_cast<unsigned int>(value));
 }
 
 inline void
-traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsUInt32 value) {
+traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsUInt32 value, const char *field = "VAL") {
     if (pdbc->tpro > 1)
-        errlogPrintf("%s: write (state=%s, reason=%s) <- VAL=%u (%#010x)\n",
+        errlogPrintf("%s: write (state=%s, reason=%s) <- %s=%u (%#010x)\n",
                      pdbc->name,
                      connectionStatusString(pcon->state()),
                      processReasonString(pcon->reason),
+                     field,
                      value, value);
 }
 
 inline void
-traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsInt64 value) {
+traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsInt64 value, const char *field = "VAL") {
     if (pdbc->tpro > 1)
-        errlogPrintf("%s: write (state=%s, reason=%s) <- VAL=%lld (%#018llx)\n",
+        errlogPrintf("%s: write (state=%s, reason=%s) <- %s=%lld (%#018llx)\n",
                      pdbc->name,
                      connectionStatusString(pcon->state()),
                      processReasonString(pcon->reason),
+                     field,
                      value, static_cast<unsigned long long int>(value));
 }
 
@@ -280,23 +283,25 @@ traceWriteArrayPrint (const dbCommon *pdbc, const RecordConnector *pcon, const e
 
 inline void
 traceReadPrint (const dbCommon *pdbc, const RecordConnector *pcon,
-                const long ret, const bool setVal, const epicsInt32 value) {
+                const long ret, const bool setVal, const epicsInt32 value, const char *field = "VAL") {
     if (pdbc->tpro > 1)
-        errlogPrintf("%s: read (state=%s, reason=%s, status=%ld, setVal=%c) -> VAL=%d (%#010x)\n",
+        errlogPrintf("%s: read (state=%s, reason=%s, status=%ld, setVal=%c) -> %s=%d (%#010x)\n",
                      pdbc->name, connectionStatusString(pcon->state()),
                      processReasonString(pcon->reason),
                      ret, setVal ? 'y' : 'n',
+                     field,
                      value, static_cast<unsigned int>(value));
 }
 
 inline void
 traceReadPrint (const dbCommon *pdbc, const RecordConnector *pcon,
-                const long ret, const bool setVal, const epicsUInt32 value) {
+                const long ret, const bool setVal, const epicsUInt32 value, const char *field = "VAL") {
     if (pdbc->tpro > 1)
-        errlogPrintf("%s: read (state=%s, reason=%s, status=%ld, setVal=%c) -> VAL=%u (%#010x)\n",
+        errlogPrintf("%s: read (state=%s, reason=%s, status=%ld, setVal=%c) -> %s=%u (%#010x)\n",
                      pdbc->name, connectionStatusString(pcon->state()),
                      processReasonString(pcon->reason),
                      ret, setVal ? 'y' : 'n',
+                     field,
                      value, value);
 }
 
@@ -507,7 +512,7 @@ opcua_read_uint32_rval (REC *prec)
         } else {
             epicsUInt32 *value = useReadValue(pcon) ? &prec->rval : nullptr;
             ret = pcon->readScalar(value, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->rval);
+            traceReadPrint(pdbc, pcon, ret, value, prec->rval, "RVAL");
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -527,7 +532,7 @@ opcua_write_uint32_rval (REC *prec)
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
             if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
-                traceWritePrint(pdbc, pcon, prec->rval);
+                traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                 pcon->writeScalar(prec->rval);
                 if (pcon->plinkinfo->linkedToItem &&
                         (pcon->state() == ConnectionStatus::up ||
@@ -539,7 +544,7 @@ opcua_write_uint32_rval (REC *prec)
         } else {
             epicsUInt32 *value = useReadValue(pcon) ? &prec->rval : nullptr;
             ret = pcon->readScalar(value, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->rval);
+            traceReadPrint(pdbc, pcon, ret, value, prec->rval, "RVAL");
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -587,7 +592,7 @@ opcua_read_analog (REC *prec)
                 } else {
                     ret = 2;     // don't convert
                 }
-                traceReadPrint(pdbc, pcon, ret, setValFromValue, prec->rval);
+                traceReadPrint(pdbc, pcon, ret, setValFromValue, prec->rval, "RVAL");
             }
             manageStateAndBiniProcessing(pcon);
         }
@@ -613,7 +618,7 @@ opcua_write_analog (REC *prec)
                     traceWritePrint(pdbc, pcon, prec->val);
                     ret = pcon->writeScalar(prec->val);
                 } else {
-                    traceWritePrint(pdbc, pcon, prec->rval);
+                    traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                     ret = pcon->writeScalar(prec->rval);
                 }
                 if (pcon->plinkinfo->linkedToItem &&
@@ -683,7 +688,7 @@ opcua_write_enum (REC *prec)
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
             if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
-                traceWritePrint(pdbc, pcon, prec->rval);
+                traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                 pcon->writeScalar(prec->rval);
                 if (pcon->plinkinfo->linkedToItem &&
                         (pcon->state() == ConnectionStatus::up ||
@@ -736,7 +741,7 @@ opcua_write_bo (REC *prec)
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
             if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
-                traceWritePrint(pdbc, pcon, prec->rval);
+                traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                 pcon->writeScalar(prec->rval);
                 if (pcon->plinkinfo->linkedToItem &&
                         (pcon->state() == ConnectionStatus::up ||
@@ -774,7 +779,7 @@ opcua_write_mbbod (REC *prec)
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
             if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
-                traceWritePrint(pdbc, pcon, prec->rval);
+                traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                 pcon->writeScalar(prec->rval);
                 if (pcon->plinkinfo->linkedToItem &&
                         (pcon->state() == ConnectionStatus::up ||
