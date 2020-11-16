@@ -236,6 +236,7 @@ traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsU
                      value, value);
 }
 
+#ifdef DBR_INT64
 inline void
 traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsInt64 value, const char *field = "VAL") {
     if (pdbc->tpro > 1)
@@ -246,6 +247,7 @@ traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const epicsI
                      field,
                      value, static_cast<unsigned long long int>(value));
 }
+#endif
 
 inline void
 traceWritePrint (const dbCommon *pdbc, const RecordConnector *pcon, const double value) {
@@ -301,6 +303,7 @@ traceReadPrint (const dbCommon *pdbc, const RecordConnector *pcon,
                      value, value);
 }
 
+#ifdef DBR_INT64
 inline void
 traceReadPrint (const dbCommon *pdbc, const RecordConnector *pcon,
                 const long ret, const bool setVal, const epicsInt64 value) {
@@ -311,6 +314,7 @@ traceReadPrint (const dbCommon *pdbc, const RecordConnector *pcon,
                      ret, setVal ? 'y' : 'n',
                      value, static_cast<unsigned long long int>(value));
 }
+#endif
 
 inline void
 traceReadPrint (const dbCommon *pdbc, const RecordConnector *pcon,
@@ -435,6 +439,7 @@ opcua_write_int32_val (REC *prec)
     return ret;
 }
 
+#ifdef DBR_INT64
 template<typename REC>
 long
 opcua_read_int64_val (REC *prec)
@@ -490,6 +495,7 @@ opcua_write_int64_val (REC *prec)
     } CATCH()
     return ret;
 }
+#endif
 
 // unsigned integer to/from RVAL
 
