@@ -394,7 +394,7 @@ opcua_read_int32_val (REC *prec)
         } else {
             epicsInt32 *value = useReadValue(pcon) ? &prec->val : nullptr;
             ret = pcon->readScalar(value, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->val);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -426,7 +426,7 @@ opcua_write_int32_val (REC *prec)
         } else {
             epicsInt32 *value = useReadValue(pcon) ? &prec->val : nullptr;
             ret = pcon->readScalar(value, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->val);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -450,7 +450,7 @@ opcua_read_int64_val (REC *prec)
         } else {
             epicsInt64 *value = useReadValue(pcon) ? &prec->val : nullptr;
             ret = pcon->readScalar(value, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->val);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -482,7 +482,7 @@ opcua_write_int64_val (REC *prec)
         } else {
             epicsInt64 *value = useReadValue(pcon) ? &prec->val : nullptr;
             ret = pcon->readScalar(value, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->val);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -508,7 +508,7 @@ opcua_read_uint32_rval (REC *prec)
         } else {
             epicsUInt32 *value = useReadValue(pcon) ? &prec->rval : nullptr;
             ret = pcon->readScalar(value, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->rval, "RVAL");
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->rval, "RVAL");
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -540,7 +540,7 @@ opcua_write_uint32_rval (REC *prec)
         } else {
             epicsUInt32 *value = useReadValue(pcon) ? &prec->rval : nullptr;
             ret = pcon->readScalar(value, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->rval, "RVAL");
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->rval, "RVAL");
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -715,7 +715,7 @@ opcua_write_enum (REC *prec)
                     prec->val = static_cast<epicsUInt16>(*rval);
                 }
             }
-            traceReadPrint(pdbc, pcon, ret, rval, prec->val, prec->rval);
+            traceReadPrint(pdbc, pcon, ret, !!rval, prec->val, prec->rval);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -753,7 +753,7 @@ opcua_write_bo (REC *prec)
                 if (*rval == 0) prec->val = 0;
                 else prec->val = 1;
             }
-            traceReadPrint(pdbc, pcon, ret, rval, prec->val, prec->rval);
+            traceReadPrint(pdbc, pcon, ret, !!rval, prec->val, prec->rval);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -803,7 +803,7 @@ opcua_write_mbbod (REC *prec)
                     }
                 }
             }
-            traceReadPrint(pdbc, pcon, ret, rval, prec->val, prec->rval);
+            traceReadPrint(pdbc, pcon, ret, !!rval, prec->val, prec->rval);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -830,7 +830,7 @@ opcua_read_string_val (REC *prec)
             char *value = useReadValue(pcon) ? prec->val : nullptr;
             unsigned short num = value ? MAX_STRING_SIZE : 0;
             ret = pcon->readScalar(value, num, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->val);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -863,7 +863,7 @@ opcua_write_string_val (REC *prec)
             char *value = useReadValue(pcon) ? prec->val : nullptr;
             unsigned short num = value ? MAX_STRING_SIZE : 0;
             ret = pcon->readScalar(value, num, &nextReason);
-            traceReadPrint(pdbc, pcon, ret, value, prec->val);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -891,7 +891,7 @@ opcua_read_lstring_val (REC *prec)
             ret = pcon->readScalar(value, prec->sizv, &nextReason);
             if (value)
                 prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
-            traceReadPrint(pdbc, pcon, ret, value, prec->val);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -925,7 +925,7 @@ opcua_write_lstring_val (REC *prec)
             ret = pcon->readScalar(value, prec->sizv, &nextReason);
             if (value)
                 prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
-            traceReadPrint(pdbc, pcon, ret, value, prec->val);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -1005,7 +1005,7 @@ opcua_read_array (REC *prec)
             }
             if (nord != prec->nord)
                 db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);            
-            traceReadArrayPrint(pdbc, pcon, ret, bptr, prec->nord);
+            traceReadArrayPrint(pdbc, pcon, ret, !!bptr, prec->nord);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason)
@@ -1131,7 +1131,7 @@ opcua_write_array (REC *prec)
             if (nord != prec->nord)
                 db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
 
-            traceReadArrayPrint(pdbc, pcon, ret, bptr, prec->nord);
+            traceReadArrayPrint(pdbc, pcon, ret, !!bptr, prec->nord);
             manageStateAndBiniProcessing(pcon);
         }
         if (nextReason != ProcessReason::none)
