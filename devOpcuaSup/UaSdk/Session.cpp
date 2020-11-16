@@ -64,9 +64,15 @@ void
 Session::showOptionHelp ()
 {
     std::cout << "Options:\n"
-              << "clientcert   path to client certificate [none]\n"
-              << "clientkey    path to client private key [none]\n"
-              << "batch-nodes  max. nodes per service call [0 = no limit]"
+              << "clientcert         path to client certificate [none]\n"
+              << "clientkey          path to client private key [none]\n"
+              << "nodes-max          max. nodes per service call [0 = no limit]\n"
+              << "read-nodes-max     max. nodes per read service call [0 = no limit]\n"
+              << "read-timeout-min   min. timeout (holdoff) after read service call [ms]\n"
+              << "read-timeout-max   timeout (holdoff) after read service call w/ max elements [ms]\n"
+              << "write-nodes-max    max. nodes per write service call [0 = no limit]\n"
+              << "write-timeout-min  min. timeout (holdoff) after write service call [ms]\n"
+              << "write-timeout-max  timeout (holdoff) after write service call w/ max elements [ms]"
               << std::endl;
 }
 
