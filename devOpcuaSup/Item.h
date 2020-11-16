@@ -48,6 +48,14 @@ public:
     virtual ~Item() {}
 
     /**
+     * @brief Factory method to dynamically create an Item of the specific implementation.
+     *
+     * @param info  linkinfo data of the parsed record link
+     * @return  pointer to the Item base class of the created object
+     */
+    static Item * newItem(const linkInfo &info);
+
+    /**
      * @brief Schedule a read request (using beginRead service).
      */
     virtual void requestRead() = 0;

@@ -203,9 +203,9 @@ public:
      * @param pconnector  pointer to record connector to link to
      * @param path        path of leaf element inside the structure
      */
-    static void addElementChain(ItemUaSdk *item,
-                                RecordConnector *pconnector,
-                                const std::string &path);
+    static void addElementToTree(ItemUaSdk *item,
+                                 RecordConnector *pconnector,
+                                 const std::string &path);
 
     /**
      * @brief Print configuration and status. See DevOpcua::DataElement::show

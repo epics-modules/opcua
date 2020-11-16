@@ -68,8 +68,6 @@
 #include "devOpcuaVersion.h"
 #include "RecordConnector.h"
 #include "linkParser.h"
-#include "ItemUaSdk.h"
-#include "DataElementUaSdk.h"
 
 namespace {
 
@@ -93,18 +91,16 @@ opcua_add_record (dbCommon *prec)
     try {
         DBEntry ent(prec);
         std::unique_ptr<RecordConnector> pcon (new RecordConnector(prec));
-        ItemUaSdk *pitem;
         pcon->plinkinfo = parseLink(prec, ent);
         if (prec->pini) reportPiniAndClear(prec);
-        //TODO: Switch to implementation selection / factory
+
         if (pcon->plinkinfo->linkedToItem) {
-            pitem = new ItemUaSdk(*pcon->plinkinfo);
-            pitem->recConnector = pcon.get();
+            pcon->pitem = Item::newItem(*pcon->plinkinfo);
+            pcon->pitem->recConnector = pcon.get();
         } else {
-            pitem = static_cast<ItemUaSdk *>(pcon->plinkinfo->item);
+            pcon->pitem = pcon->plinkinfo->item;
         }
-        DataElementUaSdk::addElementChain(pitem, pcon.get(), pcon->plinkinfo->element);
-        pcon->pitem = pitem;
+        DataElement::addElementToTree(pcon->pitem, pcon.get(), pcon->plinkinfo->element);
         prec->dpvt = pcon.release();
         return 0;
     } catch(std::exception& e) {

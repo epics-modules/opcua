@@ -29,6 +29,13 @@ namespace DevOpcua {
 
 using namespace UaClientSdk;
 
+/* Specific implementation of Item's factory method */
+Item *
+Item::newItem(const linkInfo &info)
+{
+    return static_cast<Item*>(new ItemUaSdk(info));
+}
+
 ItemUaSdk::ItemUaSdk (const linkInfo &info)
     : Item(info)
     , subscription(nullptr)

@@ -34,6 +34,15 @@
 
 namespace DevOpcua {
 
+/* Specific implementation of DataElement's "factory" method */
+void
+DataElement::addElementToTree (Item *item,
+                               RecordConnector *pconnector,
+                               const std::string &fullpath)
+{
+    DataElementUaSdk::addElementToTree(static_cast<ItemUaSdk*>(item), pconnector, fullpath);
+}
+
 DataElementUaSdk::DataElementUaSdk (const std::string &name,
                                     ItemUaSdk *item,
                                     RecordConnector *pconnector)
@@ -80,9 +89,9 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
 }
 
 void
-DataElementUaSdk::addElementChain (ItemUaSdk *item,
-                                   RecordConnector *pconnector,
-                                   const std::string &fullpath)
+DataElementUaSdk::addElementToTree (ItemUaSdk *item,
+                                    RecordConnector *pcon,
+                                    const std::string &fullpath)
 {
     bool hasRootElement = true;
     // Create final path element as leaf and link it to connector
@@ -99,8 +108,8 @@ DataElementUaSdk::addElementChain (ItemUaSdk *item,
     if (sep != std::string::npos)
         restpath = path.substr(0, sep);
 
-    auto chainelem = std::make_shared<DataElementUaSdk>(leafname, item, pconnector);
-    pconnector->setDataElement(chainelem);
+    auto chainelem = std::make_shared<DataElementUaSdk>(leafname, item, pcon);
+    pcon->setDataElement(chainelem);
 
     // Starting from item...
     std::weak_ptr<DataElementUaSdk> topelem = item->rootElement;

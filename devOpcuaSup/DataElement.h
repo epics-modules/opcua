@@ -47,6 +47,20 @@ public:
     virtual ~DataElement() {}
 
     /**
+     * @brief "Factory" method to construct a linked list of data elements between a record connector and an item.
+     *
+     * Creates the leaf element first, then identifies the part of the path that already exists
+     * on the item and creates the missing list of linked nodes.
+     *
+     * @param pitem       pointer to corresponding Item
+     * @param pconnector  pointer to record connector to link to
+     * @param path        path of leaf element inside the structure
+     */
+    static void addElementToTree(Item *item,
+                                 RecordConnector *pconnector,
+                                 const std::string &path);
+
+    /**
      * @brief Get the type of element (inside a structure).
      *
      * @return true if element is a leaf (has no child elements)

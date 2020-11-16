@@ -32,7 +32,6 @@
 #include "opcuaItemRecord.h"
 #undef GEN_SIZE_OFFSET
 #include "devOpcua.h"
-#include "ItemUaSdk.h"    //FIXME: replace item creation with factory call (see below)
 #include "RecordConnector.h"
 #include "linkParser.h"
 
@@ -65,16 +64,15 @@ init_record (dbCommon *pdbc, int pass)
             std::unique_ptr<RecordConnector> pvt (new RecordConnector(pdbc));
             pvt->plinkinfo = parseLink(pdbc, ent);
             if (pdbc->pini) reportPiniAndClear(pdbc);
-            ItemUaSdk *pitem = new ItemUaSdk(*pvt->plinkinfo); //FIXME: replace item creation with factory call
-            pitem->recConnector = pvt.get();
-            pvt->pitem = pitem;
-            prec->dpvt = pvt.release();
-            strncpy(prec->sess, pitem->linkinfo.session.c_str(), MAX_STRING_SIZE);
+            pvt->pitem = Item::newItem(*pvt->plinkinfo);
+            pvt->pitem->recConnector = pvt.get();
+            strncpy(prec->sess, pvt->pitem->linkinfo.session.c_str(), MAX_STRING_SIZE);
             prec->sess[MAX_STRING_SIZE] = '\0';
-            strncpy(prec->subs, pitem->linkinfo.subscription.c_str(), MAX_STRING_SIZE);
+            strncpy(prec->subs, pvt->pitem->linkinfo.subscription.c_str(), MAX_STRING_SIZE);
             prec->subs[MAX_STRING_SIZE] = '\0';
             if (!prec->bini)
-                prec->bini = pitem->linkinfo.bini;
+                prec->bini = pvt->pitem->linkinfo.bini;
+            prec->dpvt = pvt.release();
         } catch(std::exception& e) {
             std::cerr << prec->name << " Error in init_record : " << e.what() << std::endl;
             return S_dbLib_badLink;
