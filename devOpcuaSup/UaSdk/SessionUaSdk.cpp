@@ -126,6 +126,8 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     connectInfo.bRetryInitialConnect = autoConnect;
     connectInfo.nMaxOperationsPerServiceCall = batchNodes;
 
+    connectInfo.typeDictionaryMode = UaClientSdk::UaClient::ReadTypeDictionaries_Reconnect;
+
     //TODO: init security settings
     if ((clientCertificate && (clientCertificate[0] != '\0'))
             || (clientPrivateKey && (clientPrivateKey[0] != '\0')))
