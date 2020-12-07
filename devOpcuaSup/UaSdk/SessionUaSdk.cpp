@@ -112,8 +112,7 @@ securityPolicyString (const UaString &policy)
 }
 
 SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUrl,
-                            bool autoConnect, int debug, epicsUInt32 batchNodes,
-                            const char *clientCertificate, const char *clientPrivateKey)
+                            bool autoConnect, int debug)
     : Session(debug)
     , name(name)
     , serverURL(serverUrl.c_str())
@@ -124,11 +123,11 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , reqSecurityPolicyURI("http://opcfoundation.org/UA/SecurityPolicy#None")
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
-    , writer("OPCwr-" + name, *this, batchNodes)
+    , writer("OPCwr-" + name, *this)
     , writeNodesMax(0)
     , writeTimeoutMin(0)
     , writeTimeoutMax(0)
-    , reader("OPCrd-" + name, *this, batchNodes)
+    , reader("OPCrd-" + name, *this)
     , readNodesMax(0)
     , readTimeoutMin(0)
     , readTimeoutMax(0)
@@ -147,14 +146,9 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
 
     connectInfo.bAutomaticReconnect = autoConnect;
     connectInfo.bRetryInitialConnect = autoConnect;
-    connectInfo.nMaxOperationsPerServiceCall = batchNodes;
+    connectInfo.nMaxOperationsPerServiceCall = 0;
 
     connectInfo.typeDictionaryMode = UaClientSdk::UaClient::ReadTypeDictionaries_Reconnect;
-
-    //TODO: init security settings
-    if ((clientCertificate && (clientCertificate[0] != '\0'))
-            || (clientPrivateKey && (clientPrivateKey[0] != '\0')))
-        errlogPrintf("OPC UA security not supported yet\n");
 
     sessions.insert({name, this});
     epicsThreadOnce(&DevOpcua::session_uasdk_ihooks_once, &DevOpcua::session_uasdk_ihooks_register, nullptr);
