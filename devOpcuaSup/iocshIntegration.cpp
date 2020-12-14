@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2020 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -24,6 +24,7 @@
 #include "linkParser.h"
 #include "Session.h"
 #include "Subscription.h"
+#include "RecordConnector.h"
 
 namespace DevOpcua {
 
@@ -454,6 +455,34 @@ void opcuaDebugSubscriptionCallFunc (const iocshArgBuf *args)
     }
 }
 
+static const iocshArg opcuaShowDataArg0 = {"record name", iocshArgString};
+static const iocshArg opcuaShowDataArg1 = {"verbosity", iocshArgInt};
+
+static const iocshArg *const opcuaShowDataArg[2] = {&opcuaShowDataArg0, &opcuaShowDataArg1};
+
+static const iocshFuncDef opcuaShowDataFuncDef = {"opcuaShowData", 2, opcuaShowDataArg};
+
+static
+void opcuaShowDataCallFunc (const iocshArgBuf *args)
+{
+    try {
+        if (args[0].sval == NULL || args[0].sval[0] == '\0') {
+            errlogPrintf("missing argument #1 (record name)\n");
+        } else {
+            RecordConnector *rc = RecordConnector::findRecordConnector(args[0].sval);
+            if (rc) {
+                rc->pitem->show(1);
+            } else {
+                errlogPrintf("record %s does not exist\n",
+                             args[0].sval);
+            }
+        }
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static
 void opcuaIocshRegister ()
 {
@@ -469,6 +498,8 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaCreateSubscriptionFuncDef, opcuaCreateSubscriptionCallFunc);
     iocshRegister(&opcuaShowSubscriptionFuncDef, opcuaShowSubscriptionCallFunc);
     iocshRegister(&opcuaDebugSubscriptionFuncDef, opcuaDebugSubscriptionCallFunc);
+
+    iocshRegister(&opcuaShowDataFuncDef, opcuaShowDataCallFunc);
 }
 
 extern "C" {

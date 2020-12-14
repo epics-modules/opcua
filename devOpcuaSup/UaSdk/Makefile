@@ -1,5 +1,5 @@
 #*************************************************************************
-# Copyright (c) 2018 ITER Organization.
+# Copyright (c) 2018-2020 ITER Organization.
 # This module is distributed subject to a Software License Agreement found
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
@@ -24,9 +24,7 @@ opcua_SRCS += Subscription.cpp
 opcua_SRCS += SubscriptionUaSdk.cpp
 opcua_SRCS += ItemUaSdk.cpp
 opcua_SRCS += DataElementUaSdk.cpp
-opcua_SRCS += iocshIntegrationUaSdk.cpp
 
-DBD_INSTALLS += opcuaUaSdk.dbd
 DBD_INSTALLS += opcua.dbd
 
 CFG += RULES_OPCUA
