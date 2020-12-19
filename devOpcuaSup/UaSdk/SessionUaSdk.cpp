@@ -299,6 +299,10 @@ SessionUaSdk::connect ()
                              << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
     } else {
+
+        if (setupSecurity())
+            return -1;
+
         UaStatus result = puasession->connect(serverURL,      // URL of the Endpoint
                                               connectInfo,    // General connection settings
                                               securityInfo,   // Security settings
@@ -636,6 +640,86 @@ SessionUaSdk::showSecurity ()
                 }
                 std::cout << std::endl;
             }
+        }
+    }
+}
+
+SessionUaSdk::ConnectResult
+SessionUaSdk::setupSecurity ()
+{
+    UaStatus status;
+    ServiceSettings serviceSettings;
+    UaDiscovery discovery;
+
+    if (reqSecurityMode == OpcUa_MessageSecurityMode_None
+        && reqSecurityPolicyURI == OpcUa_SecurityPolicy_None && reqSecurityLevel == 0) {
+        securityInfo.messageSecurityMode = OpcUa_MessageSecurityMode_None;
+        securityInfo.sSecurityPolicy = OpcUa_SecurityPolicy_None;
+        securityInfo.serverCertificate.clear();
+
+        if (debug)
+            std::cout << "Session " << name.c_str()
+                      << ": (setupSecurity) no security configured "
+                      << std::endl;
+        return ConnectResult::ok;
+
+    } else {
+
+        if (std::string(serverURL.toUtf8()).compare(0, 7, "opc.tcp") == 0) {
+            UaEndpointDescriptions endpointDescriptions;
+            if (debug)
+                std::cout << "Session " << name.c_str()
+                          << ": (setupSecurity) reading endpoints from " << serverURL.toUtf8()
+                          << std::endl;
+
+            status = discovery.getEndpoints(serviceSettings, serverURL, securityInfo, endpointDescriptions);
+            if (status.isBad()) {
+                if (debug)
+                    std::cout << "Session " << name.c_str()
+                              << ": (setupSecurity) UaDiscovery::getEndpoints from " << serverURL.toUtf8()
+                              << " failed with status " << status.toString().toUtf8()
+                              << std::endl;
+                return ConnectResult::cantConnect;
+            }
+
+            OpcUa_Byte selectedSecurityLevel = reqSecurityLevel;
+            OpcUa_UInt32 selectedEndpoint = 0;
+            for (OpcUa_UInt32 k = 0; k < endpointDescriptions.length(); k++) {
+                if (std::string(UaString(endpointDescriptions[k].EndpointUrl).toUtf8()).compare(0, 7, "opc.tcp") == 0) {
+                    if (reqSecurityMode == OpcUa_MessageSecurityMode_None ||
+                            reqSecurityMode == endpointDescriptions[k].SecurityMode)
+                        if (reqSecurityPolicyURI == OpcUa_SecurityPolicy_None ||
+                                reqSecurityPolicyURI == endpointDescriptions[k].SecurityPolicyUri)
+                            if (endpointDescriptions[k].SecurityLevel >= selectedSecurityLevel) {
+                                selectedEndpoint = k;
+                                selectedSecurityLevel = endpointDescriptions[k].SecurityLevel;
+                            }
+                }
+            }
+            if (selectedEndpoint > 0) {
+                securityInfo.messageSecurityMode = endpointDescriptions[selectedEndpoint].SecurityMode;
+                securityInfo.sSecurityPolicy.attach(&endpointDescriptions[selectedEndpoint].SecurityPolicyUri);
+                OpcUa_String_Initialize(&endpointDescriptions[selectedEndpoint].SecurityPolicyUri);
+                securityInfo.serverCertificate.attach(&endpointDescriptions[selectedEndpoint].ServerCertificate);
+                OpcUa_ByteString_Initialize(&endpointDescriptions[selectedEndpoint].ServerCertificate);
+                if (debug)
+                    std::cout << "Session " << name.c_str()
+                              << ": (setupSecurity) found matching endpoint, using"
+                              << " mode=" << securityModeString(securityInfo.messageSecurityMode)
+                              << " policy=" << securityPolicyString(securityInfo.sSecurityPolicy)
+                              << " (level " << +endpointDescriptions[selectedEndpoint].SecurityLevel << ")"
+                              << std::endl;
+            } else {
+                errlogPrintf("OPC UA session %s: (setupSecurity) found no endpoint that matches "
+                             "the security requirements",
+                             name.c_str());
+                return ConnectResult::noMatchingEndpoint;
+            }
+            return ConnectResult::ok;
+        } else {
+            errlogPrintf("OPC UA session %s: fatal - only URLs of type 'opc.tcp' supported\n",
+                         name.c_str());
+            return SessionUaSdk::fatal;
         }
     }
 }

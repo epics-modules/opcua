@@ -267,6 +267,20 @@ private:
      */
     void updateNamespaceMap(const UaStringArray &nsArray);
 
+    enum ConnectResult { fatal = -1, ok = 0
+                         , cantConnect
+                         , noMatchingEndpoint
+                       };
+    /**
+     * @brief Set up security.
+     *
+     * Discovers the endpoints and finds the one matching the user configuration.
+     * Verifies the presented server certificate.
+     *
+     * @returns status (0 = OK)
+     */
+    ConnectResult setupSecurity();
+
     static Registry<SessionUaSdk> sessions;                   /**< session management */
 
     const std::string name;                                   /**< unique session name */
