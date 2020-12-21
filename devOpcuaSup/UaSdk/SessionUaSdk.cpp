@@ -111,8 +111,10 @@ securityPolicyString (const UaString &policy)
         return policy.toUtf8() + found + 1;
 }
 
-SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUrl,
-                            bool autoConnect, int debug)
+SessionUaSdk::SessionUaSdk(const std::string &name,
+                           const std::string &serverUrl,
+                           bool autoConnect,
+                           int debug)
     : Session(debug)
     , name(name)
     , serverURL(serverUrl.c_str())
@@ -121,6 +123,7 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , puasession(new UaSession())
     , reqSecurityMode(OpcUa_MessageSecurityMode_None)
     , reqSecurityPolicyURI("http://opcfoundation.org/UA/SecurityPolicy#None")
+    , reqSecurityLevel(0)
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
     , writer("OPCwr-" + name, *this)
@@ -172,11 +175,7 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
     bool updateReadBatcher = false;
     bool updateWriteBatcher = false;
 
-    if (name == "clientcert") {
-        errlogPrintf("security not implemented\n");
-    } else if (name == "clientkey") {
-        errlogPrintf("security not implemented\n");
-    } else if (name == "sec-mode") {
+    if (name == "sec-mode") {
         if (value == "None" || value == "none") {
             reqSecurityMode = OpcUa_MessageSecurityMode_None;
         } else if (value == "SignAndEncrypt") {
@@ -229,6 +228,9 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
 #endif
                          ")\n");
         }
+    } else if (name == "sec-level-min") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        reqSecurityLevel = static_cast<unsigned char>(ul);
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -597,8 +599,8 @@ SessionUaSdk::showSecurity ()
             if (serverURL != applicationDescriptions[i].DiscoveryUrls[j])
                 std::cout << "    (using " << serverURL.toUtf8() << ")";
             std::cout << "\n  Requested Mode: " << securityModeString(reqSecurityMode)
-                      << "    Policy: " << securityPolicyString(reqSecurityPolicyURI);
-
+                      << "    Policy: " << securityPolicyString(reqSecurityPolicyURI)
+                      << "    Level: " << +reqSecurityLevel;
             if (std::string(serverURL.toUtf8()).compare(0, 7, "opc.tcp") == 0) {
                 UaEndpointDescriptions endpointDescriptions;
                 status = discovery.getEndpoints(serviceSettings, serverURL, securityInfo, endpointDescriptions);
@@ -677,6 +679,7 @@ SessionUaSdk::show (const int level) const
               << "(" << securityModeString(reqSecurityMode) << ")"
               << " sec-policy="  << securityPolicyString(securityInfo.sSecurityPolicy)
               << "(" << securityPolicyString(reqSecurityPolicyURI) << ")"
+              << " sec-level="   << reqSecurityLevel
               << " debug="       << debug
               << " batch=";
     if (isConnected())

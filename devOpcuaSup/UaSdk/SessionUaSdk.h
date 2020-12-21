@@ -282,6 +282,7 @@ private:
     SessionSecurityInfo securityInfo;                         /**< security metadata */
     OpcUa_MessageSecurityMode reqSecurityMode;                /**< requested security mode */
     UaString reqSecurityPolicyURI;                            /**< requested security policy */
+    unsigned char reqSecurityLevel;                           /**< requested security level */
     UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
     int transactionId;                                        /**< next transaction id */
     /** itemUaSdk vectors of outstanding read or write operations, indexed by transaction id */
