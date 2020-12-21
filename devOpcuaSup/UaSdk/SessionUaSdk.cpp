@@ -638,14 +638,45 @@ SessionUaSdk::showSecurity ()
     }
 }
 
+void SessionUaSdk::initClientSecurity()
+{
+    UaStatus status;
+
+    if (debug)
+        std::cout << "Session " << name.c_str()
+                  << ": (initClientSecurity) setting up PKI provider"
+                  << std::endl;
+    status = securityInfo.initializePkiProviderOpenSSL(
+                securityCertificateRevocationListDir.c_str(),
+                securityCertificateTrustListDir.c_str(),
+                securityIssuersCertificatesDir.c_str(),
+                securityIssuersRevocationListDir.c_str());
+    if (status.isBad())
+        errlogPrintf("OPC UA session %s: setting up PKI context failed with status %s\n",
+                     name.c_str(), status.toString().toUtf8());
+
+    if (debug)
+        std::cout << "Session " << name.c_str()
+                  << ": (initClientSecurity) loading client certificate " << securityClientCertificateFile.c_str()
+                  << std::endl;
+    status = securityInfo.loadClientCertificateOpenSSL(
+                securityClientCertificateFile.c_str(),
+                securityClientPrivateKeyFile.c_str());
+    if (status.isBad())
+        errlogPrintf("OPC UA session %s: loading client certificate failed with status %s\n",
+                     name.c_str(), status.toString().toUtf8());
+}
+
 void
 SessionUaSdk::show (const int level) const
 {
     std::cout << "session="      << name
               << " url="         << serverURL.toUtf8()
               << " status="      << serverStatusString(serverConnectionStatus)
-              << " sec-mode="    << securityModeString(reqSecurityMode)
-              << " sec-policy="  << securityPolicyString(reqSecurityPolicyURI)
+              << " sec-mode="    << securityModeString(securityInfo.messageSecurityMode)
+              << "(" << securityModeString(reqSecurityMode) << ")"
+              << " sec-policy="  << securityPolicyString(securityInfo.sSecurityPolicy)
+              << "(" << securityPolicyString(reqSecurityPolicyURI) << ")"
               << " debug="       << debug
               << " batch=";
     if (isConnected())
@@ -950,6 +981,7 @@ SessionUaSdk::initHook (initHookState state)
     {
         errlogPrintf("OPC UA: Autoconnecting sessions\n");
         for (auto &it : sessions) {
+            it.second->initClientSecurity();
             if (it.second->autoConnect)
                 it.second->connect();
         }

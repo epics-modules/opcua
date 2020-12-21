@@ -207,6 +207,8 @@ public:
      */
     OpcUa_UInt16 mapNamespaceIndex(const OpcUa_UInt16 nsIndex) const;
 
+    virtual void initClientSecurity() override;
+
     /**
      * @brief EPICS IOC Database initHook function.
      *

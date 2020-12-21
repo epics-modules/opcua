@@ -137,6 +137,11 @@ public:
     virtual void addNamespaceMapping(const unsigned short nsIndex, const std::string &uri) = 0;
 
     /**
+     * @brief Initialize client security (PKI store and client certificate).
+     */
+    virtual void initClientSecurity() = 0;
+
+    /**
      * @brief Factory method to create a session (implementation specific).
      *
      * @param name         name of the new session
@@ -177,6 +182,14 @@ public:
         securityClientPrivateKeyFile = std::move(prvKey);
     }
 
+    /**
+     * @brief Setup client PKI (cert store locations).
+     *
+     * @param certTrustList  server certificate location
+     * @param certRevocationList  server revocation list location
+     * @param issuersTrustList  issuers certificate location
+     * @param issuersRevocationList  issuers revocation list location
+     */
     static void setupPKI(const std::string &&certTrustList,
                          const std::string &&certRevocationList,
                          const std::string &&issuersTrustList,
