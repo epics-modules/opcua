@@ -279,6 +279,8 @@ private:
     UaSession* puasession;                                    /**< pointer to low level session */
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */
+    OpcUa_MessageSecurityMode reqSecurityMode;                /**< requested security mode */
+    UaString reqSecurityPolicyURI;                            /**< requested security policy */
     UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
     int transactionId;                                        /**< next transaction id */
     /** itemUaSdk vectors of outstanding read or write operations, indexed by transaction id */

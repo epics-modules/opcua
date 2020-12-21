@@ -84,8 +84,8 @@ serverStatusString (UaClient::ServerStatus type)
     case UaClient::ConnectionErrorApiReconnect:       return "ConnectionErrorApiReconnect";
     case UaClient::ServerShutdown:                    return "ServerShutdown";
     case UaClient::NewSessionCreated:                 return "NewSessionCreated";
-    default:                                          return "<unknown>";
     }
+    return "";
 }
 
 inline const char *
@@ -120,6 +120,8 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
     , autoConnect(autoConnect)
     , registeredItemsNo(0)
     , puasession(new UaSession())
+    , reqSecurityMode(OpcUa_MessageSecurityMode_None)
+    , reqSecurityPolicyURI("http://opcfoundation.org/UA/SecurityPolicy#None")
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
     , writer("OPCwr-" + name, *this, batchNodes)
@@ -180,6 +182,59 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
         errlogPrintf("security not implemented\n");
     } else if (name == "clientkey") {
         errlogPrintf("security not implemented\n");
+    } else if (name == "sec-mode") {
+        if (value == "None" || value == "none") {
+            reqSecurityMode = OpcUa_MessageSecurityMode_None;
+        } else if (value == "SignAndEncrypt") {
+            reqSecurityMode = OpcUa_MessageSecurityMode_SignAndEncrypt;
+        } else if (value == "Sign") {
+            reqSecurityMode = OpcUa_MessageSecurityMode_Sign;
+        } else {
+            errlogPrintf("invalid security-mode (valid: None Sign SignAndEncrypt)\n");
+            reqSecurityMode = OpcUa_MessageSecurityMode_Invalid;
+        }
+    } else if (name == "sec-policy") {
+        if (value == "None" || value == "none") {
+            reqSecurityPolicyURI = OpcUa_SecurityPolicy_None;
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC128RSA15
+        } else if (value == "Basic128Rsa15") {
+            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Basic128Rsa15;
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256
+        } else if (value == "Basic256") {
+            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Basic256;
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256SHA256
+        } else if (value == "Basic256Sha256") {
+            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Basic256Sha256;
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_AES128SHA256RSAOAEP
+        } else if (value == "Aes128Sha256RsaOaep") {
+            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Aes128Sha256RsaOaep;
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_AES256SHA256RSAPSS
+        } else if (value == "Aes256Sha256RsaPss") {
+            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Aes256Sha256RsaPss;
+#endif
+        } else {
+            errlogPrintf("invalid security-policy (valid: None"
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC128RSA15
+                         " Basic128Rsa15"
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256
+                         " Basic256"
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256SHA256
+                         " Basic256Sha256"
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_AES128SHA256RSAOAEP
+                         " Aes128Sha256RsaOaep"
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_AES256SHA256RSAPSS
+                         " Aes256Sha256RsaPss"
+#endif
+                         ")\n");
+        }
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -547,6 +602,8 @@ SessionUaSdk::showSecurity ()
                       << "\n  Server Url:  " << UaString(applicationDescriptions[i].DiscoveryUrls[j]).toUtf8();
             if (serverURL != applicationDescriptions[i].DiscoveryUrls[j])
                 std::cout << "    (using " << serverURL.toUtf8() << ")";
+            std::cout << "\n  Requested Mode: " << securityModeString(reqSecurityMode)
+                      << "    Policy: " << securityPolicyString(reqSecurityPolicyURI);
 
             if (std::string(serverURL.toUtf8()).compare(0, 7, "opc.tcp") == 0) {
                 UaEndpointDescriptions endpointDescriptions;
@@ -593,8 +650,8 @@ SessionUaSdk::show (const int level) const
     std::cout << "session="      << name
               << " url="         << serverURL.toUtf8()
               << " status="      << serverStatusString(serverConnectionStatus)
-              << " cert="        << "[none]"
-              << " key="         << "[none]"
+              << " sec-mode="    << securityModeString(reqSecurityMode)
+              << " sec-policy="  << securityPolicyString(reqSecurityPolicyURI)
               << " debug="       << debug
               << " batch=";
     if (isConnected())
