@@ -16,6 +16,9 @@
 #include <string>
 
 #include <shareLib.h>
+#include <epicsTimer.h>
+
+#include "iocshVariables.h"
 
 namespace DevOpcua {
 
@@ -45,8 +48,8 @@ public:
      * Non-blocking. Connection status changes shall be reported through a
      * callback interface.
      *
-     * If the server is not available at the time of calling,
-     * the client library shall continue trying to connect.
+     * If the connection attempt fails and the autoConnect flag is true,
+     * the reconnect timer shall be restarted.
      *
      * @return long status (0 = OK)
      */
@@ -204,8 +207,11 @@ public:
     int debug;  /**< debug verbosity level */
 
 protected:
-    Session (const int debug)
-        : debug(debug) {}
+    Session (const int debug, const bool autoConnect)
+        : debug(debug)
+        , autoConnector(*this, opcua_ConnectTimeout, queue)
+        , autoConnect(autoConnect)
+    {}
 
     static std::string securityCertificateTrustListDir;       /**< directory for trusted server certs */
     static std::string securityCertificateRevocationListDir;  /**< directory for server cert revocation lists */
@@ -213,6 +219,30 @@ protected:
     static std::string securityIssuersRevocationListDir;      /**< directory for issuer cert revocation lists */
     static std::string securityClientCertificateFile;         /**< full path to the client cert (public key) */
     static std::string securityClientPrivateKeyFile;          /**< full path to the client private key */
+
+    // Delay timer for reconnecting whenever connection is down
+    class AutoConnect : public epicsTimerNotify {
+    public:
+        AutoConnect(Session &client, const double delay, epicsTimerQueueActive &queue)
+            : timer(queue.createTimer())
+            , client(client)
+            , delay(delay)
+        {}
+        virtual ~AutoConnect() override { timer.destroy(); }
+        void start() { timer.start(*this, delay); }
+        virtual expireStatus expire(const epicsTime &/*currentTime*/) override {
+            client.connect();
+            return expireStatus(noRestart); // client.connect() starts the timer on failure
+        }
+    private:
+        epicsTimer &timer;
+        Session &client;
+        const double delay;
+    };
+
+    static epicsTimerQueueActive &queue;                      /**< timer queue for session reconnects */
+    AutoConnect autoConnector;                                /**< reconnection timer */
+    bool autoConnect;                                         /**< auto (re)connect flag */
 };
 
 

@@ -115,10 +115,9 @@ SessionUaSdk::SessionUaSdk(const std::string &name,
                            const std::string &serverUrl,
                            bool autoConnect,
                            int debug)
-    : Session(debug)
+    : Session(debug, autoConnect)
     , name(name)
     , serverURL(serverUrl.c_str())
-    , autoConnect(autoConnect)
     , registeredItemsNo(0)
     , puasession(new UaSession())
     , reqSecurityMode(OpcUa_MessageSecurityMode_None)
