@@ -111,6 +111,16 @@ public:
     static void showAll(const int level);
 
     /**
+     * @brief Do a discovery and show the available endpoints.
+     */
+    virtual void showSecurity() = 0;
+
+    /**
+     * @brief Do a discovery and show the available endpoints of all sessions.
+     */
+    static void showSecurityClient();
+
+    /**
      * @brief Set an option for the session.
      *
      * @param name   option name

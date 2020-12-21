@@ -14,6 +14,7 @@
 
 #include <uaplatformlayer.h>
 #include <uabase.h>
+#include <uapkicertificate.h>
 
 #include <epicsThread.h>
 
@@ -60,6 +61,44 @@ void
 Session::showAll (const int level)
 {
     SessionUaSdk::showAll(level);
+}
+
+void
+Session::showSecurityClient()
+{
+    UaStatus status;
+    SessionSecurityInfo securityInfo;
+
+    //TODO: Move these two calls into a separate function and file with Linux/Windows ifdefs
+    status = securityInfo.initializePkiProviderOpenSSL(
+                securityCertificateRevocationListDir.c_str(),
+                securityCertificateTrustListDir.c_str(),
+                securityIssuersCertificatesDir.c_str(),
+                securityIssuersRevocationListDir.c_str());
+    if (status.isBad())
+        std::cerr << "Error initializing PKI provider" << std::endl;
+
+    status = securityInfo.loadClientCertificateOpenSSL(
+                securityClientCertificateFile.c_str(),
+                securityClientPrivateKeyFile.c_str());
+    if (status.isBad())
+        std::cerr << "Error loading client certificate" << std::endl;
+
+    std::cout << "Configuration:"
+              << "\n  Client certificate: " << securityClientCertificateFile
+              << "\n  Client private key: " << securityClientPrivateKeyFile
+              << "\n  Server trusted certificates dir: " << securityCertificateTrustListDir
+              << "\n  Server revocation list dir: " << securityCertificateRevocationListDir
+              << "\n  Issuer trusted certificates dir: " << securityIssuersCertificatesDir
+              << "\n  Issuer revocation list dir: " << securityIssuersRevocationListDir;
+    UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.clientCertificate);
+    UaPkiIdentity id = cert.subject();
+    std::cout << "\nClient Certificate: " << id.commonName.toUtf8()
+              << " (" << id.organization.toUtf8() << ")"
+              << " serial " << cert.serialNumber().toUtf8()
+              << " (thumb " << cert.thumbPrint().toHex(false).toUtf8() << ")"
+              << (cert.isSelfSigned() ? " self-signed" : "")
+              << std::endl;
 }
 
 void

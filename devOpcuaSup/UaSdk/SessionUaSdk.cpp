@@ -12,6 +12,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <map>
 #include <algorithm>
@@ -21,6 +22,8 @@
 
 #include <uaclientsdk.h>
 #include <uasession.h>
+#include <uadiscovery.h>
+#include <uapkicertificate.h>
 
 #include <epicsExit.h>
 #include <epicsThread.h>
@@ -83,6 +86,29 @@ serverStatusString (UaClient::ServerStatus type)
     case UaClient::NewSessionCreated:                 return "NewSessionCreated";
     default:                                          return "<unknown>";
     }
+}
+
+inline const char *
+securityModeString (const OpcUa_MessageSecurityMode mode)
+{
+    switch (mode) {
+    case OpcUa_MessageSecurityMode_Invalid:         return "Invalid";
+    case OpcUa_MessageSecurityMode_None:            return "None";
+    case OpcUa_MessageSecurityMode_Sign:            return "Sign";
+    case OpcUa_MessageSecurityMode_SignAndEncrypt:  return "SignAndEncrypt";
+    default:                                        return "<unknown>";
+    }
+}
+
+inline const char *
+securityPolicyString (const UaString &policy)
+{
+    auto s = std::string(policy.toUtf8());
+    size_t found = s.find_last_of('#');
+    if (found == std::string::npos)
+        return "Invalid";
+    else
+        return policy.toUtf8() + found + 1;
 }
 
 SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUrl,
@@ -492,6 +518,70 @@ SessionUaSdk::updateNamespaceMap(const UaStringArray &nsArray)
             if (nsIndexMap.find(it.second) == nsIndexMap.end()) {
                 errlogPrintf("OPC UA session %s: locally mapped namespace '%s' not found on server\n",
                              name.c_str(), it.first.c_str());
+            }
+        }
+    }
+}
+
+void
+SessionUaSdk::showSecurity ()
+{
+    UaStatus status;
+    ServiceSettings serviceSettings;
+    UaApplicationDescriptions applicationDescriptions;
+    UaDiscovery discovery;
+
+    status = discovery.findServers(serviceSettings, serverURL, securityInfo, applicationDescriptions);
+    if (status.isBad()) {
+        std::cerr << "Session " << name << ": (showSecurity) UaDiscovery::findServers failed"
+                  << " with status " << status.toString().toUtf8()
+                  << std::endl;
+        return;
+    }
+
+    for (OpcUa_UInt32 i = 0; i < applicationDescriptions.length(); i++) {
+        for (OpcUa_Int32 j = 0; j < applicationDescriptions[i].NoOfDiscoveryUrls; j++) {
+            std::cout << "Session " << name << "    (discovery at " << serverURL.toUtf8() << ")"
+                      << "\n  Server Name: " << UaString(applicationDescriptions[i].ApplicationName.Text).toUtf8()
+                      << "\n  Server Uri:  " << UaString(applicationDescriptions[i].ApplicationUri).toUtf8()
+                      << "\n  Server Url:  " << UaString(applicationDescriptions[i].DiscoveryUrls[j]).toUtf8();
+            if (serverURL != applicationDescriptions[i].DiscoveryUrls[j])
+                std::cout << "    (using " << serverURL.toUtf8() << ")";
+
+            if (std::string(serverURL.toUtf8()).compare(0, 7, "opc.tcp") == 0) {
+                UaEndpointDescriptions endpointDescriptions;
+                status = discovery.getEndpoints(serviceSettings, serverURL, securityInfo, endpointDescriptions);
+                if (status.isBad()) {
+                    std::cerr << "Session " << name << ": (showSecurity) UaDiscovery::getEndpoints failed"
+                              << " with status" << status.toString()
+                              << std::endl;
+                    return;
+                }
+
+                for (OpcUa_UInt32 k = 0; k < endpointDescriptions.length(); k++) {
+                    if (std::string(UaString(endpointDescriptions[k].EndpointUrl).toUtf8()).compare(0, 7, "opc.tcp") == 0) {
+                        std::cout << "\n  ----- Level: " << std::setw(3) << +endpointDescriptions[k].SecurityLevel
+                                  << " ----------------------------------------- Endpoint " << k
+                                  << "\n    Security Mode: " << securityModeString(endpointDescriptions[k].SecurityMode)
+                                  << "    Policy: " << securityPolicyString(UaString(endpointDescriptions[k].SecurityPolicyUri))
+                                  << "\n    URL: " << UaString(&endpointDescriptions[k].EndpointUrl).toUtf8();
+                        if (UaString(endpointDescriptions[k].EndpointUrl) == UaString(applicationDescriptions[i].DiscoveryUrls[j]))
+                            std::cout << "    (using " << serverURL.toUtf8() << ")";
+
+                        securityInfo.serverCertificate = endpointDescriptions[k].ServerCertificate;
+
+                        UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.serverCertificate);
+                        UaPkiIdentity id = cert.subject();
+                        std::cout << "\n    Server Certificate: " << id.commonName.toUtf8()
+                                  << " (" << id.organization.toUtf8() << ")"
+                                  << " serial " << cert.serialNumber().toUtf8()
+                                  << " (thumb " << cert.thumbPrint().toHex(false).toUtf8() << ")"
+                                  << (cert.isSelfSigned() ? " self-signed" : "")
+                                  << (securityInfo.verifyServerCertificate().isBad() ? " - not" : " -")
+                                  << " trusted";
+                    }
+                }
+                std::cout << std::endl;
             }
         }
     }

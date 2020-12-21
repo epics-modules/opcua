@@ -105,6 +105,11 @@ public:
     virtual void show(const int level) const override;
 
     /**
+     * @brief Do a discovery and show the available endpoints.
+     */
+    virtual void showSecurity() override;
+
+    /**
      * @brief Get session name. See DevOpcua::Session::getName
      * @return session name
      */
