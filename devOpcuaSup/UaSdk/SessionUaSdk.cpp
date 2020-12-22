@@ -111,6 +111,18 @@ securityPolicyString (const UaString &policy)
         return policy.toUtf8() + found + 1;
 }
 
+inline const char *
+SessionUaSdk::connectResultString (const ConnectResult result)
+{
+    switch (result) {
+    case ConnectResult::fatal:               return "fatal";
+    case ConnectResult::ok:                  return "ok";
+    case ConnectResult::cantConnect:         return "cantConnect";
+    case ConnectResult::noMatchingEndpoint:  return "noMatchingEndpoint";
+    }
+    return "";
+}
+
 SessionUaSdk::SessionUaSdk(const std::string &name,
                            const std::string &serverUrl,
                            bool autoConnect,
@@ -286,44 +298,65 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
 }
 
 long
-SessionUaSdk::connect ()
+SessionUaSdk::connect()
 {
     if (!puasession) {
-        std::cerr << "Session " << name.c_str()
-                  << ": invalid session, cannot connect" << std::endl;
+        std::cerr << "Session " << name.c_str() << ": invalid session, cannot connect" << std::endl;
         return -1;
     }
+
     if (isConnected()) {
-        if (debug) std::cerr << "Session " << name.c_str() << ": already connected ("
-                             << serverStatusString(serverConnectionStatus) << ")" << std::endl;
+        if (debug)
+            std::cerr << "Session " << name.c_str() << ": already connected ("
+                      << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
-    } else {
-
-        if (setupSecurity())
-            return -1;
-
-        UaStatus result = puasession->connect(serverURL,      // URL of the Endpoint
-                                              connectInfo,    // General connection settings
-                                              securityInfo,   // Security settings
-                                              this);          // Callback interface
-
-        if (result.isGood()) {
-            if (debug) std::cerr << "Session " << name.c_str()
-                                 << ": connect service ok" << std::endl;
-        } else {
-            std::cerr << "Session " << name.c_str()
-                      << ": connect service failed with status "
-                      << result.toString().toUtf8() << std::endl;
-        }
-        // asynchronous: remaining actions are done on the status-change callback
-        return !result.isGood();
     }
+
+    disconnect(); // Do a proper disconnection before attempting to reconnect
+
+    ConnectResult secResult = setupSecurity();
+    if (secResult) {
+        if (!autoConnect || debug)
+            errlogPrintf("OPC UA session %s: security discovery and setup failed with status %s\n",
+                         name.c_str(),
+                         connectResultString(secResult));
+        if (autoConnect)
+            autoConnector.start();
+        return -1;
+    }
+
+    UaStatus result = puasession->connect(serverURL,    // URL of the Endpoint
+                                          connectInfo,  // General connection settings
+                                          securityInfo, // Security settings
+                                          this);        // Callback interface
+
+    if (result.isGood()) {
+        if (securityInfo.messageSecurityMode != OpcUa_MessageSecurityMode_None)
+            errlogPrintf("OPC UA session %s: connect service succeeded with security level %u "
+                         "(mode=%s; policy=%s)\n",
+                         name.c_str(),
+                         securityLevel,
+                         securityModeString(securityInfo.messageSecurityMode),
+                         securityPolicyString(securityInfo.sSecurityPolicy));
+        else
+            errlogPrintf("OPC UA session %s: connect service succeeded with no security\n",
+                         name.c_str());
+    } else {
+        if (!autoConnect || debug)
+            errlogPrintf("OPC UA session %s: connect service failed with status %s\n",
+                         name.c_str(),
+                         result.toString().toUtf8());
+        if (autoConnect)
+            autoConnector.start();
+    }
+    // asynchronous: remaining actions are done on the status-change callback
+    return !result.isGood();
 }
 
 long
-SessionUaSdk::disconnect ()
+SessionUaSdk::disconnect()
 {
-    if (isConnected()) {
+    if (serverConnectionStatus != UaClient::Disconnected) {
         ServiceSettings serviceSettings;
 
         UaStatus result = puasession->disconnect(serviceSettings,  // Use default settings
@@ -343,20 +376,18 @@ SessionUaSdk::disconnect ()
         }
         return !result.isGood();
     } else {
-        if (debug) std::cerr << "Session " << name.c_str() << ": already disconnected ("
-                             << serverStatusString(serverConnectionStatus) << ")" << std::endl;
+        if (debug)
+            std::cerr << "Session " << name.c_str() << ": (disconnect) already disconnected ("
+                      << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
     }
 }
 
 bool
-SessionUaSdk::isConnected () const
+SessionUaSdk::isConnected() const
 {
-    if (puasession)
-        return (!!puasession->isConnected()
-                && serverConnectionStatus != UaClient::ConnectionErrorApiReconnect);
-    else
-        return false;
+    return (serverConnectionStatus == UaClient::ConnectionWarningWatchdogTimeout
+            || serverConnectionStatus == UaClient::Connected);
 }
 
 void
@@ -398,7 +429,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 	        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
 	                     name.c_str(), status.toString().toUtf8());
             //TODO: create writeFailure events for all items of the batch
-//	        item.setIncomingEvent(ProcessReason::readFailure);
+            //	    item.setIncomingEvent(ProcessReason::readFailure);
 
         } else {
             if (debug >= 5)
@@ -452,7 +483,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch
 	        errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
 	                     name.c_str(), status.toString().toUtf8());
             //TODO: create writeFailure events for all items of the batch
-//	        item.setIncomingEvent(ProcessReason::writeFailure);
+            //	    item.setIncomingEvent(ProcessReason::writeFailure);
 
         } else {
             if (debug >= 5)
@@ -770,7 +801,7 @@ SessionUaSdk::show (const int level) const
     else
         std::cout << "?";
     std::cout << "(" << connectInfo.nMaxOperationsPerServiceCall << ")"
-              << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "y" : "n")
+              << " autoconnect=" << (autoConnect ? "y" : "n")
               << " items=" << items.size()
               << " registered=" << registeredItemsNo
               << " subscriptions=" << subscriptions.size()
@@ -833,6 +864,18 @@ SessionUaSdk::mapNamespaceIndex (const OpcUa_UInt16 nsIndex) const
     return serverIndex;
 }
 
+inline void
+SessionUaSdk::markConnectionLoss()
+{
+    reader.clear();
+    writer.clear();
+    for (auto it : items) {
+        it->setState(ConnectionStatus::down);
+        it->setIncomingEvent(ProcessReason::connectionLoss);
+    }
+    registeredItemsNo = 0;
+}
+
 // UaSessionCallback interface
 
 void SessionUaSdk::connectionStatusChanged (
@@ -852,15 +895,14 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::ConnectionErrorApiReconnect:
         // "The server sent a shut-down event and the client API tries a reconnect."
     case UaClient::ServerShutdown:
+        markConnectionLoss();
+        if (autoConnect)
+            autoConnector.start();
+        break;
         // "The connection to the server is deactivated by the user of the client API."
     case UaClient::Disconnected:
-        reader.clear();
-        writer.clear();
-        for (auto it : items) {
-            it->setState(ConnectionStatus::down);
-            it->setIncomingEvent(ProcessReason::connectionLoss);
-        }
-        registeredItemsNo = 0;
+        if (serverConnectionStatus == UaClient::Connected)
+            markConnectionLoss();
         break;
 
         // "The monitoring of the connection to the server indicated
@@ -1067,6 +1109,7 @@ SessionUaSdk::initHook (initHookState state)
     {
         errlogPrintf("OPC UA: Autoconnecting sessions\n");
         for (auto &it : sessions) {
+            it.second->markConnectionLoss();
             it.second->initClientSecurity();
             if (it.second->autoConnect)
                 it.second->connect();
