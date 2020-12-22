@@ -155,11 +155,41 @@ public:
      */
     static void showOptionHelp();
 
+    /**
+     * @brief Set client certificate (public key, private key) file paths.
+     *
+     * @param pubPath  full path to certificate (public key)
+     * @param prvPath  full path to private key file
+     */
+    static void setClientCertificate(const std::string &&pubKey, const std::string &&prvKey)
+    {
+        securityClientCertificateFile = std::move(pubKey);
+        securityClientPrivateKeyFile = std::move(prvKey);
+    }
+
+    static void setupPKI(const std::string &&certTrustList,
+                         const std::string &&certRevocationList,
+                         const std::string &&issuersTrustList,
+                         const std::string &&issuersRevocationList)
+    {
+        securityCertificateTrustListDir = std::move(certTrustList);
+        securityCertificateRevocationListDir = std::move(certRevocationList);
+        securityIssuersCertificatesDir = std::move(issuersTrustList);
+        securityIssuersRevocationListDir = std::move(issuersRevocationList);
+    }
+
     int debug;  /**< debug verbosity level */
 
 protected:
     Session (const int debug)
         : debug(debug) {}
+
+    static std::string securityCertificateTrustListDir;       /**< directory for trusted server certs */
+    static std::string securityCertificateRevocationListDir;  /**< directory for server cert revocation lists */
+    static std::string securityIssuersCertificatesDir;        /**< directory for trusted issuer certs */
+    static std::string securityIssuersRevocationListDir;      /**< directory for issuer cert revocation lists */
+    static std::string securityClientCertificateFile;         /**< full path to the client cert (public key) */
+    static std::string securityClientPrivateKeyFile;          /**< full path to the client private key */
 };
 
 

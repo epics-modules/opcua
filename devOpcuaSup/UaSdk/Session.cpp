@@ -87,4 +87,11 @@ opcuaGetDriverName ()
     return sdk;
 }
 
+std::string Session::securityCertificateTrustListDir;
+std::string Session::securityCertificateRevocationListDir;
+std::string Session::securityIssuersCertificatesDir;
+std::string Session::securityIssuersRevocationListDir;
+std::string Session::securityClientCertificateFile;
+std::string Session::securityClientPrivateKeyFile;
+
 } // namespace DevOpcua

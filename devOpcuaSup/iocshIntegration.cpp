@@ -262,6 +262,76 @@ void opcuaShowSessionCallFunc (const iocshArgBuf *args)
     }
 }
 
+static const iocshArg opcuaClientCertificateArg0 = {"certificate (public key) file", iocshArgString};
+static const iocshArg opcuaClientCertificateArg1 = {"private key file", iocshArgString};
+
+static const iocshArg *const opcuaClientCertificateArg[2] = {&opcuaClientCertificateArg0, &opcuaClientCertificateArg1};
+
+static const iocshFuncDef opcuaClientCertificateFuncDef = {"opcuaClientCertificate", 2, opcuaClientCertificateArg};
+
+static
+    void opcuaClientCertificateCallFunc (const iocshArgBuf *args)
+{
+    try {
+        bool ok = true;
+
+        if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
+            errlogPrintf("missing argument #1 (certificate file)\n");
+            ok = false;
+        }
+        if (args[1].sval == nullptr || args[1].sval[0] == '\0') {
+            errlogPrintf("missing argument #2 (private key file)\n");
+            ok = false;
+        }
+
+        if (ok)
+            Session::setClientCertificate(args[0].sval, args[1].sval);
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
+static const iocshArg opcuaSetupPKIArg0 = {"PKI / server certs location", iocshArgString};
+static const iocshArg opcuaSetupPKIArg1 = {"server revocation lists location", iocshArgString};
+static const iocshArg opcuaSetupPKIArg2 = {"issuer certs location", iocshArgString};
+static const iocshArg opcuaSetupPKIArg3 = {"issuer revocation lists location", iocshArgString};
+
+static const iocshArg *const opcuaSetupPKIArg[4] = {&opcuaSetupPKIArg0, &opcuaSetupPKIArg1,
+                                                    &opcuaSetupPKIArg2, &opcuaSetupPKIArg3};
+
+static const iocshFuncDef opcuaSetupPKIFuncDef = {"opcuaSetupPKI", 4, opcuaSetupPKIArg};
+
+static
+    void opcuaSetupPKICallFunc (const iocshArgBuf *args)
+{
+    try {
+        // Special case: only one arg => points to PKI root, use default structure
+        if (args[0].sval != nullptr && args[1].sval == nullptr) {
+            auto pki = std::string(args[0].sval);
+            if (pki.length() && pki.back() != '/')
+                pki.append("/");
+            Session::setupPKI(pki + "trusted/certs",
+                              pki + "trusted/crl",
+                              pki + "issuers/certs",
+                              pki + "issuers/crl");
+        } else {
+            bool ok = true;
+            for (unsigned i = 0; i < 4; i++) {
+                if (args[i].sval == nullptr || args[i].sval[0] == '\0') {
+                    errlogPrintf("missing argument #%d - %s\n", i+1, opcuaSetupPKIArg[i]->name);
+                    ok = false;
+                }
+            }
+            if (ok)
+                Session::setupPKI(args[0].sval, args[1].sval, args[2].sval,args[3].sval);
+        }
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static const iocshArg opcuaConnectArg0 = {"session name", iocshArgString};
 
 static const iocshArg *const opcuaConnectArg[1] = {&opcuaConnectArg0};
@@ -501,6 +571,8 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaConnectFuncDef, opcuaConnectCallFunc);
     iocshRegister(&opcuaDisconnectFuncDef, opcuaDisconnectCallFunc);
     iocshRegister(&opcuaShowSessionFuncDef, opcuaShowSessionCallFunc);
+    iocshRegister(&opcuaClientCertificateFuncDef, opcuaClientCertificateCallFunc);
+    iocshRegister(&opcuaSetupPKIFuncDef, opcuaSetupPKICallFunc);
     iocshRegister(&opcuaDebugSessionFuncDef, opcuaDebugSessionCallFunc);
 
     iocshRegister(&opcuaCreateSubscriptionFuncDef, opcuaCreateSubscriptionCallFunc);
