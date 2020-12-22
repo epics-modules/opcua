@@ -34,6 +34,7 @@
 #define epicsExportSharedSymbols
 #include "Session.h"
 #include "RecordConnector.h"
+#include "linkParser.h"
 #include "RequestQueueBatcher.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
@@ -277,6 +278,9 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         writeTimeoutMax = ul;
         updateWriteBatcher = true;
+    } else if (name == "autoconnect") {
+        if (value.length() > 0)
+            autoConnect = getYesNo(value[0]);
     } else {
         errlogPrintf("unknown option '%s' ignored\n", name.c_str());
     }
