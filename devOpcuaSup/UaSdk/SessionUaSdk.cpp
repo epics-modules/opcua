@@ -651,11 +651,25 @@ SessionUaSdk::showSecurity ()
 
                 for (OpcUa_UInt32 k = 0; k < endpointDescriptions.length(); k++) {
                     if (std::string(UaString(endpointDescriptions[k].EndpointUrl).toUtf8()).compare(0, 7, "opc.tcp") == 0) {
-                        std::cout << "\n  ----- Level: " << std::setw(3) << +endpointDescriptions[k].SecurityLevel
-                                  << " ----------------------------------------- Endpoint " << k
-                                  << "\n    Security Mode: " << securityModeString(endpointDescriptions[k].SecurityMode)
-                                  << "    Policy: " << securityPolicyString(UaString(endpointDescriptions[k].SecurityPolicyUri))
-                                  << "\n    URL: " << UaString(&endpointDescriptions[k].EndpointUrl).toUtf8();
+                        char dash = '-';
+                        if (isConnected()
+                            && endpointDescriptions[k].SecurityMode
+                                   == securityInfo.messageSecurityMode
+                            && UaString(endpointDescriptions[k].SecurityPolicyUri)
+                                   == securityInfo.sSecurityPolicy)
+                            dash = '=';
+                        std::cout << "\n  " << std::setfill(dash) << std::setw(5) << dash
+                                  << std::setfill(' ') << " Level: " << std::setw(3)
+                                  << +endpointDescriptions[k].SecurityLevel << " "
+                                  << std::setfill(dash) << std::setw(45) << dash
+                                  << std::setfill(' ') << " Endpoint " << k
+                                  << "\n    Security Mode: "
+                                  << securityModeString(endpointDescriptions[k].SecurityMode)
+                                  << "    Policy: "
+                                  << securityPolicyString(
+                                         UaString(endpointDescriptions[k].SecurityPolicyUri))
+                                  << "\n    URL: "
+                                  << UaString(&endpointDescriptions[k].EndpointUrl).toUtf8();
                         if (UaString(endpointDescriptions[k].EndpointUrl) == UaString(applicationDescriptions[i].DiscoveryUrls[j]))
                             std::cout << "    (using " << serverURL.toUtf8() << ")";
 
