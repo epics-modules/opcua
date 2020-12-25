@@ -114,6 +114,11 @@ Session::showOptionHelp ()
               << "write-nodes-max    max. nodes per write service call [0 = no limit]\n"
               << "write-timeout-min  min. timeout (holdoff) after write service call [ms]\n"
               << "write-timeout-max  timeout (holdoff) after write service call w/ max elements [ms]"
+              << "sec-mode           requested security mode\n"
+              << "sec-policy         requested security policy\n"
+              << "sec-level-min      requested minimal security level\n"
+              << "ident-file         file to read identity credentials from\n"
+              << "batch-nodes        max. nodes per service call [0 = no limit]"
               << std::endl;
 }
 

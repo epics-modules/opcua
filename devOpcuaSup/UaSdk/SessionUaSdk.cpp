@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include <string>
 #include <map>
 #include <algorithm>
@@ -243,6 +244,8 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
     } else if (name == "sec-level-min") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         reqSecurityLevel = static_cast<unsigned char>(ul);
+    } else if (name == "ident-file") {
+        securityCredentialFile = value;
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -336,12 +339,14 @@ SessionUaSdk::connect()
 
     if (result.isGood()) {
         if (securityInfo.messageSecurityMode != OpcUa_MessageSecurityMode_None)
-            errlogPrintf("OPC UA session %s: connect service succeeded with security level %u "
-                         "(mode=%s; policy=%s)\n",
-                         name.c_str(),
-                         securityLevel,
-                         securityModeString(securityInfo.messageSecurityMode),
-                         securityPolicyString(securityInfo.sSecurityPolicy));
+            errlogPrintf(
+                "OPC UA session %s: connect service succeeded as '%s' with security level %u "
+                "(mode=%s; policy=%s)\n",
+                name.c_str(),
+                (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
+                securityLevel,
+                securityModeString(securityInfo.messageSecurityMode),
+                securityPolicyString(securityInfo.sSecurityPolicy));
         else
             errlogPrintf("OPC UA session %s: connect service succeeded with no security\n",
                          name.c_str());
@@ -639,6 +644,13 @@ SessionUaSdk::showSecurity ()
             std::cout << "\n  Requested Mode: " << securityModeString(reqSecurityMode)
                       << "    Policy: " << securityPolicyString(reqSecurityPolicyURI)
                       << "    Level: " << +reqSecurityLevel;
+            if (securityCredentialFile.length()) {
+                readCredentials();
+                std::cout << "\n  Identity: Username '" << securityUserName
+                          << "' (credentials from " << securityCredentialFile << ")";
+            } else {
+                std::cout << "\n  Identity: Anonymous";
+            }
             if (std::string(serverURL.toUtf8()).compare(0, 7, "opc.tcp") == 0) {
                 UaEndpointDescriptions endpointDescriptions;
                 status = discovery.getEndpoints(serviceSettings, serverURL, securityInfo, endpointDescriptions);
@@ -712,7 +724,7 @@ SessionUaSdk::setupSecurity ()
         return ConnectResult::ok;
 
     } else {
-
+        readCredentials();
         if (std::string(serverURL.toUtf8()).compare(0, 7, "opc.tcp") == 0) {
             UaEndpointDescriptions endpointDescriptions;
             if (debug)
@@ -892,6 +904,48 @@ SessionUaSdk::markConnectionLoss()
         it->setIncomingEvent(ProcessReason::connectionLoss);
     }
     registeredItemsNo = 0;
+}
+
+void
+SessionUaSdk::readCredentials()
+{
+    securityInfo.setAnonymousUserIdentity();
+
+    if (securityCredentialFile.length()) {
+        std::ifstream inFile;
+        std::string line;
+        std::string user;
+        std::string pass;
+
+        inFile.open(securityCredentialFile);
+        if (inFile.fail()) {
+            errlogPrintf("OPC UA session %s: cannot open credentials file %s\n",
+                         name.c_str(),
+                         securityCredentialFile.c_str());
+        }
+
+        while (std::getline(inFile, line)) {
+            if (line[0] != '#') {
+                size_t pos = line.find_first_of('=');
+                if (pos != std::string::npos) {
+                    if (line.substr(0, pos) == "user") {
+                        user = line.substr(pos + 1, std::string::npos);
+                    } else if (line.substr(0, pos) == "pass") {
+                        pass = line.substr(pos + 1, std::string::npos);
+                    }
+                }
+            }
+        }
+
+        if (user.length() && pass.length()) {
+            securityUserName = user;
+            securityInfo.setUserPasswordUserIdentity(user.c_str(), pass.c_str());
+        } else {
+            errlogPrintf("OPC UA session %s: credentials file %s does not contain settings for user and pass\n",
+                         name.c_str(),
+                         securityCredentialFile.c_str());
+        }
+    }
 }
 
 // UaSessionCallback interface

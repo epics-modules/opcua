@@ -279,6 +279,11 @@ private:
     void markConnectionLoss();
 
     /**
+     * @brief Read user/pass credentials from credentials file.
+     */
+    void readCredentials();
+
+    /**
      * @brief Set up security.
      *
      * Discovers the endpoints and finds the one matching the user configuration.
