@@ -279,9 +279,9 @@ private:
     void markConnectionLoss();
 
     /**
-     * @brief Read user/pass credentials from credentials file.
+     * @brief Read user/pass or cert/key/pass credentials from credentials file.
      */
-    void readCredentials();
+    void setupIdentity();
 
     /**
      * @brief Set up security.
