@@ -56,11 +56,11 @@ As a debugging tool, the iocShell command `opcuaShowSecurity` runs the discovery
 
 ## IOC Configuration
 
-An IOC using the OPC UA Device Support is considered to be a production system. As such, it has to be fully configured and supplied with the certificates needed to connect to the configured OPC UA servers. Other than general purpose clients, the IOC cannot interactively create self-signed certificates or change the trust for certificates that a server presents.
+An IOC using the OPC UA Device Support is considered to be a production system. As such, it has to be fully configured and supplied with the certificates needed to connect to the configured OPC UA servers. Other than general purpose and example clients, the IOC cannot interactively create self-signed certificates or change the trust for a certificate that a server presents.
 
 ### Certificate Store Setup
 
-The iocShell command `opcuaSetupPKI` sets the location(s) for the certificate store. The IOC needs to have read access to all files in the PKI store, write access should not be granted.
+The iocShell command `opcuaSetupPKI` sets the location(s) for the certificate store. The IOC needs to have read access to all files in the PKI store, further access should not be granted as this might compromise security.
 
 In its simple form, the single argument defines the location of the PKI certificate store, using default subdirectories for peer certificates (`trusted/certs`), peer certificate revocation lists (`trusted/crl`), issuer certificates (`issuers/certs`) and issuer certificate revocation lists (`issuers/crl`).
 
@@ -79,6 +79,12 @@ Setting `sec-mode` requires the specified message security mode for the connecti
 The IOC will always choose the best available security that matches all option settings. Leaving the options in their default setting (`None`/`None`/ `0`) will connect without security.
 
 If no matching endpoint is discovered or the server certificate is untrusted, the IOC will not connect.
+
+### Client Authentication
+
+Without configuration, an Anonymous Identity Token will be used.
+
+To use an Username Identity Token, prepare an identity credentials file that sets `user=<username>` and `pass=<password>`, each on a separate line. This file should only be readable by the IOC. Configure the filename through the session option `ident-file`.
 
 ## Managing Certificates
 
