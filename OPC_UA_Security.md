@@ -4,7 +4,7 @@
 
 The security features of OPC UA are based on the widely used X.509 certificates and the concepts of *Public Key Infrastructure* (PKI).
 
-Certificates are filed in a *Certificate Store*, containing trusted and own certificates as well as certificates from certificate authorities (CAs). 
+Certificates are filed in a *Certificate Store*, containing trusted and own certificates as well as certificates from certificate authorities (CAs). On Linux, a file based store is used, defined by four specific locations for certificates and revocation lists.
 
 In the basic, explicit form, trusting a certificate usually means that the certificate (file) is moved into a specific folder in the certificate store.
 
@@ -58,6 +58,8 @@ As a debugging tool, the iocShell command `opcuaShowSecurity` runs the discovery
 
 An IOC using the OPC UA Device Support is considered to be a production system. As such, it has to be fully configured and supplied with the certificates needed to connect to the configured OPC UA servers. Other than general purpose and example clients, the IOC cannot interactively create self-signed certificates or change the trust for a certificate that a server presents.
 
+An easy way to obtain OPC UA server certificates (to put them in the IOC's certificate store) is using a general purpose client (e.g., the `UaExpert` tool) to connect to the server, trust its certificate, and copy the file from that client's certificate store. (You can also import it into your certificate management tool, see below.)
+
 ### Certificate Store Setup
 
 The iocShell command `opcuaSetupPKI` sets the location(s) for the certificate store. The IOC needs to have read access to all files in the PKI store, further access should not be granted as this might compromise security.
@@ -84,7 +86,13 @@ If no matching endpoint is discovered or the server certificate is untrusted, th
 
 Without configuration, an Anonymous Identity Token will be used.
 
-To use an Username Identity Token, prepare an identity credentials file that sets `user=<username>` and `pass=<password>`, each on a separate line. This file should only be readable by the IOC. Configure the filename through the session option `ident-file`.
+To use a Username Identity or a Certificate Identity Token, prepare an identity credentials file. This file should only be readable by the IOC. Configure the filename through the session option `ident-file`.
+
+In the credentials file, lines starting with `#` are considered comments and ignored.
+
+To use a Username Identity Token, set `user=<username>` and `pass=<password>`, each on a separate line.
+
+To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<private key file>`, each on a separate line, to identify the DER certificate and PEM private key to use. If the private key is password protected, add another line setting `pass=<password>`. The Common Name (CN) property of the certificate will be used by the server to determine the user name for authorization.
 
 ## Managing Certificates
 
@@ -103,16 +111,25 @@ Creating a self-signed certificate for OPC UA use is pretty straight-forward. Fo
   `<hostname>` is the hostname of the machine that runs the IOC (the result of a `gethostname()` call). The URI tag *must* match what the Device Support module sets as its application URI.
   For server certificates, I have seen the URI not containing a hostname and a numerical `IP Address` tag instead of `DNS`.
 
-For the IOC, save the certificate in DER format, the private key as PEM. The server may need different formats.
+For the IOC, save the certificate in DER format, the private key as PEM. The server may need different formats - refer to the documentation of your server for more details.
+
+### Creating Identity Token Certificates
+
+Create a self-signed certificate, following the documented procedure and giving your certificate/key pair the following properties:
+
+- Choose the issuer information to match your situation.
+  The Common Name (CN) property of the certificate will be used by the server to determine the user name for authorization. 
+- Sign using `SHA 256` (i.e., `sha256WithRSAEncryption`).
+- X509v3 Basic Constraints: **critical**, `CA:FALSE`.
 
 ### Using a Certificate Authority
 
-A complete discussion of this concept and the design and implementation of an appropriate public key infrastructure for a specific installation is well outside the scope of this README. The [Xca online documentation](https://hohnstaedt.de/xca/index.php/documentation/stepbystep) has more details and step-by-step guides.
+A complete discussion of this concept and the design and implementation of an appropriate public key infrastructure for a specific installation is outside the scope of this README. The [Xca online documentation](https://hohnstaedt.de/xca/index.php/documentation/stepbystep) has more details and step-by-step guides.
 
 The basic steps are:
 
 - Create a Certificate Authority.
   In the simplest form this means creating a Root CA certificate/key that is configured to sign other certificates.
-- Create Application Instance Certificates signed by your CA.
+- Create Application Instance and Identity Token Certificates signed by your CA.
   When creating a new certificate, under the "Source" tab, instead of selecting "Create a self-signed certificate", choose a different certificate (your Root CA) that will be used to sign the newly created certificate.
 - Setting up an Xca template can simplify certificate creation and improve consistency.
