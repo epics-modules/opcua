@@ -11,6 +11,7 @@
  */
 
 #include <iostream>
+#include <map>
 
 #include <uaplatformlayer.h>
 #include <uabase.h>
@@ -63,6 +64,21 @@ Session::showAll (const int level)
     SessionUaSdk::showAll(level);
 }
 
+const std::string
+Session::securityPolicyString(const std::string &policy)
+{
+    auto p = securitySupportedPolicies.find(policy);
+    if (p == securitySupportedPolicies.end()) {
+        size_t found = policy.find_last_of('#');
+        if (found == std::string::npos)
+            return "Invalid";
+        else
+            return policy.substr(found + 1) + " (unsupported)";
+    } else {
+        return p->second;
+    }
+}
+
 void
 Session::showSecurityClient()
 {
@@ -84,21 +100,24 @@ Session::showSecurityClient()
     if (status.isBad())
         std::cerr << "Error loading client certificate" << std::endl;
 
-    std::cout << "Configuration:"
-              << "\n  Client certificate: " << securityClientCertificateFile
-              << "\n  Client private key: " << securityClientPrivateKeyFile
+    std::cout << "Certificate store:"
               << "\n  Server trusted certificates dir: " << securityCertificateTrustListDir
               << "\n  Server revocation list dir: " << securityCertificateRevocationListDir
               << "\n  Issuer trusted certificates dir: " << securityIssuersCertificatesDir
               << "\n  Issuer revocation list dir: " << securityIssuersRevocationListDir;
     UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.clientCertificate);
     UaPkiIdentity id = cert.subject();
-    std::cout << "\nClient Certificate: " << id.commonName.toUtf8()
-              << " (" << id.organization.toUtf8() << ")"
-              << " serial " << cert.serialNumber().toUtf8()
-              << " (thumb " << cert.thumbPrint().toHex(false).toUtf8() << ")"
+    std::cout << "\nClient certificate: " << id.commonName.toUtf8() << " ("
+              << id.organization.toUtf8() << ")"
+              << " serial " << cert.serialNumber().toUtf8() << " (thumb "
+              << cert.thumbPrint().toHex(false).toUtf8() << ")"
               << (cert.isSelfSigned() ? " self-signed" : "")
-              << std::endl;
+              << "\n  Certificate file: " << securityClientCertificateFile
+              << "\n  Private key file: " << securityClientPrivateKeyFile
+              << "\nSupported security policies: ";
+    for (const auto &p : securitySupportedPolicies)
+        std::cout << " " << p.second;
+    std::cout << std::endl;
 }
 
 void
@@ -137,6 +156,25 @@ std::string Session::securityIssuersCertificatesDir;
 std::string Session::securityIssuersRevocationListDir;
 std::string Session::securityClientCertificateFile;
 std::string Session::securityClientPrivateKeyFile;
+
+const std::map<std::string, std::string> Session::securitySupportedPolicies
+    = {{OpcUa_SecurityPolicy_None, "None"}
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC128RSA15
+       , {OpcUa_SecurityPolicy_Basic128Rsa15, "Basic128Rsa15"}
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256
+       , {OpcUa_SecurityPolicy_Basic256, "Basic256"}
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256SHA256
+       , {OpcUa_SecurityPolicy_Basic256Sha256, "Basic256Sha256"}
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_AES128SHA256RSAOAEP
+       , {OpcUa_SecurityPolicy_Aes128Sha256RsaOaep, "Aes128_Sha256_RsaOaep"}
+#endif
+#if OPCUA_SUPPORT_SECURITYPOLICY_AES256SHA256RSAPSS
+       , {OpcUa_SecurityPolicy_Aes256Sha256RsaPss, "Aes256_Sha256_RsaPss"}
+#endif
+};
 
 epicsTimerQueueActive &Session::queue = epicsTimerQueueActive::allocate(true);
 

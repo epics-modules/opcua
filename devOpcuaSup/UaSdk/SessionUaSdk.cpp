@@ -104,17 +104,6 @@ securityModeString (const OpcUa_MessageSecurityMode mode)
 }
 
 inline const char *
-securityPolicyString (const UaString &policy)
-{
-    auto s = std::string(policy.toUtf8());
-    size_t found = s.find_last_of('#');
-    if (found == std::string::npos)
-        return "Invalid";
-    else
-        return policy.toUtf8() + found + 1;
-}
-
-inline const char *
 SessionUaSdk::connectResultString (const ConnectResult result)
 {
     switch (result) {
@@ -190,57 +179,29 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
     bool updateWriteBatcher = false;
 
     if (name == "sec-mode") {
-        if (value == "None" || value == "none") {
+        if (value == "None") {
             reqSecurityMode = OpcUa_MessageSecurityMode_None;
         } else if (value == "SignAndEncrypt") {
             reqSecurityMode = OpcUa_MessageSecurityMode_SignAndEncrypt;
         } else if (value == "Sign") {
             reqSecurityMode = OpcUa_MessageSecurityMode_Sign;
         } else {
-            errlogPrintf("invalid security-mode (valid: None Sign SignAndEncrypt)\n");
+            errlogPrintf("invalid security mode (valid: None Sign SignAndEncrypt)\n");
             reqSecurityMode = OpcUa_MessageSecurityMode_Invalid;
         }
     } else if (name == "sec-policy") {
-        if (value == "None" || value == "none") {
-            reqSecurityPolicyURI = OpcUa_SecurityPolicy_None;
-#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC128RSA15
-        } else if (value == "Basic128Rsa15") {
-            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Basic128Rsa15;
-#endif
-#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256
-        } else if (value == "Basic256") {
-            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Basic256;
-#endif
-#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256SHA256
-        } else if (value == "Basic256Sha256") {
-            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Basic256Sha256;
-#endif
-#if OPCUA_SUPPORT_SECURITYPOLICY_AES128SHA256RSAOAEP
-        } else if (value == "Aes128_Sha256_RsaOaep") {
-            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Aes128Sha256RsaOaep;
-#endif
-#if OPCUA_SUPPORT_SECURITYPOLICY_AES256SHA256RSAPSS
-        } else if (value == "Aes256_Sha256_RsaPss") {
-            reqSecurityPolicyURI = OpcUa_SecurityPolicy_Aes256Sha256RsaPss;
-#endif
-        } else {
-            errlogPrintf("invalid security-policy (valid: None"
-#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC128RSA15
-                         " Basic128Rsa15"
-#endif
-#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256
-                         " Basic256"
-#endif
-#if OPCUA_SUPPORT_SECURITYPOLICY_BASIC256SHA256
-                         " Basic256Sha256"
-#endif
-#if OPCUA_SUPPORT_SECURITYPOLICY_AES128SHA256RSAOAEP
-                         " Aes128_Sha256_RsaOaep"
-#endif
-#if OPCUA_SUPPORT_SECURITYPOLICY_AES256SHA256RSAPSS
-                         " Aes256_Sha256_RsaPss"
-#endif
-                         ")\n");
+        bool found = false;
+        for (const auto &p : securitySupportedPolicies) {
+            if (value == p.second) {
+                found = true;
+                reqSecurityPolicyURI = UaString(p.first.c_str());
+            }
+        }
+        if (!found) {
+            std::string s;
+            for (const auto &p : securitySupportedPolicies)
+                s += " " + p.second;
+            errlogPrintf("invalid security policy (valid:%s)\n", s.c_str());
         }
     } else if (name == "sec-level-min") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -347,7 +308,7 @@ SessionUaSdk::connect()
                 (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
                 securityLevel,
                 securityModeString(securityInfo.messageSecurityMode),
-                securityPolicyString(securityInfo.sSecurityPolicy));
+                securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
         else
             errlogPrintf("OPC UA session %s: connect service succeeded with no security\n",
                          name.c_str());
@@ -645,7 +606,7 @@ SessionUaSdk::showSecurity ()
             if (serverURL != applicationDescriptions[i].DiscoveryUrls[j])
                 std::cout << "    (using " << serverURL.toUtf8() << ")";
             std::cout << "\n  Requested Mode: " << securityModeString(reqSecurityMode)
-                      << "    Policy: " << securityPolicyString(reqSecurityPolicyURI)
+                      << "    Policy: " << securityPolicyString(reqSecurityPolicyURI.toUtf8())
                       << "    Level: " << +reqSecurityLevel
                       << "\n  Identity: ";
             if (securityInfo.pUserIdentityToken()->getTokenType() == OpcUa_UserTokenType_UserName)
@@ -684,11 +645,11 @@ SessionUaSdk::showSecurity ()
                                   << +endpointDescriptions[k].SecurityLevel << " "
                                   << std::setfill(dash) << std::setw(45) << dash
                                   << std::setfill(' ') << " Endpoint " << k << marker
-                                  << "\n    Security Mode: "
+                                  << "\n    Security Mode: " << std::setw(14) << std::left
                                   << securityModeString(endpointDescriptions[k].SecurityMode)
-                                  << "    Policy: "
+                                  << std::right << "    Policy: "
                                   << securityPolicyString(
-                                         UaString(endpointDescriptions[k].SecurityPolicyUri))
+                                         UaString(endpointDescriptions[k].SecurityPolicyUri).toUtf8())
                                   << "\n    URL: "
                                   << UaString(&endpointDescriptions[k].EndpointUrl).toUtf8();
                         if (UaString(endpointDescriptions[k].EndpointUrl)
@@ -777,7 +738,7 @@ SessionUaSdk::setupSecurity ()
                     std::cout << "Session " << name.c_str()
                               << ": (setupSecurity) found matching endpoint, using"
                               << " mode=" << securityModeString(securityInfo.messageSecurityMode)
-                              << " policy=" << securityPolicyString(securityInfo.sSecurityPolicy)
+                              << " policy=" << securityPolicyString(securityInfo.sSecurityPolicy.toUtf8())
                               << " (level " << +endpointDescriptions[selectedEndpoint].SecurityLevel << ")"
                               << std::endl;
             } else {
@@ -832,8 +793,8 @@ SessionUaSdk::show (const int level) const
               << " status="      << serverStatusString(serverConnectionStatus)
               << " sec-mode="    << securityModeString(securityInfo.messageSecurityMode)
               << "(" << securityModeString(reqSecurityMode) << ")"
-              << " sec-policy="  << securityPolicyString(securityInfo.sSecurityPolicy)
-              << "(" << securityPolicyString(reqSecurityPolicyURI) << ")"
+              << " sec-policy="  << securityPolicyString(securityInfo.sSecurityPolicy.toUtf8())
+              << "(" << securityPolicyString(reqSecurityPolicyURI.toUtf8()) << ")"
               << " sec-level="   << reqSecurityLevel
               << " debug="       << debug
               << " batch=";

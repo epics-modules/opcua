@@ -14,6 +14,7 @@
 #define DEVOPCUA_SESSION_H
 
 #include <string>
+#include <map>
 
 #include <shareLib.h>
 #include <epicsTimer.h>
@@ -218,7 +219,13 @@ protected:
     static std::string securityIssuersCertificatesDir;        /**< directory for trusted issuer certs */
     static std::string securityIssuersRevocationListDir;      /**< directory for issuer cert revocation lists */
     static std::string securityClientCertificateFile;         /**< full path to the client cert (public key) */
-    static std::string securityClientPrivateKeyFile;          /**< full path to the client private key */
+    static std::string securityClientPrivateKeyFile; /**< full path to the client private key */
+
+    /**
+     * @brief std::map of (URI, name) pairs for all supported security policies.
+     */
+    static const std::map<std::string, std::string> securitySupportedPolicies;
+    static const std::string securityPolicyString(const std::string &policy);  /**< URI to name converter */
 
     // Delay timer for reconnecting whenever connection is down
     class AutoConnect : public epicsTimerNotify {
