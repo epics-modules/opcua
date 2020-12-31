@@ -670,17 +670,20 @@ SessionUaSdk::showSecurity ()
                 for (OpcUa_UInt32 k = 0; k < endpointDescriptions.length(); k++) {
                     if (std::string(UaString(endpointDescriptions[k].EndpointUrl).toUtf8()).compare(0, 7, "opc.tcp") == 0) {
                         char dash = '-';
+                        std::string marker;
                         if (isConnected()
                             && endpointDescriptions[k].SecurityMode
                                    == securityInfo.messageSecurityMode
                             && UaString(endpointDescriptions[k].SecurityPolicyUri)
-                                   == securityInfo.sSecurityPolicy)
+                                   == securityInfo.sSecurityPolicy) {
                             dash = '=';
+                            marker = " ===== connected =====";
+                        }
                         std::cout << "\n  " << std::setfill(dash) << std::setw(5) << dash
                                   << std::setfill(' ') << " Level: " << std::setw(3)
                                   << +endpointDescriptions[k].SecurityLevel << " "
                                   << std::setfill(dash) << std::setw(45) << dash
-                                  << std::setfill(' ') << " Endpoint " << k
+                                  << std::setfill(' ') << " Endpoint " << k << marker
                                   << "\n    Security Mode: "
                                   << securityModeString(endpointDescriptions[k].SecurityMode)
                                   << "    Policy: "
@@ -688,7 +691,9 @@ SessionUaSdk::showSecurity ()
                                          UaString(endpointDescriptions[k].SecurityPolicyUri))
                                   << "\n    URL: "
                                   << UaString(&endpointDescriptions[k].EndpointUrl).toUtf8();
-                        if (UaString(endpointDescriptions[k].EndpointUrl) == UaString(applicationDescriptions[i].DiscoveryUrls[j]))
+                        if (UaString(endpointDescriptions[k].EndpointUrl)
+                                == UaString(applicationDescriptions[i].DiscoveryUrls[j])
+                            && UaString(endpointDescriptions[k].EndpointUrl) != serverURL)
                             std::cout << "    (using " << serverURL.toUtf8() << ")";
 
                         securityInfo.serverCertificate = endpointDescriptions[k].ServerCertificate;
