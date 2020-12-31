@@ -722,7 +722,9 @@ SessionUaSdk::setupSecurity ()
                             reqSecurityMode == endpointDescriptions[k].SecurityMode)
                         if (reqSecurityPolicyURI == OpcUa_SecurityPolicy_None ||
                                 reqSecurityPolicyURI == endpointDescriptions[k].SecurityPolicyUri)
-                            if (endpointDescriptions[k].SecurityLevel >= selectedSecurityLevel) {
+                            if (endpointDescriptions[k].SecurityLevel >= selectedSecurityLevel
+                                && securitySupportedPolicies.count(
+                                    UaString(endpointDescriptions[k].SecurityPolicyUri).toUtf8())) {
                                 selectedEndpoint = k;
                                 selectedSecurityLevel = endpointDescriptions[k].SecurityLevel;
                             }
