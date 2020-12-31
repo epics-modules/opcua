@@ -216,11 +216,11 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
             reqSecurityPolicyURI = OpcUa_SecurityPolicy_Basic256Sha256;
 #endif
 #if OPCUA_SUPPORT_SECURITYPOLICY_AES128SHA256RSAOAEP
-        } else if (value == "Aes128Sha256RsaOaep") {
+        } else if (value == "Aes128_Sha256_RsaOaep") {
             reqSecurityPolicyURI = OpcUa_SecurityPolicy_Aes128Sha256RsaOaep;
 #endif
 #if OPCUA_SUPPORT_SECURITYPOLICY_AES256SHA256RSAPSS
-        } else if (value == "Aes256Sha256RsaPss") {
+        } else if (value == "Aes256_Sha256_RsaPss") {
             reqSecurityPolicyURI = OpcUa_SecurityPolicy_Aes256Sha256RsaPss;
 #endif
         } else {
@@ -235,10 +235,10 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
                          " Basic256Sha256"
 #endif
 #if OPCUA_SUPPORT_SECURITYPOLICY_AES128SHA256RSAOAEP
-                         " Aes128Sha256RsaOaep"
+                         " Aes128_Sha256_RsaOaep"
 #endif
 #if OPCUA_SUPPORT_SECURITYPOLICY_AES256SHA256RSAPSS
-                         " Aes256Sha256RsaPss"
+                         " Aes256_Sha256_RsaPss"
 #endif
                          ")\n");
         }
