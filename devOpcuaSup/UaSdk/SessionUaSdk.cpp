@@ -905,24 +905,32 @@ SessionUaSdk::setupIdentity()
             size_t equ = line.find_first_of('=');
             if (hash < equ) continue;
             if (equ != std::string::npos) {
-                if (line.substr(0, equ) == "user") {
+                if (line.substr(0, equ) == "user")
                     user = line.substr(equ + 1, std::string::npos);
-                } else if (line.substr(0, equ) == "pass") {
+                else if (line.substr(0, equ) == "pass")
                     pass = line.substr(equ + 1, std::string::npos);
-                } else if (line.substr(0, equ) == "cert") {
+                else if (line.substr(0, equ) == "cert")
                     certfile = line.substr(equ + 1, std::string::npos);
-                } else if (line.substr(0, equ) == "key") {
+                else if (line.substr(0, equ) == "key")
                     keyfile = line.substr(equ + 1, std::string::npos);
-                }
             }
         }
 
         if (user.length() && pass.length()) {
+            if (debug)
+                std::cout << "Session " << name.c_str()
+                          << ": (setupIdentity) setting Username token (" << user
+                          << "/*****)" << std::endl;
             securityUserName = user;
             securityInfo.setUserPasswordUserIdentity(user.c_str(), pass.c_str());
         } else if (certfile.length() && keyfile.length()) {
             UaPkiCertificate cert = UaPkiCertificate::fromDERFile(certfile.c_str());
             UaPkiRsaKeyPair key = UaPkiRsaKeyPair::fromPEMFile(keyfile.c_str(), pass.c_str());
+            if (debug)
+                std::cout << "Session " << name.c_str()
+                          << ": (setupIdentity) setting Certificate token (CN="
+                          << cert.commonName().toUtf8() << "; thumb "
+                          << cert.thumbPrint().toHex(false).toUtf8() << ")" << std::endl;
             securityUserName = cert.commonName().toUtf8();
             securityInfo.setCertificateUserIdentity(cert.toByteStringDER(), key.toDER());
         } else {
@@ -932,6 +940,10 @@ SessionUaSdk::setupIdentity()
                 name.c_str(),
                 securityCredentialFile.c_str());
         }
+    } else {
+        if (debug)
+            std::cout << "Session " << name.c_str() << ": (setupIdentity) setting Anonymous token"
+                      << std::endl;
     }
 }
 
