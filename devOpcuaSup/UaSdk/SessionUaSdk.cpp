@@ -300,21 +300,28 @@ SessionUaSdk::connect()
                                           this);        // Callback interface
 
     if (result.isGood()) {
-        if (securityInfo.messageSecurityMode != OpcUa_MessageSecurityMode_None)
-            errlogPrintf(
-                "OPC UA session %s: connect service succeeded as '%s' with security level %u "
-                "(mode=%s; policy=%s)\n",
-                name.c_str(),
-                (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
-                securityLevel,
-                securityModeString(securityInfo.messageSecurityMode),
-                securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
-        else
-            errlogPrintf("OPC UA session %s: connect service succeeded with no security\n",
+        if (securityInfo.messageSecurityMode != OpcUa_MessageSecurityMode_None) {
+            std::string token;
+            auto type = securityInfo.pUserIdentityToken()->getTokenType();
+            if (type == OpcUa_UserTokenType_UserName)
+                token = " (username token)";
+            else if (type == OpcUa_UserTokenType_Certificate)
+                token = " (certificate token)";
+            errlogPrintf("OPC UA session %s: connect succeeded as '%s'%s with security level %u "
+                         "(mode=%s; policy=%s)\n",
+                         name.c_str(),
+                         (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
+                         token.c_str(),
+                         securityLevel,
+                         securityModeString(securityInfo.messageSecurityMode),
+                         securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
+        } else {
+            errlogPrintf("OPC UA session %s: connect succeeded as 'Anonymous' with NO SECURITY\n",
                          name.c_str());
+        }
     } else {
         if (!autoConnect || debug)
-            errlogPrintf("OPC UA session %s: connect service failed with status %s\n",
+            errlogPrintf("OPC UA session %s: connect failed with status %s\n",
                          name.c_str(),
                          result.toString().toUtf8());
         if (autoConnect)
@@ -736,12 +743,13 @@ SessionUaSdk::setupSecurity ()
                 OpcUa_String_Initialize(&endpointDescriptions[selectedEndpoint].SecurityPolicyUri);
                 securityInfo.serverCertificate.attach(&endpointDescriptions[selectedEndpoint].ServerCertificate);
                 OpcUa_ByteString_Initialize(&endpointDescriptions[selectedEndpoint].ServerCertificate);
+                securityLevel = endpointDescriptions[selectedEndpoint].SecurityLevel;
                 if (debug)
                     std::cout << "Session " << name.c_str()
                               << ": (setupSecurity) found matching endpoint, using"
                               << " mode=" << securityModeString(securityInfo.messageSecurityMode)
                               << " policy=" << securityPolicyString(securityInfo.sSecurityPolicy.toUtf8())
-                              << " (level " << +endpointDescriptions[selectedEndpoint].SecurityLevel << ")"
+                              << " (level " << +securityLevel << ")"
                               << std::endl;
             } else {
                 errlogPrintf("OPC UA session %s: (setupSecurity) found no endpoint that matches "
