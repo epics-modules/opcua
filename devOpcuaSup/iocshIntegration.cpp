@@ -262,7 +262,7 @@ void opcuaShowSessionCallFunc (const iocshArgBuf *args)
     }
 }
 
-static const iocshArg opcuaShowSecurityArg0 = {"session name [\"\"=all]", iocshArgString};
+static const iocshArg opcuaShowSecurityArg0 = {"session name [\"\"=client]", iocshArgString};
 
 static const iocshArg *const opcuaShowSecurityArg[1] = {&opcuaShowSecurityArg0};
 

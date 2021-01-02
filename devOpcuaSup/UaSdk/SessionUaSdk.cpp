@@ -607,14 +607,14 @@ SessionUaSdk::showSecurity ()
     for (OpcUa_UInt32 i = 0; i < applicationDescriptions.length(); i++) {
         for (OpcUa_Int32 j = 0; j < applicationDescriptions[i].NoOfDiscoveryUrls; j++) {
             std::cout << "Session " << name << "    (discovery at " << serverURL.toUtf8() << ")"
-                      << "\n  Server Name: " << UaString(applicationDescriptions[i].ApplicationName.Text).toUtf8()
-                      << "\n  Server Uri:  " << UaString(applicationDescriptions[i].ApplicationUri).toUtf8()
-                      << "\n  Server Url:  " << UaString(applicationDescriptions[i].DiscoveryUrls[j]).toUtf8();
+                      << "\n  Server name: " << UaString(applicationDescriptions[i].ApplicationName.Text).toUtf8()
+                      << "\n  Server URI:  " << UaString(applicationDescriptions[i].ApplicationUri).toUtf8()
+                      << "\n  Server URL:  " << UaString(applicationDescriptions[i].DiscoveryUrls[j]).toUtf8();
             if (serverURL != applicationDescriptions[i].DiscoveryUrls[j])
                 std::cout << "    (using " << serverURL.toUtf8() << ")";
-            std::cout << "\n  Requested Mode: " << securityModeString(reqSecurityMode)
-                      << "    Policy: " << securityPolicyString(reqSecurityPolicyURI.toUtf8())
-                      << "    Level: " << +reqSecurityLevel
+            std::cout << "\n  Requested security mode: " << securityModeString(reqSecurityMode)
+                      << "    policy: " << securityPolicyString(reqSecurityPolicyURI.toUtf8())
+                      << "    minimum level: " << +reqSecurityLevel
                       << "\n  Identity: ";
             if (securityInfo.pUserIdentityToken()->getTokenType() == OpcUa_UserTokenType_UserName)
                 std::cout << "Username token '" << securityUserName << "'"
@@ -645,13 +645,14 @@ SessionUaSdk::showSecurity ()
                             && UaString(endpointDescriptions[k].SecurityPolicyUri)
                                    == securityInfo.sSecurityPolicy) {
                             dash = '=';
-                            marker = " ===== connected =====";
+                            marker = " connected =====";
                         }
                         std::cout << "\n  " << std::setfill(dash) << std::setw(5) << dash
+                                  << " Endpoint " << k << " " << std::setw(5) << dash
                                   << std::setfill(' ') << " Level: " << std::setw(3)
                                   << +endpointDescriptions[k].SecurityLevel << " "
-                                  << std::setfill(dash) << std::setw(45) << dash
-                                  << std::setfill(' ') << " Endpoint " << k << marker
+                                  << std::setfill(dash) << std::setw(50) << dash
+                                  << std::setfill(' ')  << marker
                                   << "\n    Security Mode: " << std::setw(14) << std::left
                                   << securityModeString(endpointDescriptions[k].SecurityMode)
                                   << std::right << "    Policy: "
@@ -802,10 +803,7 @@ SessionUaSdk::show (const int level) const
               << " url="         << serverURL.toUtf8()
               << " status="      << serverStatusString(serverConnectionStatus)
               << " sec-mode="    << securityModeString(securityInfo.messageSecurityMode)
-              << "(" << securityModeString(reqSecurityMode) << ")"
               << " sec-policy="  << securityPolicyString(securityInfo.sSecurityPolicy.toUtf8())
-              << "(" << securityPolicyString(reqSecurityPolicyURI.toUtf8()) << ")"
-              << " sec-level="   << reqSecurityLevel
               << " debug="       << debug
               << " batch=";
     if (isConnected())
