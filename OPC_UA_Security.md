@@ -24,8 +24,8 @@ OPC UA defines *Security Policies* (sets of security algorithms and key lengths)
 | Basic128Rsa15 *(obsolete)* | http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15     |
 | Basic256                   | http://opcfoundation.org/UA/SecurityPolicy#Basic256          |
 | Basic256Sha256             | http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256    |
-| Aes128Sha256RsaOaep        | http://opcfoundation.org/UA/SecurityPolicy#Aes128_Sha256_RsaOaep |
-| Aes256Sha256RsaPss         | http://opcfoundation.org/UA/SecurityPolicy#Aes256_Sha256_RsaPss |
+| Aes128_Sha256_RsaOaep      | http://opcfoundation.org/UA/SecurityPolicy#Aes128_Sha256_RsaOaep |
+| Aes256_Sha256_RsaPss       | http://opcfoundation.org/UA/SecurityPolicy#Aes256_Sha256_RsaPss |
 
 Three *Message Security Modes* are defined:
 
@@ -105,11 +105,13 @@ Creating a self-signed certificate for OPC UA use is pretty straight-forward. Fo
 - Choose the issuer information to match your situation.
 - Sign using `SHA 256` (i.e., `sha256WithRSAEncryption`).
 - X509v3 Basic Constraints: **critical**, `CA:FALSE`.
-- X509v3 Key Usage: **critical**, `Digital Signature`, `Key Encipherment`, `Data Encipherment`.
+- X509v3 Key Usage: **critical**, `Digital Signature`, `Non Repudiation`, `Key Encipherment`, `Data Encipherment`, `Certificate Sign`.
 - X509v3 Extended Key Usage: **critical**, `TLS Web Server Authentication`, `TLS Web Client Authentication`.
-- X509v3 Subject Alternative Name: `URI:urn:<hostname>:EPICS:IOC`, `DNS:<hostname>`
-  `<hostname>` is the hostname of the machine that runs the IOC (the result of a `gethostname()` call). The URI tag *must* match what the Device Support module sets as its application URI.
+- X509v3 Subject Alternative Name: `URI:urn:<ioc>@<host>:EPICS:IOC`, `DNS:<host>`
+  `<ioc>` is the IOC name,`<host>` is the hostname of the machine that runs the IOC (i.e., the result of a `gethostname()` call). The URI tag *must* match what the Device Support module sets as its application URI.
   For server certificates, I have seen the URI not containing a hostname and a numerical `IP Address` tag instead of `DNS`.
+
+The sources contain an Xca certificate template that can be imported and modified to fit your needs, which will greatly simplify generating new IOC client certificates. 
 
 For the IOC, save the certificate in DER format, the private key as PEM. The server may need different formats - refer to the documentation of your server for more details.
 
