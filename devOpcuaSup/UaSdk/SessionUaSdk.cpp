@@ -21,11 +21,15 @@
 #include <vector>
 #include <limits>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <uaclientsdk.h>
 #include <uasession.h>
 #include <uadiscovery.h>
 #include <uapkicertificate.h>
 #include <uapkirsakeypair.h>
+#include <uadir.h>
 
 #include <epicsExit.h>
 #include <epicsThread.h>
@@ -138,15 +142,10 @@ SessionUaSdk::SessionUaSdk(const std::string &name,
     , readTimeoutMin(0)
     , readTimeoutMax(0)
 {
-    int status;
-    char host[256] = { 0 };
-
-    status = gethostname(host, sizeof(host));
-    if (status) strcpy(host, "unknown-host");
-
     //TODO: allow overriding by env variable
     connectInfo.sApplicationName = "EPICS IOC";
-    connectInfo.sApplicationUri  = UaString("urn:%1:EPICS:IOC").arg(host);
+    connectInfo.sApplicationUri
+        = UaString("urn:%1@%2:EPICS:IOC").arg(iocname.c_str()).arg(hostname.c_str());
     connectInfo.sProductUri      = "urn:EPICS:IOC";
     connectInfo.sSessionName     = UaString(name.c_str());
 
@@ -745,13 +744,50 @@ SessionUaSdk::setupSecurity ()
                 securityInfo.serverCertificate.attach(&endpointDescriptions[selectedEndpoint].ServerCertificate);
                 OpcUa_ByteString_Initialize(&endpointDescriptions[selectedEndpoint].ServerCertificate);
                 securityLevel = endpointDescriptions[selectedEndpoint].SecurityLevel;
-                if (debug)
-                    std::cout << "Session " << name.c_str()
-                              << ": (setupSecurity) found matching endpoint, using"
-                              << " mode=" << securityModeString(securityInfo.messageSecurityMode)
-                              << " policy=" << securityPolicyString(securityInfo.sSecurityPolicy.toUtf8())
-                              << " (level " << +securityLevel << ")"
-                              << std::endl;
+
+                // Verify server certificate (and save if rejected and securitySaveRejected is set)
+                UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.serverCertificate);
+                UaPkiIdentity id = cert.subject();
+                if (securityInfo.verifyServerCertificate().isBad()) {
+                    if (securitySaveRejected) {
+                        bool save = true;
+                        struct stat info;
+                        if (stat(securitySaveRejectedDir.c_str(), &info) != 0) {
+                            int status = mkdir(securitySaveRejectedDir.c_str(), 0777);
+                            if (status) {
+                                std::cout << "Session " << name
+                                          << ": (setupSecurity) cannot create directory for "
+                                             "rejected certificates ("
+                                          << securitySaveRejectedDir << ")" << std::endl;
+                                save = false;
+                            }
+                        }
+                        if (save) {
+                            UaString fileName = UaString("%1/%2 [%3].cer")
+                                                    .arg(securitySaveRejectedDir.c_str())
+                                                    .arg(id.commonName)
+                                                    .arg(cert.thumbPrint().toHex());
+                            int status = cert.toDERFile(fileName.toUtf8());
+                            if (status)
+                                std::cout << "Session " << name
+                                          << ": (setupSecurity) ERROR - cannot save rejected certificate as "
+                                          << fileName.toUtf8() << std::endl;
+                            else
+                                std::cout << "Session " << name
+                                          << ": (setupSecurity) saved rejected certificate as "
+                                          << fileName.toUtf8() << std::endl;
+                        }
+                    }
+                } else {
+                    if (debug)
+                        std::cout << "Session " << name.c_str()
+                                  << ": (setupSecurity) found matching endpoint, using"
+                                  << " mode="
+                                  << securityModeString(securityInfo.messageSecurityMode)
+                                  << " policy="
+                                  << securityPolicyString(securityInfo.sSecurityPolicy.toUtf8())
+                                  << " (level " << +securityLevel << ")" << std::endl;
+                }
             } else {
                 errlogPrintf("OPC UA session %s: (setupSecurity) found no endpoint that matches "
                              "the security requirements",

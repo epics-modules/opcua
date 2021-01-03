@@ -131,6 +131,11 @@ Session::showSecurityClient()
               << "\n  Server revocation list dir: " << securityCertificateRevocationListDir
               << "\n  Issuer trusted certificates dir: " << securityIssuersCertificatesDir
               << "\n  Issuer revocation list dir: " << securityIssuersRevocationListDir;
+    if (securitySaveRejected)
+        std::cout << "\n  Rejected certificates saved to: " << securitySaveRejectedDir;
+    else
+        std::cout << "\n  Rejected certificates are not saved.";
+
     UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.clientCertificate);
     UaPkiIdentity id = cert.subject();
     std::cout << "\nClient certificate: " << id.commonName.toUtf8() << " ("
@@ -190,6 +195,19 @@ Session::setupPKI(const std::string &&certTrustList,
         errlogPrintf(format.c_str(), securityIssuersRevocationListDir.c_str());
 }
 
+void
+Session::saveRejected(const std::string &location)
+{
+    securitySaveRejected = true;
+    if (location.length()) {
+        securitySaveRejectedDir = location;
+        if (securitySaveRejectedDir.back() == '/')
+            securitySaveRejectedDir.pop_back();
+    } else {
+        securitySaveRejectedDir = "/tmp/" + iocname + "@" + hostname;
+    }
+}
+
 const std::string &
 opcuaGetDriverName ()
 {
@@ -199,12 +217,16 @@ opcuaGetDriverName ()
     return sdk;
 }
 
+std::string Session::hostname;
+std::string Session::iocname;
 std::string Session::securityCertificateTrustListDir;
 std::string Session::securityCertificateRevocationListDir;
 std::string Session::securityIssuersCertificatesDir;
 std::string Session::securityIssuersRevocationListDir;
 std::string Session::securityClientCertificateFile;
 std::string Session::securityClientPrivateKeyFile;
+bool Session::securitySaveRejected;
+std::string Session::securitySaveRejectedDir;
 
 const std::map<std::string, std::string> Session::securitySupportedPolicies
     = {{OpcUa_SecurityPolicy_None, "None"}

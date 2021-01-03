@@ -15,11 +15,19 @@
 
 #include <string>
 #include <map>
+#include <cstring>
+
+#include <limits.h>
+#include <unistd.h>
 
 #include <shareLib.h>
 #include <epicsTimer.h>
 
 #include "iocshVariables.h"
+
+#ifndef HOST_NAME_MAX
+  #define HOST_NAME_MAX 256
+#endif
 
 namespace DevOpcua {
 
@@ -199,29 +207,53 @@ public:
                          const std::string &&issuersTrustList,
                          const std::string &&issuersRevocationList);
 
+    /**
+     * @brief Enable saving of rejected (untrusted) server certificates.
+     *
+     * @param location  location for saving rejected certs (empty = use default)
+     */
+    static void saveRejected(const std::string &location = "");
+
     int debug;  /**< debug verbosity level */
 
 protected:
-    Session (const int debug, const bool autoConnect)
+    Session(const int debug, const bool autoConnect)
         : debug(debug)
         , autoConnector(*this, opcua_ConnectTimeout, queue)
         , autoConnect(autoConnect)
-    {}
+    {
+        char host[HOST_NAME_MAX] = {0};
+        int status = gethostname(host, sizeof(host));
+        if (status)
+            strcpy(host, "unknown-host");
+        hostname = host;
 
-    static std::string securityCertificateTrustListDir;       /**< directory for trusted server certs */
-    static std::string securityCertificateRevocationListDir;  /**< directory for server cert revocation lists */
-    static std::string securityIssuersCertificatesDir;        /**< directory for trusted issuer certs */
-    static std::string securityIssuersRevocationListDir;      /**< directory for issuer cert revocation lists */
-    static std::string securityClientCertificateFile;         /**< full path to the client cert (public key) */
-    static std::string securityClientPrivateKeyFile; /**< full path to the client private key */
+        const char *ioc = std::getenv("IOC");
+        if (!ioc)
+            ioc = "ioc";
+        iocname = ioc;
+    }
+
+    static std::string hostname;
+    static std::string iocname;
+    static std::string securityCertificateTrustListDir;  /**< trusted server certs location */
+    static std::string
+        securityCertificateRevocationListDir;            /**< server cert revocation lists location */
+    static std::string securityIssuersCertificatesDir;   /**< trusted issuer certs location */
+    static std::string securityIssuersRevocationListDir; /**< issuer cert revocation lists location */
+    static std::string securityClientCertificateFile;    /**< full path to the client cert (public key) */
+    static std::string securityClientPrivateKeyFile;     /**< full path to the client private key */
+    static bool securitySaveRejected;                    /**< flag: save rejected (untrusted) certs */
+    static std::string securitySaveRejectedDir;          /**< rejected certificates location */
 
     /**
      * @brief std::map of (URI, name) pairs for all supported security policies.
      */
     static const std::map<std::string, std::string> securitySupportedPolicies;
-    static const std::string securityPolicyString(const std::string &policy);  /**< URI to name converter */
+    /** @brief URI to name converter. */
+    static const std::string securityPolicyString(const std::string &policy);
 
-    // Delay timer for reconnecting whenever connection is down
+    /** @brief Delay timer for reconnecting whenever connection is down. */
     class AutoConnect : public epicsTimerNotify {
     public:
         AutoConnect(Session &client, const double delay, epicsTimerQueueActive &queue)

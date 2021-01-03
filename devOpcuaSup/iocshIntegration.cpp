@@ -355,6 +355,26 @@ static
     }
 }
 
+static const iocshArg opcuaSaveRejectedArg0 = {"location for saving rejected certs", iocshArgString};
+
+static const iocshArg *const opcuaSaveRejectedArg[1] = {&opcuaSaveRejectedArg0};
+
+static const iocshFuncDef opcuaSaveRejectedFuncDef = {"opcuaSaveRejected", 1, opcuaSaveRejectedArg};
+
+static
+    void opcuaSaveRejectedCallFunc (const iocshArgBuf *args)
+{
+    try {
+        if (args[0].sval == nullptr || args[0].sval[0] == '\0')
+            Session::saveRejected();
+        else
+            Session::saveRejected(args[0].sval);
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static const iocshArg opcuaConnectArg0 = {"session name", iocshArgString};
 
 static const iocshArg *const opcuaConnectArg[1] = {&opcuaConnectArg0};
@@ -597,6 +617,7 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaShowSecurityFuncDef, opcuaShowSecurityCallFunc);
     iocshRegister(&opcuaClientCertificateFuncDef, opcuaClientCertificateCallFunc);
     iocshRegister(&opcuaSetupPKIFuncDef, opcuaSetupPKICallFunc);
+    iocshRegister(&opcuaSaveRejectedFuncDef, opcuaSaveRejectedCallFunc);
     iocshRegister(&opcuaDebugSessionFuncDef, opcuaDebugSessionCallFunc);
 
     iocshRegister(&opcuaCreateSubscriptionFuncDef, opcuaCreateSubscriptionCallFunc);
