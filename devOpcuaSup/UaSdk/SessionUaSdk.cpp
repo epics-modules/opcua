@@ -205,8 +205,8 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
     } else if (name == "sec-level-min") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         reqSecurityLevel = static_cast<unsigned char>(ul);
-    } else if (name == "ident-file") {
-        securityCredentialFile = value;
+    } else if (name == "sec-id") {
+        securityIdentityFile = value;
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -617,10 +617,10 @@ SessionUaSdk::showSecurity ()
                       << "\n  Identity: ";
             if (securityInfo.pUserIdentityToken()->getTokenType() == OpcUa_UserTokenType_UserName)
                 std::cout << "Username token '" << securityUserName << "'"
-                          << " (credentials from " << securityCredentialFile << ")";
+                          << " (credentials from " << securityIdentityFile << ")";
             else if (securityInfo.pUserIdentityToken()->getTokenType() == OpcUa_UserTokenType_Certificate)
                 std::cout << "Certificate token '" << securityUserName << "'"
-                          << " (credentials from " << securityCredentialFile << ")";
+                          << " (credentials from " << securityIdentityFile << ")";
             else
                 std::cout << "Anonymous";
 
@@ -927,7 +927,7 @@ SessionUaSdk::setupIdentity()
 {
     securityInfo.setAnonymousUserIdentity();
 
-    if (securityCredentialFile.length()) {
+    if (securityIdentityFile.length()) {
         std::ifstream inFile;
         std::string line;
         std::string user;
@@ -935,11 +935,11 @@ SessionUaSdk::setupIdentity()
         std::string keyfile;
         std::string pass;
 
-        inFile.open(securityCredentialFile);
+        inFile.open(securityIdentityFile);
         if (inFile.fail()) {
             errlogPrintf("OPC UA session %s: cannot open credentials file %s\n",
                          name.c_str(),
-                         securityCredentialFile.c_str());
+                         securityIdentityFile.c_str());
         }
 
         while (std::getline(inFile, line)) {
@@ -980,7 +980,7 @@ SessionUaSdk::setupIdentity()
                 "OPC UA session %s: credentials file %s does not contain settings for "
                 "Username token (user + pass) or Certificate token (cert + key [+ pass])\n",
                 name.c_str(),
-                securityCredentialFile.c_str());
+                securityIdentityFile.c_str());
         }
     } else {
         if (debug)

@@ -86,7 +86,7 @@ If no matching endpoint is discovered or the server certificate is untrusted, th
 
 Without configuration, an Anonymous Identity Token will be used.
 
-To use a Username Identity or a Certificate Identity Token, prepare an identity credentials file. This file should only be readable by the IOC. Configure the filename through the session option `ident-file`.
+To use a Username Identity or a Certificate Identity Token, prepare an identity file. This file should only be readable by the IOC. Configure the filename through the session option `sec-id`.
 
 In the credentials file, lines starting with `#` are considered comments and ignored.
 

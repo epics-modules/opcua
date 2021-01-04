@@ -273,11 +273,11 @@ protected:
         const double delay;
     };
 
-    static epicsTimerQueueActive &queue;     /**< timer queue for session reconnects */
-    AutoConnect autoConnector;               /**< reconnection timer */
-    bool autoConnect;                        /**< auto (re)connect flag */
-    std::string securityCredentialFile;      /**< full path to file with user/pass credentials */
-    std::string securityUserName;            /**< user name set in Username token */
+    static epicsTimerQueueActive &queue;   /**< timer queue for session reconnects */
+    AutoConnect autoConnector;             /**< reconnection timer */
+    bool autoConnect;                      /**< auto (re)connect flag */
+    std::string securityIdentityFile;      /**< full path to file with Identity token settings */
+    std::string securityUserName;          /**< user name set in Username token */
 };
 
 
