@@ -37,7 +37,7 @@ Three *Message Security Modes* are defined:
 
 ### Client Authentication
 
-For authentication to manage the authorization of access to a server, OPC UA defines four *User Token Types* (methods of user authentication):
+For authentication related to managing the authorization of access to a server, OPC UA defines four *User Token Types* (methods of user authentication):
 
 | User Token Type          |                                            |
 | ------------------------ | ------------------------------------------ |
@@ -56,9 +56,11 @@ As a debugging tool, the iocShell command `opcuaShowSecurity` runs the discovery
 
 ## IOC Configuration
 
-An IOC using the OPC UA Device Support is considered to be a production system. As such, it has to be fully configured and supplied with the certificates needed to connect to the configured OPC UA servers. Other than general purpose and example clients, the IOC cannot interactively create self-signed certificates or change the trust for a certificate that a server presents.
+An IOC using the OPC UA Device Support is considered to be a production system. As such, it has to be fully configured and supplied with the certificates needed to connect to the configured OPC UA servers. Other than general purpose and example clients, the IOC cannot and should not interactively create self-signed certificates or change the trust for a certificate that a server presents.
 
-An easy way to obtain OPC UA server certificates (to put them in the IOC's certificate store) is using a general purpose client (e.g., the `UaExpert` tool) to connect to the server, trust its certificate, and copy the file from that client's certificate store. (You can also import it into your certificate management tool, see below.)
+To support setting up the certificate store, the `opcuaSaveRejected` iocShell command will configure the IOC to save rejected (untrusted) server certificates in a specified location (default: `/tmp/<ioc>@<host>`). Copying such a certificate file to the IOC's certificate store (under `trusted/certs`) will explicitly trust the certificate and allow secure connections to the server.
+
+Alternatively, you can use a general purpose client (e.g., the `UaExpert` tool) to connect to the server, trust its certificate, and use the certificate file from that client's certificate store. (You could also import it into your certificate management tool, see below.)
 
 ### Certificate Store Setup
 
@@ -88,15 +90,15 @@ Without configuration, an Anonymous Identity Token will be used.
 
 To use a Username Identity or a Certificate Identity Token, prepare an identity file. This file should only be readable by the IOC. Configure the filename through the session option `sec-id`.
 
-In the credentials file, lines starting with `#` are considered comments and ignored.
+In the identity file, lines starting with `#` are considered comments and ignored.
 
 To use a Username Identity Token, set `user=<username>` and `pass=<password>`, each on a separate line.
 
-To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<private key file>`, each on a separate line, to identify the DER certificate and PEM private key to use. If the private key is password protected, add another line setting `pass=<password>`. The Common Name (CN) property of the certificate will be used by the server to determine the user name for authorization.
+To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<private key file>`, each on a separate line, to identify the DER certificate and PEM private key to use. If the private key is password protected, add another line setting `pass=<password>`. Normally, the server will use the Common Name (CN) property of the certificate to determine the user name for authorization.
 
 ## Managing Certificates
 
-[Xca](https://hohnstaedt.de/xca/) is a powerful GUI for managing X.509 certificates and keys, including the certificate authority (CA) functionality needed for managing the certificates for a larger installation.
+[Xca](https://hohnstaedt.de/xca/) is a powerful and popular GUI for managing X.509 certificates and keys, including the certificate authority (CA) functionality needed for managing the certificates for a larger installation.
 
 ### Creating Application Instance Certificates
 
@@ -108,10 +110,10 @@ Creating a self-signed certificate for OPC UA use is pretty straight-forward. Fo
 - X509v3 Key Usage: **critical**, `Digital Signature`, `Non Repudiation`, `Key Encipherment`, `Data Encipherment`, `Certificate Sign`.
 - X509v3 Extended Key Usage: **critical**, `TLS Web Server Authentication`, `TLS Web Client Authentication`.
 - X509v3 Subject Alternative Name: `URI:urn:<ioc>@<host>:EPICS:IOC`, `DNS:<host>`
-  `<ioc>` is the IOC name,`<host>` is the hostname of the machine that runs the IOC (i.e., the result of a `gethostname()` call). The URI tag *must* match what the Device Support module sets as its application URI.
+  with `<ioc>` being the IOC name,`<host>` being the hostname (i.e., the result of a `gethostname()` call) of the machine that runs the IOC. The URI tag *must* match what the Device Support module sets as its application URI.
   For server certificates, I have seen the URI not containing a hostname and a numerical `IP Address` tag instead of `DNS`.
 
-The sources contain an Xca certificate template that can be imported and modified to fit your needs, which will greatly simplify generating new IOC client certificates. 
+The sources contain an Xca certificate template that can be imported and modified to fit your needs, which will simplify generating new IOC client certificates. 
 
 For the IOC, save the certificate in DER format, the private key as PEM. The server may need different formats - refer to the documentation of your server for more details.
 
@@ -120,9 +122,11 @@ For the IOC, save the certificate in DER format, the private key as PEM. The ser
 Create a self-signed certificate, following the documented procedure and giving your certificate/key pair the following properties:
 
 - Choose the issuer information to match your situation.
-  The Common Name (CN) property of the certificate will be used by the server to determine the user name for authorization. 
+  The Common Name (CN) property of the certificate will normally be used by the server to determine the user name for authorization. 
 - Sign using `SHA 256` (i.e., `sha256WithRSAEncryption`).
 - X509v3 Basic Constraints: **critical**, `CA:FALSE`.
+
+*Note:* The Unified Automation example server accepts any trusted certificate, without further verification and without using certificate properties for authorization.
 
 ### Using a Certificate Authority
 
@@ -134,4 +138,5 @@ The basic steps are:
   In the simplest form this means creating a Root CA certificate/key that is configured to sign other certificates.
 - Create Application Instance and Identity Token Certificates signed by your CA.
   When creating a new certificate, under the "Source" tab, instead of selecting "Create a self-signed certificate", choose a different certificate (your Root CA) that will be used to sign the newly created certificate.
-- Setting up an Xca template can simplify certificate creation and improve consistency.
+
+Setting up Xca templates can simplify certificate creation and greatly improve consistency.
