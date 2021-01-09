@@ -43,7 +43,7 @@ Three *Message Security Modes* are defined:
 | Sign                  | All messages are signed, but not encrypted. |
 | SignAndEncrypt        | All messages are signed and encrypted.      |
 
-### Client Authentication
+### Client Authentication (Identity)
 
 For authentication related to managing the authorization of access to a server, OPC UA defines four *User Token Types* (methods of user authentication):
 
@@ -94,7 +94,7 @@ The IOC will always choose the best available security that matches all option s
 
 If no matching endpoint is discovered or the server certificate is untrusted, the IOC will not connect.
 
-### Client Authentication
+### Identity (Client Authentication)
 
 Without configuration, an Anonymous Identity Token will be used.
 
@@ -114,14 +114,19 @@ To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<pri
 
 Creating a self-signed certificate for OPC UA use is pretty straight-forward. Follow the documented procedure, giving your certificate/key pair the following properties:
 
-- Choose the issuer information to match your situation.
-- Sign using `SHA 256` (i.e., `sha256WithRSAEncryption`).
-- X509v3 Basic Constraints: **critical**, `CA:FALSE`.
-- X509v3 Key Usage: **critical**, `Digital Signature`, `Non Repudiation`, `Key Encipherment`, `Data Encipherment`, `Certificate Sign`.
-- X509v3 Extended Key Usage: **critical**, `TLS Web Server Authentication`, `TLS Web Client Authentication`.
-- X509v3 Subject Alternative Name: `URI:urn:<ioc>@<host>:EPICS:IOC`, `DNS:<host>`
-  with `<ioc>` being the IOC name,`<host>` being the hostname (i.e., the result of a `gethostname()` call) of the machine that runs the IOC. The URI tag *must* match what the Device Support module sets as its application URI.
-  For server certificates, I have seen the URI not containing a hostname and a numerical `IP Address` tag instead of `DNS`.
+-   Choose the issuer information to match your situation.
+
+-   Sign using `SHA 256` (i.e., `sha256WithRSAEncryption`).
+
+-   X509v3 Basic Constraints: **critical**, `CA:FALSE`.
+
+-   X509v3 Key Usage: **critical**, `Digital Signature`, `Non Repudiation`, `Key Encipherment`, `Data Encipherment`, `Certificate Sign`.
+
+-   X509v3 Extended Key Usage: **critical**, `TLS Web Server Authentication`, `TLS Web Client Authentication`.
+
+-   X509v3 Subject Alternative Name: `URI:urn:<ioc>@<host>:EPICS:IOC`, `DNS:<host>`
+    with `<ioc>` being the IOC name,`<host>` being the hostname (i.e., the result of a `gethostname()` call) of the machine that runs the IOC. The URI tag *must* match what the Device Support module sets as its application URI.
+    For server certificates, I have seen the URI not containing a hostname and a numerical `IP Address` tag instead of `DNS`.
 
 The sources contain an Xca certificate template that can be imported and modified to fit your needs, which will simplify generating new IOC client certificates. 
 
@@ -131,10 +136,12 @@ For the IOC, save the certificate in DER format, the private key as PEM. The ser
 
 Create a self-signed certificate, following the documented procedure and giving your certificate/key pair the following properties:
 
-- Choose the issuer information to match your situation.
-  The Common Name (CN) property of the certificate will normally be used by the server to determine the user name for authorization. 
-- Sign using `SHA 256` (i.e., `sha256WithRSAEncryption`).
-- X509v3 Basic Constraints: **critical**, `CA:FALSE`.
+-   Choose the issuer information to match your situation.
+    The Common Name (CN) property of the certificate will normally be used by the server to determine the user name for authorization. 
+
+-   Sign using `SHA 256` (i.e., `sha256WithRSAEncryption`).
+
+-   X509v3 Basic Constraints: **critical**, `CA:FALSE`.
 
 *Note:* The Unified Automation example server accepts any trusted certificate, without further verification and without using certificate properties for authorization.
 
@@ -144,9 +151,10 @@ A complete discussion of this concept and the design and implementation of an ap
 
 The basic steps are:
 
-- Create a Certificate Authority.
-  In the simplest form this means creating a Root CA certificate/key that is configured to sign other certificates.
-- Create Application Instance and Identity Token Certificates signed by your CA.
-  When creating a new certificate, under the "Source" tab, instead of selecting "Create a self-signed certificate", choose a different certificate (your Root CA) that will be used to sign the newly created certificate.
+-   Create a Certificate Authority.
+    In the simplest form this means creating a Root CA certificate/key that is configured to sign other certificates.
+
+-   Create Application Instance and Identity Token Certificates signed by your CA.
+    When creating a new certificate, under the "Source" tab, instead of selecting "Create a self-signed certificate", choose a different certificate (your Root CA) that will be used to sign the newly created certificate.
 
 Setting up Xca templates can simplify certificate creation and greatly improve consistency.
