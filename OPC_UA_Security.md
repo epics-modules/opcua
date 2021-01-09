@@ -8,7 +8,15 @@ Certificates are filed in a *Certificate Store*, containing trusted and own cert
 
 In the basic, explicit form, trusting a certificate usually means that the certificate (file) is moved into a specific folder in the certificate store.
 
-Alternatively, using certificate authorities (CAs), a certificate is trusted if it is signed by a trusted CA. This approach is preferable for a larger installation, as it does not require updating all servers and clients when new peers with new certificates are added.
+When using certificate authorities (CAs), a certificate is trusted if it is signed by a trusted CA. This approach is preferable for a larger installation, as it does not require updating all servers and clients when new peers with new certificates are added.
+
+A good analogy to certificates are passports: In a world with only a handful people, fabricating your passport yourself is reasonable. In reality, it helps a lot that passports are fabricated by a government agency and this fact can be verified by checking holograms, watermarks etc.
+
+### Self-signed Certificates
+
+Servers often come with preloaded self-signed server certificates and a setting that will generously trust any valid self-signed client certificate. Generic clients typically offer an easy way to create a self-signed client certificate.
+
+These settings are intended to get users started with security easily and create minimal frustration during development. These "simple" self-signed certificates are good enough for securing the communication, but they are not very practical for authentication: every self-signed certificate must be trusted explicitly - or be accepted by default.
 
 ### Communication Security
 
@@ -61,6 +69,8 @@ An IOC using the OPC UA Device Support is considered to be a production system. 
 To support setting up the certificate store, the `opcuaSaveRejected` iocShell command will configure the IOC to save rejected (untrusted) server certificates in a specified location (default: `/tmp/<ioc>@<host>`). Copying such a certificate file to the IOC's certificate store (under `trusted/certs`) will explicitly trust the certificate and allow secure connections to the server.
 
 Alternatively, you can use a general purpose client (e.g., the `UaExpert` tool) to connect to the server, trust its certificate, and use the certificate file from that client's certificate store. (You could also import it into your certificate management tool, see below.)
+
+*Important Note:* During the process of saving the untrusted server certificate, a man-in-the-middle could send its own certificate to the IOC. Only add a server certificate to the trusted certificate store if you are sure it actually originates from the server (e.g., on a trusted network, after verifying its thumb print)! This act of trusting is the crucial and weakest point when using self-signed certificates.
 
 ### Certificate Store Setup
 
