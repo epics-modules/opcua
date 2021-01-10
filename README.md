@@ -100,7 +100,7 @@ This module is distributed subject to a Software License Agreement found
 in file LICENSE that is included with this distribution.
 
 <!-- Links -->
-[badge.version]: https://badge.fury.io/gh/ralphlange%2Fopcua.svg
+[badge.version]: https://img.shields.io/github/v/release/ralphlange/opcua?sort=semver
 [badge.travis]: https://travis-ci.org/ralphlange/opcua.svg?branch=master
 [badge.codacy]: https://api.codacy.com/project/badge/Grade/65b1d28ca5e34a7d853d168f50beaafc
 
