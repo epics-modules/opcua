@@ -128,9 +128,9 @@ public:
     virtual void showSecurity() = 0;
 
     /**
-     * @brief Do a discovery and show the available endpoints of all sessions.
+     * @brief Show client security setup and certificate info.
      */
-    static void showSecurityClient();
+    static void showClientSecurity();
 
     /**
      * @brief Set an option for the session.

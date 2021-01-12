@@ -273,7 +273,7 @@ void opcuaShowSecurityCallFunc (const iocshArgBuf *args)
 {
     try {
         if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
-            Session::showSecurityClient();
+            Session::showClientSecurity();
         } else {
             Session *s = Session::find(args[0].sval);
             if (s)
