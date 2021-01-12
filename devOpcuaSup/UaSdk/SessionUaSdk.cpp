@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <uaplatformlayer.h>
 #include <uaclientsdk.h>
 #include <uasession.h>
 #include <uadiscovery.h>
@@ -802,33 +803,81 @@ SessionUaSdk::setupSecurity ()
     }
 }
 
-void SessionUaSdk::initClientSecurity()
+void
+SessionUaSdk::setupClientSecurityInfo(ClientSecurityInfo &securityInfo,
+                                      const std::string *sessionName,
+                                      const int debug)
 {
-    UaStatus status;
-
-    if (debug)
-        std::cout << "Session " << name.c_str()
-                  << ": (initClientSecurity) setting up PKI provider"
-                  << std::endl;
-    status = securityInfo.initializePkiProviderOpenSSL(
-                securityCertificateRevocationListDir.c_str(),
-                securityCertificateTrustListDir.c_str(),
-                securityIssuersCertificatesDir.c_str(),
-                securityIssuersRevocationListDir.c_str());
+    if (debug) {
+        if (sessionName)
+            std::cout << "Session " << *sessionName;
+        std::cout << ": (setupClientSecurityInfo) setting up PKI provider" << std::endl;
+    }
+    UaStatus status
+        = securityInfo.initializePkiProviderOpenSSL(securityCertificateRevocationListDir.c_str(),
+                                                    securityCertificateTrustListDir.c_str(),
+                                                    securityIssuersCertificatesDir.c_str(),
+                                                    securityIssuersRevocationListDir.c_str());
     if (status.isBad())
-        errlogPrintf("OPC UA session %s: setting up PKI context failed with status %s\n",
-                     name.c_str(), status.toString().toUtf8());
+        errlogPrintf("%s%s: setting up PKI context failed with status %s\n",
+                     sessionName ? "OPC UA Session " : "OPC UA",
+                     sessionName ? sessionName->c_str() : "",
+                     status.toString().toUtf8());
 
-    if (debug)
-        std::cout << "Session " << name.c_str()
-                  << ": (initClientSecurity) loading client certificate " << securityClientCertificateFile.c_str()
-                  << std::endl;
-    status = securityInfo.loadClientCertificateOpenSSL(
-                securityClientCertificateFile.c_str(),
-                securityClientPrivateKeyFile.c_str());
-    if (status.isBad())
-        errlogPrintf("OPC UA session %s: loading client certificate failed with status %s\n",
-                     name.c_str(), status.toString().toUtf8());
+    if (securityClientCertificateFile.length() && securityClientPrivateKeyFile.length()) {
+        if (debug) {
+            if (sessionName)
+                std::cout << "Session " << *sessionName;
+            std::cout << ": (setupClientSecurityInfo) loading client certificate "
+                      << securityClientCertificateFile << std::endl;
+        }
+
+        UaPkiCertificate cert;
+        if (isPEM(securityClientCertificateFile)) {
+            cert = UaPkiCertificate::fromPEMFile(UaString(securityClientCertificateFile.c_str()));
+        } else {
+            cert = UaPkiCertificate::fromDERFile(UaString(securityClientCertificateFile.c_str()));
+        }
+
+        if (!cert.isValid()) {
+            errlogPrintf("%s%s: configured client certificate is not valid (expired?)\n",
+                         sessionName ? "OPC UA Session " : "OPC UA",
+                         sessionName ? sessionName->c_str() : "");
+            return;
+        }
+
+        if (debug) {
+            if (sessionName)
+                std::cout << "Session " << *sessionName;
+            std::cout << ": (setupClientSecurityInfo) loading client private key "
+                      << securityClientPrivateKeyFile << std::endl;
+        }
+
+        // atm hard-coded: no password for client certificate key
+        auto key = UaPkiRsaKeyPair::fromPEMFile(securityClientPrivateKeyFile.c_str(), "");
+
+        if (!UaPkiRsaKeyPair::checkKeyPair(cert.publicKey(), key.privateKey())) {
+            errlogPrintf("%s%s: client certificate and client key don't match\n",
+                         sessionName ? "OPC UA Session " : "OPC UA",
+                         sessionName ? sessionName->c_str() : "");
+            return;
+        }
+
+// API change in UA SDK 1.6
+#if (PROD_MAJOR == 1 && PROD_MINOR < 6)
+        securityInfo.clientPrivateKey = key.toDER();
+#else
+        securityInfo.setClientPrivateKeyDer(key.toDER());
+#endif
+        securityInfo.clientCertificate = cert.toDER();
+    } else {
+        if (debug) {
+            if (sessionName)
+                std::cout << "Session " << *sessionName;
+            std::cout << ": (setupClientSecurityInfo) no client certificate configured"
+                      << std::endl;
+        }
+    }
 }
 
 void
