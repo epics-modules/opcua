@@ -108,23 +108,9 @@ Session::securityPolicyString(const std::string &policy)
 void
 Session::showClientSecurity()
 {
-    UaStatus status;
-    SessionSecurityInfo securityInfo;
+    ClientSecurityInfo securityInfo;
 
-    //TODO: Move these two calls into a separate function and file with Linux/Windows ifdefs
-    status = securityInfo.initializePkiProviderOpenSSL(
-                securityCertificateRevocationListDir.c_str(),
-                securityCertificateTrustListDir.c_str(),
-                securityIssuersCertificatesDir.c_str(),
-                securityIssuersRevocationListDir.c_str());
-    if (status.isBad())
-        std::cerr << "Error initializing PKI provider" << std::endl;
-
-    status = securityInfo.loadClientCertificateOpenSSL(
-                securityClientCertificateFile.c_str(),
-                securityClientPrivateKeyFile.c_str());
-    if (status.isBad())
-        std::cerr << "Error loading client certificate" << std::endl;
+    SessionUaSdk::setupClientSecurityInfo(securityInfo);
 
     std::cout << "Certificate store:"
               << "\n  Server trusted certificates dir: " << securityCertificateTrustListDir
@@ -136,16 +122,20 @@ Session::showClientSecurity()
     else
         std::cout << "\n  Rejected certificates are not saved.";
 
-    UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.clientCertificate);
-    UaPkiIdentity id = cert.subject();
-    std::cout << "\nClient certificate: " << id.commonName.toUtf8() << " ("
-              << id.organization.toUtf8() << ")"
-              << " serial " << cert.serialNumber().toUtf8() << " (thumb "
-              << cert.thumbPrint().toHex(false).toUtf8() << ")"
-              << (cert.isSelfSigned() ? " self-signed" : "")
-              << "\n  Certificate file: " << securityClientCertificateFile
-              << "\n  Private key file: " << securityClientPrivateKeyFile
-              << "\nSupported security policies: ";
+    if (securityInfo.clientCertificate.length() > 0) {
+        UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.clientCertificate);
+        UaPkiIdentity id = cert.subject();
+        std::cout << "\nClient certificate: " << id.commonName.toUtf8() << " ("
+                  << id.organization.toUtf8() << ")"
+                  << " serial " << cert.serialNumber().toUtf8() << " (thumb "
+                  << cert.thumbPrint().toHex(false).toUtf8() << ")"
+                  << (cert.isSelfSigned() ? " self-signed" : "")
+                  << "\n  Certificate file: " << securityClientCertificateFile
+                  << "\n  Private key file: " << securityClientPrivateKeyFile;
+    } else {
+        std::cout << "\nNo client cerificate loaded.";
+    }
+    std::cout << "\nSupported security policies: ";
     for (const auto &p : securitySupportedPolicies)
         std::cout << " " << p.second;
     std::cout << std::endl;

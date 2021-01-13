@@ -207,11 +207,6 @@ public:
      */
     OpcUa_UInt16 mapNamespaceIndex(const OpcUa_UInt16 nsIndex) const;
 
-    virtual void initClientSecurity() override
-    {
-        setupClientSecurityInfo(securityInfo, &name, debug);
-    }
-
     /**
      * @brief EPICS IOC Database initHook function.
      *
@@ -254,6 +249,13 @@ public:
     virtual void processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch) override;
     virtual void processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch) override;
 
+    /**
+     * @brief Setup ClientSecurityInfo object from PKI store locations and cert files
+     */
+    static void setupClientSecurityInfo(ClientSecurityInfo &securityInfo,
+                                        const std::string *sessionName = nullptr,
+                                        const int debug = 0);
+
 private:
     /**
      * @brief Register all nodes that are configured to be registered.
@@ -285,13 +287,6 @@ private:
      * @brief Read user/pass or cert/key/pass credentials from credentials file.
      */
     void setupIdentity();
-
-    /**
-     * @brief Setup ClientSecurityInfo object from PKI store locations and cert files
-     */
-    static void setupClientSecurityInfo(ClientSecurityInfo &securityInfo,
-                                        const std::string *sessionName = nullptr,
-                                        const int debug = 0);
 
     /**
      * @brief Set up security.

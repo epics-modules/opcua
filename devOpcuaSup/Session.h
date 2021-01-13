@@ -151,11 +151,6 @@ public:
     virtual void addNamespaceMapping(const unsigned short nsIndex, const std::string &uri) = 0;
 
     /**
-     * @brief Initialize client security (PKI store and client certificate).
-     */
-    virtual void initClientSecurity() = 0;
-
-    /**
      * @brief Factory method to create a session (implementation specific).
      *
      * @param name         name of the new session
