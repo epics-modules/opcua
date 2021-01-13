@@ -16,12 +16,14 @@
 #include <string>
 #include <map>
 #include <cstring>
+#include <fstream>
 
 #include <limits.h>
 #include <unistd.h>
 
 #include <shareLib.h>
 #include <epicsTimer.h>
+#include <errlog.h>
 
 #include "iocshVariables.h"
 
@@ -217,8 +219,9 @@ public:
     int debug;  /**< debug verbosity level */
 
 protected:
-    Session(const int debug, const bool autoConnect)
+    Session(const std::string &name, const int debug, const bool autoConnect)
         : debug(debug)
+        , name(name)
         , autoConnector(*this, opcua_ConnectTimeout, queue)
         , autoConnect(autoConnect)
     {
@@ -253,6 +256,39 @@ protected:
     /** @brief URI to name converter. */
     static const std::string securityPolicyString(const std::string &policy);
 
+    /**
+     * @brief Determine if a file contains PEM encoded keys or certificates.
+     *
+     * @param file  file name
+     *
+     * @return true if file uses PEM format
+     */
+    static bool
+    isPEM(const std::string &file)
+    {
+        if (file.length()) {
+            std::ifstream inFile;
+            std::string line;
+            bool foundPemMarker = false;
+
+            inFile.open(file);
+            if (inFile.fail()) {
+                errlogPrintf("OPC UA: cannot open file %s\n", file.c_str());
+                return false;
+            }
+
+            while (std::getline(inFile, line)) {
+                size_t cert = line.find("-----BEGIN CERTIFICATE-----");
+                size_t key = line.find("-----BEGIN RSA PRIVATE KEY-----");
+                if (!(cert && key))
+                    foundPemMarker = true;
+            }
+            return foundPemMarker;
+        } else {
+            return false;
+        }
+    }
+
     /** @brief Delay timer for reconnecting whenever connection is down. */
     class AutoConnect : public epicsTimerNotify {
     public:
@@ -274,6 +310,8 @@ protected:
     };
 
     static epicsTimerQueueActive &queue;   /**< timer queue for session reconnects */
+
+    const std::string name;                /**< unique session name */
     AutoConnect autoConnector;             /**< reconnection timer */
     bool autoConnect;                      /**< auto (re)connect flag */
     std::string securityIdentityFile;      /**< full path to file with Identity token settings */

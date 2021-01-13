@@ -295,7 +295,6 @@ private:
 
     static Registry<SessionUaSdk> sessions;                   /**< session management */
 
-    const std::string name;                                   /**< unique session name */
     UaString serverURL;                                       /**< server URL */
     std::map<std::string, SubscriptionUaSdk*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemUaSdk *> items;                           /**< items on this session */

@@ -123,8 +123,7 @@ SessionUaSdk::SessionUaSdk(const std::string &name,
                            const std::string &serverUrl,
                            bool autoConnect,
                            int debug)
-    : Session(debug, autoConnect)
-    , name(name)
+    : Session(name, debug, autoConnect)
     , serverURL(serverUrl.c_str())
     , registeredItemsNo(0)
     , puasession(new UaSession())
