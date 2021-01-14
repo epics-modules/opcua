@@ -1016,8 +1016,21 @@ SessionUaSdk::setupIdentity()
                           << "/*****)" << std::endl;
             securityUserName = user;
             securityInfo.setUserPasswordUserIdentity(user.c_str(), pass.c_str());
+
         } else if (certfile.length() && keyfile.length()) {
-            UaPkiCertificate cert = UaPkiCertificate::fromDERFile(certfile.c_str());
+            if (debug)
+                std::cout << "Session " << name << ": (setupIdentity) loading identity certificate "
+                          << certfile << std::endl;
+
+            UaPkiCertificate cert;
+            if (isPEM(certfile)) {
+                cert = UaPkiCertificate::fromPEMFile(certfile.c_str());
+            } else {
+                cert = UaPkiCertificate::fromDERFile(certfile.c_str());
+            }
+            if (!cert.isValid())
+                errlogPrintf("OPC UA session %s: identity certificate is not valid (expired?)\n",
+                             name.c_str());
             UaPkiRsaKeyPair key = UaPkiRsaKeyPair::fromPEMFile(keyfile.c_str(), pass.c_str());
             if (debug)
                 std::cout << "Session " << name.c_str()
@@ -1026,6 +1039,7 @@ SessionUaSdk::setupIdentity()
                           << cert.thumbPrint().toHex(false).toUtf8() << ")" << std::endl;
             securityUserName = cert.commonName().toUtf8();
             securityInfo.setCertificateUserIdentity(cert.toByteStringDER(), key.toDER());
+
         } else {
             errlogPrintf(
                 "OPC UA session %s: credentials file %s does not contain settings for "
