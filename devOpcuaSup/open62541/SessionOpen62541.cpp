@@ -44,8 +44,6 @@
 
 namespace DevOpcua {
 
-using namespace UaClientSdk;
-
 static epicsThreadOnceId session_uasdk_ihooks_once = EPICS_THREAD_ONCE_INIT;
 static epicsThreadOnceId session_uasdk_atexit_once = EPICS_THREAD_ONCE_INIT;
 

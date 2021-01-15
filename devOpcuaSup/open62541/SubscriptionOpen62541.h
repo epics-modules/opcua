@@ -25,8 +25,6 @@
 
 namespace DevOpcua {
 
-using namespace UaClientSdk;
-
 /**
  * @brief The SubscriptionOpen62541 implementation of an OPC UA Subscription.
  *

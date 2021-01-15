@@ -29,8 +29,6 @@
 
 namespace DevOpcua {
 
-using namespace UaClientSdk;
-
 class SubscriptionOpen62541;
 class DataElementOpen62541;
 struct linkInfo;

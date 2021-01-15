@@ -28,8 +28,6 @@
 
 namespace DevOpcua {
 
-using namespace UaClientSdk;
-
 std::map<std::string, SubscriptionOpen62541*> SubscriptionOpen62541::subscriptions;
 
 SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOpen62541 *session,
