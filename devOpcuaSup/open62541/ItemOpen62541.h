@@ -16,10 +16,6 @@
 
 #include <memory>
 
-#include <statuscode.h>
-#include <opcua_builtintypes.h>
-#include <uastructuredefinition.h>
-
 #include <epicsTime.h>
 
 #include "Item.h"

@@ -14,10 +14,6 @@
 #ifndef DEVOPCUA_SUBSCRIPTIONOPEN62541_H
 #define DEVOPCUA_SUBSCRIPTIONOPEN62541_H
 
-#include <uabase.h>
-#include <uaclientsdk.h>
-#include <uasubscription.h>
-
 #include <epicsTypes.h>
 
 #include "SessionOpen62541.h"

@@ -22,9 +22,6 @@
 #include <unordered_map>
 #include <limits>
 
-#include <uadatavalue.h>
-#include <statuscode.h>
-
 #include <errlog.h>
 
 #include "DataElement.h"

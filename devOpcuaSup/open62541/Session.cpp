@@ -12,9 +12,6 @@
 
 #include <iostream>
 
-#include <uaplatformlayer.h>
-#include <uabase.h>
-
 #include <epicsThread.h>
 
 #include "Session.h"

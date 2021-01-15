@@ -18,10 +18,6 @@
 #include <vector>
 #include <memory>
 
-#include <uabase.h>
-#include <uaclientsdk.h>
-#include <uasession.h>
-
 #include <epicsMutex.h>
 #include <epicsTypes.h>
 #include <initHooks.h>

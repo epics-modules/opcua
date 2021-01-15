@@ -24,9 +24,6 @@
 #include <vector>
 #include <limits>
 
-#include <uaclientsdk.h>
-#include <uasession.h>
-
 #include <epicsExit.h>
 #include <epicsThread.h>
 #include <epicsAtomic.h>

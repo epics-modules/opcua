@@ -15,9 +15,6 @@
 #include <string>
 #include <map>
 
-#include <uaclientsdk.h>
-#include <uasession.h>
-
 #include <errlog.h>
 
 #define epicsExportSharedSymbols

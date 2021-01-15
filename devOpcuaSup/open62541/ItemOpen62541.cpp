@@ -14,10 +14,6 @@
 #include <memory>
 #include <cstring>
 
-#include <uaclientsdk.h>
-#include <uanodeid.h>
-#include <opcua_statuscodes.h>
-
 #include "RecordConnector.h"
 #include "opcuaItemRecord.h"
 #include "ItemOpen62541.h"
