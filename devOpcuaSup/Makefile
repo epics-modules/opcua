@@ -76,6 +76,10 @@ ifdef UASDK
 include $(OPCUA)/UaSdk/Makefile
 endif
 
+ifdef OPEN62541
+include $(OPCUA)/open62541/Makefile
+endif
+
 # Module versioning
 EXPANDVARS += EPICS_OPCUA_MAJOR_VERSION
 EXPANDVARS += EPICS_OPCUA_MINOR_VERSION
