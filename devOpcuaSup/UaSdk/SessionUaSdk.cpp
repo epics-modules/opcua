@@ -304,23 +304,22 @@ SessionUaSdk::connect()
                                           this);        // Callback interface
 
     if (result.isGood()) {
-        if (securityInfo.messageSecurityMode != OpcUa_MessageSecurityMode_None) {
-            std::string token;
-            auto type = securityInfo.pUserIdentityToken()->getTokenType();
-            if (type == OpcUa_UserTokenType_UserName)
-                token = " (username token)";
-            else if (type == OpcUa_UserTokenType_Certificate)
-                token = " (certificate token)";
-            errlogPrintf("OPC UA session %s: connect succeeded as '%s'%s with security level %u "
-                         "(mode=%s; policy=%s)\n",
-                         name.c_str(),
-                         (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
-                         token.c_str(),
-                         securityLevel,
-                         securityModeString(securityInfo.messageSecurityMode),
-                         securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
-        } else {
-            errlogPrintf("OPC UA session %s: connect succeeded as 'Anonymous' with NO SECURITY\n",
+        std::string token;
+        auto type = securityInfo.pUserIdentityToken()->getTokenType();
+        if (type == OpcUa_UserTokenType_UserName)
+            token = " (username token)";
+        else if (type == OpcUa_UserTokenType_Certificate)
+            token = " (certificate token)";
+        errlogPrintf("OPC UA session %s: connect succeeded as '%s'%s with security level %u "
+                     "(mode=%s; policy=%s)\n",
+                     name.c_str(),
+                     (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
+                     token.c_str(),
+                     securityLevel,
+                     securityModeString(securityInfo.messageSecurityMode),
+                     securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
+        if (securityInfo.messageSecurityMode == OpcUa_MessageSecurityMode_None) {
+            errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
                          name.c_str());
         }
     } else {
