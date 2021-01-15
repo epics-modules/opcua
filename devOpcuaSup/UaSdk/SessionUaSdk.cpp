@@ -133,7 +133,7 @@ SessionUaSdk::SessionUaSdk(const std::string &name,
     , puasession(new UaSession())
     , reqSecurityMode(OpcUa_MessageSecurityMode_None)
     , reqSecurityPolicyURI("http://opcfoundation.org/UA/SecurityPolicy#None")
-    , reqSecurityLevel(0)
+    , reqSecurityLevel(1)
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
     , writer("OPCwr-" + name, *this)
