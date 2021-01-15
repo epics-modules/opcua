@@ -58,7 +58,7 @@ For authentication related to managing the authorization of access to a server, 
 
 In order to establish a secure connection, the client has to find out which security features the server provides. This process is called *Discovery*.
 
-In its answer to a discovery request, a server usually provides a list of *Endpoints* for the client to connect to, with different sets of security features.
+In its answer to a discovery request, a server provides a list of *Endpoints* for the client to connect to, with different sets of security features.
 
 As a debugging tool, the iocShell command `opcuaShowSecurity` runs the discovery service and displays the available endpoints with their features and their *security level* (used by the IOC to find the endpoint providing the best security).
 
@@ -66,11 +66,13 @@ As a debugging tool, the iocShell command `opcuaShowSecurity` runs the discovery
 
 An IOC using the OPC UA Device Support is considered to be a production system. As such, it has to be fully configured and supplied with the certificates needed to connect to the configured OPC UA servers. Other than general purpose and example clients, the IOC cannot and should not interactively create self-signed certificates or change the trust for a certificate that a server presents.
 
-To support setting up the certificate store, the `opcuaSaveRejected` iocShell command will configure the IOC to save rejected (untrusted) server certificates in a specified location (default: `/tmp/<ioc>@<host>`). Copying such a certificate file to the IOC's certificate store (under `trusted/certs`) will explicitly trust the certificate and allow secure connections to the server.
+To support setting up the certificate store, the `opcuaSaveRejected` iocShell command will configure the IOC to save rejected (untrusted) server certificates in a specified location (default: `/tmp/<ioc>@<host>`), using DER format. Copying such a certificate file to the IOC's certificate store (under `trusted/certs`) will explicitly trust the certificate and allow secure connections to the server.
 
-Alternatively, you can use a general purpose client (e.g., the `UaExpert` tool) to connect to the server, trust its certificate, and use the certificate file from that client's certificate store. (You could also import it into your certificate management tool, see below.)
+When using the UA SDK low level client, the trusted server certificates (under `trusted/certs`) must use DER format. ([See below](#managing-certificates) for how to convert between formats.)
 
-*Important Note:* During the process of saving the untrusted server certificate, a man-in-the-middle could send its own certificate to the IOC. Only add a server certificate to the trusted certificate store if you are sure it actually originates from the server (e.g., on a trusted network, after verifying its thumb print)! This act of trusting is the crucial and weakest point when using self-signed certificates.
+Alternatively, you can use a general purpose client (e.g., the `UaExpert` tool) to connect to the server, trust its certificate, and use the certificate file from that client's certificate store. (You could also import it into your certificate management tool, [see below]((#managing-certificates)).)
+
+*Important Note:* During the process of endpoint discovery and saving the untrusted server certificate, a man-in-the-middle could send its own certificate to the IOC. Only add a server certificate to the trusted certificate store if you are sure it actually originates from the server (e.g., on a trusted network, after verifying its thumb print). This act of trusting is the crucial and weakest point when using self-signed certificates.
 
 ### Certificate Store Setup
 
@@ -82,7 +84,7 @@ In the fully detailed form (using four arguments), the four locations are specif
 
 ### Client Certificate
 
-The iocShell command `setClientCertificate` sets the locations for the client certificate (DER format) and the matching private key (PEM format).
+The iocShell command `setClientCertificate` sets the locations for the client certificate (PEM or DER format) and the matching private key (PEM format).
 
 ### Session Security Setting
 
@@ -104,11 +106,23 @@ In the identity file, lines starting with `#` are considered comments and ignore
 
 To use a Username Identity Token, set `user=<username>` and `pass=<password>`, each on a separate line.
 
-To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<private key file>`, each on a separate line, to identify the DER certificate and PEM private key to use. If the private key is password protected, add another line setting `pass=<password>`. Normally, the server will use the Common Name (CN) property of the certificate to determine the user name for authorization.
+To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<private key file>`, each on a separate line, to identify the DER or PEM certificate and PEM private key to use. If the private key is password protected, add another line setting `pass=<password>`. Normally, the server will use the Common Name (CN) property of the certificate to determine the user name for authorization.
 
 ## Managing Certificates
 
 [Xca](https://hohnstaedt.de/xca/) is a powerful and popular GUI for managing X.509 certificates and keys, including the certificate authority (CA) functionality needed for managing the certificates for a larger installation.
+
+The `openssl` command line utility can be used to convert certificates (and keys) between formats. To convert certificate `<cert>`  from DER to PEM format, use:
+
+```bash
+openssl x509 -inform der -in <cert>.der -out <cert>.crt
+```
+
+To convert in the other direction, use:
+
+```bash
+openssl x509 -in <cert>.crt -outform der -out <cert>.der
+```
 
 ### Creating Application Instance Certificates
 
@@ -130,7 +144,7 @@ Creating a self-signed certificate for OPC UA use is pretty straight-forward. Fo
 
 The sources contain an Xca certificate template that can be imported and modified to fit your needs, which will simplify generating new IOC client certificates. 
 
-For the IOC, save the certificate in DER format, the private key as PEM. The server may need different formats - refer to the documentation of your server for more details.
+For the IOC, save the certificate in DER or PEM format, the private key as PEM. The server may need different formats - refer to the documentation of your server for more details.
 
 ### Creating Identity Token Certificates
 
