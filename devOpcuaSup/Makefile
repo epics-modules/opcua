@@ -62,6 +62,15 @@ HTMLS += menuDefAction.html
 # are in separate directories, added by reading
 # Makefile fragments
 
+SUPPORTED_SDKS = UASDK OPEN62541
+
+ifneq ($(words $(foreach SDK,$(SUPPORTED_SDKS),$($(SDK)))),1)
+$(warning Set your UPC UA SDK in CONFIG_SITE.local)
+$(warning Define exactly one of these variables: $(SUPPORTED_SDKS))
+$(foreach SDK,$(SUPPORTED_SDKS),$(warning $(SDK) = $($(SDK))))
+$(error )
+endif
+
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
 include $(OPCUA)/UaSdk/Makefile
