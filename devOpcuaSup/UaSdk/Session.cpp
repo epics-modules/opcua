@@ -17,7 +17,9 @@
 
 #include <uaplatformlayer.h>
 #include <uabase.h>
+#ifdef HAS_SECURITY
 #include <uapkicertificate.h>
+#endif
 
 #include <epicsThread.h>
 #include <errlog.h>
@@ -107,6 +109,7 @@ Session::securityPolicyString(const std::string &policy)
 
 void
 Session::showClientSecurity()
+#ifdef HAS_SECURITY
 {
     ClientSecurityInfo securityInfo;
 
@@ -140,6 +143,15 @@ Session::showClientSecurity()
         std::cout << " " << p.second;
     std::cout << std::endl;
 }
+#else
+{
+    std::cout << "Client library does not support security features.";
+    std::cout << "\nSupported security policies: ";
+    for (const auto &p : securitySupportedPolicies)
+        std::cout << " " << p.second;
+    std::cout << std::endl;
+}
+#endif
 
 void
 Session::showOptionHelp ()

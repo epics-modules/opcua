@@ -28,9 +28,12 @@
 #include <uaclientsdk.h>
 #include <uasession.h>
 #include <uadiscovery.h>
+#include <uadir.h>
+
+#ifdef HAS_SECURITY
 #include <uapkicertificate.h>
 #include <uapkirsakeypair.h>
-#include <uadir.h>
+#endif
 
 #include <epicsExit.h>
 #include <epicsThread.h>
@@ -603,6 +606,10 @@ SessionUaSdk::showSecurity ()
         return;
     }
 
+#ifndef HAS_SECURITY
+    std::cout << "Client library does not support security features." << std::endl;
+#endif
+
     setupClientSecurityInfo(securityInfo, &name, debug);
     setupIdentity();
 
@@ -668,7 +675,7 @@ SessionUaSdk::showSecurity ()
                             std::cout << "    (using " << serverURL.toUtf8() << ")";
 
                         securityInfo.serverCertificate = endpointDescriptions[k].ServerCertificate;
-
+#ifdef HAS_SECURITY
                         UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.serverCertificate);
                         UaPkiIdentity id = cert.subject();
                         std::cout << "\n    Server Certificate: " << id.commonName.toUtf8()
@@ -678,6 +685,7 @@ SessionUaSdk::showSecurity ()
                                   << (cert.isSelfSigned() ? " self-signed" : "")
                                   << (securityInfo.verifyServerCertificate().isBad() ? " - not" : " -")
                                   << " trusted";
+#endif
                     }
                 }
                 std::cout << std::endl;
@@ -689,10 +697,6 @@ SessionUaSdk::showSecurity ()
 SessionUaSdk::ConnectResult
 SessionUaSdk::setupSecurity ()
 {
-    UaStatus status;
-    ServiceSettings serviceSettings;
-    UaDiscovery discovery;
-
     if (reqSecurityMode == OpcUa_MessageSecurityMode_None
         && reqSecurityPolicyURI == OpcUa_SecurityPolicy_None && reqSecurityLevel == 0) {
         securityInfo.messageSecurityMode = OpcUa_MessageSecurityMode_None;
@@ -704,10 +708,13 @@ SessionUaSdk::setupSecurity ()
                       << ": (setupSecurity) no security configured "
                       << std::endl;
         return ConnectResult::ok;
-
+#ifdef HAS_SECURITY
     } else {
         setupIdentity();
         if (std::string(serverURL.toUtf8()).compare(0, 7, "opc.tcp") == 0) {
+            UaStatus status;
+            ServiceSettings serviceSettings;
+            UaDiscovery discovery;
             UaEndpointDescriptions endpointDescriptions;
             if (debug)
                 std::cout << "Session " << name.c_str()
@@ -803,7 +810,9 @@ SessionUaSdk::setupSecurity ()
                          name.c_str());
             return SessionUaSdk::fatal;
         }
+#endif // #ifdef HAS_SECURITY
     }
+    return ConnectResult::ok;
 }
 
 void
@@ -811,6 +820,7 @@ SessionUaSdk::setupClientSecurityInfo(ClientSecurityInfo &securityInfo,
                                       const std::string *sessionName,
                                       const int debug)
 {
+#ifdef HAS_SECURITY
     if (debug) {
         if (sessionName)
             std::cout << "Session " << *sessionName;
@@ -881,6 +891,7 @@ SessionUaSdk::setupClientSecurityInfo(ClientSecurityInfo &securityInfo,
                       << std::endl;
         }
     }
+#endif // #ifdef HAS_SECURITY
 }
 
 void
@@ -978,6 +989,7 @@ SessionUaSdk::setupIdentity()
 {
     securityInfo.setAnonymousUserIdentity();
 
+#ifdef HAS_SECURITY
     if (securityIdentityFile.length()) {
         std::ifstream inFile;
         std::string line;
@@ -1047,7 +1059,9 @@ SessionUaSdk::setupIdentity()
                 name.c_str(),
                 securityIdentityFile.c_str());
         }
-    } else {
+    } else
+#endif // #ifdef HAS_SECURITY
+    {
         if (debug)
             std::cout << "Session " << name.c_str() << ": (setupIdentity) setting Anonymous token"
                       << std::endl;
