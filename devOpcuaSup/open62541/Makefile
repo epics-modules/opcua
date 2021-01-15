@@ -15,7 +15,7 @@
 # Implementation using open62541 (https://open62541.org/)
 
 SRC_DIRS += $(OPCUA)/open62541
-USR_INCLUDES += -I$(OPCUA)/open62541 -I$(OPEN62541)/include -I$(OPEN62541)/src_generated
+USR_INCLUDES += -I$(OPCUA)/open62541 -I$(OPEN62541)/include
 USR_DBDFLAGS += -I $(OPCUA)/open62541
 USR_LDFLAGS += -l open62541 -L$(OPEN62541)/lib64 -L$(OPEN62541)/lib -L$(OPEN62541)/bin
 
