@@ -11,8 +11,8 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-#ifndef DEVOPCUA_ITEMUASDK_H
-#define DEVOPCUA_ITEMUASDK_H
+#ifndef DEVOPCUA_ITEMOPEN62541_H
+#define DEVOPCUA_ITEMOPEN62541_H
 
 #include <memory>
 
@@ -234,4 +234,4 @@ private:
 
 } // namespace DevOpcua
 
-#endif // DEVOPCUA_ITEMUASDK_H
+#endif // DEVOPCUA_ITEMOPEN62541_H

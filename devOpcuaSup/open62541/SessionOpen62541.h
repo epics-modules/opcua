@@ -11,8 +11,8 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-#ifndef DEVOPCUA_SESSIONUASDK_H
-#define DEVOPCUA_SESSIONUASDK_H
+#ifndef DEVOPCUA_SESSIONOPEN62541_H
+#define DEVOPCUA_SESSIONOPEN62541_H
 
 #include <algorithm>
 #include <vector>
@@ -296,4 +296,4 @@ private:
 
 } // namespace DevOpcua
 
-#endif // DEVOPCUA_SESSIONUASDK_H
+#endif // DEVOPCUA_SESSIONOPEN62541_H

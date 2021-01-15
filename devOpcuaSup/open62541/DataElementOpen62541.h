@@ -11,8 +11,8 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
-#ifndef DEVOPCUA_DATAELEMENTUASDK_H
-#define DEVOPCUA_DATAELEMENTUASDK_H
+#ifndef DEVOPCUA_DATAELEMENTOPEN62541_H
+#define DEVOPCUA_DATAELEMENTOPEN62541_H
 
 // Avoid problems on Windows (macros min, max clash with numeric_limits<>)
 #ifdef _WIN32
@@ -1077,4 +1077,4 @@ private:
 
 } // namespace DevOpcua
 
-#endif // DEVOPCUA_DATAELEMENTUASDK_H
+#endif // DEVOPCUA_DATAELEMENTOPEN62541_H
