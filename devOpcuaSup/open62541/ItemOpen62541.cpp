@@ -61,7 +61,7 @@ void
 ItemOpen62541::rebuildNodeId ()
 {
 /*
-    OpcUa_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
+    UA_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
     if (linkinfo.identifierIsNumeric) {
         nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierNumber, ns));
     } else {
@@ -139,7 +139,7 @@ ItemOpen62541::clearOutgoingData()
 
 /*
 epicsTime
-ItemOpen62541::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
+ItemOpen62541::uaToEpicsTime (const UaDateTime &dt, const UA_UInt16 pico10)
 {
     epicsTimeStamp ts;
     ts.secPastEpoch = static_cast<epicsUInt32>(dt.toTime_t()) - POSIX_TIME_AT_EPICS_EPOCH;
@@ -150,7 +150,7 @@ ItemOpen62541::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 
 /*
 void
-ItemOpen62541::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
+ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
     if (OpcUa_IsNotBad(value.StatusCode)) {

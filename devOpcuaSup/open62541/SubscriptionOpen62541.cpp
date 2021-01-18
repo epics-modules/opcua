@@ -39,7 +39,7 @@ SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOp
     // keep the default timeout
 //    double deftimeout = subscriptionSettings.publishingInterval * subscriptionSettings.lifetimeCount;
 //    subscriptionSettings.publishingInterval = requestedSettings.publishingInterval = publishingInterval;
-//    subscriptionSettings.lifetimeCount = requestedSettings.lifetimeCount = static_cast<OpcUa_UInt32>(deftimeout / publishingInterval);
+//    subscriptionSettings.lifetimeCount = requestedSettings.lifetimeCount = static_cast<UA_UInt32>(deftimeout / publishingInterval);
 //    subscriptionSettings.priority = requestedSettings.priority = priority;
 
     subscriptions[name] = this;
@@ -154,12 +154,12 @@ SubscriptionOpen62541::addMonitoredItems ()
 /*
     UaStatus status;
     ServiceSettings serviceSettings;
-    OpcUa_UInt32 i;
+    UA_UInt32 i;
     UaMonitoredItemCreateRequests monitoredItemCreateRequests;
     UaMonitoredItemCreateResults monitoredItemCreateResults;
 
     if (items.size()) {
-        monitoredItemCreateRequests.create(static_cast<OpcUa_UInt32>(items.size()));
+        monitoredItemCreateRequests.create(static_cast<UA_UInt32>(items.size()));
         i = 0;
         for (auto &it : items) {
             it->getNodeId().copyTo(&monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
@@ -236,16 +236,16 @@ SubscriptionOpen62541::removeItemOpen62541 (ItemOpen62541 *item)
 
 /*
 void
-SubscriptionOpen62541::subscriptionStatusChanged (OpcUa_UInt32 clientSubscriptionHandle,
+SubscriptionOpen62541::subscriptionStatusChanged (UA_UInt32 clientSubscriptionHandle,
                                               const UaStatus& status)
 {}
 
 void
-SubscriptionOpen62541::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
+SubscriptionOpen62541::dataChange (UA_UInt32 clientSubscriptionHandle,
                                const UaDataNotifications& dataNotifications,
                                const UaDiagnosticInfos&   diagnosticInfos)
 {
-    OpcUa_UInt32 i;
+    UA_UInt32 i;
 
     if (debug)
         std::cout << "Subscription " << name.c_str()
@@ -269,7 +269,7 @@ SubscriptionOpen62541::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
 }
 
 void
-SubscriptionOpen62541::newEvents (OpcUa_UInt32 clientSubscriptionHandle,
+SubscriptionOpen62541::newEvents (UA_UInt32 clientSubscriptionHandle,
                               UaEventFieldLists& eventFieldList)
 {}
 */

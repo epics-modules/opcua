@@ -23,6 +23,8 @@
 #include <epicsTypes.h>
 #include <initHooks.h>
 
+#include <open62541/client.h>
+
 #include "RequestQueueBatcher.h"
 #include "Session.h"
 
@@ -204,7 +206,7 @@ public:
      *
      * @return server-side namespace index
      */
-//    OpcUa_UInt16 mapNamespaceIndex(const OpcUa_UInt16 nsIndex) const;
+    UA_UInt16 mapNamespaceIndex(const UA_UInt16 nsIndex) const;
 
     /**
      * @brief EPICS IOC Database initHook function.
@@ -225,22 +227,22 @@ public:
     static void atExit(void *junk);
 
     // Get a new (unique per session) transaction id
-//    OpcUa_UInt32 getTransactionId();
+    UA_UInt32 getTransactionId();
 
 /*
     // UaSessionCallback interface
     virtual void connectionStatusChanged(
-            OpcUa_UInt32 clientConnectionId,
+            UA_UInt32 clientConnectionId,
             UaClient::ServerStatus serverStatus) override;
 
     virtual void readComplete(
-            OpcUa_UInt32 transactionId,
+            UA_UInt32 transactionId,
             const UaStatus &result,
             const UaDataValues &values,
             const UaDiagnosticInfos &diagnosticInfos) override;
 
     virtual void writeComplete(
-            OpcUa_UInt32 transactionId,
+            UA_UInt32 transactionId,
             const UaStatus &result,
             const UaStatusCodeArray &results,
             const UaDiagnosticInfos &diagnosticInfos) override;
@@ -273,16 +275,16 @@ private:
     bool autoConnect;                                         /**< auto (re)connect flag */
     std::map<std::string, SubscriptionOpen62541*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemOpen62541 *> items;                           /**< items on this session */
-//    OpcUa_UInt32 registeredItemsNo;                           /**< number of registered items */
-//    std::map<std::string, OpcUa_UInt16> namespaceMap;         /**< local namespace map (URI->index) */
-//    std::map<OpcUa_UInt16, OpcUa_UInt16> nsIndexMap;          /**< namespace index map (local->server-side) */
+    UA_UInt32 registeredItemsNo;                           /**< number of registered items */
+    std::map<std::string, UA_UInt16> namespaceMap;         /**< local namespace map (URI->index) */
+    std::map<UA_UInt16, UA_UInt16> nsIndexMap;          /**< namespace index map (local->server-side) */
 //    UaSession* puasession;                                    /**< pointer to low level session */
 //    SessionConnectInfo connectInfo;                           /**< connection metadata */
 //    SessionSecurityInfo securityInfo;                         /**< security metadata */
 //    UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
     int transactionId;                                        /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */
-//    std::map<OpcUa_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>> outstandingOps;
+    std::map<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>> outstandingOps;
     epicsMutex opslock;                                       /**< lock for outstandingOps map */
 
     RequestQueueBatcher<WriteRequest> writer;                 /**< batcher for write requests */

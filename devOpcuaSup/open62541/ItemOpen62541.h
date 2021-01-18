@@ -18,6 +18,8 @@
 
 #include <epicsTime.h>
 
+#include <open62541/client.h>
+
 #include "Item.h"
 #include "opcuaItemRecord.h"
 #include "devOpcua.h"
@@ -170,7 +172,7 @@ public:
      * @param value  new value for this data element
      * @param reason  reason for this value update
      */
-//    void setIncomingData(const OpcUa_DataValue &value, ProcessReason reason);
+    void setIncomingData(const UA_DataValue &value, ProcessReason reason);
 
     /**
      * @brief Push an incoming event down the root element.
@@ -186,15 +188,15 @@ public:
      * @brief Setter for the revised sampling interval.
      * @param status  status code received by the client library
      */
-//    void setRevisedSamplingInterval(const OpcUa_Double &interval)
-//    { revisedSamplingInterval = interval; }
+    void setRevisedSamplingInterval(const UA_Double &interval)
+    { revisedSamplingInterval = interval; }
 
     /**
      * @brief Setter for the revised sampling interval.
      * @param status  status code received by the client library
      */
-//    void setRevisedQueueSize(const OpcUa_UInt32 &qsize)
-//    { revisedQueueSize = qsize; }
+    void setRevisedQueueSize(const UA_UInt32 &qsize)
+    { revisedQueueSize = qsize; }
 
     /**
      * @brief Convert OPC UA time stamp to EPICS time stamp.
@@ -202,7 +204,7 @@ public:
      * @param pico10 10 picosecond resolution counter
      * @return EPICS time stamp
      */
-//    static epicsTime uaToEpicsTime(const UaDateTime &dt, const OpcUa_UInt16 pico10);
+//    static epicsTime uaToEpicsTime(const UaDateTime &dt, const UA_UInt16 pico10);
 
     /**
      * @brief Get debug level (from itemRecord or via TOP DataElement)
@@ -215,8 +217,8 @@ private:
     SessionOpen62541 *session;                 /**< raw pointer to session */
 //    std::unique_ptr<UaNodeId> nodeid;      /**< node id of this item */
     bool registered;                       /**< flag for registration status */
-//    OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
-//    OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
+    UA_Double revisedSamplingInterval;  /**< server-revised sampling interval */
+    UA_UInt32 revisedQueueSize;         /**< server-revised queue size */
     std::weak_ptr<DataElementOpen62541> rootElement;  /**< top level data element */
 //    UaStatusCode lastStatus;               /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */

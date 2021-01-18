@@ -145,16 +145,16 @@ public:
 /*
     // UaSubscriptionCallback interface
     virtual void subscriptionStatusChanged(
-            OpcUa_UInt32      clientSubscriptionHandle,
+            UA_UInt32      clientSubscriptionHandle,
             const UaStatus&   status
             ) override;
     virtual void dataChange(
-            OpcUa_UInt32               clientSubscriptionHandle,
+            UA_UInt32               clientSubscriptionHandle,
             const UaDataNotifications& dataNotifications,
             const UaDiagnosticInfos&   diagnosticInfos
             ) override;
     virtual void newEvents(
-            OpcUa_UInt32                clientSubscriptionHandle,
+            UA_UInt32                clientSubscriptionHandle,
             UaEventFieldLists&          eventFieldList
             ) override;
 */

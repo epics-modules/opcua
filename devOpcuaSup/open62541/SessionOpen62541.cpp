@@ -143,13 +143,11 @@ SessionOpen62541::getName () const
     return name;
 }
 
-/*
-OpcUa_UInt32
+UA_UInt32
 SessionOpen62541::getTransactionId ()
 {
-    return static_cast<OpcUa_UInt32>(epics::atomic::increment(transactionId));
+    return static_cast<UA_UInt32>(epics::atomic::increment(transactionId));
 }
-*/
 
 SessionOpen62541 &
 SessionOpen62541::findSession (const std::string &name)
@@ -333,10 +331,10 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
     UaReadValueIds nodesToRead;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToRead(new std::vector<ItemOpen62541 *>);
     ServiceSettings serviceSettings;
-    OpcUa_UInt32 id = getTransactionId();
+    UA_UInt32 id = getTransactionId();
 
     nodesToRead.create(batch.size());
-    OpcUa_UInt32 i = 0;
+    UA_UInt32 i = 0;
     for (auto c : batch) {
         c->item->getNodeId().copyTo(&nodesToRead[i].NodeId);
         nodesToRead[i].AttributeId = OpcUa_Attributes_Value;
@@ -364,7 +362,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
                           << ": (requestRead) beginRead service ok"
                           << " (transaction id " << id
                           << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
-            outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>>
+            outstandingOps.insert(std::pair<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>>
                                   (id, std::move(itemsToRead)));
         }
     }
@@ -390,10 +388,10 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
     UaWriteValues nodesToWrite;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToWrite(new std::vector<ItemOpen62541 *>);
     ServiceSettings serviceSettings;
-    OpcUa_UInt32 id = getTransactionId();
+    UA_UInt32 id = getTransactionId();
 
     nodesToWrite.create(batch.size());
-    OpcUa_UInt32 i = 0;
+    UA_UInt32 i = 0;
     for (auto c : batch) {
         c->item->getNodeId().copyTo(&nodesToWrite[i].NodeId);
         nodesToWrite[i].AttributeId = OpcUa_Attributes_Value;
@@ -420,7 +418,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
                           << ": (requestWrite) beginWrite service ok"
                           << " (transaction id " << id
                           << "; writing " << nodesToWrite.length() << " nodes)" << std::endl;
-            outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>>
+            outstandingOps.insert(std::pair<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>>
                                   (id, std::move(itemsToWrite)));
         }
     }
@@ -452,8 +450,8 @@ SessionOpen62541::registerNodes ()
     UaNodeIdArray     registeredNodes;
     ServiceSettings   serviceSettings;
 
-    nodesToRegister.create(static_cast<OpcUa_UInt32>(items.size()));
-    OpcUa_UInt32 i = 0;
+    nodesToRegister.create(static_cast<UA_UInt32>(items.size()));
+    UA_UInt32 i = 0;
     for (auto &it : items) {
         if (it->linkinfo.registerNode) {
             it->getNodeId().copyTo(&nodesToRegister[i]);
@@ -528,7 +526,7 @@ SessionOpen62541::updateNamespaceMap(const UaStringArray &nsArray)
                   << " entries" << std::endl;
     if (namespaceMap.size()) {
         nsIndexMap.clear();
-        for (OpcUa_UInt16 i = 0; i < nsArray.length(); i++) {
+        for (UA_UInt16 i = 0; i < nsArray.length(); i++) {
             auto it = namespaceMap.find(UaString(nsArray[i]).toUtf8());
             if (it != namespaceMap.end())
                 nsIndexMap.insert({it->second, i});
@@ -614,11 +612,10 @@ SessionOpen62541::removeItemOpen62541 (ItemOpen62541 *item)
         items.erase(it);
 }
 
-/*
-OpcUa_UInt16
-SessionOpen62541::mapNamespaceIndex (const OpcUa_UInt16 nsIndex) const
+UA_UInt16
+SessionOpen62541::mapNamespaceIndex (const UA_UInt16 nsIndex) const
 {
-    OpcUa_UInt16 serverIndex = nsIndex;
+    UA_UInt16 serverIndex = nsIndex;
     if (nsIndexMap.size()) {
         auto it = nsIndexMap.find(nsIndex);
         if (it != nsIndexMap.end())
@@ -626,12 +623,11 @@ SessionOpen62541::mapNamespaceIndex (const OpcUa_UInt16 nsIndex) const
     }
     return serverIndex;
 }
-*/
 
 // UaSessionCallback interface
 /*
 void SessionOpen62541::connectionStatusChanged (
-    OpcUa_UInt32             clientConnectionId,
+    UA_UInt32             clientConnectionId,
     UaClient::ServerStatus   serverStatus)
 {
     OpcUa_ReferenceParameter(clientConnectionId);
@@ -708,7 +704,7 @@ void SessionOpen62541::connectionStatusChanged (
 }
 
 void
-SessionOpen62541::readComplete (OpcUa_UInt32 transactionId,
+SessionOpen62541::readComplete (UA_UInt32 transactionId,
                             const UaStatus &result,
                             const UaDataValues &values,
                             const UaDiagnosticInfos &diagnosticInfos)
@@ -729,7 +725,7 @@ SessionOpen62541::readComplete (OpcUa_UInt32 transactionId,
             errlogPrintf("OPC UA session %s: (readComplete) received a callback "
                          "with %u values for a request containing %lu items\n",
                          name.c_str(), values.length(), (*it->second).size());
-        OpcUa_UInt32 i = 0;
+        UA_UInt32 i = 0;
         for (auto item : (*it->second)) {
             if (i >= values.length()) {
                 item->setIncomingEvent(ProcessReason::readFailure);
@@ -768,7 +764,7 @@ SessionOpen62541::readComplete (OpcUa_UInt32 transactionId,
 }
 
 void
-SessionOpen62541::writeComplete (OpcUa_UInt32 transactionId,
+SessionOpen62541::writeComplete (UA_UInt32 transactionId,
                              const UaStatus&          result,
                              const UaStatusCodeArray& results,
                              const UaDiagnosticInfos& diagnosticInfos)
@@ -785,7 +781,7 @@ SessionOpen62541::writeComplete (OpcUa_UInt32 transactionId,
                       << ": (writeComplete) getting results for write service"
                       << " (transaction id " << transactionId
                       << "; results for " << results.length() << " items)" << std::endl;
-        OpcUa_UInt32 i = 0;
+        UA_UInt32 i = 0;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()

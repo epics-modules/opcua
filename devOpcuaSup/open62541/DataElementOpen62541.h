@@ -24,6 +24,8 @@
 
 #include <errlog.h>
 
+#include <open62541/client.h>
+
 #include "DataElement.h"
 #include "devOpcua.h"
 #include "RecordConnector.h"
@@ -35,7 +37,7 @@ namespace DevOpcua {
 
 class ItemOpen62541;
 
-//typedef Update<UaVariant, OpcUa_StatusCode> UpdateOpen62541;
+//typedef Update<UaVariant, UA_StatusCode> UpdateOpen62541;
 
 inline const char *epicsTypeString (const epicsInt8 &) { return "epicsInt8"; }
 inline const char *epicsTypeString (const epicsUInt8 &) { return "epicsUInt8"; }
@@ -55,31 +57,31 @@ variantTypeString (const OpcUa_BuiltInType type)
 {
     switch(type) {
         case OpcUaType_Null:            return "OpcUa_Null";
-        case OpcUaType_Boolean:         return "OpcUa_Boolean";
-        case OpcUaType_SByte:           return "OpcUa_SByte";
-        case OpcUaType_Byte:            return "OpcUa_Byte";
-        case OpcUaType_Int16:           return "OpcUa_Int16";
-        case OpcUaType_UInt16:          return "OpcUa_UInt16";
-        case OpcUaType_Int32:           return "OpcUa_Int32";
-        case OpcUaType_UInt32:          return "OpcUa_UInt32";
-        case OpcUaType_Int64:           return "OpcUa_Int64";
-        case OpcUaType_UInt64:          return "OpcUa_UInt64";
-        case OpcUaType_Float:           return "OpcUa_Float";
-        case OpcUaType_Double:          return "OpcUa_Double";
-        case OpcUaType_String:          return "OpcUa_String";
-        case OpcUaType_DateTime:        return "OpcUa_DateTime";
-        case OpcUaType_Guid:            return "OpcUa_Guid";
-        case OpcUaType_ByteString:      return "OpcUa_ByteString";
-        case OpcUaType_XmlElement:      return "OpcUa_XmlElement";
-        case OpcUaType_NodeId:          return "OpcUa_NodeId";
-        case OpcUaType_ExpandedNodeId:  return "OpcUa_ExpandedNodeId";
-        case OpcUaType_StatusCode:      return "OpcUa_StatusCode";
-        case OpcUaType_QualifiedName:   return "OpcUa_QualifiedName";
-        case OpcUaType_LocalizedText:   return "OpcUa_LocalizedText";
-        case OpcUaType_ExtensionObject: return "OpcUa_ExtensionObject";
-        case OpcUaType_DataValue:       return "OpcUa_DataValue";
-        case OpcUaType_Variant:         return "OpcUa_Variant";
-        case OpcUaType_DiagnosticInfo:  return "OpcUa_DiagnosticInfo";
+        case OpcUaType_Boolean:         return "UA_Boolean";
+        case OpcUaType_SByte:           return "UA_SByte";
+        case OpcUaType_Byte:            return "UA_Byte";
+        case OpcUaType_Int16:           return "UA_Int16";
+        case OpcUaType_UInt16:          return "UA_UInt16";
+        case OpcUaType_Int32:           return "UA_Int32";
+        case OpcUaType_UInt32:          return "UA_UInt32";
+        case OpcUaType_Int64:           return "UA_Int64";
+        case OpcUaType_UInt64:          return "UA_UInt64";
+        case OpcUaType_Float:           return "UA_Float";
+        case OpcUaType_Double:          return "UA_Double";
+        case OpcUaType_String:          return "UA_String";
+        case OpcUaType_DateTime:        return "UA_DataTime";
+        case OpcUaType_Guid:            return "UA_Guid";
+        case OpcUaType_ByteString:      return "UA_ByteString";
+        case OpcUaType_XmlElement:      return "UA_XmlElement";
+        case OpcUaType_NodeId:          return "UA_NodeId";
+        case OpcUaType_ExpandedNodeId:  return "UA_ExpandedNodeId";
+        case OpcUaType_StatusCode:      return "UA_StatusCode";
+        case OpcUaType_QualifiedName:   return "UA_QualifiedName";
+        case OpcUaType_LocalizedText:   return "UA_LocalizedText";
+        case OpcUaType_ExtensionObject: return "UA_ExtensionObject";
+        case OpcUaType_DataValue:       return "UA_DataValue";
+        case OpcUaType_Variant:         return "UA_Variant";
+        case OpcUaType_DiagnosticInfo:  return "UA_DiagnosticInfo";
     }
     return "Illegal Value";
 }
@@ -92,69 +94,67 @@ inline bool isWithinRange (const FROM &value) {
 }
 
 // Specializations for unsigned to signed to avoid compiler warnings
-/*
 template<>
-inline bool isWithinRange<OpcUa_SByte, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > static_cast<OpcUa_UInt32>(std::numeric_limits<OpcUa_SByte>::max()));
+inline bool isWithinRange<UA_SByte, epicsUInt32> (const epicsUInt32 &value) {
+    return !(value > static_cast<UA_UInt32>(std::numeric_limits<UA_SByte>::max()));
 }
 
 template<>
-inline bool isWithinRange<OpcUa_Int16, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > static_cast<OpcUa_UInt32>(std::numeric_limits<OpcUa_Int16>::max()));
+inline bool isWithinRange<UA_Int16, epicsUInt32> (const epicsUInt32 &value) {
+    return !(value > static_cast<UA_UInt32>(std::numeric_limits<UA_Int16>::max()));
 }
 
 template<>
-inline bool isWithinRange<OpcUa_Int32, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > static_cast<OpcUa_UInt32>(std::numeric_limits<OpcUa_Int32>::max()));
+inline bool isWithinRange<UA_Int32, epicsUInt32> (const epicsUInt32 &value) {
+    return !(value > static_cast<UA_UInt32>(std::numeric_limits<UA_Int32>::max()));
 }
 
 template<>
-inline bool isWithinRange<OpcUa_SByte, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > static_cast<OpcUa_UInt64>(std::numeric_limits<OpcUa_SByte>::max()));
+inline bool isWithinRange<UA_SByte, epicsUInt64> (const epicsUInt64 &value) {
+    return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_SByte>::max()));
 }
 
 template<>
-inline bool isWithinRange<OpcUa_Int16, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > static_cast<OpcUa_UInt64>(std::numeric_limits<OpcUa_Int16>::max()));
+inline bool isWithinRange<UA_Int16, epicsUInt64> (const epicsUInt64 &value) {
+    return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_Int16>::max()));
 }
 
 template<>
-inline bool isWithinRange<OpcUa_Int32, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > static_cast<OpcUa_UInt64>(std::numeric_limits<OpcUa_Int32>::max()));
+inline bool isWithinRange<UA_Int32, epicsUInt64> (const epicsUInt64 &value) {
+    return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_Int32>::max()));
 }
 
 template<>
-inline bool isWithinRange<OpcUa_Int64, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > static_cast<OpcUa_UInt64>(std::numeric_limits<OpcUa_Int64>::max()));
+inline bool isWithinRange<UA_Int64, epicsUInt64> (const epicsUInt64 &value) {
+    return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_Int64>::max()));
 }
 
 // Simple-check specializations for converting signed to unsigned of same or wider type
-template<> inline bool isWithinRange<OpcUa_UInt32, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<OpcUa_UInt32, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<OpcUa_UInt32, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<OpcUa_UInt64, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<OpcUa_UInt64, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<OpcUa_UInt64, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<OpcUa_UInt64, epicsInt64> (const epicsInt64 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<UA_UInt32, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<UA_UInt32, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<UA_UInt32, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<UA_UInt64, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<UA_UInt64, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<UA_UInt64, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<UA_UInt64, epicsInt64> (const epicsInt64 &value) { return !(value < 0); }
 
 // No-check-needed specializations for converting to same or wider type
-template<> inline bool isWithinRange<OpcUa_Int32, epicsInt32> (const epicsInt32 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_Int64, epicsInt32> (const epicsInt32 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_Float, epicsInt32> (const epicsInt32 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_Double, epicsInt32> (const epicsInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_Int32, epicsInt32> (const epicsInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_Int64, epicsInt32> (const epicsInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_Float, epicsInt32> (const epicsInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_Double, epicsInt32> (const epicsInt32 &) { return true; }
 
-template<> inline bool isWithinRange<OpcUa_UInt32, epicsUInt32> (const epicsUInt32 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_Int64, epicsUInt32> (const epicsUInt32 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_UInt64, epicsUInt32> (const epicsUInt32 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_Float, epicsUInt32> (const epicsUInt32 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_Double, epicsUInt32> (const epicsUInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_UInt32, epicsUInt32> (const epicsUInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_Int64, epicsUInt32> (const epicsUInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_UInt64, epicsUInt32> (const epicsUInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_Float, epicsUInt32> (const epicsUInt32 &) { return true; }
+template<> inline bool isWithinRange<UA_Double, epicsUInt32> (const epicsUInt32 &) { return true; }
 
-template<> inline bool isWithinRange<OpcUa_Int64, epicsInt64> (const epicsInt64 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_Float, epicsInt64> (const epicsInt64 &) { return true; }
-template<> inline bool isWithinRange<OpcUa_Double, epicsInt64> (const epicsInt64 &) { return true; }
+template<> inline bool isWithinRange<UA_Int64, epicsInt64> (const epicsInt64 &) { return true; }
+template<> inline bool isWithinRange<UA_Float, epicsInt64> (const epicsInt64 &) { return true; }
+template<> inline bool isWithinRange<UA_Double, epicsInt64> (const epicsInt64 &) { return true; }
 
-template<> inline bool isWithinRange<OpcUa_Double, epicsFloat64> (const epicsFloat64 &) { return true; }
-*/
+template<> inline bool isWithinRange<UA_Double, epicsFloat64> (const epicsFloat64 &) { return true; }
 
 /**
  * @brief The DataElementOpen62541 implementation of a single piece of data.
@@ -680,25 +680,25 @@ private:
 
     // Get the read status from the incoming object
 /*
-    OpcUa_StatusCode getIncomingReadStatus() const { return pitem->getLastStatus().code(); }
+    UA_StatusCode getIncomingReadStatus() const { return pitem->getLastStatus().code(); }
 
     // Overloaded helper functions that wrap the UaVariant::toXxx() and UaVariant::setXxx methods
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_Int32 &value) { return variant.toInt32(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_UInt32 &value) { return variant.toUInt32(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_Int64 &value) { return variant.toInt64(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_Double &value) { return variant.toDouble(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UA_Int32 &value) { return variant.toInt32(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UA_UInt32 &value) { return variant.toUInt32(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UA_Int64 &value) { return variant.toInt64(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UA_Double &value) { return variant.toDouble(value); }
 
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaSByteArray &value) { return variant.toSByteArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaByteArray &value) { return variant.toByteArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaInt16Array &value) { return variant.toInt16Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaUInt16Array &value) { return variant.toUInt16Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaInt32Array &value) { return variant.toInt32Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaUInt32Array &value) { return variant.toUInt32Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaInt64Array &value) { return variant.toInt64Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaUInt64Array &value) { return variant.toUInt64Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaFloatArray &value) { return variant.toFloatArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaDoubleArray &value) { return variant.toDoubleArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaStringArray &value) { return variant.toStringArray(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaSByteArray &value) { return variant.toSByteArray(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaByteArray &value) { return variant.toByteArray(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaInt16Array &value) { return variant.toInt16Array(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaUInt16Array &value) { return variant.toUInt16Array(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaInt32Array &value) { return variant.toInt32Array(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaUInt32Array &value) { return variant.toUInt32Array(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaInt64Array &value) { return variant.toInt64Array(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaUInt64Array &value) { return variant.toUInt64Array(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaFloatArray &value) { return variant.toFloatArray(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaDoubleArray &value) { return variant.toDoubleArray(value); }
+    UA_StatusCode UaVariant_to(const UaVariant &variant, UaStringArray &value) { return variant.toStringArray(value); }
 */
 
 /*
@@ -752,7 +752,7 @@ private:
         case ProcessReason::readComplete:
         {
             if (value) {
-                OpcUa_StatusCode stat = upd->getStatus();
+                UA_StatusCode stat = upd->getStatus();
                 if (OpcUa_IsNotGood(stat)) {
                     // No valid OPC UA value
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
@@ -832,7 +832,7 @@ private:
         case ProcessReason::readComplete:
         {
             if (num && value) {
-                OpcUa_StatusCode stat = upd->getStatus();
+                UA_StatusCode stat = upd->getStatus();
                 if (OpcUa_IsNotGood(stat)) {
                     // No valid OPC UA value
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
@@ -879,7 +879,7 @@ private:
         return ret;
     }
 
-    // Read array value for EPICS String / OpcUa_String
+    // Read array value for EPICS String / UA_String
     long
     readArray (char **value, const epicsUInt32 len,
                const epicsUInt32 num,
@@ -911,100 +911,100 @@ private:
             break;
         }
         case OpcUaType_Byte:
-            if (isWithinRange<OpcUa_Byte>(value)) {
+            if (isWithinRange<UA_Byte>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setByte(static_cast<OpcUa_Byte>(value));
+                outgoingData.setByte(static_cast<UA_Byte>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_SByte:
-            if (isWithinRange<OpcUa_SByte>(value)) {
+            if (isWithinRange<UA_SByte>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setSByte(static_cast<OpcUa_SByte>(value));
+                outgoingData.setSByte(static_cast<UA_SByte>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_UInt16:
-            if (isWithinRange<OpcUa_UInt16>(value)) {
+            if (isWithinRange<UA_UInt16>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setUInt16(static_cast<OpcUa_UInt16>(value));
+                outgoingData.setUInt16(static_cast<UA_UInt16>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_Int16:
-            if (isWithinRange<OpcUa_Int16>(value)) {
+            if (isWithinRange<UA_Int16>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setInt16(static_cast<OpcUa_Int16>(value));
+                outgoingData.setInt16(static_cast<UA_Int16>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_UInt32:
-            if (isWithinRange<OpcUa_UInt32>(value)) {
+            if (isWithinRange<UA_UInt32>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setUInt32(static_cast<OpcUa_UInt32>(value));
+                outgoingData.setUInt32(static_cast<UA_UInt32>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_Int32:
-            if (isWithinRange<OpcUa_Int32>(value)) {
+            if (isWithinRange<UA_Int32>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setInt32(static_cast<OpcUa_UInt32>(value));
+                outgoingData.setInt32(static_cast<UA_UInt32>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_UInt64:
-            if (isWithinRange<OpcUa_UInt64>(value)) {
+            if (isWithinRange<UA_UInt64>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setUInt64(static_cast<OpcUa_UInt64>(value));
+                outgoingData.setUInt64(static_cast<UA_UInt64>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_Int64:
-            if (isWithinRange<OpcUa_Int64>(value)) {
+            if (isWithinRange<UA_Int64>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setInt64(static_cast<OpcUa_Int64>(value));
+                outgoingData.setInt64(static_cast<UA_Int64>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_Float:
-            if (isWithinRange<OpcUa_Float>(value)) {
+            if (isWithinRange<UA_Float>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setFloat(static_cast<OpcUa_Float>(value));
+                outgoingData.setFloat(static_cast<UA_Float>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             }
             break;
         case OpcUaType_Double:
-            if (isWithinRange<OpcUa_Double>(value)) {
+            if (isWithinRange<UA_Double>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setDouble(static_cast<OpcUa_Double>(value));
+                outgoingData.setDouble(static_cast<UA_Double>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1028,7 +1028,7 @@ private:
     }
 */
 
-    // Write array value for EPICS String / OpcUa_String
+    // Write array value for EPICS String / UA_String
 /*
     long
     writeArray (const char **value, const epicsUInt32 len,
@@ -1063,7 +1063,7 @@ private:
             // The array methods must cast away the constness of their value argument
             // as the UA SDK API uses non-const parameters
             ST *val = const_cast<ST *>(reinterpret_cast<const ST *>(value));
-            CT arr(static_cast<OpcUa_Int32>(num), val);
+            CT arr(static_cast<UA_Int32>(num), val);
             { // Scope of Guard G
                 Guard G(outgoingLock);
                 isdirty = true;

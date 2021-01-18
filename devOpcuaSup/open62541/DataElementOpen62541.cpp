@@ -438,7 +438,7 @@ DataElementOpen62541::readScalar (epicsInt32 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-//    return readScalar<epicsInt32, OpcUa_Int32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readScalar<epicsInt32, UA_Int32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -449,7 +449,7 @@ DataElementOpen62541::readScalar (epicsInt64 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-//    return readScalar<epicsInt64, OpcUa_Int64>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readScalar<epicsInt64, UA_Int64>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -460,7 +460,7 @@ DataElementOpen62541::readScalar (epicsUInt32 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-//    return readScalar<epicsUInt32, OpcUa_UInt32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readScalar<epicsUInt32, UA_UInt32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -471,7 +471,7 @@ DataElementOpen62541::readScalar (epicsFloat64 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-//    return readScalar<epicsFloat64, OpcUa_Double>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readScalar<epicsFloat64, UA_Double>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 // CString type needs specialization
@@ -512,7 +512,7 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
     case ProcessReason::readComplete:
     {
         if (num && value) {
-            OpcUa_StatusCode stat = upd->getStatus();
+            UA_StatusCode stat = upd->getStatus();
             if (OpcUa_IsNotGood(stat)) {
                 // No valid OPC UA value
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
@@ -573,7 +573,7 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
 }
 */
 
-// Read array for EPICS String / OpcUa_String
+// Read array for EPICS String / UA_String
 /*
 long int
 DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
@@ -612,7 +612,7 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
     case ProcessReason::readComplete:
     {
         if (num && value) {
-            OpcUa_StatusCode stat = upd->getStatus();
+            UA_StatusCode stat = upd->getStatus();
             if (OpcUa_IsNotGood(stat)) {
                 // No valid OPC UA value
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
@@ -663,7 +663,7 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
 }
 */
 
-// Specialization for epicsUInt8 / OpcUa_Byte
+// Specialization for epicsUInt8 / UA_Byte
 //   (needed because UaByteArray API is different from all other UaXxxArray classes)
 // CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
 /*
@@ -704,7 +704,7 @@ DataElementOpen62541::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, con
     case ProcessReason::readComplete:
     {
         if (num && value) {
-            OpcUa_StatusCode stat = upd->getStatus();
+            UA_StatusCode stat = upd->getStatus();
             if (OpcUa_IsNotGood(stat)) {
                 // No valid OPC UA value
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
@@ -956,10 +956,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     }
     case OpcUaType_Byte:
         ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<OpcUa_Byte>(ul)) {
+        if (isWithinRange<UA_Byte>(ul)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setByte(static_cast<OpcUa_Byte>(ul));
+            outgoingData.setByte(static_cast<UA_Byte>(ul));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -967,10 +967,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         break;
     case OpcUaType_SByte:
         l = strtol(value, nullptr, 0);
-        if (isWithinRange<OpcUa_SByte>(l)) {
+        if (isWithinRange<UA_SByte>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setSByte(static_cast<OpcUa_SByte>(l));
+            outgoingData.setSByte(static_cast<UA_SByte>(l));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -978,10 +978,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         break;
     case OpcUaType_UInt16:
         ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<OpcUa_UInt16>(ul)) {
+        if (isWithinRange<UA_UInt16>(ul)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setUInt16(static_cast<OpcUa_UInt16>(ul));
+            outgoingData.setUInt16(static_cast<UA_UInt16>(ul));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -989,10 +989,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         break;
     case OpcUaType_Int16:
         l = strtol(value, nullptr, 0);
-        if (isWithinRange<OpcUa_Int16>(l)) {
+        if (isWithinRange<UA_Int16>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setInt16(static_cast<OpcUa_Int16>(l));
+            outgoingData.setInt16(static_cast<UA_Int16>(l));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -1000,10 +1000,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         break;
     case OpcUaType_UInt32:
         ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<OpcUa_UInt32>(ul)) {
+        if (isWithinRange<UA_UInt32>(ul)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setUInt32(static_cast<OpcUa_UInt32>(ul));
+            outgoingData.setUInt32(static_cast<UA_UInt32>(ul));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -1011,10 +1011,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         break;
     case OpcUaType_Int32:
         l = strtol(value, nullptr, 0);
-        if (isWithinRange<OpcUa_Int32>(l)) {
+        if (isWithinRange<UA_Int32>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setInt32(static_cast<OpcUa_Int32>(l));
+            outgoingData.setInt32(static_cast<UA_Int32>(l));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -1022,10 +1022,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         break;
     case OpcUaType_UInt64:
         ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<OpcUa_UInt64>(ul)) {
+        if (isWithinRange<UA_UInt64>(ul)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setUInt64(static_cast<OpcUa_UInt64>(ul));
+            outgoingData.setUInt64(static_cast<UA_UInt64>(ul));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -1033,10 +1033,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         break;
     case OpcUaType_Int64:
         l = strtol(value, nullptr, 0);
-        if (isWithinRange<OpcUa_Int64>(l)) {
+        if (isWithinRange<UA_Int64>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setInt64(static_cast<OpcUa_Int64>(l));
+            outgoingData.setInt64(static_cast<UA_Int64>(l));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -1044,10 +1044,10 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         break;
     case OpcUaType_Float:
         d = strtod(value, nullptr);
-        if (isWithinRange<OpcUa_Float>(d)) {
+        if (isWithinRange<UA_Float>(d)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setFloat(static_cast<OpcUa_Float>(d));
+            outgoingData.setFloat(static_cast<UA_Float>(d));
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -1058,7 +1058,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         d = strtod(value, nullptr);
         Guard G(outgoingLock);
         isdirty = true;
-        outgoingData.setDouble(static_cast<OpcUa_Double>(d));
+        outgoingData.setDouble(static_cast<UA_Double>(d));
         break;
     }
     default:
@@ -1083,7 +1083,7 @@ DataElementOpen62541::dbgWriteArray (const epicsUInt32 targetSize, const std::st
     }
 }
 
-// Write array for EPICS String / OpcUa_String
+// Write array for EPICS String / UA_String
 /*
 long
 DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
@@ -1107,7 +1107,7 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
         ret = 1;
     } else {
         UaStringArray arr;
-        arr.create(static_cast<OpcUa_UInt32>(num));
+        arr.create(static_cast<UA_UInt32>(num));
         for (epicsUInt32 i = 0; i < num; i++) {
             char *val = nullptr;
             const char *pval;
@@ -1135,13 +1135,13 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
 }
 */
 
-// Specialization for epicsUInt8 / OpcUa_Byte
+// Specialization for epicsUInt8 / UA_Byte
 //   (needed because UaByteArray API is different from all other UaXxxArray classes)
 // CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
 /*
 template<>
 long
-DataElementOpen62541::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epicsUInt8 *value, const epicsUInt32 num,
+DataElementOpen62541::writeArray<epicsUInt8, UaByteArray, UA_Byte> (const epicsUInt8 *value, const epicsUInt32 num,
                                                                    OpcUa_BuiltInType targetType,
                                                                    dbCommon *prec)
 {
@@ -1160,7 +1160,7 @@ DataElementOpen62541::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epi
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     } else {
-        UaByteArray arr(reinterpret_cast<const char *>(value), static_cast<OpcUa_Int32>(num));
+        UaByteArray arr(reinterpret_cast<const char *>(value), static_cast<UA_Int32>(num));
         { // Scope of Guard G
             Guard G(outgoingLock);
             isdirty = true;
@@ -1175,61 +1175,61 @@ DataElementOpen62541::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epi
 long
 DataElementOpen62541::writeArray (const epicsInt8 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsInt8, UaSByteArray, OpcUa_SByte>(value, num, OpcUaType_SByte, prec);
+    return writeArray<epicsInt8, UaSByteArray, UA_SByte>(value, num, OpcUaType_SByte, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsUInt8 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt8, UaByteArray, OpcUa_Byte>(value, num, OpcUaType_Byte, prec);
+    return writeArray<epicsUInt8, UaByteArray, UA_Byte>(value, num, OpcUaType_Byte, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsInt16 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsInt16, UaInt16Array, OpcUa_Int16>(value, num, OpcUaType_Int16, prec);
+    return writeArray<epicsInt16, UaInt16Array, UA_Int16>(value, num, OpcUaType_Int16, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsUInt16 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt16, UaUInt16Array, OpcUa_UInt16>(value, num, OpcUaType_UInt16, prec);
+    return writeArray<epicsUInt16, UaUInt16Array, UA_UInt16>(value, num, OpcUaType_UInt16, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsInt32 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsInt32, UaInt32Array, OpcUa_Int32>(value, num, OpcUaType_Int32, prec);
+    return writeArray<epicsInt32, UaInt32Array, UA_Int32>(value, num, OpcUaType_Int32, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsUInt32 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt32, UaUInt32Array, OpcUa_UInt32>(value, num, OpcUaType_UInt32, prec);
+    return writeArray<epicsUInt32, UaUInt32Array, UA_UInt32>(value, num, OpcUaType_UInt32, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsInt64 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsInt64, UaInt64Array, OpcUa_Int64>(value, num, OpcUaType_Int64, prec);
+    return writeArray<epicsInt64, UaInt64Array, UA_Int64>(value, num, OpcUaType_Int64, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsUInt64 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt64, UaUInt64Array, OpcUa_UInt64>(value, num, OpcUaType_UInt64, prec);
+    return writeArray<epicsUInt64, UaUInt64Array, UA_UInt64>(value, num, OpcUaType_UInt64, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsFloat32 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsFloat32, UaFloatArray, OpcUa_Float>(value, num, OpcUaType_Float, prec);
+    return writeArray<epicsFloat32, UaFloatArray, UA_Float>(value, num, OpcUaType_Float, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsFloat64 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsFloat64, UaDoubleArray, OpcUa_Double>(value, num, OpcUaType_Double, prec);
+    return writeArray<epicsFloat64, UaDoubleArray, UA_Double>(value, num, OpcUaType_Double, prec);
 }
 
 long
