@@ -28,9 +28,9 @@ namespace DevOpcua {
  *
  * The class provides all Subscription related services.
  */
-class SubscriptionOpen62541 : public UaSubscriptionCallback, public Subscription
+class SubscriptionOpen62541 : public Subscription
 {
-    UA_DISABLE_COPY(SubscriptionOpen62541);
+//    UA_DISABLE_COPY(SubscriptionOpen62541);
 
 public:
     /**
@@ -142,6 +142,7 @@ public:
      */
     void clear();
 
+/*
     // UaSubscriptionCallback interface
     virtual void subscriptionStatusChanged(
             OpcUa_UInt32      clientSubscriptionHandle,
@@ -156,15 +157,16 @@ public:
             OpcUa_UInt32                clientSubscriptionHandle,
             UaEventFieldLists&          eventFieldList
             ) override;
+*/
 
 private:
     static std::map<std::string, SubscriptionOpen62541*> subscriptions;
 
-    UaSubscription *puasubscription;            /**< pointer to low level subscription */
+//    UaSubscription *puasubscription;            /**< pointer to low level subscription */
     SessionOpen62541 *psessionuasdk;                /**< pointer to session */
     std::vector<ItemOpen62541 *> items;             /**< items on this subscription */
-    SubscriptionSettings subscriptionSettings;  /**< subscription specific settings */
-    SubscriptionSettings requestedSettings;     /**< requested subscription specific settings */
+//    SubscriptionSettings subscriptionSettings;  /**< subscription specific settings */
+//    SubscriptionSettings requestedSettings;     /**< requested subscription specific settings */
     bool enable;                                /**< subscription enable flag */
 };
 

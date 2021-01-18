@@ -101,25 +101,25 @@ public:
      * @brief Setter for the node id of this item.
      * @return node id
      */
-    void setRegisteredNodeId(const UaNodeId &id) { (*nodeid) = id; registered = true; }
+//    void setRegisteredNodeId(const UaNodeId &id) { (*nodeid) = id; registered = true; }
 
     /**
      * @brief Getter that returns the node id of this item.
      * @return node id
      */
-    UaNodeId &getNodeId() const { return (*nodeid); }
+//    UaNodeId &getNodeId() const { return (*nodeid); }
 
     /**
      * @brief Setter for the status of a read operation.
      * @param status  status code received by the client library
      */
-    void setLastStatus(const OpcUa_StatusCode &status) { lastStatus = status; }
+//    void setLastStatus(const OpcUa_StatusCode &status) { lastStatus = status; }
 
     /**
      * @brief Getter for the status of the last read operation.
      * @return read status
      */
-    UaStatusCode getLastStatus() { return lastStatus; }
+//    UaStatusCode getLastStatus() { return lastStatus; }
 
     /**
      * @brief Setter for the reason of an operation.
@@ -138,8 +138,8 @@ public:
      * @param dataTypeId data type of the extension object
      * @return structure definition
      */
-    UaStructureDefinition structureDefinition(const UaNodeId &dataTypeId)
-    { return session->structureDefinition(dataTypeId); }
+//    UaStructureDefinition structureDefinition(const UaNodeId &dataTypeId)
+//    { return session->structureDefinition(dataTypeId); }
 
     /**
      * @brief Get the outgoing data value.
@@ -147,7 +147,7 @@ public:
      * Called from the OPC UA client worker thread when data is being
      * assembled in OPC UA session for sending.
      */
-    const UaVariant &getOutgoingData() const;
+//    const UaVariant &getOutgoingData() const;
 
     /**
      * @brief Clear (discard) the current outgoing data.
@@ -170,7 +170,7 @@ public:
      * @param value  new value for this data element
      * @param reason  reason for this value update
      */
-    void setIncomingData(const OpcUa_DataValue &value, ProcessReason reason);
+//    void setIncomingData(const OpcUa_DataValue &value, ProcessReason reason);
 
     /**
      * @brief Push an incoming event down the root element.
@@ -186,15 +186,15 @@ public:
      * @brief Setter for the revised sampling interval.
      * @param status  status code received by the client library
      */
-    void setRevisedSamplingInterval(const OpcUa_Double &interval)
-    { revisedSamplingInterval = interval; }
+//    void setRevisedSamplingInterval(const OpcUa_Double &interval)
+//    { revisedSamplingInterval = interval; }
 
     /**
      * @brief Setter for the revised sampling interval.
      * @param status  status code received by the client library
      */
-    void setRevisedQueueSize(const OpcUa_UInt32 &qsize)
-    { revisedQueueSize = qsize; }
+//    void setRevisedQueueSize(const OpcUa_UInt32 &qsize)
+//    { revisedQueueSize = qsize; }
 
     /**
      * @brief Convert OPC UA time stamp to EPICS time stamp.
@@ -202,7 +202,7 @@ public:
      * @param pico10 10 picosecond resolution counter
      * @return EPICS time stamp
      */
-    static epicsTime uaToEpicsTime(const UaDateTime &dt, const OpcUa_UInt16 pico10);
+//    static epicsTime uaToEpicsTime(const UaDateTime &dt, const OpcUa_UInt16 pico10);
 
     /**
      * @brief Get debug level (from itemRecord or via TOP DataElement)
@@ -213,12 +213,12 @@ public:
 private:
     SubscriptionOpen62541 *subscription;       /**< raw pointer to subscription (if monitored) */
     SessionOpen62541 *session;                 /**< raw pointer to session */
-    std::unique_ptr<UaNodeId> nodeid;      /**< node id of this item */
+//    std::unique_ptr<UaNodeId> nodeid;      /**< node id of this item */
     bool registered;                       /**< flag for registration status */
-    OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
-    OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
+//    OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
+//    OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
     std::weak_ptr<DataElementOpen62541> rootElement;  /**< top level data element */
-    UaStatusCode lastStatus;               /**< status code of most recent service */
+//    UaStatusCode lastStatus;               /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
     ConnectionStatus connState;            /**< Connection state of the item */
     epicsTime tsClient;                    /**< client (local) time stamp */

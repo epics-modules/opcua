@@ -28,7 +28,7 @@ static
 void opcuaOpen62541_init (void *junk)
 {
     (void)junk;
-    UaPlatformLayer::init();
+//    UaPlatformLayer::init();
 }
 
 void

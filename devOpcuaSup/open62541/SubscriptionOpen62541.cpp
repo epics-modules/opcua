@@ -31,16 +31,16 @@ SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOp
                                       const double publishingInterval, const epicsUInt8 priority,
                                       const int debug)
     : Subscription(name, debug)
-    , puasubscription(nullptr)
-    , psessionuasdk(session)
+//    , puasubscription(nullptr)
+//    , psessionuasdk(session)
     //TODO: add runtime support for subscription enable/disable
     , enable(true)
 {
     // keep the default timeout
-    double deftimeout = subscriptionSettings.publishingInterval * subscriptionSettings.lifetimeCount;
-    subscriptionSettings.publishingInterval = requestedSettings.publishingInterval = publishingInterval;
-    subscriptionSettings.lifetimeCount = requestedSettings.lifetimeCount = static_cast<OpcUa_UInt32>(deftimeout / publishingInterval);
-    subscriptionSettings.priority = requestedSettings.priority = priority;
+//    double deftimeout = subscriptionSettings.publishingInterval * subscriptionSettings.lifetimeCount;
+//    subscriptionSettings.publishingInterval = requestedSettings.publishingInterval = publishingInterval;
+//    subscriptionSettings.lifetimeCount = requestedSettings.lifetimeCount = static_cast<OpcUa_UInt32>(deftimeout / publishingInterval);
+//    subscriptionSettings.priority = requestedSettings.priority = priority;
 
     subscriptions[name] = this;
     psessionuasdk->subscriptions[name] = this;
@@ -52,18 +52,21 @@ SubscriptionOpen62541::show (int level) const
     std::cout << "subscription=" << name
               << " session="     << psessionuasdk->getName()
               << " interval=";
+/*
     if (puasubscription)
         std::cout << puasubscription->publishingInterval();
     else
+*/
         std::cout << "?";
-    std::cout << "(" << requestedSettings.publishingInterval << ")"
+    std::cout // << "(" << requestedSettings.publishingInterval << ")"
               << " prio=";
-    if (puasubscription)
+/*    if (puasubscription)
         std::cout << static_cast<int>(puasubscription->priority());
     else
+*/
         std::cout << "?";
-    std::cout << "(" << static_cast<int>(requestedSettings.priority) << ")"
-              << " enable=" << (puasubscription ? (puasubscription->publishingEnabled() ? "y" : "n") : "?")
+    std::cout //<< "(" << static_cast<int>(requestedSettings.priority) << ")"
+//              << " enable=" << (puasubscription ? (puasubscription->publishingEnabled() ? "y" : "n") : "?")
               << "(" << (enable ? "Y" : "N") << ")"
               << " debug=" << debug
               << " items=" << items.size()
@@ -122,6 +125,7 @@ SubscriptionOpen62541::getSessionOpen62541 () const
 void
 SubscriptionOpen62541::create ()
 {
+/*
     UaStatus status;
     ServiceSettings serviceSettings;
 
@@ -141,11 +145,13 @@ SubscriptionOpen62541::create ()
             errlogPrintf("OPC UA subscription %s on session %s created (%s)\n",
                          name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
     }
+*/
 }
 
 void
 SubscriptionOpen62541::addMonitoredItems ()
 {
+/*
     UaStatus status;
     ServiceSettings serviceSettings;
     OpcUa_UInt32 i;
@@ -202,12 +208,13 @@ SubscriptionOpen62541::addMonitoredItems ()
             }
         }
     }
+*/
 }
 
 void
 SubscriptionOpen62541::clear ()
 {
-    puasubscription = nullptr;
+//    puasubscription = nullptr;
 }
 
 void
@@ -227,6 +234,7 @@ SubscriptionOpen62541::removeItemOpen62541 (ItemOpen62541 *item)
 
 // UaSubscriptionCallback interface
 
+/*
 void
 SubscriptionOpen62541::subscriptionStatusChanged (OpcUa_UInt32 clientSubscriptionHandle,
                                               const UaStatus& status)
@@ -264,5 +272,6 @@ void
 SubscriptionOpen62541::newEvents (OpcUa_UInt32 clientSubscriptionHandle,
                               UaEventFieldLists& eventFieldList)
 {}
+*/
 
 } // namespace DevOpcua

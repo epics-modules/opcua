@@ -35,7 +35,7 @@ namespace DevOpcua {
 
 class ItemOpen62541;
 
-typedef Update<UaVariant, OpcUa_StatusCode> UpdateOpen62541;
+//typedef Update<UaVariant, OpcUa_StatusCode> UpdateOpen62541;
 
 inline const char *epicsTypeString (const epicsInt8 &) { return "epicsInt8"; }
 inline const char *epicsTypeString (const epicsUInt8 &) { return "epicsUInt8"; }
@@ -49,6 +49,7 @@ inline const char *epicsTypeString (const epicsFloat32 &) { return "epicsFloat32
 inline const char *epicsTypeString (const epicsFloat64 &) { return "epicsFloat64"; }
 inline const char *epicsTypeString (const char* &) { return "epicsString"; }
 
+/*
 inline const char *
 variantTypeString (const OpcUa_BuiltInType type)
 {
@@ -82,6 +83,7 @@ variantTypeString (const OpcUa_BuiltInType type)
     }
     return "Illegal Value";
 }
+*/
 
 // Template for range check when writing
 template<typename TO, typename FROM>
@@ -90,6 +92,7 @@ inline bool isWithinRange (const FROM &value) {
 }
 
 // Specializations for unsigned to signed to avoid compiler warnings
+/*
 template<>
 inline bool isWithinRange<OpcUa_SByte, epicsUInt32> (const epicsUInt32 &value) {
     return !(value > static_cast<OpcUa_UInt32>(std::numeric_limits<OpcUa_SByte>::max()));
@@ -151,6 +154,7 @@ template<> inline bool isWithinRange<OpcUa_Float, epicsInt64> (const epicsInt64 
 template<> inline bool isWithinRange<OpcUa_Double, epicsInt64> (const epicsInt64 &) { return true; }
 
 template<> inline bool isWithinRange<OpcUa_Double, epicsFloat64> (const epicsFloat64 &) { return true; }
+*/
 
 /**
  * @brief The DataElementOpen62541 implementation of a single piece of data.
@@ -218,7 +222,7 @@ public:
      * @param value  new value for this data element
      * @param reason  reason for this value update
      */
-    void setIncomingData(const UaVariant &value, ProcessReason reason);
+//    void setIncomingData(const UaVariant &value, ProcessReason reason);
 
     /**
      * @brief Push an incoming event into the DataElement.
@@ -238,7 +242,7 @@ public:
      *
      * @return  reference to outgoing data
      */
-    const UaVariant &getOutgoingData();
+//    const UaVariant &getOutgoingData();
 
     /**
      * @brief Read incoming data as a scalar epicsInt32.
@@ -627,7 +631,7 @@ public:
      * oldest element from the queue, allowing access to the next element
      * with the next send.
      */
-    virtual void clearOutgoingData() { outgoingData.clear(); }
+//    virtual void clearOutgoingData() { outgoingData.clear(); }
 
     /**
      * @brief Create processing requests for record(s) attached to this element.
@@ -643,17 +647,21 @@ public:
 
 private:
     void dbgWriteScalar () const;
+/*
     void dbgReadScalar(const UpdateOpen62541 *upd,
                        const std::string &targetTypeName,
                        const size_t targetSize = 0) const;
     void dbgReadArray(const UpdateOpen62541 *upd,
                       const epicsUInt32 targetSize,
                       const std::string &targetTypeName) const;
-    void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &targetTypeName) const;
+*/
+//    void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
+/*
     bool updateDataInGenericValue(UaGenericStructureValue &value,
                                   const int index,
                                   std::shared_ptr<DataElementOpen62541> pelem);
+*/
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
 
@@ -671,6 +679,7 @@ private:
     }
 
     // Get the read status from the incoming object
+/*
     OpcUa_StatusCode getIncomingReadStatus() const { return pitem->getLastStatus().code(); }
 
     // Overloaded helper functions that wrap the UaVariant::toXxx() and UaVariant::setXxx methods
@@ -690,7 +699,9 @@ private:
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaFloatArray &value) { return variant.toFloatArray(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaDoubleArray &value) { return variant.toDoubleArray(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaStringArray &value) { return variant.toStringArray(value); }
+*/
 
+/*
     void UaVariant_set(UaVariant &variant, UaSByteArray &value) { variant.setSByteArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaByteArray &value) { variant.setByteArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaInt16Array &value) { variant.setInt16Array(value, OpcUa_True); }
@@ -702,6 +713,7 @@ private:
     void UaVariant_set(UaVariant &variant, UaFloatArray &value) { variant.setFloatArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaDoubleArray &value) { variant.setDoubleArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaStringArray &value) { variant.setStringArray(value, OpcUa_True); }
+*/
 
     // Read scalar value as templated function on EPICS type and OPC UA type
     // value == nullptr is allowed and leads to the value being dropped (ignored),
@@ -717,6 +729,7 @@ private:
     {
         long ret = 0;
 
+/*
         if (incomingQueue.empty()) {
             errlogPrintf("%s : incoming data queue empty\n", prec->name);
             return 1;
@@ -774,12 +787,14 @@ private:
 
         prec->time = upd->getTimeStamp();
         if (nextReason) *nextReason = nReason;
+*/
         return ret;
     }
 
     // Read array value as templated function on EPICS type and OPC UA type
     // (latter *must match* OPC UA type enum argument)
     // CAVEAT: changes must also be reflected in specializations (in DataElementOpen62541.cpp)
+/*
     template<typename ET, typename OT>
     long
     readArray (ET *value, const epicsUInt32 num,
@@ -1011,8 +1026,10 @@ private:
         dbgWriteScalar();
         return ret;
     }
+*/
 
     // Write array value for EPICS String / OpcUa_String
+/*
     long
     writeArray (const char **value, const epicsUInt32 len,
                 const epicsUInt32 num,
@@ -1057,6 +1074,7 @@ private:
         }
         return ret;
     }
+*/
 
     ItemOpen62541 *pitem;                                       /**< corresponding item */
     std::vector<std::weak_ptr<DataElementOpen62541>> elements;  /**< children (if node) */
@@ -1065,10 +1083,10 @@ private:
     std::unordered_map<int, std::weak_ptr<DataElementOpen62541>> elementMap;
 
     bool mapped;                             /**< child name to index mapping done */
-    UpdateQueue<UpdateOpen62541> incomingQueue;  /**< queue of incoming values */
-    UaVariant incomingData;                  /**< cache of latest incoming value */
+//    UpdateQueue<UpdateOpen62541> incomingQueue;  /**< queue of incoming values */
+//    UaVariant incomingData;                  /**< cache of latest incoming value */
     epicsMutex outgoingLock;                 /**< data lock for outgoing value */
-    UaVariant outgoingData;                  /**< cache of latest outgoing value */
+//    UaVariant outgoingData;                  /**< cache of latest outgoing value */
     bool isdirty;                            /**< outgoing value has been (or needs to be) updated */
 };
 

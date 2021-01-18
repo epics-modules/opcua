@@ -20,11 +20,11 @@ USR_DBDFLAGS += -I $(OPCUA)/open62541
 USR_LDFLAGS += -l open62541 -L$(OPEN62541)/lib64 -L$(OPEN62541)/lib -L$(OPEN62541)/bin
 
 opcua_SRCS += Session.cpp
-opcua_SRCS += SessionUaSdk.cpp
+opcua_SRCS += SessionOpen62541.cpp
 opcua_SRCS += Subscription.cpp
-opcua_SRCS += SubscriptionUaSdk.cpp
-opcua_SRCS += ItemUaSdk.cpp
-opcua_SRCS += DataElementUaSdk.cpp
+opcua_SRCS += SubscriptionOpen62541.cpp
+opcua_SRCS += ItemOpen62541.cpp
+opcua_SRCS += DataElementOpen62541.cpp
 
 DBD_INSTALLS += opcua.dbd
 

@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 #include <limits>
+#include <unistd.h>
 
 #include <epicsExit.h>
 #include <epicsThread.h>
@@ -49,7 +50,7 @@ std::map<std::string, SessionOpen62541*> SessionOpen62541::sessions;
 // Cargo structure and batcher for write requests
 struct WriteRequest {
     ItemOpen62541 *item;
-    OpcUa_WriteValue wvalue;
+//    OpcUa_WriteValue wvalue;
 };
 
 // Cargo structure and batcher for read requests
@@ -71,6 +72,7 @@ void session_uasdk_atexit_register (void *junk)
     epicsAtExit(SessionOpen62541::atExit, nullptr);
 }
 
+/*
 inline const char *
 serverStatusString (UaClient::ServerStatus type)
 {
@@ -84,17 +86,18 @@ serverStatusString (UaClient::ServerStatus type)
     default:                                          return "<unknown>";
     }
 }
+*/
 
 SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &serverUrl,
                             bool autoConnect, int debug, epicsUInt32 batchNodes,
                             const char *clientCertificate, const char *clientPrivateKey)
     : Session(debug)
     , name(name)
-    , serverURL(serverUrl.c_str())
+//    , serverURL(serverUrl.c_str())
     , autoConnect(autoConnect)
-    , registeredItemsNo(0)
-    , puasession(new UaSession())
-    , serverConnectionStatus(UaClient::Disconnected)
+//    , registeredItemsNo(0)
+//    , puasession(new UaSession())
+//    , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
     , writer("OPCwr-" + name, *this, batchNodes)
     , writeNodesMax(0)
@@ -112,6 +115,7 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     if (status) strcpy(host, "unknown-host");
 
     //TODO: allow overriding by env variable
+/*
     connectInfo.sApplicationName = "EPICS IOC";
     connectInfo.sApplicationUri  = UaString("urn:%1:EPICS:IOC").arg(host);
     connectInfo.sProductUri      = "urn:EPICS:IOC";
@@ -122,6 +126,7 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     connectInfo.nMaxOperationsPerServiceCall = batchNodes;
 
     connectInfo.typeDictionaryMode = UaClientSdk::UaClient::ReadTypeDictionaries_Reconnect;
+*/
 
     //TODO: init security settings
     if ((clientCertificate && (clientCertificate[0] != '\0'))
@@ -138,11 +143,13 @@ SessionOpen62541::getName () const
     return name;
 }
 
+/*
 OpcUa_UInt32
 SessionOpen62541::getTransactionId ()
 {
     return static_cast<OpcUa_UInt32>(epics::atomic::increment(transactionId));
 }
+*/
 
 SessionOpen62541 &
 SessionOpen62541::findSession (const std::string &name)
@@ -173,13 +180,13 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
         errlogPrintf("security not implemented\n");
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
-        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
-        connectInfo.nMaxOperationsPerServiceCall = ul;
+//        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+//        connectInfo.nMaxOperationsPerServiceCall = ul;
         updateReadBatcher = true;
         updateWriteBatcher = true;
     } else if (name == "nodes-max") {
-        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
-        connectInfo.nMaxOperationsPerServiceCall = ul;
+//        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+//        connectInfo.nMaxOperationsPerServiceCall = ul;
         updateReadBatcher = true;
         updateWriteBatcher = true;
     } else if (name == "read-nodes-max") {
@@ -211,29 +218,34 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     }
 
     unsigned int max = 0;
+/*
     if (connectInfo.nMaxOperationsPerServiceCall > 0 && readNodesMax > 0) {
         max = std::min(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
     } else {
         max = connectInfo.nMaxOperationsPerServiceCall + readNodesMax;
     }
+*/
     if (updateReadBatcher) reader.setParams(max, readTimeoutMin, readTimeoutMax);
 
+/*
     if (connectInfo.nMaxOperationsPerServiceCall > 0 && writeNodesMax > 0) {
         max = std::min(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
     } else {
         max = connectInfo.nMaxOperationsPerServiceCall + writeNodesMax;
     }
+*/
     if (updateWriteBatcher) writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
 }
 
 long
 SessionOpen62541::connect ()
 {
-    if (!puasession) {
+/*    if (!puasession) */ {
         std::cerr << "Session " << name.c_str()
                   << ": invalid session, cannot connect" << std::endl;
         return -1;
     }
+/*
     if (isConnected()) {
         if (debug) std::cerr << "Session " << name.c_str() << ": already connected ("
                              << serverStatusString(serverConnectionStatus) << ")" << std::endl;
@@ -255,12 +267,14 @@ SessionOpen62541::connect ()
         // asynchronous: remaining actions are done on the status-change callback
         return !result.isGood();
     }
+*/
 }
 
 long
 SessionOpen62541::disconnect ()
 {
     if (isConnected()) {
+/*
         ServiceSettings serviceSettings;
 
         UaStatus result = puasession->disconnect(serviceSettings,  // Use default settings
@@ -279,9 +293,13 @@ SessionOpen62541::disconnect ()
             it.second->clear();
         }
         return !result.isGood();
+*/
+        return 0;
     } else {
+/*
         if (debug) std::cerr << "Session " << name.c_str() << ": already disconnected ("
                              << serverStatusString(serverConnectionStatus) << ")" << std::endl;
+*/
         return 0;
     }
 }
@@ -289,10 +307,12 @@ SessionOpen62541::disconnect ()
 bool
 SessionOpen62541::isConnected () const
 {
+/*
     if (puasession)
         return (!!puasession->isConnected()
                 && serverConnectionStatus != UaClient::ConnectionErrorApiReconnect);
     else
+*/
         return false;
 }
 
@@ -308,6 +328,7 @@ SessionOpen62541::requestRead (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
+/*
     UaStatus status;
     UaReadValueIds nodesToRead;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToRead(new std::vector<ItemOpen62541 *>);
@@ -347,6 +368,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
                                   (id, std::move(itemsToRead)));
         }
     }
+*/
 }
 
 void
@@ -354,7 +376,7 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 {
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
-    item.getOutgoingData().copyTo(&cargo->wvalue.Value.Value);
+//    item.getOutgoingData().copyTo(&cargo->wvalue.Value.Value);
     item.clearOutgoingData();
     writer.pushRequest(cargo, item.recConnector->getRecordPriority());
 }
@@ -363,6 +385,7 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
+/*
     UaStatus status;
     UaWriteValues nodesToWrite;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToWrite(new std::vector<ItemOpen62541 *>);
@@ -401,6 +424,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
                                   (id, std::move(itemsToWrite)));
         }
     }
+*/
 }
 
 void
@@ -422,6 +446,7 @@ SessionOpen62541::addAllMonitoredItems ()
 void
 SessionOpen62541::registerNodes ()
 {
+/*
     UaStatus          status;
     UaNodeIdArray     nodesToRegister;
     UaNodeIdArray     registeredNodes;
@@ -461,6 +486,7 @@ SessionOpen62541::registerNodes ()
             registeredItemsNo = i;
         }
     }
+*/
 }
 
 void
@@ -473,8 +499,9 @@ SessionOpen62541::rebuildNodeIds ()
 /* Add a mapping to the session's map, replacing any existing mappings with the same
  * index or URI */
 void
-SessionOpen62541::addNamespaceMapping (const OpcUa_UInt16 nsIndex, const std::string &uri)
+SessionOpen62541::addNamespaceMapping (const unsigned short nsIndex, const std::string &uri)
 {
+/*
     for (auto &it : namespaceMap) {
         if (it.second == nsIndex) {
             namespaceMap.erase(it.first);
@@ -485,10 +512,12 @@ SessionOpen62541::addNamespaceMapping (const OpcUa_UInt16 nsIndex, const std::st
     if (it != namespaceMap.end())
         namespaceMap.erase(uri);
     namespaceMap.insert({uri, nsIndex});
+*/
 }
 
 /* If a local namespaceMap exists, create a local->remote numerical index mapping
  * for every URI that is found both there and in the server's array */
+/*
 void
 SessionOpen62541::updateNamespaceMap(const UaStringArray &nsArray)
 {
@@ -513,25 +542,28 @@ SessionOpen62541::updateNamespaceMap(const UaStringArray &nsArray)
         }
     }
 }
+*/
 
 void
 SessionOpen62541::show (const int level) const
 {
     std::cout << "session="      << name
-              << " url="         << serverURL.toUtf8()
-              << " status="      << serverStatusString(serverConnectionStatus)
+//              << " url="         << serverURL.toUtf8()
+//              << " status="      << serverStatusString(serverConnectionStatus)
               << " cert="        << "[none]"
               << " key="         << "[none]"
               << " debug="       << debug
               << " batch=";
+/*
     if (isConnected())
         std::cout << puasession->maxOperationsPerServiceCall();
     else
+*/
         std::cout << "?";
-    std::cout << "(" << connectInfo.nMaxOperationsPerServiceCall << ")"
-              << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "y" : "n")
+    std::cout // << "(" << connectInfo.nMaxOperationsPerServiceCall << ")"
+//               << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "y" : "n")
               << " items=" << items.size()
-              << " registered=" << registeredItemsNo
+//              << " registered=" << registeredItemsNo
               << " subscriptions=" << subscriptions.size()
               << " reader=" << reader.maxRequests() << "/"
               << reader.minHoldOff() << "-" << reader.maxHoldOff() << "ms"
@@ -540,6 +572,7 @@ SessionOpen62541::show (const int level) const
               << std::endl;
 
     if (level >= 3) {
+/*
         if (namespaceMap.size()) {
             std::cout << "Configured Namespace Mapping "
                       << "(local -> Namespace URI -> server)" << std::endl;
@@ -548,6 +581,7 @@ SessionOpen62541::show (const int level) const
                           << mapNamespaceIndex(p.second) << std::endl;
             }
         }
+*/
     }
 
     if (level >= 1) {
@@ -580,6 +614,7 @@ SessionOpen62541::removeItemOpen62541 (ItemOpen62541 *item)
         items.erase(it);
 }
 
+/*
 OpcUa_UInt16
 SessionOpen62541::mapNamespaceIndex (const OpcUa_UInt16 nsIndex) const
 {
@@ -591,9 +626,10 @@ SessionOpen62541::mapNamespaceIndex (const OpcUa_UInt16 nsIndex) const
     }
     return serverIndex;
 }
+*/
 
 // UaSessionCallback interface
-
+/*
 void SessionOpen62541::connectionStatusChanged (
     OpcUa_UInt32             clientConnectionId,
     UaClient::ServerStatus   serverStatus)
@@ -782,6 +818,7 @@ SessionOpen62541::writeComplete (OpcUa_UInt32 transactionId,
         outstandingOps.erase(it);
     }
 }
+*/
 
 void
 SessionOpen62541::showAll (const int level)
@@ -809,6 +846,7 @@ SessionOpen62541::showAll (const int level)
 
 SessionOpen62541::~SessionOpen62541 ()
 {
+/*
     if (puasession) {
         if (isConnected()) {
             ServiceSettings serviceSettings;
@@ -816,6 +854,7 @@ SessionOpen62541::~SessionOpen62541 ()
         }
         delete puasession;
     }
+*/
 }
 
 void

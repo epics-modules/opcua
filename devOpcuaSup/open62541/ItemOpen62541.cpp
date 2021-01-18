@@ -35,9 +35,9 @@ ItemOpen62541::ItemOpen62541 (const linkInfo &info)
     , subscription(nullptr)
     , session(nullptr)
     , registered(false)
-    , revisedSamplingInterval(0.0)
-    , revisedQueueSize(0)
-    , lastStatus(OpcUa_BadServerNotConnected)
+//    , revisedSamplingInterval(0.0)
+//    , revisedQueueSize(0)
+//    , lastStatus(OpcUa_BadServerNotConnected)
     , lastReason(ProcessReason::connectionLoss)
     , connState(ConnectionStatus::down)
 {
@@ -60,12 +60,14 @@ ItemOpen62541::~ItemOpen62541 ()
 void
 ItemOpen62541::rebuildNodeId ()
 {
+/*
     OpcUa_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
     if (linkinfo.identifierIsNumeric) {
         nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierNumber, ns));
     } else {
         nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierString.c_str(), ns));
     }
+*/
     registered = false;
 }
 
@@ -74,9 +76,9 @@ ItemOpen62541::show (int level) const
 {
     std::cout << "item"
               << " ns=";
-    if (nodeid && (nodeid->namespaceIndex() != linkinfo.namespaceIndex))
-        std::cout << nodeid->namespaceIndex() << "(" << linkinfo.namespaceIndex << ")";
-    else
+//    if (nodeid && (nodeid->namespaceIndex() != linkinfo.namespaceIndex))
+//        std::cout << nodeid->namespaceIndex() << "(" << linkinfo.namespaceIndex << ")";
+//    else
         std::cout << linkinfo.namespaceIndex;
     if (linkinfo.identifierIsNumeric)
         std::cout << ";i=" << linkinfo.identifierNumber;
@@ -84,12 +86,12 @@ ItemOpen62541::show (int level) const
         std::cout << ";s=" << linkinfo.identifierString;
     std::cout << " record=" << recConnector->getRecordName()
               << " state=" << connectionStatusString(connState)
-              << " status=" << UaStatus(lastStatus).toString().toUtf8()
+//              << " status=" << UaStatus(lastStatus).toString().toUtf8()
               << " context=" << linkinfo.subscription
               << "@" << session->getName()
-              << " sampling=" << revisedSamplingInterval
+//              << " sampling=" << revisedSamplingInterval
               << "(" << linkinfo.samplingInterval << ")"
-              << " qsize=" << revisedQueueSize
+//              << " qsize=" << revisedQueueSize
               << "(" << linkinfo.queueSize << ")"
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
@@ -97,7 +99,7 @@ ItemOpen62541::show (int level) const
               << " bini=" << linkOptionBiniString(linkinfo.bini)
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
-              << " registered=" << (registered ? nodeid->toString().toUtf8() : "-" )
+//              << " registered=" << (registered ? nodeid->toString().toUtf8() : "-" )
               << "(" << (linkinfo.registerNode ? "y" : "n") << ")"
               << std::endl;
 
@@ -115,6 +117,7 @@ int ItemOpen62541::debug() const
 }
 
 //FIXME: in case of itemRecord there might be no rootElement
+/*
 const UaVariant &
 ItemOpen62541::getOutgoingData() const
 {
@@ -124,15 +127,17 @@ ItemOpen62541::getOutgoingData() const
         throw std::runtime_error(SB() << "stale pointer to root data element");
     }
 }
+*/
 
 void
 ItemOpen62541::clearOutgoingData()
 {
     if (auto pd = rootElement.lock()) {
-        pd->clearOutgoingData();
+//        pd->clearOutgoingData();
     }
 }
 
+/*
 epicsTime
 ItemOpen62541::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 {
@@ -141,7 +146,9 @@ ItemOpen62541::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
     ts.nsec         = static_cast<epicsUInt32>(dt.msec()) * 1000000 + pico10 / 100;
     return epicsTime(ts);
 }
+*/
 
+/*
 void
 ItemOpen62541::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 {
@@ -177,6 +184,7 @@ ItemOpen62541::setIncomingData(const OpcUa_DataValue &value, ProcessReason reaso
         }
     }
 }
+*/
 
 void
 ItemOpen62541::setIncomingEvent(const ProcessReason reason)
@@ -186,7 +194,7 @@ ItemOpen62541::setIncomingEvent(const ProcessReason reason)
     if (reason == ProcessReason::connectionLoss) {
         tsSource = tsClient;
         tsServer = tsClient;
-        setLastStatus(OpcUa_BadServerNotConnected);
+//        setLastStatus(OpcUa_BadServerNotConnected);
     }
 
     if (auto pd = rootElement.lock()) {
@@ -200,9 +208,9 @@ ItemOpen62541::setIncomingEvent(const ProcessReason reason)
 void
 ItemOpen62541::getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len, epicsTimeStamp *ts)
 {
-    *code = lastStatus.code();
+//    *code = lastStatus.code();
     if (text && len) {
-        strncpy(text, lastStatus.toString().toUtf8(), len);
+//        strncpy(text, lastStatus.toString().toUtf8(), len);
         text[len-1] = '\0';
     }
 

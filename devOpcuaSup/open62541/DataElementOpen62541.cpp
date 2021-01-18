@@ -17,12 +17,6 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <uadatetime.h>
-#include <uaextensionobject.h>
-#include <uaarraytemplates.h>
-#include <opcua_builtintypes.h>
-#include <statuscode.h>
-
 #include <errlog.h>
 #include <epicsTime.h>
 #include <alarm.h>
@@ -49,7 +43,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     : DataElement(pconnector, name)
     , pitem(item)
     , mapped(false)
-    , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
+//    , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
     , isdirty(false)
 {}
 
@@ -59,7 +53,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     : DataElement(name)
     , pitem(item)
     , mapped(false)
-    , incomingQueue(0ul)
+//    , incomingQueue(0ul)
     , isdirty(false)
 {
     elements.push_back(child);
@@ -73,7 +67,7 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
     if (isLeaf()) {
         std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")="
                   << pconnector->getRecordName()
-                  << " type=" << variantTypeString(incomingData.type())
+//                  << " type=" << variantTypeString(incomingData.type())
                   << " timestamp=" << (pconnector->plinkinfo->useServerTimestamp ? "server" : "source")
                   << " bini=" << linkOptionBiniString(pconnector->plinkinfo->bini)
                   << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
@@ -201,6 +195,7 @@ DataElementOpen62541::addElementToTree (ItemOpen62541 *item,
 
 // Getting the timestamp and status information from the Item assumes that only one thread
 // is pushing data into the Item's DataElement structure at any time.
+/*
 void
 DataElementOpen62541::setIncomingData (const UaVariant &value, ProcessReason reason)
 {
@@ -273,6 +268,7 @@ DataElementOpen62541::setIncomingData (const UaVariant &value, ProcessReason rea
         }
     }
 }
+*/
 
 void
 DataElementOpen62541::setIncomingEvent (ProcessReason reason)
@@ -281,14 +277,15 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
         Guard(pconnector->lock);
         bool wasFirst = false;
         // Put the event on the queue
-        UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
-        incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
+//        UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
+//        incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
         if (debug() >= 5)
             std::cout << "Element " << name << " set event ("
                       << processReasonString(reason)
                       << ") for record " << pconnector->getRecordName()
-                      << " (queue use " << incomingQueue.size()
-                      << "/" << incomingQueue.capacity() << ")" << std::endl;
+//                      << " (queue use " << incomingQueue.size()
+//                      << "/" << incomingQueue.capacity() << ")"
+                      << std::endl;
         if (wasFirst)
             pconnector->requestRecordProcessing(reason);
     } else {
@@ -300,6 +297,7 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
 }
 
 // Helper to update one data structure element from pointer to child
+/*
 bool
 DataElementOpen62541::updateDataInGenericValue (UaGenericStructureValue &value,
                                             const int index,
@@ -325,7 +323,9 @@ DataElementOpen62541::updateDataInGenericValue (UaGenericStructureValue &value,
     }
     return updated;
 }
+*/
 
+/*
 const UaVariant &
 DataElementOpen62541::getOutgoingData ()
 {
@@ -394,7 +394,9 @@ DataElementOpen62541::getOutgoingData ()
     }
     return outgoingData;
 }
+*/
 
+/*
 void
 DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
                                  const std::string &targetTypeName,
@@ -426,6 +428,7 @@ DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
                   << "/" << incomingQueue.capacity() << std::endl;
     }
 }
+*/
 
 long
 DataElementOpen62541::readScalar (epicsInt32 *value,
@@ -435,7 +438,7 @@ DataElementOpen62541::readScalar (epicsInt32 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsInt32, OpcUa_Int32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readScalar<epicsInt32, OpcUa_Int32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -446,7 +449,7 @@ DataElementOpen62541::readScalar (epicsInt64 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsInt64, OpcUa_Int64>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readScalar<epicsInt64, OpcUa_Int64>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -457,7 +460,7 @@ DataElementOpen62541::readScalar (epicsUInt32 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsUInt32, OpcUa_UInt32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readScalar<epicsUInt32, OpcUa_UInt32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -468,7 +471,7 @@ DataElementOpen62541::readScalar (epicsFloat64 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsFloat64, OpcUa_Double>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readScalar<epicsFloat64, OpcUa_Double>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 // CString type needs specialization
@@ -482,12 +485,17 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
 {
     long ret = 0;
 
+/*
     if (incomingQueue.empty()) {
         errlogPrintf("%s : incoming data queue empty\n", prec->name);
+*/
         return 1;
+/*
     }
+*/
 
     ProcessReason nReason;
+/*
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
     dbgReadScalar(upd.get(), "CString", num);
 
@@ -531,10 +539,12 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
     }
 
     prec->time = upd->getTimeStamp();
+*/
     if (nextReason) *nextReason = nReason;
     return ret;
 }
 
+/*
 void
 DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
                                 const epicsUInt32 targetSize,
@@ -561,8 +571,10 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
                   << "/" << incomingQueue.capacity() << std::endl;
     }
 }
+*/
 
 // Read array for EPICS String / OpcUa_String
+/*
 long int
 DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
                              const epicsUInt32 num,
@@ -649,10 +661,12 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
         *numRead = elemsWritten;
     return ret;
 }
+*/
 
 // Specialization for epicsUInt8 / OpcUa_Byte
 //   (needed because UaByteArray API is different from all other UaXxxArray classes)
 // CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
+/*
 template<>
 long
 DataElementOpen62541::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const epicsUInt32 num,
@@ -737,6 +751,7 @@ DataElementOpen62541::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, con
         *numRead = elemsWritten;
     return ret;
 }
+*/
 
 long
 DataElementOpen62541::readArray (epicsInt8 *value, const epicsUInt32 num,
@@ -747,7 +762,7 @@ DataElementOpen62541::readArray (epicsInt8 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt8, UaSByteArray>(value, num, numRead, OpcUaType_SByte, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsInt8, UaSByteArray>(value, num, numRead, OpcUaType_SByte, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -759,7 +774,7 @@ DataElementOpen62541::readArray (epicsUInt8 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt8, UaByteArray>(value, num, numRead, OpcUaType_Byte, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsUInt8, UaByteArray>(value, num, numRead, OpcUaType_Byte, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -771,7 +786,7 @@ DataElementOpen62541::readArray (epicsInt16 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt16, UaInt16Array>(value, num, numRead, OpcUaType_Int16, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsInt16, UaInt16Array>(value, num, numRead, OpcUaType_Int16, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -783,7 +798,7 @@ DataElementOpen62541::readArray (epicsUInt16 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt16, UaUInt16Array>(value, num, numRead, OpcUaType_UInt16, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsUInt16, UaUInt16Array>(value, num, numRead, OpcUaType_UInt16, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -795,7 +810,7 @@ DataElementOpen62541::readArray (epicsInt32 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt32, UaInt32Array>(value, num, numRead, OpcUaType_Int32, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsInt32, UaInt32Array>(value, num, numRead, OpcUaType_Int32, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -807,7 +822,7 @@ DataElementOpen62541::readArray (epicsUInt32 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt32, UaUInt32Array>(value, num, numRead, OpcUaType_UInt32, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsUInt32, UaUInt32Array>(value, num, numRead, OpcUaType_UInt32, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -819,7 +834,7 @@ DataElementOpen62541::readArray (epicsInt64 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt64, UaInt64Array>(value, num, numRead, OpcUaType_Int64, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsInt64, UaInt64Array>(value, num, numRead, OpcUaType_Int64, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -831,7 +846,7 @@ DataElementOpen62541::readArray (epicsUInt64 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt64, UaUInt64Array>(value, num, numRead, OpcUaType_UInt64, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsUInt64, UaUInt64Array>(value, num, numRead, OpcUaType_UInt64, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -843,7 +858,7 @@ DataElementOpen62541::readArray (epicsFloat32 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsFloat32, UaFloatArray>(value, num, numRead, OpcUaType_Float, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsFloat32, UaFloatArray>(value, num, numRead, OpcUaType_Float, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -855,7 +870,7 @@ DataElementOpen62541::readArray (epicsFloat64 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsFloat64, UaDoubleArray>(value, num, numRead, OpcUaType_Double, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray<epicsFloat64, UaDoubleArray>(value, num, numRead, OpcUaType_Double, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -868,13 +883,14 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray(&value, len, num, numRead, OpcUaType_String, prec, nextReason, statusCode, statusText, statusTextLen);
+//    return readArray(&value, len, num, numRead, OpcUaType_String, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 inline
 void
 DataElementOpen62541::dbgWriteScalar () const
 {
+/*
     if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": set outgoing data ("
                   << variantTypeString(outgoingData.type()) << ") to value ";
@@ -884,36 +900,38 @@ DataElementOpen62541::dbgWriteScalar () const
             std::cout << outgoingData.toString().toUtf8();
         std::cout << std::endl;
     }
+*/
 }
 
 long
 DataElementOpen62541::writeScalar (const epicsInt32 &value, dbCommon *prec)
 {
-    return writeScalar<epicsInt32>(value, prec);
+//    return writeScalar<epicsInt32>(value, prec);
 }
 
 long
 DataElementOpen62541::writeScalar (const epicsUInt32 &value, dbCommon *prec)
 {
-    return writeScalar<epicsUInt32>(value, prec);
+//    return writeScalar<epicsUInt32>(value, prec);
 }
 
 long
 DataElementOpen62541::writeScalar (const epicsInt64 &value, dbCommon *prec)
 {
-    return writeScalar<epicsInt64>(value, prec);
+//    return writeScalar<epicsInt64>(value, prec);
 }
 
 long
 DataElementOpen62541::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 {
-    return writeScalar<epicsFloat64>(value, prec);
+//    return writeScalar<epicsFloat64>(value, prec);
 }
 
 long
 DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
 {
     long ret = 0;
+/*
     long l;
     unsigned long ul;
     double d;
@@ -1048,7 +1066,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
                      prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
     }
-
+*/
     dbgWriteScalar();
     return ret;
 }
@@ -1060,12 +1078,13 @@ DataElementOpen62541::dbgWriteArray (const epicsUInt32 targetSize, const std::st
     if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": writing array of "
                   << targetTypeName << "[" << targetSize << "] as "
-                  << variantTypeString(outgoingData.type()) << "["<< outgoingData.arraySize() << "]"
+//                  << variantTypeString(outgoingData.type()) << "["<< outgoingData.arraySize() << "]"
                   << std::endl;
     }
 }
 
 // Write array for EPICS String / OpcUa_String
+/*
 long
 DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
                               const epicsUInt32 num,
@@ -1114,10 +1133,12 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
     }
     return ret;
 }
+*/
 
 // Specialization for epicsUInt8 / OpcUa_Byte
 //   (needed because UaByteArray API is different from all other UaXxxArray classes)
 // CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
+/*
 template<>
 long
 DataElementOpen62541::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epicsUInt8 *value, const epicsUInt32 num,
@@ -1216,6 +1237,7 @@ DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len, cons
 {
     return writeArray(&value, len, num, OpcUaType_String, prec);
 }
+*/
 
 void
 DataElementOpen62541::requestRecordProcessing (const ProcessReason reason) const
