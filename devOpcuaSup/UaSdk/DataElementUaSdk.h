@@ -952,7 +952,7 @@ private:
             if (isWithinRange<OpcUa_Int32>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setInt32(static_cast<OpcUa_UInt32>(value));
+                outgoingData.setInt32(static_cast<OpcUa_Int32>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
