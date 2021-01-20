@@ -43,7 +43,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     : DataElement(pconnector, name)
     , pitem(item)
     , mapped(false)
-//    , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
+    , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
     , isdirty(false)
 {}
 
@@ -53,7 +53,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     : DataElement(name)
     , pitem(item)
     , mapped(false)
-//    , incomingQueue(0ul)
+    , incomingQueue(0ul)
     , isdirty(false)
 {
     elements.push_back(child);
@@ -67,7 +67,7 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
     if (isLeaf()) {
         std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")="
                   << pconnector->getRecordName()
-//                  << " type=" << variantTypeString(incomingData.type())
+                  << " type=" << variantTypeString(incomingData.type->typeKind)
                   << " timestamp=" << (pconnector->plinkinfo->useServerTimestamp ? "server" : "source")
                   << " bini=" << linkOptionBiniString(pconnector->plinkinfo->bini)
                   << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
@@ -195,12 +195,11 @@ DataElementOpen62541::addElementToTree (ItemOpen62541 *item,
 
 // Getting the timestamp and status information from the Item assumes that only one thread
 // is pushing data into the Item's DataElement structure at any time.
-/*
 void
-DataElementOpen62541::setIncomingData (const UaVariant &value, ProcessReason reason)
+DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason reason)
 {
     // Make a copy of this element and cache it
-    incomingData = value;
+    UA_copy(&value, &incomingData, value.type);
 
     if (isLeaf()) {
         if ((pitem->state() == ConnectionStatus::initialRead && reason == ProcessReason::readComplete) ||
@@ -223,13 +222,13 @@ DataElementOpen62541::setIncomingData (const UaVariant &value, ProcessReason rea
         if (debug() >= 5)
             std::cout << "Element " << name << " splitting structured data to "
                       << elements.size() << " child elements" << std::endl;
-
-        if (value.type() == OpcUaType_ExtensionObject) {
-            UaExtensionObject extensionObject;
+/*
+        if (value.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+            UA_ExtensionObject *extensionObject = value.data
             value.toExtensionObject(extensionObject);
 
             // Try to get the structure definition from the dictionary
-            UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
+            UA_tructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
             if (!definition.isNull()) {
                 if (!definition.isUnion()) {
                     // ExtensionObject is a structure
@@ -266,9 +265,9 @@ DataElementOpen62541::setIncomingData (const UaVariant &value, ProcessReason rea
                 errlogPrintf("Cannot get a structure definition for %s - check access to type dictionary\n",
                              extensionObject.dataTypeId().toString().toUtf8());
         }
+*/
     }
 }
-*/
 
 void
 DataElementOpen62541::setIncomingEvent (ProcessReason reason)
@@ -277,14 +276,14 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
         Guard(pconnector->lock);
         bool wasFirst = false;
         // Put the event on the queue
-//        UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
-//        incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
+        UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
+        incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
         if (debug() >= 5)
             std::cout << "Element " << name << " set event ("
                       << processReasonString(reason)
                       << ") for record " << pconnector->getRecordName()
-//                      << " (queue use " << incomingQueue.size()
-//                      << "/" << incomingQueue.capacity() << ")"
+                      << " (queue use " << incomingQueue.size()
+                      << "/" << incomingQueue.capacity() << ")"
                       << std::endl;
         if (wasFirst)
             pconnector->requestRecordProcessing(reason);
@@ -325,8 +324,8 @@ DataElementOpen62541::updateDataInGenericValue (UaGenericStructureValue &value,
 }
 */
 
-/*
-const UaVariant &
+
+const UA_Variant &
 DataElementOpen62541::getOutgoingData ()
 {
     if (!isLeaf()) {
@@ -334,10 +333,11 @@ DataElementOpen62541::getOutgoingData ()
             std::cout << "Element " << name << " updating structured data from "
                       << elements.size() << " child elements" << std::endl;
 
-        outgoingData = incomingData;
+        UA_copy(&incomingData, &outgoingData, incomingData.type);
         isdirty = false;
-        if (outgoingData.type() == OpcUaType_ExtensionObject) {
-            UaExtensionObject extensionObject;
+        if (outgoingData.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+            UA_ExtensionObject extensionObject;
+/*
             outgoingData.toExtensionObject(extensionObject);
 
             // Try to get the structure definition from the dictionary
@@ -390,13 +390,12 @@ DataElementOpen62541::getOutgoingData ()
             } else
                 errlogPrintf("Cannot get a structure definition for %s - check access to type dictionary\n",
                              extensionObject.dataTypeId().toString().toUtf8());
+*/
         }
     }
     return outgoingData;
 }
-*/
 
-/*
 void
 DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
                                  const std::string &targetTypeName,
@@ -411,13 +410,13 @@ DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
         if (reason == ProcessReason::incomingData || reason == ProcessReason::readComplete) {
             std::cout << "(" << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device")
                       << " time " << time_buf << ") read " << processReasonString(reason) << " ("
-                      << UaStatus(upd->getStatus()).toString().toUtf8() << ") ";
-            UaVariant &data = upd->getData();
-            if (data.type() == OpcUaType_String)
-                std::cout << "'" << data.toString().toUtf8() << "'";
-            else
-                std::cout << data.toString().toUtf8();
-            std::cout << " (" << variantTypeString(data.type()) << ")"
+                      << UA_StatusCode_name(upd->getStatus()) << ") ";
+            UA_Variant &data = upd->getData();
+            UA_String output;
+            UA_print(&data, data.type, &output);
+            std::cout << output.data;
+            UA_String_clear(&output);
+            std::cout << " (" << variantTypeString(data.type->typeKind) << ")"
                       << " as " << targetTypeName;
             if (targetSize)
                 std::cout << "[" << targetSize << "]";
@@ -428,7 +427,6 @@ DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
                   << "/" << incomingQueue.capacity() << std::endl;
     }
 }
-*/
 
 long
 DataElementOpen62541::readScalar (epicsInt32 *value,
@@ -485,17 +483,12 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
 {
     long ret = 0;
 
-/*
     if (incomingQueue.empty()) {
         errlogPrintf("%s : incoming data queue empty\n", prec->name);
-*/
         return 1;
-/*
     }
-*/
 
     ProcessReason nReason;
-/*
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
     dbgReadScalar(upd.get(), "CString", num);
 
@@ -513,22 +506,22 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
     {
         if (num && value) {
             UA_StatusCode stat = upd->getStatus();
-            if (OpcUa_IsNotGood(stat)) {
+            if (UA_STATUS_IS_BAD(stat)) {
                 // No valid OPC UA value
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                 ret = 1;
             } else {
                 // Valid OPC UA value, so copy over
-                if (OpcUa_IsUncertain(stat)) {
+                if (UA_STATUS_IS_UNCERTAIN(stat)) {
                     (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                 }
-                strncpy(value, upd->getData().toString().toUtf8(), num);
+//                strncpy(value, upd->getData().toString().toUtf8(), num);
                 value[num-1] = '\0';
                 prec->udf = false;
             }
             if (statusCode) *statusCode = stat;
             if (statusText) {
-                strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+                strncpy(statusText, UA_StatusCode_name(stat), statusTextLen);
                 statusText[statusTextLen-1] = '\0';
             }
         }
@@ -539,12 +532,10 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
     }
 
     prec->time = upd->getTimeStamp();
-*/
     if (nextReason) *nextReason = nReason;
     return ret;
 }
 
-/*
 void
 DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
                                 const epicsUInt32 targetSize,
@@ -559,10 +550,10 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
         if (reason == ProcessReason::incomingData || reason == ProcessReason::readComplete) {
             std::cout << "(" << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device")
                       << " time " << time_buf << ") read " << processReasonString(reason) << " ("
-                      << UaStatus(upd->getStatus()).toString().toUtf8() << ") ";
-            UaVariant &data = upd->getData();
-            std::cout << " array of " << variantTypeString(data.type())
-                      << "[" << upd->getData().arraySize() << "]"
+                      << UA_StatusCode_name(upd->getStatus()) << ") ";
+            UA_Variant &data = upd->getData();
+            std::cout << " array of " << variantTypeString(data.type->typeKind)
+                      << "[" << upd->getData().arrayLength << "]"
                       << " into " << targetTypeName << "[" << targetSize << "]";
         } else {
             std::cout << "(client time "<< time_buf << ") " << processReasonString(reason);
@@ -571,15 +562,13 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
                   << "/" << incomingQueue.capacity() << std::endl;
     }
 }
-*/
 
 // Read array for EPICS String / UA_String
-/*
 long int
 DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
-                             OpcUa_BuiltInType expectedType,
+                             const UA_DataType *expectedType,
                              dbCommon *prec,
                              ProcessReason *nextReason,
                              epicsUInt32 *statusCode,
@@ -613,26 +602,27 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
     {
         if (num && value) {
             UA_StatusCode stat = upd->getStatus();
-            if (OpcUa_IsNotGood(stat)) {
+            if (UA_STATUS_IS_BAD(stat)) {
                 // No valid OPC UA value
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                 ret = 1;
             } else {
                 // Valid OPC UA value, so try to convert
-                UaVariant &data = upd->getData();
-                if (!data.isArray()) {
+                UA_Variant &data = upd->getData();
+                if (UA_Variant_isScalar(&data)) {
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
-                } else if (data.type() != expectedType) {
+                } else if (data.type != expectedType) {
                     errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data.type()), epicsTypeString(**value));
+                                 prec->name, variantTypeString(data.type->typeKind), epicsTypeString(**value));
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
                 } else {
-                    if (OpcUa_IsUncertain(stat)) {
+                    if (UA_STATUS_IS_UNCERTAIN(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
+/*
                     UaStringArray arr;
                     UaVariant_to(upd->getData(), arr);
                     elemsWritten = num < arr.length() ? num : arr.length();
@@ -641,11 +631,12 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
                         value[i][len-1] = '\0';
                     }
                     prec->udf = false;
+*/
                 }
             }
             if (statusCode) *statusCode = stat;
             if (statusText) {
-                strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+                strncpy(statusText, UA_StatusCode_name(stat), statusTextLen);
                 statusText[statusTextLen-1] = '\0';
             }
         }
@@ -661,17 +652,16 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
         *numRead = elemsWritten;
     return ret;
 }
-*/
 
+/*
 // Specialization for epicsUInt8 / UA_Byte
 //   (needed because UaByteArray API is different from all other UaXxxArray classes)
 // CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
-/*
 template<>
 long
 DataElementOpen62541::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const epicsUInt32 num,
                                                       epicsUInt32 *numRead,
-                                                      OpcUa_BuiltInType expectedType,
+                                                      const UA_DataType *expectedType,
                                                       dbCommon *prec,
                                                       ProcessReason *nextReason,
                                                       epicsUInt32 *statusCode,
@@ -705,37 +695,37 @@ DataElementOpen62541::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, con
     {
         if (num && value) {
             UA_StatusCode stat = upd->getStatus();
-            if (OpcUa_IsNotGood(stat)) {
+            if (UA_STATUS_IS_BAD(stat)) {
                 // No valid OPC UA value
                 (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                 ret = 1;
             } else {
                 // Valid OPC UA value, so try to convert
-                UaVariant &data = upd->getData();
-                if (!data.isArray()) {
+                UA_Variant &data = upd->getData();
+                if (UA_Variant_isScalar(&data)) {
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
-                } else if (data.type() != expectedType) {
+                } else if (data.type != expectedType) {
                     errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data.type()), epicsTypeString(*value));
+                                 prec->name, variantTypeString(data.type->typeKind), epicsTypeString(*value));
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
                 } else {
-                    if (OpcUa_IsUncertain(stat)) {
+                    if (UA_STATUS_IS_UNCERTAIN(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
-                    UaByteArray arr;
-                    UaVariant_to(upd->getData(), arr);
-                    elemsWritten = static_cast<epicsUInt32>(arr.size());
-                    if (num < elemsWritten) elemsWritten = num;
-                    memcpy(value, arr.data(), sizeof(epicsUInt8) * elemsWritten);
-                    prec->udf = false;
+//                    UaByteArray arr;
+//                    UaVariant_to(upd->getData(), arr);
+//                    elemsWritten = static_cast<epicsUInt32>(arr.size());
+//                    if (num < elemsWritten) elemsWritten = num;
+//                    memcpy(value, arr.data(), sizeof(epicsUInt8) * elemsWritten);
+//                    prec->udf = false;
                 }
             }
             if (statusCode) *statusCode = stat;
             if (statusText) {
-                strncpy(statusText, UaStatus(stat).toString().toUtf8(), statusTextLen);
+                strncpy(statusText, UA_StatusCode_name(stat), statusTextLen);
                 statusText[statusTextLen-1] = '\0';
             }
         }
@@ -890,175 +880,185 @@ inline
 void
 DataElementOpen62541::dbgWriteScalar () const
 {
-/*
     if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": set outgoing data ("
-                  << variantTypeString(outgoingData.type()) << ") to value ";
+                  << variantTypeString(outgoingData.type->typeKind) << ") to value ";
+/*
         if (outgoingData.type() == OpcUaType_String)
             std::cout << "'" << outgoingData.toString().toUtf8() << "'";
         else
             std::cout << outgoingData.toString().toUtf8();
         std::cout << std::endl;
-    }
 */
+    }
 }
 
 long
 DataElementOpen62541::writeScalar (const epicsInt32 &value, dbCommon *prec)
 {
-//    return writeScalar<epicsInt32>(value, prec);
+    return writeScalar<epicsInt32>(value, prec);
 }
 
 long
 DataElementOpen62541::writeScalar (const epicsUInt32 &value, dbCommon *prec)
 {
-//    return writeScalar<epicsUInt32>(value, prec);
+    return writeScalar<epicsUInt32>(value, prec);
 }
 
 long
 DataElementOpen62541::writeScalar (const epicsInt64 &value, dbCommon *prec)
 {
-//    return writeScalar<epicsInt64>(value, prec);
+    return writeScalar<epicsInt64>(value, prec);
 }
 
 long
 DataElementOpen62541::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 {
-//    return writeScalar<epicsFloat64>(value, prec);
+    return writeScalar<epicsFloat64>(value, prec);
 }
 
 long
 DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
 {
     long ret = 0;
-/*
     long l;
     unsigned long ul;
     double d;
 
-    switch (incomingData.type()) {
-    case OpcUaType_String:
+    switch (incomingData.type->typeKind) {
+    case UA_TYPES_STRING:
     { // Scope of Guard G
         Guard G(outgoingLock);
         isdirty = true;
-        outgoingData.setString(static_cast<UaString>(value));
+        // copies string twice -- better way?
+        UA_String val = UA_STRING_ALLOC(value);
+        UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
+        UA_String_clear(&val);
         break;
     }
-    case OpcUaType_Boolean:
+    case UA_TYPES_BOOLEAN:
     { // Scope of Guard G
         Guard G(outgoingLock);
         isdirty = true;
-        if (strchr("YyTt1", *value))
-            outgoingData.setBoolean(true);
-        else
-            outgoingData.setBoolean(false);
+        UA_Boolean val = strchr("YyTt1", *value);
+        UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
         break;
     }
-    case OpcUaType_Byte:
+    case UA_TYPES_BYTE:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_Byte>(ul)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setByte(static_cast<UA_Byte>(ul));
+            UA_Byte val = static_cast<UA_Byte>(ul);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_SByte:
+    case UA_TYPES_SBYTE:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_SByte>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setSByte(static_cast<UA_SByte>(l));
+            UA_SByte val = static_cast<UA_Byte>(l);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_UInt16:
+    case UA_TYPES_UINT16:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt16>(ul)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setUInt16(static_cast<UA_UInt16>(ul));
+            UA_UInt16 val = static_cast<UA_UInt16>(ul);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_Int16:
+    case UA_TYPES_INT16:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int16>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setInt16(static_cast<UA_Int16>(l));
+            UA_Int16 val = static_cast<UA_Int16>(l);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_UInt32:
+    case UA_TYPES_UINT32:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt32>(ul)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setUInt32(static_cast<UA_UInt32>(ul));
+            UA_UInt32 val = static_cast<UA_UInt32>(ul);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_Int32:
+    case UA_TYPES_INT32:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int32>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setInt32(static_cast<UA_Int32>(l));
+            UA_Int32 val = static_cast<UA_Int32>(l);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_UInt64:
+    case UA_TYPES_UINT64:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt64>(ul)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setUInt64(static_cast<UA_UInt64>(ul));
+            UA_UInt64 val = static_cast<UA_UInt64>(ul);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_Int64:
+    case UA_TYPES_INT64:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int64>(l)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setInt64(static_cast<UA_Int64>(l));
+            UA_Int64 val = static_cast<UA_Int64>(l);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_Float:
+    case UA_TYPES_FLOAT:
         d = strtod(value, nullptr);
         if (isWithinRange<UA_Float>(d)) {
             Guard G(outgoingLock);
             isdirty = true;
-            outgoingData.setFloat(static_cast<UA_Float>(d));
+            UA_Float val = static_cast<UA_Float>(d);
+            UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         break;
-    case OpcUaType_Double:
+    case UA_TYPES_DOUBLE:
     {
         d = strtod(value, nullptr);
         Guard G(outgoingLock);
         isdirty = true;
-        outgoingData.setDouble(static_cast<UA_Double>(d));
+        UA_Double val = static_cast<UA_Double>(d);
+        UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
         break;
     }
     default:
@@ -1066,7 +1066,6 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
                      prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
     }
-*/
     dbgWriteScalar();
     return ret;
 }
@@ -1078,34 +1077,34 @@ DataElementOpen62541::dbgWriteArray (const epicsUInt32 targetSize, const std::st
     if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": writing array of "
                   << targetTypeName << "[" << targetSize << "] as "
-//                  << variantTypeString(outgoingData.type()) << "["<< outgoingData.arraySize() << "]"
+                  << variantTypeString(outgoingData.type->typeKind) << "["<< outgoingData.arrayLength << "]"
                   << std::endl;
     }
 }
 
 // Write array for EPICS String / UA_String
-/*
 long
 DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
                               const epicsUInt32 num,
-                              OpcUa_BuiltInType targetType,
+                              UA_DataTypeKind targetType,
                               dbCommon *prec)
 {
     long ret = 0;
 
-    if (!incomingData.isArray()) {
+    if (UA_Variant_isScalar(&incomingData)) {
         errlogPrintf("%s : OPC UA data type is not an array\n", prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
-    } else if (incomingData.type() != targetType) {
+    } else if (incomingData.type->typeKind != targetType) {
         errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
                      prec->name,
-                     variantTypeString(incomingData.type()),
+                     variantTypeString(incomingData.type->typeKind),
                      variantTypeString(targetType),
                      epicsTypeString(**value));
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     } else {
+/*
         UaStringArray arr;
         arr.create(static_cast<UA_UInt32>(num));
         for (epicsUInt32 i = 0; i < num; i++) {
@@ -1130,10 +1129,10 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
         }
 
         dbgWriteArray(num, epicsTypeString(**value));
+*/
     }
     return ret;
 }
-*/
 
 // Specialization for epicsUInt8 / UA_Byte
 //   (needed because UaByteArray API is different from all other UaXxxArray classes)
@@ -1142,7 +1141,7 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
 template<>
 long
 DataElementOpen62541::writeArray<epicsUInt8, UaByteArray, UA_Byte> (const epicsUInt8 *value, const epicsUInt32 num,
-                                                                   OpcUa_BuiltInType targetType,
+                                                                   UA_DataTypeKind targetType,
                                                                    dbCommon *prec)
 {
     long ret = 0;
@@ -1151,10 +1150,10 @@ DataElementOpen62541::writeArray<epicsUInt8, UaByteArray, UA_Byte> (const epicsU
         errlogPrintf("%s : OPC UA data type is not an array\n", prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
-    } else if (incomingData.type() != targetType) {
+    } else if (incomingData.type->typeKind != targetType) {
         errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
                      prec->name,
-                     variantTypeString(incomingData.type()),
+                     variantTypeString(incomingData.type->typeKind),
                      variantTypeString(targetType),
                      epicsTypeString(*value));
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -1171,73 +1170,73 @@ DataElementOpen62541::writeArray<epicsUInt8, UaByteArray, UA_Byte> (const epicsU
     }
     return ret;
 }
+*/
 
 long
 DataElementOpen62541::writeArray (const epicsInt8 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsInt8, UaSByteArray, UA_SByte>(value, num, OpcUaType_SByte, prec);
+//    return writeArray<epicsInt8, UaSByteArray, UA_SByte>(value, num, OpcUaType_SByte, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsUInt8 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt8, UaByteArray, UA_Byte>(value, num, OpcUaType_Byte, prec);
+//    return writeArray<epicsUInt8, UaByteArray, UA_Byte>(value, num, OpcUaType_Byte, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsInt16 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsInt16, UaInt16Array, UA_Int16>(value, num, OpcUaType_Int16, prec);
+//    return writeArray<epicsInt16, UaInt16Array, UA_Int16>(value, num, OpcUaType_Int16, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsUInt16 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt16, UaUInt16Array, UA_UInt16>(value, num, OpcUaType_UInt16, prec);
+//    return writeArray<epicsUInt16, UaUInt16Array, UA_UInt16>(value, num, OpcUaType_UInt16, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsInt32 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsInt32, UaInt32Array, UA_Int32>(value, num, OpcUaType_Int32, prec);
+//    return writeArray<epicsInt32, UaInt32Array, UA_Int32>(value, num, OpcUaType_Int32, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsUInt32 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt32, UaUInt32Array, UA_UInt32>(value, num, OpcUaType_UInt32, prec);
+//    return writeArray<epicsUInt32, UaUInt32Array, UA_UInt32>(value, num, OpcUaType_UInt32, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsInt64 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsInt64, UaInt64Array, UA_Int64>(value, num, OpcUaType_Int64, prec);
+ //   return writeArray<epicsInt64, UaInt64Array, UA_Int64>(value, num, OpcUaType_Int64, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsUInt64 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt64, UaUInt64Array, UA_UInt64>(value, num, OpcUaType_UInt64, prec);
+//    return writeArray<epicsUInt64, UaUInt64Array, UA_UInt64>(value, num, OpcUaType_UInt64, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsFloat32 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsFloat32, UaFloatArray, UA_Float>(value, num, OpcUaType_Float, prec);
+//    return writeArray<epicsFloat32, UaFloatArray, UA_Float>(value, num, OpcUaType_Float, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const epicsFloat64 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsFloat64, UaDoubleArray, UA_Double>(value, num, OpcUaType_Double, prec);
+//    return writeArray<epicsFloat64, UaDoubleArray, UA_Double>(value, num, OpcUaType_Double, prec);
 }
 
 long
 DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray(&value, len, num, OpcUaType_String, prec);
+    return writeArray(&value, len, num, UA_DATATYPEKIND_STRING, prec);
 }
-*/
 
 void
 DataElementOpen62541::requestRecordProcessing (const ProcessReason reason) const

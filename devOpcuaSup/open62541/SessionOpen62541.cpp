@@ -178,12 +178,12 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
         errlogPrintf("security not implemented\n");
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
-//        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
 //        connectInfo.nMaxOperationsPerServiceCall = ul;
         updateReadBatcher = true;
         updateWriteBatcher = true;
     } else if (name == "nodes-max") {
-//        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
 //        connectInfo.nMaxOperationsPerServiceCall = ul;
         updateReadBatcher = true;
         updateWriteBatcher = true;
@@ -249,12 +249,12 @@ SessionOpen62541::connect ()
                              << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
     } else {
-        UaStatus result = puasession->connect(serverURL,      // URL of the Endpoint
+        UA_StatusCode result = puasession->connect(serverURL,      // URL of the Endpoint
                                               connectInfo,    // General connection settings
                                               securityInfo,   // Security settings
                                               this);          // Callback interface
 
-        if (result.isGood()) {
+        if (!UA_STATUS_IS_BAD(result)) {
             if (debug) std::cerr << "Session " << name.c_str()
                                  << ": connect service ok" << std::endl;
         } else {
@@ -263,7 +263,7 @@ SessionOpen62541::connect ()
                       << result.toString().toUtf8() << std::endl;
         }
         // asynchronous: remaining actions are done on the status-change callback
-        return !result.isGood();
+        return UA_STATUS_IS_BAD(result);
     }
 */
 }
@@ -275,10 +275,10 @@ SessionOpen62541::disconnect ()
 /*
         ServiceSettings serviceSettings;
 
-        UaStatus result = puasession->disconnect(serviceSettings,  // Use default settings
+        UA_StatusCode result = puasession->disconnect(serviceSettings,  // Use default settings
                                                  OpcUa_True);      // Delete subscriptions
 
-        if (result.isGood()) {
+        if (!UA_STATUS_IS_BAD(result)) {
             if (debug) std::cerr << "Session " << name.c_str()
                                  << ": disconnect service ok" << std::endl;
         } else {
@@ -290,7 +290,7 @@ SessionOpen62541::disconnect ()
         for (auto &it : subscriptions) {
             it.second->clear();
         }
-        return !result.isGood();
+        return UA_STATUS_IS_BAD(result);
 */
         return 0;
     } else {
@@ -327,7 +327,7 @@ void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
 /*
-    UaStatus status;
+    UA_StatusCode status;
     UaReadValueIds nodesToRead;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToRead(new std::vector<ItemOpen62541 *>);
     ServiceSettings serviceSettings;
@@ -350,9 +350,9 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
                                        nodesToRead,                    // Array of nodes to read
                                        id);                            // Transaction id
 
-	    if (status.isBad()) {
+	    if (!UA_STATUS_IS_BAD(status)) {
 	        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
-	                     name.c_str(), status.toString().toUtf8());
+	                     name.c_str(), UA_StatusCode_name(status);
             //TODO: create writeFailure events for all items of the batch
 //	        item.setIncomingEvent(ProcessReason::readFailure);
 
@@ -384,7 +384,7 @@ void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
 /*
-    UaStatus status;
+    UA_StatusCode status;
     UaWriteValues nodesToWrite;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToWrite(new std::vector<ItemOpen62541 *>);
     ServiceSettings serviceSettings;
@@ -406,11 +406,11 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
                                         nodesToWrite,           // Array of nodes/data to write
                                         id);                    // Transaction id
 
-	    if (status.isBad()) {
-	        errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
-	                     name.c_str(), status.toString().toUtf8());
+        if (UA_STATUS_IS_BAD(status)) {
+            errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
+                         name.c_str(), UA_StatusCode_name(status));
             //TODO: create writeFailure events for all items of the batch
-//	        item.setIncomingEvent(ProcessReason::writeFailure);
+//          item.setIncomingEvent(ProcessReason::writeFailure);
 
         } else {
             if (debug >= 5)
@@ -445,7 +445,7 @@ void
 SessionOpen62541::registerNodes ()
 {
 /*
-    UaStatus          status;
+    UA_StatusCode     status;
     UaNodeIdArray     nodesToRegister;
     UaNodeIdArray     registeredNodes;
     ServiceSettings   serviceSettings;
@@ -466,9 +466,9 @@ SessionOpen62541::registerNodes ()
                                            nodesToRegister,     // Array of nodeIds to register
                                            registeredNodes);    // Returns an array of registered nodeIds
 
-        if (status.isBad()) {
+        if (UA_STATUS_IS_BAD(status)) {
             errlogPrintf("OPC UA session %s: (registerNodes) registerNodes service failed with status %s\n",
-                         name.c_str(), status.toString().toUtf8());
+                         name.c_str(), UA_StatusCode_name(status));
         } else {
             if (debug)
                 std::cout << "Session " << name.c_str()
@@ -705,7 +705,7 @@ void SessionOpen62541::connectionStatusChanged (
 
 void
 SessionOpen62541::readComplete (UA_UInt32 transactionId,
-                            const UaStatus &result,
+                            UA_StatusCode result,
                             const UaDataValues &values,
                             const UaDiagnosticInfos &diagnosticInfos)
 {
@@ -715,7 +715,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
         errlogPrintf("OPC UA session %s: (readComplete) received a callback "
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
-    } else if (result.isGood()) {
+    } else if (!UA_STATUS_IS_BAD(result)) {
         if (debug >= 2)
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) getting data for read service"
@@ -748,7 +748,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) for read service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << result.toString() << std::endl;
+                      << ") failed with status " << UA_StatusCode_name(result) << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
@@ -765,7 +765,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
 
 void
 SessionOpen62541::writeComplete (UA_UInt32 transactionId,
-                             const UaStatus&          result,
+                             UA_StatusCode result,
                              const UaStatusCodeArray& results,
                              const UaDiagnosticInfos& diagnosticInfos)
 {
@@ -775,7 +775,7 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
         errlogPrintf("OPC UA session %s: (writeComplete) received a callback "
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
-    } else if (result.isGood()) {
+    } else if (!UA_STATUS_IS_BAD(result)) {
         if (debug >= 2)
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) getting results for write service"
@@ -789,7 +789,7 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
                           << item->getNodeId().toXmlString().toUtf8() << std::endl;
             }
             ProcessReason reason = ProcessReason::writeComplete;
-            if (OpcUa_IsBad(results[i]))
+            if (UA_STATUS_IS_BAD(results[i]))
                 reason = ProcessReason::writeFailure;
             item->setIncomingEvent(reason);
             item->setState(ConnectionStatus::up);
@@ -801,7 +801,7 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) for write service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << result.toString() << std::endl;
+                      << ") failed with status " << UA_StatusCode_name(result) << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()

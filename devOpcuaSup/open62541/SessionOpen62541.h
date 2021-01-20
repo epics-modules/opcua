@@ -237,13 +237,13 @@ public:
 
     virtual void readComplete(
             UA_UInt32 transactionId,
-            const UaStatus &result,
+            const UA_StatusCode result,
             const UaDataValues &values,
             const UaDiagnosticInfos &diagnosticInfos) override;
 
     virtual void writeComplete(
             UA_UInt32 transactionId,
-            const UaStatus &result,
+            const UA_StatusCode result,
             const UaStatusCodeArray &results,
             const UaDiagnosticInfos &diagnosticInfos) override;
 */
@@ -271,7 +271,7 @@ private:
     static std::map<std::string, SessionOpen62541 *> sessions;    /**< session management */
 
     const std::string name;                                   /**< unique session name */
-//    UaString serverURL;                                       /**< server URL */
+    UA_String serverURL;                                      /**< server URL */
     bool autoConnect;                                         /**< auto (re)connect flag */
     std::map<std::string, SubscriptionOpen62541*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemOpen62541 *> items;                           /**< items on this session */

@@ -35,9 +35,9 @@ ItemOpen62541::ItemOpen62541 (const linkInfo &info)
     , subscription(nullptr)
     , session(nullptr)
     , registered(false)
-//    , revisedSamplingInterval(0.0)
-//    , revisedQueueSize(0)
-//    , lastStatus(OpcUa_BadServerNotConnected)
+    , revisedSamplingInterval(0.0)
+    , revisedQueueSize(0)
+    , lastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED)
     , lastReason(ProcessReason::connectionLoss)
     , connState(ConnectionStatus::down)
 {
@@ -86,12 +86,12 @@ ItemOpen62541::show (int level) const
         std::cout << ";s=" << linkinfo.identifierString;
     std::cout << " record=" << recConnector->getRecordName()
               << " state=" << connectionStatusString(connState)
-//              << " status=" << UaStatus(lastStatus).toString().toUtf8()
+              << " status=" << UA_StatusCode_name(lastStatus)
               << " context=" << linkinfo.subscription
               << "@" << session->getName()
-//              << " sampling=" << revisedSamplingInterval
+              << " sampling=" << revisedSamplingInterval
               << "(" << linkinfo.samplingInterval << ")"
-//              << " qsize=" << revisedQueueSize
+              << " qsize=" << revisedQueueSize
               << "(" << linkinfo.queueSize << ")"
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
@@ -117,8 +117,7 @@ int ItemOpen62541::debug() const
 }
 
 //FIXME: in case of itemRecord there might be no rootElement
-/*
-const UaVariant &
+const UA_Variant &
 ItemOpen62541::getOutgoingData() const
 {
     if (auto pd = rootElement.lock()) {
@@ -127,41 +126,37 @@ ItemOpen62541::getOutgoingData() const
         throw std::runtime_error(SB() << "stale pointer to root data element");
     }
 }
-*/
 
 void
 ItemOpen62541::clearOutgoingData()
 {
     if (auto pd = rootElement.lock()) {
-//        pd->clearOutgoingData();
+        pd->clearOutgoingData();
     }
 }
 
-/*
 epicsTime
-ItemOpen62541::uaToEpicsTime (const UaDateTime &dt, const UA_UInt16 pico10)
+ItemOpen62541::uaToEpicsTime (const UA_DateTime &dt, const UA_UInt16 pico10)
 {
     epicsTimeStamp ts;
-    ts.secPastEpoch = static_cast<epicsUInt32>(dt.toTime_t()) - POSIX_TIME_AT_EPICS_EPOCH;
-    ts.nsec         = static_cast<epicsUInt32>(dt.msec()) * 1000000 + pico10 / 100;
+    ts.secPastEpoch = static_cast<epicsUInt32>(UA_DateTime_toUnixTime(dt)) - POSIX_TIME_AT_EPICS_EPOCH;
+    ts.nsec         = static_cast<epicsUInt32>(dt%UA_DATETIME_SEC) * (1000000000LL/UA_DATETIME_SEC) + pico10 / 100;
     return epicsTime(ts);
 }
-*/
 
-/*
 void
 ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
-    if (OpcUa_IsNotBad(value.StatusCode)) {
-        tsSource = uaToEpicsTime(UaDateTime(value.SourceTimestamp), value.SourcePicoseconds);
-        tsServer = uaToEpicsTime(UaDateTime(value.ServerTimestamp), value.ServerPicoseconds);
+    if (!UA_STATUS_IS_BAD(value.status)) {
+        tsSource = uaToEpicsTime(value.sourceTimestamp, value.sourcePicoseconds);
+        tsServer = uaToEpicsTime(value.serverTimestamp, value.serverPicoseconds);
     } else {
         tsSource = tsClient;
         tsServer = tsClient;
     }
     setReason(reason);
-    if (getLastStatus() == OpcUa_BadServerNotConnected && value.StatusCode == OpcUa_BadNodeIdUnknown)
+    if (getLastStatus() == UA_STATUSCODE_BADSERVERNOTCONNECTED && value.status == UA_STATUSCODE_BADNODEIDUNKNOWN)
         errlogPrintf("OPC UA session %s: item ns=%d;%s%.*d%s : BadNodeIdUnknown\n",
                      session->getName().c_str(),
                      linkinfo.namespaceIndex,
@@ -170,10 +165,10 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
                      (linkinfo.identifierIsNumeric ? linkinfo.identifierNumber : 0),
                      (linkinfo.identifierIsNumeric ? "" : linkinfo.identifierString.c_str()));
 
-    setLastStatus(value.StatusCode);
+    setLastStatus(value.status);
 
     if (auto pd = rootElement.lock())
-        pd->setIncomingData(value.Value, reason);
+        pd->setIncomingData(value.value, reason);
 
     if (linkinfo.isItemRecord) {
         if (state() == ConnectionStatus::initialRead
@@ -184,7 +179,6 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
         }
     }
 }
-*/
 
 void
 ItemOpen62541::setIncomingEvent(const ProcessReason reason)
@@ -194,7 +188,7 @@ ItemOpen62541::setIncomingEvent(const ProcessReason reason)
     if (reason == ProcessReason::connectionLoss) {
         tsSource = tsClient;
         tsServer = tsClient;
-//        setLastStatus(OpcUa_BadServerNotConnected);
+        setLastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED);
     }
 
     if (auto pd = rootElement.lock()) {
@@ -208,9 +202,9 @@ ItemOpen62541::setIncomingEvent(const ProcessReason reason)
 void
 ItemOpen62541::getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len, epicsTimeStamp *ts)
 {
-//    *code = lastStatus.code();
+    *code = lastStatus;
     if (text && len) {
-//        strncpy(text, lastStatus.toString().toUtf8(), len);
+        strncpy(text, UA_StatusCode_name(lastStatus), len);
         text[len-1] = '\0';
     }
 

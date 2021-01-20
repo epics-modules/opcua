@@ -30,7 +30,10 @@ namespace DevOpcua {
  */
 class SubscriptionOpen62541 : public Subscription
 {
-//    UA_DISABLE_COPY(SubscriptionOpen62541);
+    // Cannot copy a subscription
+    SubscriptionOpen62541(const SubscriptionOpen62541 &);
+    SubscriptionOpen62541 &operator=(const SubscriptionOpen62541 &);
+
 
 public:
     /**
@@ -146,7 +149,7 @@ public:
     // UaSubscriptionCallback interface
     virtual void subscriptionStatusChanged(
             UA_UInt32      clientSubscriptionHandle,
-            const UaStatus&   status
+            UA_StatusCode   status
             ) override;
     virtual void dataChange(
             UA_UInt32               clientSubscriptionHandle,

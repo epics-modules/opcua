@@ -115,13 +115,13 @@ public:
      * @brief Setter for the status of a read operation.
      * @param status  status code received by the client library
      */
-//    void setLastStatus(const OpcUa_StatusCode &status) { lastStatus = status; }
+    void setLastStatus(const UA_StatusCode &status) { lastStatus = status; }
 
     /**
      * @brief Getter for the status of the last read operation.
      * @return read status
      */
-//    UaStatusCode getLastStatus() { return lastStatus; }
+    UA_StatusCode getLastStatus() { return lastStatus; }
 
     /**
      * @brief Setter for the reason of an operation.
@@ -149,7 +149,7 @@ public:
      * Called from the OPC UA client worker thread when data is being
      * assembled in OPC UA session for sending.
      */
-//    const UaVariant &getOutgoingData() const;
+    const UA_Variant &getOutgoingData() const;
 
     /**
      * @brief Clear (discard) the current outgoing data.
@@ -204,7 +204,7 @@ public:
      * @param pico10 10 picosecond resolution counter
      * @return EPICS time stamp
      */
-//    static epicsTime uaToEpicsTime(const UaDateTime &dt, const UA_UInt16 pico10);
+    static epicsTime uaToEpicsTime(const UA_DateTime &dt, const UA_UInt16 pico10);
 
     /**
      * @brief Get debug level (from itemRecord or via TOP DataElement)
@@ -220,7 +220,7 @@ private:
     UA_Double revisedSamplingInterval;  /**< server-revised sampling interval */
     UA_UInt32 revisedQueueSize;         /**< server-revised queue size */
     std::weak_ptr<DataElementOpen62541> rootElement;  /**< top level data element */
-//    UaStatusCode lastStatus;               /**< status code of most recent service */
+    UA_StatusCode lastStatus;               /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
     ConnectionStatus connState;            /**< Connection state of the item */
     epicsTime tsClient;                    /**< client (local) time stamp */
