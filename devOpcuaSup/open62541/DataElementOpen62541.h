@@ -1026,15 +1026,15 @@ private:
             break;
         case UA_TYPES_STRING:
         {
-            // copies string twice -- better way?
-            UA_String val = UA_STRING_ALLOC(std::to_string(value).c_str());
-// TBD: error check!
+            std::string strval = std::to_string(value);
+            UA_String val;
+            val.length = strval.length();
+            val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(strval.c_str()));
             { // Scope of Guard G
                 Guard G(outgoingLock);
                 isdirty = true;
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
             }
-            UA_String_clear(&val);
             break;
         }
         default:
@@ -1045,7 +1045,7 @@ private:
         if (ret == 0 && UA_STATUS_IS_BAD(status)) {
             errlogPrintf("%s : scalar copy failed: %s\n",
                          prec->name, UA_StatusCode_name(status));
-            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         }
         dbgWriteScalar();

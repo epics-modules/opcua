@@ -840,13 +840,15 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
 
     switch (incomingData.type->typeKind) {
     case UA_TYPES_STRING:
-    { // Scope of Guard G
-        Guard G(outgoingLock);
-        isdirty = true;
-        // copies string twice -- better way?
-        UA_String val = UA_STRING_ALLOC(value);
-        status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
-        UA_String_clear(&val);
+    {
+        UA_String val;
+        val.length = strlen(value);
+        val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+        { // Scope of Guard G
+            Guard G(outgoingLock);
+            isdirty = true;
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
+        }
         break;
     }
     case UA_TYPES_BOOLEAN:
