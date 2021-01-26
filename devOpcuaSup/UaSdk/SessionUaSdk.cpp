@@ -13,7 +13,7 @@
 
 // Avoid problems on Windows (macros min, max clash with numeric_limits<>)
 #ifdef _WIN32
-#  define NOMINMAX
+#    define NOMINMAX
 #endif
 
 #include <iostream>
@@ -217,14 +217,14 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
 
     unsigned int max = 0;
     if (connectInfo.nMaxOperationsPerServiceCall > 0 && readNodesMax > 0) {
-        max = std::min(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
+        max = std::min<unsigned int>(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
     } else {
         max = connectInfo.nMaxOperationsPerServiceCall + readNodesMax;
     }
     if (updateReadBatcher) reader.setParams(max, readTimeoutMin, readTimeoutMax);
 
     if (connectInfo.nMaxOperationsPerServiceCall > 0 && writeNodesMax > 0) {
-        max = std::min(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
+        max = std::min<unsigned int>(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
     } else {
         max = connectInfo.nMaxOperationsPerServiceCall + writeNodesMax;
     }
