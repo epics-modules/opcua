@@ -24,6 +24,8 @@
 #include <uasession.h>
 
 #include <errlog.h>
+#include <epicsThread.h>
+#include <epicsEvent.h>
 
 #define epicsExportSharedSymbols
 #include "SubscriptionUaSdk.h"

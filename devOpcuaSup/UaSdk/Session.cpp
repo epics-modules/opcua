@@ -17,6 +17,7 @@
 
 #include <epicsThread.h>
 
+#define epicsExportSharedSymbols
 #include "Session.h"
 #include "SessionUaSdk.h"
 
