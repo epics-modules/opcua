@@ -41,7 +41,7 @@ ifdef OPCUA_NEEDS_INCLUDES
 USR_INCLUDES += -I$(UASDK)/include
 USR_INCLUDES += $(foreach lib, $(UASDK_LIBS),-I$(UASDK)/include/$(lib))
 # SDK libraries are not built with correct RUNPATH - rely on executable
-USR_LDFLAGS += -Wl,--disable-new-dtags
+USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
 endif
 
 ifeq ($(UASDK_DEPLOY_MODE),SYSTEM)
