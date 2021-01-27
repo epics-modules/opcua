@@ -436,7 +436,7 @@ DataElementOpen62541::readScalar (epicsInt32 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsInt32, UA_Int32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readScalar<epicsInt32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -447,7 +447,7 @@ DataElementOpen62541::readScalar (epicsInt64 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsInt64, UA_Int64>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readScalar<epicsInt64>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -458,7 +458,7 @@ DataElementOpen62541::readScalar (epicsUInt32 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsUInt32, UA_UInt32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readScalar<epicsUInt32>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -469,7 +469,7 @@ DataElementOpen62541::readScalar (epicsFloat64 *value,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
 {
-    return readScalar<epicsFloat64, UA_Double>(value, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readScalar<epicsFloat64>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 // CString type needs specialization

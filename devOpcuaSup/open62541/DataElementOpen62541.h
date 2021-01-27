@@ -136,6 +136,16 @@ inline bool isWithinRange<UA_Int64, epicsUInt64> (const epicsUInt64 &value) {
     return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_Int64>::max()));
 }
 
+template<>
+inline bool isWithinRange<epicsInt32, UA_UInt64> (const UA_UInt64 &value) {
+    return !(value > static_cast<UA_UInt64>(std::numeric_limits<epicsInt32>::max()));
+}
+
+template<>
+inline bool isWithinRange<epicsInt64, UA_UInt64> (const UA_UInt64 &value) {
+    return !(value > static_cast<UA_UInt64>(std::numeric_limits<epicsInt64>::max()));
+}
+
 // Simple-check specializations for converting signed to unsigned of same or wider type
 template<> inline bool isWithinRange<UA_UInt32, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
 template<> inline bool isWithinRange<UA_UInt32, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
@@ -144,6 +154,13 @@ template<> inline bool isWithinRange<UA_UInt64, epicsInt8> (const epicsInt8 &val
 template<> inline bool isWithinRange<UA_UInt64, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
 template<> inline bool isWithinRange<UA_UInt64, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
 template<> inline bool isWithinRange<UA_UInt64, epicsInt64> (const epicsInt64 &value) { return !(value < 0); }
+
+template<> inline bool isWithinRange<epicsUInt32, UA_SByte> (const UA_SByte &value) { return !(value < 0); }
+template<> inline bool isWithinRange<epicsUInt64, UA_SByte> (const UA_SByte &value) { return !(value < 0); }
+template<> inline bool isWithinRange<epicsUInt64, UA_Int16> (const UA_Int16 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<epicsUInt64, UA_Int32> (const UA_Int32 &value) { return !(value < 0); }
+template<> inline bool isWithinRange<epicsUInt64, UA_Int64> (const UA_Int64 &value) { return !(value < 0); }
+
 
 // No-check-needed specializations for converting to same or wider type
 template<> inline bool isWithinRange<UA_Int32, epicsInt32> (const epicsInt32 &) { return true; }
@@ -162,6 +179,47 @@ template<> inline bool isWithinRange<UA_Float, epicsInt64> (const epicsInt64 &) 
 template<> inline bool isWithinRange<UA_Double, epicsInt64> (const epicsInt64 &) { return true; }
 
 template<> inline bool isWithinRange<UA_Double, epicsFloat64> (const epicsFloat64 &) { return true; }
+
+
+// Helper function to convert C-strings to numeric types
+
+inline bool string_to(const char* s, epicsInt32& value) {
+    try {
+        value = std::stol(std::string(s), 0, 0);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+inline bool string_to(const char* s, epicsInt64& value) {
+    try {
+        value = std::stoll(std::string(s), 0, 0);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+inline bool string_to(const char* s, epicsUInt32& value) {
+    try {
+        long long v = std::stoll(std::string(s), 0, 0);
+        if (v > ULONG_MAX) return false;
+        value = v;
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+inline bool string_to(const char* s, epicsFloat64& value) {
+    try {
+        value = std::stod(std::string(s), 0);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
 
 /**
  * @brief The DataElementOpen62541 implementation of a single piece of data.
@@ -686,42 +744,10 @@ private:
     // Get the read status from the incoming object
     UA_StatusCode getIncomingReadStatus() const { return pitem->getLastStatus(); }
 
-/*
-    // Overloaded helper functions that wrap the UA_Variant::toXxx() and UA_Variant::setXxx methods
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UA_Int32 &value) { return variant.toInt32(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UA_UInt32 &value) { return variant.toUInt32(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UA_Int64 &value) { return variant.toInt64(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UA_Double &value) { return variant.toDouble(value); }
-
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaSByteArray &value) { return variant.toSByteArray(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaByteArray &value) { return variant.toByteArray(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaInt16Array &value) { return variant.toInt16Array(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaUInt16Array &value) { return variant.toUInt16Array(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaInt32Array &value) { return variant.toInt32Array(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaUInt32Array &value) { return variant.toUInt32Array(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaInt64Array &value) { return variant.toInt64Array(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaUInt64Array &value) { return variant.toUInt64Array(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaFloatArray &value) { return variant.toFloatArray(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaDoubleArray &value) { return variant.toDoubleArray(value); }
-    UA_StatusCode UaVariant_to(const UA_Variant &variant, UaStringArray &value) { return variant.toStringArray(value); }
-
-    void UaVariant_set(UaVariant &variant, UaSByteArray &value) { variant.setSByteArray(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaByteArray &value) { variant.setByteArray(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaInt16Array &value) { variant.setInt16Array(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaUInt16Array &value) { variant.setUInt16Array(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaInt32Array &value) { variant.setInt32Array(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaUInt32Array &value) { variant.setUInt32Array(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaInt64Array &value) { variant.setInt64Array(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaUInt64Array &value) { variant.setUInt64Array(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaFloatArray &value) { variant.setFloatArray(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaDoubleArray &value) { variant.setDoubleArray(value, OpcUa_True); }
-    void UaVariant_set(UaVariant &variant, UaStringArray &value) { variant.setStringArray(value, OpcUa_True); }
-*/
-
     // Read scalar value as templated function on EPICS type and OPC UA type
     // value == nullptr is allowed and leads to the value being dropped (ignored),
     // including the extended status
-    template<typename ET, typename OT>
+    template<typename ET>
     long
     readScalar (ET *value,
                 dbCommon *prec,
@@ -762,10 +788,77 @@ private:
                     ret = 1;
                 } else {
                     // Valid OPC UA value, so try to convert
-/*
                     UA_Variant &data = upd->getData();
-                    OT v;
-                    if (UA_STATUS_IS_BAD(UaVariant_to(data, v))) {
+                    switch(data.type->typeKind) {
+                        case UA_TYPES_BOOLEAN:
+                            *value = *static_cast<UA_Boolean*>(data.data) != 0;
+                            break;
+                        case UA_TYPES_BYTE:
+                            if (isWithinRange<ET, UA_Byte>(*static_cast<UA_Byte*>(data.data)))
+                                *value = *static_cast<UA_Byte*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_SBYTE:
+                            if (isWithinRange<ET, UA_SByte>(*static_cast<UA_SByte*>(data.data)))
+                                *value = *static_cast<UA_SByte*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_INT16:
+                            if (isWithinRange<ET, UA_Int16>(*static_cast<UA_Int16*>(data.data)))
+                            *value = *static_cast<UA_Int16*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_UINT16:
+                            if (isWithinRange<ET, UA_UInt16>(*static_cast<UA_UInt16*>(data.data)))
+                                *value = *static_cast<UA_UInt16*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_INT32:
+                            if (isWithinRange<ET, UA_Int32>(*static_cast<UA_Int32*>(data.data)))
+                                *value = *static_cast<UA_Int32*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_UINT32:
+                            if (isWithinRange<ET, UA_UInt32>(*static_cast<UA_UInt32*>(data.data)))
+                                *value = *static_cast<UA_UInt32*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_INT64:
+                            if (isWithinRange<ET, UA_Int64>(*static_cast<UA_Int64*>(data.data)))
+                                *value = *static_cast<UA_Int64*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_UINT64:
+                            if (isWithinRange<ET, UA_UInt64>(*static_cast<UA_UInt64*>(data.data)))
+                                *value = *static_cast<UA_UInt64*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_FLOAT:
+                            if (isWithinRange<ET, UA_Float>(*static_cast<UA_Float*>(data.data)))
+                                *value = *static_cast<UA_Float*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_DOUBLE:
+                            if (isWithinRange<ET, UA_Double>(*static_cast<UA_Double*>(data.data)))
+                                *value = *static_cast<UA_Double*>(data.data);
+                            else
+                                ret = 1;
+                            break;
+                        case UA_TYPES_STRING:
+                            if (!string_to(reinterpret_cast<char*>(static_cast<UA_String*>(data.data)->data), *value))
+                                ret = 1;
+                            break;
+                    }
+                    if (ret == 1) {
                         UA_String datastring;
                         UA_print(&data, data.type, &datastring);
                         errlogPrintf("%s : incoming data (%s) out-of-bounds\n",
@@ -777,10 +870,8 @@ private:
                         if (UA_STATUS_IS_UNCERTAIN(stat)) {
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
-                        *value = v;
                         prec->udf = false;
                     }
-*/
                 }
                 if (statusCode) *statusCode = stat;
                 if (statusText) {
