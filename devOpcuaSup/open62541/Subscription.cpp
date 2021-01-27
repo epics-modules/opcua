@@ -5,9 +5,9 @@
 \*************************************************************************/
 
 /*
- *  Author: Ralph Lange <ralph.lange@gmx.de>
+ *  Author: Dirk Zimoch <dirk.zimoch@psi.ch>
  *
- *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
+ *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
 #include <errlog.h>

@@ -5,10 +5,9 @@
 \*************************************************************************/
 
 /*
- *  Author: Ralph Lange <ralph.lange@gmx.de>
+ *  Author: Dirk Zimoch <dirk.zimoch@psi.ch>
  *
- *  based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
- *  and example code from the Unified Automation C++ Based OPC UA Client SDK
+ *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
 #include <iostream>
