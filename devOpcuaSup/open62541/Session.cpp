@@ -17,9 +17,6 @@
 #include "Session.h"
 #include "SessionOpen62541.h"
 
-#define st(s) #s
-#define str(s) st(s)
-
 namespace DevOpcua {
 
 static epicsThreadOnceId opcuaOpen62541_once = EPICS_THREAD_ONCE_INIT;
@@ -76,10 +73,8 @@ Session::showOptionHelp ()
 const std::string &
 opcuaGetDriverName ()
 {
-    static const std::string sdk("Unified Automation C++ Client SDK v"
-                                 str(PROD_MAJOR) "." str(PROD_MINOR) "."
-                                 str(PROD_PATCH) "-" str(PROD_BUILD));
-    return sdk;
+    static const std::string version("Open62541 Client API " UA_OPEN62541_VER_COMMIT);
+    return version;
 }
 
 } // namespace DevOpcua
