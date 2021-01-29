@@ -99,7 +99,7 @@ DataElementUaSdk::addElementToTree (ItemUaSdk *item,
     std::string restpath;
     size_t sep = path.find_last_of(separator);
     // allow escaping separators
-    while (path[sep-1] == '\\') {
+    while (sep && sep != std::string::npos && path[sep - 1] == '\\') {
         path.erase(--sep, 1);
         sep = path.find_last_of(separator, --sep);
     }
