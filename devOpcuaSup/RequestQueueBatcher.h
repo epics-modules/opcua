@@ -75,19 +75,23 @@ public:
     /**
      * @brief Construct (and possibly start) a RequestQueueBatcher.
      *
+     * The sleep parameter can be used for intercepting the sleep in tests.
+     *
      * @param name  name for the batcher thread
      * @param consumer  callback interface of the request consumer
      * @param maxRequestsPerBatch  limit of items per service call
      * @param minHoldOff  minimal holdoff time (after a batch of 1) [msec]
      * @param maxHoldOff  maximal holdoff time (after a full batch) [msec]
      * @param startWorkerNow  true = start now; false = use start() method
+     * @param sleep  function to use for sleep [epicsThread::sleep]
      */
     RequestQueueBatcher(const std::string &name,
                         RequestConsumer<T> &consumer,
                         const unsigned int maxRequestsPerBatch = 0,
                         const unsigned int minHoldOff = 0,
                         const unsigned int maxHoldOff = 0,
-                        const bool startWorkerNow = true)
+                        const bool startWorkerNow = true,
+                        void (*sleep)(double) = epicsThread::sleep)
         : maxBatchSize(0)
         , holdOffVar(0.0)
         , holdOffFix(0.0)
@@ -97,6 +101,7 @@ public:
         , workToDo(epicsEventEmpty)
         , workerShutdown(false)
         , consumer(consumer)
+        , sleep(sleep)
     {
         setParams(maxRequestsPerBatch, minHoldOff, maxHoldOff);
         if (startWorkerNow)
@@ -262,7 +267,7 @@ public:
             }
 
             if (holdOff > 0.0)
-                epicsThread::sleep(holdOff);
+                sleep(holdOff);
 
         } while (true);
     }
@@ -277,6 +282,7 @@ private:
     epicsEvent workToDo;
     bool workerShutdown;
     RequestConsumer<T> &consumer;
+    void (*sleep)(double);
 };
 
 } // namespace DevOpcua
