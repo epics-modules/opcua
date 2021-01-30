@@ -319,7 +319,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToRead.create(batch.size());
+    nodesToRead.create(static_cast<OpcUa_UInt32>(batch.size()));
     OpcUa_UInt32 i = 0;
     for (auto c : batch) {
         c->item->getNodeId().copyTo(&nodesToRead[i].NodeId);
@@ -374,7 +374,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToWrite.create(batch.size());
+    nodesToWrite.create(static_cast<OpcUa_UInt32>(batch.size()));
     OpcUa_UInt32 i = 0;
     for (auto c : batch) {
         c->item->getNodeId().copyTo(&nodesToWrite[i].NodeId);

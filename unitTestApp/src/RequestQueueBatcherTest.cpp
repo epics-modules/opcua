@@ -67,7 +67,7 @@ void
 TestDumper::processRequests(std::vector<std::shared_ptr<TestCargo>> &batch)
 {
     noOfBatches++;
-    batchSizes.push_back(batch.size());
+    batchSizes.push_back(static_cast<unsigned int>(batch.size()));
     std::vector<unsigned int> data;
     bool done = false;
 
