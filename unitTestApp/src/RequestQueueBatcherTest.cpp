@@ -231,9 +231,12 @@ protected:
         ~Adder() override { t.exitWait(); }
 
         virtual void run () override {
-            for (unsigned int i = 0; i < no; i++) {
-                parent.addRequests(b, static_cast<menuPriority>(rand() % 3), 1);
-                if (i % 10 == 0) epicsThreadSleep(0.04); // allow context switch
+            unsigned int added = 0;
+            while (added < no) {
+                unsigned int i = std::max<unsigned int>(rand() % 7, no - added);
+                parent.addRequests(b, static_cast<menuPriority>(rand() % 3), i);
+                added += i;
+                epicsThreadSleep(0.02 + 0.001 * (rand() % 23)); // allow context switch
             }
             done.signal();
         }
