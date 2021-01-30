@@ -233,7 +233,7 @@ protected:
         virtual void run () override {
             for (unsigned int i = 0; i < no; i++) {
                 parent.addRequests(b, static_cast<menuPriority>(rand() % 3), 1);
-                if (!i % 10) epicsThreadSleep(0.04); // allow context switch
+                if (i % 10 == 0) epicsThreadSleep(0.04); // allow context switch
             }
             done.signal();
         }
