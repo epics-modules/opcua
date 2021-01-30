@@ -147,6 +147,8 @@ const unsigned int maxTimeout = 80;
 const unsigned int minTimeout2 = 3;
 const unsigned int maxTimeout2 = 100;
 
+static void myThreadSleep(double seconds);
+
 // Fixture for testing the batcher (with worker thread)
 class RQBBatcherTest : public ::testing::Test {
 public:
@@ -162,7 +164,7 @@ protected:
         , b10("test batcher 10", dump, 10, 0, 0, false)
         , b100("test batcher 100", dump, 100)
         , b1000("test batcher 1k", dump, 1000, 0, 0, false)
-        , b10h("test batcher 10h", dump, 10, minTimeout * 1000, maxTimeout * 1000)
+        , b10h("test batcher 10h", dump, 10, minTimeout * 1000, maxTimeout * 1000, true, myThreadSleep)
     {
         dump.reset();
         allSentCargo.clear();
@@ -426,22 +428,18 @@ TEST_F(RQBBatcherTest, size10HoldOff_20RequestsVaryingBatchesAfterParamChange) {
     }
 }
 
-// Mocking libCom's epicsThreadSleep();
-// periods < 1.0s are passed through, the others are intercepted
+// Replacing libCom's epicsThreadSleep();
 
-extern "C" void epicsThreadSleep(double seconds)
+void
+myThreadSleep(double seconds)
 {
-    if (seconds < 1.0) {
-        std::this_thread::sleep_for(std::chrono::duration<double>(seconds));
-    } else {
-        lastHoldOff = seconds;
-        if (nextTimeAdd < 11) {
-            static_cast<RQBBatcherTest*>(fixture)->addB10hRequests(nextTimeAdd);
-        } else if (nextTimeAdd == 11) {
-            allPushesDone.signal();
-        }
-        nextTimeAdd++;
+    lastHoldOff = seconds;
+    if (nextTimeAdd < 11) {
+        static_cast<RQBBatcherTest *>(fixture)->addB10hRequests(nextTimeAdd);
+    } else if (nextTimeAdd == 11) {
+        allPushesDone.signal();
     }
+    nextTimeAdd++;
 }
 
 } // namespace
