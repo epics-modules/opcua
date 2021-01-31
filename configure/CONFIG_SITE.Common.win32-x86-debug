@@ -1,1 +1,3 @@
+D = d
+D_DIR = .dbg
 include $(TOP)/configure/CONFIG_SITE.Common.win32-x86
