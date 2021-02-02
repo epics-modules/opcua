@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 #include <limits>
-#include <unistd.h>
 
 #include <epicsExit.h>
 #include <epicsThread.h>
