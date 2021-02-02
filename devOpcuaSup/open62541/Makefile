@@ -20,7 +20,7 @@ SRC_DIRS += $(OPCUA)/open62541
 
 # Find open62541 library and header files
 # This should work with installed (typically to /usr/local) as well as not installed open62541
-USR_INCLUDES += $(addprefix -I$(OPEN62541)/,include arch build/src_generated)
+USR_INCLUDES += $(addprefix -I$(OPEN62541)/,include plugins/include arch build/src_generated)
 LIB_LIBS += open62541
 open62541_DIR += $(if $(filter %64,$(ARCH_CLASS)),$(OPEN62541)/lib64) $(OPEN62541)/lib $(OPEN62541)/build/bin
 
