@@ -144,21 +144,25 @@ public:
      */
     void clear();
 
+    // SubscriptionCallback interface
 /*
-    // UaSubscriptionCallback interface
-    virtual void subscriptionStatusChanged(
-            UA_UInt32      clientSubscriptionHandle,
+    void subscriptionStatusChanged(
+            UA_UInt32       clientSubscriptionHandle,
             UA_StatusCode   status
-            ) override;
-    virtual void dataChange(
-            UA_UInt32               clientSubscriptionHandle,
+            );
+*/
+/*
+    void dataChange(
+            UA_UInt32                  clientSubscriptionHandle,
             const UaDataNotifications& dataNotifications,
             const UaDiagnosticInfos&   diagnosticInfos
-            ) override;
-    virtual void newEvents(
-            UA_UInt32                clientSubscriptionHandle,
+            );
+*/
+/*
+    void newEvents(
+            UA_UInt32                   clientSubscriptionHandle,
             UaEventFieldLists&          eventFieldList
-            ) override;
+            );
 */
 
 private:
@@ -167,8 +171,8 @@ private:
 //    UaSubscription *puasubscription;            /**< pointer to low level subscription */
     SessionOpen62541 *psessionuasdk;                /**< pointer to session */
     std::vector<ItemOpen62541 *> items;             /**< items on this subscription */
-//    SubscriptionSettings subscriptionSettings;  /**< subscription specific settings */
-//    SubscriptionSettings requestedSettings;     /**< requested subscription specific settings */
+    UA_CreateSubscriptionResponse subscriptionSettings;  /**< subscription specific settings */
+    UA_CreateSubscriptionRequest requestedSettings;      /**< requested subscription specific settings */
     bool enable;                                /**< subscription enable flag */
 };
 

@@ -14,6 +14,8 @@
 #include <string>
 #include <map>
 
+#include <open62541/client_subscriptions.h>
+
 #include <errlog.h>
 
 #define epicsExportSharedSymbols
@@ -31,15 +33,16 @@ SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOp
                                       const int debug)
     : Subscription(name, debug)
 //    , puasubscription(nullptr)
-//    , psessionuasdk(session)
+    , psessionuasdk(session)
     //TODO: add runtime support for subscription enable/disable
+    , requestedSettings(UA_CreateSubscriptionRequest_default())
     , enable(true)
 {
     // keep the default timeout
-//    double deftimeout = subscriptionSettings.publishingInterval * subscriptionSettings.lifetimeCount;
-//    subscriptionSettings.publishingInterval = requestedSettings.publishingInterval = publishingInterval;
-//    subscriptionSettings.lifetimeCount = requestedSettings.lifetimeCount = static_cast<UA_UInt32>(deftimeout / publishingInterval);
-//    subscriptionSettings.priority = requestedSettings.priority = priority;
+    double deftimeout = requestedSettings.requestedPublishingInterval * requestedSettings.requestedLifetimeCount;
+    subscriptionSettings.revisedPublishingInterval = requestedSettings.requestedPublishingInterval = publishingInterval;
+    subscriptionSettings.revisedLifetimeCount = requestedSettings.requestedLifetimeCount = static_cast<UA_UInt32>(deftimeout / publishingInterval);
+    requestedSettings.priority = priority;
 
     subscriptions[name] = this;
     psessionuasdk->subscriptions[name] = this;
@@ -50,22 +53,10 @@ SubscriptionOpen62541::show (int level) const
 {
     std::cout << "subscription=" << name
               << " session="     << psessionuasdk->getName()
-              << " interval=";
-/*
-    if (puasubscription)
-        std::cout << puasubscription->publishingInterval();
-    else
-*/
-        std::cout << "?";
-    std::cout // << "(" << requestedSettings.publishingInterval << ")"
-              << " prio=";
-/*    if (puasubscription)
-        std::cout << static_cast<int>(puasubscription->priority());
-    else
-*/
-        std::cout << "?";
-    std::cout //<< "(" << static_cast<int>(requestedSettings.priority) << ")"
-//              << " enable=" << (puasubscription ? (puasubscription->publishingEnabled() ? "y" : "n") : "?")
+              << " interval="    << subscriptionSettings.revisedPublishingInterval
+              << "("             << requestedSettings.requestedPublishingInterval  << ")"
+              << " prio="        << static_cast<int>(requestedSettings.priority)
+              << " enable="    "?" // << (puasubscription ? (puasubscription->publishingEnabled() ? "y" : "n") : "?")
               << "(" << (enable ? "Y" : "N") << ")"
               << " debug=" << debug
               << " items=" << items.size()
@@ -124,25 +115,17 @@ SubscriptionOpen62541::getSessionOpen62541 () const
 void
 SubscriptionOpen62541::create ()
 {
-    UA_StatusCode status;
-/*
-    ServiceSettings serviceSettings;
-
-    status = psessionuasdk->puasession->createSubscription(
-                serviceSettings,
-                this,
-                0,
-                subscriptionSettings,
-                enable,
-                &puasubscription);
-*/
-    if (UA_STATUS_IS_BAD(status)) {
+    subscriptionSettings = UA_Client_Subscriptions_create(psessionuasdk->client, requestedSettings,
+                                                                            NULL, NULL, NULL);
+    if (subscriptionSettings.responseHeader.serviceResult != UA_STATUSCODE_GOOD) {
         errlogPrintf("OPC UA subscription %s: createSubscription on session %s failed (%s)\n",
-                     name.c_str(), psessionuasdk->getName().c_str(), UA_StatusCode_name(status));
+                    name.c_str(), psessionuasdk->getName().c_str(),
+                    UA_StatusCode_name(subscriptionSettings.responseHeader.serviceResult));
     } else {
         if (debug)
             errlogPrintf("OPC UA subscription %s on session %s created (%s)\n",
-                         name.c_str(), psessionuasdk->getName().c_str(), UA_StatusCode_name(status));
+                    name.c_str(), psessionuasdk->getName().c_str(),
+                    UA_StatusCode_name(subscriptionSettings.responseHeader.serviceResult));
     }
 }
 
@@ -238,7 +221,9 @@ void
 SubscriptionOpen62541::subscriptionStatusChanged (UA_UInt32 clientSubscriptionHandle,
                                               UA_StatusCode status)
 {}
+*/
 
+/*
 void
 SubscriptionOpen62541::dataChange (UA_UInt32 clientSubscriptionHandle,
                                const UaDataNotifications& dataNotifications,
@@ -266,7 +251,9 @@ SubscriptionOpen62541::dataChange (UA_UInt32 clientSubscriptionHandle,
         item->setIncomingData(dataNotifications[i].Value, ProcessReason::incomingData);
     }
 }
+*/
 
+/*
 void
 SubscriptionOpen62541::newEvents (UA_UInt32 clientSubscriptionHandle,
                               UaEventFieldLists& eventFieldList)
