@@ -20,9 +20,10 @@
 
 #include <epicsMutex.h>
 #include <epicsTypes.h>
+#include <epicsTimer.h>
 #include <initHooks.h>
 
-#include <open62541/client.h>
+#include <open62541/client_config_default.h>
 
 #include "RequestQueueBatcher.h"
 #include "Session.h"
@@ -35,25 +36,21 @@ struct WriteRequest;
 struct ReadRequest;
 
 /**
- * @brief The SessionOpen62541 implementation of an OPC UA client session.
- *
- * See DevOpcua::Session
+ * @brief The SessionOpen62541 implementation of an open62541 client session.
  *
  * The connect call establishes and maintains a Session with a Server.
  * After a successful connect, the connection is monitored by the low level driver.
- * Connection status changes are reported through the callback
- * UaClientSdk::UaSessionCallback::connectionStatusChanged.
+ * Connection status changes are reported through the connectionStatusChanged callback.
  *
  * The disconnect call disconnects the Session, deleting all Subscriptions
  * and freeing all related resources on both server and client.
  */
 
 class SessionOpen62541
-        :
-//        public UaSessionCallback , 
-          public Session
+        : public Session
         , public RequestConsumer<WriteRequest>
         , public RequestConsumer<ReadRequest>
+        , public epicsTimerNotify
 {
     // Cannot copy a Session
     SessionOpen62541(const SessionOpen62541 &);
@@ -77,6 +74,7 @@ public:
     SessionOpen62541(const std::string &name, const std::string &serverUrl,
                  bool autoConnect = true, int debug = 0, epicsUInt32 batchNodes = 0,
                  const char *clientCertificate = nullptr, const char *clientPrivateKey = nullptr);
+ private:
     ~SessionOpen62541() override;
 
     /**
@@ -84,7 +82,6 @@ public:
      * @return long status (0 = OK)
      */
     virtual long connect() override;
-
     /**
      * @brief Disconnect session. See DevOpcua::Session::disconnect
      * @return long status (0 = OK)
@@ -102,6 +99,7 @@ public:
      * @param level
      */
     virtual void show(const int level) const override;
+ public:
 
     /**
      * @brief Get session name. See DevOpcua::Session::getName
@@ -131,6 +129,7 @@ public:
      */
     void requestWrite(ItemOpen62541 &item);
 
+ private:
     /**
      * @brief Create all subscriptions related to this session.
      */
@@ -141,6 +140,7 @@ public:
      */
     void addAllMonitoredItems();
 
+ public:
     /**
      * @brief Print configuration and status of all sessions on stdout.
      *
@@ -171,6 +171,7 @@ public:
      */
     static bool sessionExists(const std::string &name);
 
+ private:
     /**
      * @brief Set an option for the session. See DevOpcua::Session::setOption
      */
@@ -184,6 +185,7 @@ public:
     unsigned int noOfSubscriptions() const { return static_cast<unsigned int>(subscriptions.size()); }
     unsigned int noOfItems() const { return static_cast<unsigned int>(items.size()); }
 
+ public:
     /**
      * @brief Add an item to the session.
      *
@@ -198,6 +200,7 @@ public:
      */
     void removeItemOpen62541(ItemOpen62541 *item);
 
+ private:
     /**
      * @brief Map namespace index (local -> server)
      *
@@ -230,9 +233,6 @@ public:
 
 /*
     // UaSessionCallback interface
-    virtual void connectionStatusChanged(
-            UA_UInt32 clientConnectionId,
-            UaClient::ServerStatus serverStatus) override;
 
     virtual void readComplete(
             UA_UInt32 transactionId,
@@ -270,7 +270,7 @@ private:
     static std::map<std::string, SessionOpen62541 *> sessions;    /**< session management */
 
     const std::string name;                                   /**< unique session name */
-    UA_String serverURL;                                      /**< server URL */
+    const std::string serverURL;                              /**< server URL */
     bool autoConnect;                                         /**< auto (re)connect flag */
     std::map<std::string, SubscriptionOpen62541*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemOpen62541 *> items;                           /**< items on this session */
@@ -281,6 +281,7 @@ private:
 //    SessionConnectInfo connectInfo;                           /**< connection metadata */
 //    SessionSecurityInfo securityInfo;                         /**< security metadata */
 //    UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
+
     int transactionId;                                        /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */
     std::map<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>> outstandingOps;
@@ -294,6 +295,36 @@ private:
     unsigned int readNodesMax;                                /**< max number of nodes per read request */
     unsigned int readTimeoutMin;                              /**< timeout after read request batch of 1 node [ms] */
     unsigned int readTimeoutMax;                              /**< timeout after read request batch of NodesMax nodes [ms] */
+
+    /** open62541 interfaces */
+    static UA_ClientConfig defaultClientConfig;               /**< configuration for each new session */
+    UA_Client *client;                                        /**< low level handle for this session */
+    epicsMutex clientlock;                                    /**< lock for client implementation */
+    UA_StatusCode connectStatus;
+    UA_SecureChannelState channelState;
+    UA_SessionState sessionState;
+
+
+    /**
+     * @brief EPICS Timer callback to poll client session
+     */
+    epicsTimerNotify::expireStatus expire (const epicsTime & currentTime );
+
+    epicsTimerQueueActive &timerQueue;                        /**< for polling the client */
+    epicsTimer &timer;                                        /**< for polling the client */
+
+    /**
+     * @brief Initialize global resources.
+     */
+    static void initOnce(void*);
+
+    /**
+     * @brief Client connection status callback.
+     */
+    void connectionStatusChanged(
+            UA_SecureChannelState channelState,
+            UA_SessionState sessionState,
+            UA_StatusCode connectStatus);
 };
 
 } // namespace DevOpcua

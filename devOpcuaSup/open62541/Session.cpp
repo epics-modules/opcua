@@ -19,20 +19,10 @@
 
 namespace DevOpcua {
 
-static epicsThreadOnceId opcuaOpen62541_once = EPICS_THREAD_ONCE_INIT;
-
-static
-void opcuaOpen62541_init (void *junk)
-{
-    (void)junk;
-//    UaPlatformLayer::init();
-}
-
 void
 Session::createSession (const std::string &name, const std::string &url,
                         const int debuglevel, const bool autoconnect)
 {
-    epicsThreadOnce(&opcuaOpen62541_once, &opcuaOpen62541_init, nullptr);
     new SessionOpen62541(name, url, autoconnect, debuglevel);
 }
 
