@@ -102,13 +102,13 @@ public:
      * @brief Setter for the node id of this item.
      * @return node id
      */
-//    void setRegisteredNodeId(const UaNodeId &id) { (*nodeid) = id; registered = true; }
+    void setRegisteredNodeId(const UA_NodeId &id) { (*nodeid) = id; registered = true; }
 
     /**
      * @brief Getter that returns the node id of this item.
      * @return node id
      */
-//    UaNodeId &getNodeId() const { return (*nodeid); }
+    UA_NodeId &getNodeId() const { return (*nodeid); }
 
     /**
      * @brief Setter for the status of a read operation.
@@ -139,7 +139,7 @@ public:
      * @param dataTypeId data type of the extension object
      * @return structure definition
      */
-//    UaStructureDefinition structureDefinition(const UaNodeId &dataTypeId)
+//    UaStructureDefinition structureDefinition(const UA_NodeId &dataTypeId)
 //    { return session->structureDefinition(dataTypeId); }
 
     /**
@@ -214,7 +214,7 @@ public:
 private:
     SubscriptionOpen62541 *subscription;       /**< raw pointer to subscription (if monitored) */
     SessionOpen62541 *session;                 /**< raw pointer to session */
-//    std::unique_ptr<UaNodeId> nodeid;      /**< node id of this item */
+    std::unique_ptr<UA_NodeId> nodeid;      /**< node id of this item */
     bool registered;                       /**< flag for registration status */
     UA_Double revisedSamplingInterval;  /**< server-revised sampling interval */
     UA_UInt32 revisedQueueSize;         /**< server-revised queue size */
