@@ -311,7 +311,7 @@ private:
     epicsTimerNotify::expireStatus expire (const epicsTime & currentTime );
 
     epicsTimerQueueActive &timerQueue;                        /**< for polling the client */
-    epicsTimer &timer;                                        /**< for polling the client */
+    epicsTimer &sessionPollTimer;                             /**< for polling the client */
 
     /**
      * @brief Initialize global resources.

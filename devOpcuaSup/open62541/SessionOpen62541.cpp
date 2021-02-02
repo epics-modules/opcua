@@ -42,7 +42,7 @@
 
 namespace DevOpcua {
 
-double PollPeriod = 0.1;
+double PollPeriod = 0.01;
 
 std::map<std::string, SessionOpen62541*> SessionOpen62541::sessions;
 
@@ -164,8 +164,11 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     , readNodesMax(0)
     , readTimeoutMin(0)
     , readTimeoutMax(0)
+    , connectStatus(UA_STATUSCODE_BADINVALIDSTATE)
+    , channelState(UA_SECURECHANNELSTATE_CLOSED)
+    , sessionState(UA_SESSIONSTATE_CLOSED)
     , timerQueue(epicsTimerQueueActive::allocate (false,epicsThreadPriorityLow))
-    , timer(timerQueue.createTimer())
+    , sessionPollTimer(timerQueue.createTimer())
 {
     errlogPrintf("SessionOpen62541 constructor %s\n", name.c_str());
     static epicsThreadOnceId init_once_id = EPICS_THREAD_ONCE_INIT;
@@ -190,7 +193,6 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
             || (clientPrivateKey && (clientPrivateKey[0] != '\0')))
         errlogPrintf("OPC UA security not supported yet\n");
 
-    UA_Client_getState(client, &channelState, &sessionState, &connectStatus);
     sessions[name] = this;
 
     errlogPrintf("SessionOpen62541 constructor %s DONE\n", name.c_str());
@@ -306,6 +308,8 @@ epicsTimerNotify::expireStatus SessionOpen62541::expire (const epicsTime &curren
         Guard G(clientlock);
         if (UA_Client_run_iterate(client, 0) == UA_STATUSCODE_GOOD)
         return expireStatus(restart, PollPeriod);
+        // One last time read status
+        UA_Client_getState(client, &channelState, &sessionState, &connectStatus);
     }
     return noRestart;
 }
@@ -325,30 +329,31 @@ SessionOpen62541::connect ()
         return 0;
     }
     errlogPrintf("SessionOpen62541::connect %s: connecting to %s\n", name.c_str(), serverURL.c_str());
-    UA_StatusCode status;
     {
         Guard G(clientlock);
-        status = UA_Client_connectAsync(client, serverURL.c_str());
+        connectStatus = UA_Client_connectAsync(client, serverURL.c_str());
     }
-    if (status != UA_STATUSCODE_GOOD) {
+    if (connectStatus != UA_STATUSCODE_GOOD) {
         std::cerr << "Session " << name.c_str()
                   << ": connect service failed with status "
-                  << toStr(status) << std::endl;
+                  << toStr(connectStatus) << std::endl;
         return -1;
     }
     if (debug) std::cerr << "Session " << name.c_str()
                          << ": connect service ok" << std::endl;
     // asynchronous: remaining actions are done on the connectionStatusChanged callback
-    timer.start(*this, 0);
+    sessionPollTimer.start(*this, 0);
     errlogPrintf("SessionOpen62541::connect %s DONE\n", name.c_str());
-    return status != UA_STATUSCODE_GOOD;
+    return 0;
 }
 
 long
 SessionOpen62541::disconnect ()
 {
     errlogPrintf("SessionOpen62541::disconnect %s\n", name.c_str());
-    if (client) {
+    sessionPollTimer.cancel();
+    if (client && (channelState != UA_SECURECHANNELSTATE_CLOSED ||
+                   sessionState != UA_SESSIONSTATE_CLOSED)) {
         Guard G(clientlock);
         // Close the session and the secure channel
         // and remove all subscriptions.
