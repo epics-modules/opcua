@@ -132,7 +132,7 @@ SubscriptionOpen62541::create ()
 void
 SubscriptionOpen62541::addMonitoredItems ()
 {
-    UA_StatusCode status;
+    UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
 //    ServiceSettings serviceSettings;
     UA_UInt32 i;
 //    UaMonitoredItemCreateRequests monitoredItemCreateRequests;
