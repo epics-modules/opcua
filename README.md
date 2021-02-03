@@ -8,6 +8,8 @@
 to the OPC UA protocol. The architecture allows supporting different
 implementations of the low level client library.
 
+Linux and Windows builds are supported.
+
 ## Status
 
 :warning:
@@ -20,7 +22,9 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
 
 ## Prerequisites
 
-*   A C++ compiler that supports the C++11 standard.
+*   A C++ compiler that supports the C++11 standard. \
+    Microsoft Visual C++ needs to be from Visual Studio 2015 or newer.
+    g++ needs to be 4.6 or above.
 
 *   [EPICS Base](https://epics-controls.org/resources-and-support/base/)
     3.15.5 (and up; EPICS 7 is supported).
@@ -31,11 +35,11 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
 ### Using the Unified Automation Client SDK
 
 *   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk]
-    (1.5/1.6/1.7 are supported, as well as their evaluation bundle).
+    (1.5/1.6/1.7 are supported, as well as their evaluation bundles).
 
 *   For OPC UA security support (authentication/encryption), you need
-    libcrypto on your system - both when compiling the SDK and when generating
-    any binaries (IOCs).
+    openssl/libcrypto on your system - both when compiling the SDK and when
+    generating any binaries (IOCs).
 
 *   For more details, refer to the `README.md` in the
     [`devOpcuaSup/UaSdk`][uasdk.dir] directory.
@@ -91,8 +95,9 @@ Please use the GitHub project's
 
 This module is based on extensive
 [prototype work](https://github.com/bkuner/opcUaUnifiedAutomation)
-by Bernhard Kuner (HZB/BESSY II) and uses ideas and code snippets from
+by Bernhard Kuner (HZB/BESSY) and uses ideas and code snippets from
 Michael Davidsaver (Osprey DCS).
+Additional help from Carsten Winkler (HZB/BESSY).
 
 ## License
 

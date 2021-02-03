@@ -11,6 +11,11 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+// Avoid problems on Windows (macros min, max clash with numeric_limits<>)
+#ifdef _WIN32
+#    define NOMINMAX
+#endif
+
 #include <iostream>
 #include <string>
 #include <map>
@@ -19,6 +24,8 @@
 #include <uasession.h>
 
 #include <errlog.h>
+#include <epicsThread.h>
+#include <epicsEvent.h>
 
 #define epicsExportSharedSymbols
 #include "SubscriptionUaSdk.h"

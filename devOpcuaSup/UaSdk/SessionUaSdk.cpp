@@ -13,7 +13,7 @@
 
 // Avoid problems on Windows (macros min, max clash with numeric_limits<>)
 #ifdef _WIN32
-#  define NOMINMAX
+#    define NOMINMAX
 #endif
 
 #include <iostream>
@@ -217,14 +217,14 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
 
     unsigned int max = 0;
     if (connectInfo.nMaxOperationsPerServiceCall > 0 && readNodesMax > 0) {
-        max = std::min(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
+        max = std::min<unsigned int>(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
     } else {
         max = connectInfo.nMaxOperationsPerServiceCall + readNodesMax;
     }
     if (updateReadBatcher) reader.setParams(max, readTimeoutMin, readTimeoutMax);
 
     if (connectInfo.nMaxOperationsPerServiceCall > 0 && writeNodesMax > 0) {
-        max = std::min(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
+        max = std::min<unsigned int>(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
     } else {
         max = connectInfo.nMaxOperationsPerServiceCall + writeNodesMax;
     }
@@ -319,7 +319,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToRead.create(batch.size());
+    nodesToRead.create(static_cast<OpcUa_UInt32>(batch.size()));
     OpcUa_UInt32 i = 0;
     for (auto c : batch) {
         c->item->getNodeId().copyTo(&nodesToRead[i].NodeId);
@@ -374,7 +374,7 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToWrite.create(batch.size());
+    nodesToWrite.create(static_cast<OpcUa_UInt32>(batch.size()));
     OpcUa_UInt32 i = 0;
     for (auto c : batch) {
         c->item->getNodeId().copyTo(&nodesToWrite[i].NodeId);

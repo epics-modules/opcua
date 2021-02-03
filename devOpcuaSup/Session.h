@@ -15,6 +15,8 @@
 
 #include <string>
 
+#include <shareLib.h>
+
 namespace DevOpcua {
 
 /**
@@ -30,7 +32,7 @@ namespace DevOpcua {
  * and freeing all related resources on both server and client.
  */
 
-class Session
+class epicsShareClass Session
 {
 public:
     virtual ~Session() {}
