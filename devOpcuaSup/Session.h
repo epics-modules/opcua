@@ -231,6 +231,8 @@ protected:
             ioc = "ioc";
         iocname = ioc;
 
+        applicationUri = "urn:" + iocname + "@" + hostname + ":EPICS:IOC";
+
         if (securitySaveRejectedDir.empty())
             securitySaveRejectedDir = "/tmp/" + iocname + "@" + hostname;
 
@@ -238,6 +240,7 @@ protected:
 
     static std::string hostname;
     static std::string iocname;
+    static std::string applicationUri;
     static std::string securityCertificateTrustListDir;  /**< trusted server certs location */
     static std::string
         securityCertificateRevocationListDir;            /**< server cert revocation lists location */

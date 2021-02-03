@@ -147,8 +147,7 @@ SessionUaSdk::SessionUaSdk(const std::string &name,
 {
     //TODO: allow overriding by env variable
     connectInfo.sApplicationName = "EPICS IOC";
-    connectInfo.sApplicationUri
-        = UaString("urn:%1@%2:EPICS:IOC").arg(iocname.c_str()).arg(hostname.c_str());
+    connectInfo.sApplicationUri  = UaString(applicationUri.c_str());
     connectInfo.sProductUri      = "urn:EPICS:IOC";
     connectInfo.sSessionName     = UaString(name.c_str());
 

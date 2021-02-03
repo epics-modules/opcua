@@ -125,6 +125,8 @@ Session::showClientSecurity()
     else
         std::cout << "\n  Rejected certificates are not saved.";
 
+    std::cout << "\nApplicationURI: " << applicationUri;
+
     if (securityInfo.clientCertificate.length() > 0) {
         UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.clientCertificate);
         UaPkiIdentity id = cert.subject();
@@ -222,6 +224,7 @@ opcuaGetDriverName ()
 
 std::string Session::hostname;
 std::string Session::iocname;
+std::string Session::applicationUri;
 std::string Session::securityCertificateTrustListDir;
 std::string Session::securityCertificateRevocationListDir;
 std::string Session::securityIssuersCertificatesDir;
