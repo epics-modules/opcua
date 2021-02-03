@@ -230,6 +230,10 @@ protected:
         if (!ioc)
             ioc = "ioc";
         iocname = ioc;
+
+        if (securitySaveRejectedDir.empty())
+            securitySaveRejectedDir = "/tmp/" + iocname + "@" + hostname;
+
     }
 
     static std::string hostname;
