@@ -316,6 +316,7 @@ private:
     /**
      * @brief Initialize global resources.
      */
+    #define HOST_NAME_MAX 512
     static void initOnce(void*);
 
     /**
