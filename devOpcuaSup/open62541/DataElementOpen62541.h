@@ -102,37 +102,37 @@ inline bool isWithinRange (const FROM &value) {
 // Specializations for unsigned to signed to avoid compiler warnings
 template<>
 inline bool isWithinRange<UA_SByte, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > static_cast<UA_UInt32>(std::numeric_limits<UA_SByte>::max()));
+    return !(value > (UA_UInt32)(std::numeric_limits<UA_SByte>::max));
 }
 
 template<>
 inline bool isWithinRange<UA_Int16, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > static_cast<UA_UInt32>(std::numeric_limits<UA_Int16>::max()));
+    return !(value > (UA_UInt32)(std::numeric_limits<UA_Int16>::max));
 }
 
 template<>
 inline bool isWithinRange<UA_Int32, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > static_cast<UA_UInt32>(std::numeric_limits<UA_Int32>::max()));
+    return !(value > (UA_UInt32)(std::numeric_limits<UA_Int32>::max));
 }
 
 template<>
 inline bool isWithinRange<UA_SByte, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_SByte>::max()));
+    return !(value > (UA_UInt64)(std::numeric_limits<UA_SByte>::max));
 }
 
 template<>
 inline bool isWithinRange<UA_Int16, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_Int16>::max()));
+    return !(value > (UA_UInt64)(std::numeric_limits<UA_Int16>::max));
 }
 
 template<>
 inline bool isWithinRange<UA_Int32, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_Int32>::max()));
+    return !(value > (UA_UInt64)(std::numeric_limits<UA_Int32>::max));
 }
 
 template<>
 inline bool isWithinRange<UA_Int64, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > static_cast<UA_UInt64>(std::numeric_limits<UA_Int64>::max()));
+    return !(value > (UA_UInt64)(std::numeric_limits<UA_Int64>::max));
 }
 
 //template<>                                                                                                      // same as bool isWithinRange<UA_Uint32, epicsUInt64>(const epicsUInt64 &value)
