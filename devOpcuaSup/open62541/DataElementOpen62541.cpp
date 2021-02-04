@@ -409,6 +409,7 @@ DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
         if (reason == ProcessReason::incomingData || reason == ProcessReason::readComplete) {
             UA_Variant &data = upd->getData();
             UA_String datastring;
+            UA_String_init(&datastring);
             UA_print(&data, data.type, &datastring);
             std::cout << "(" << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device")
                       << " time " << time_buf << ") read " << processReasonString(reason) << " ("
@@ -519,6 +520,7 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                     strncpy(value, reinterpret_cast<char*>(static_cast<UA_String *>(data.data)->data), num);
                 } else {
                     UA_String datastring;
+                    UA_String_init(&datastring);
                     UA_print(&data, data.type, &datastring);
                     strncpy(value, reinterpret_cast<char*>(datastring.data), num);
                     UA_String_clear(&datastring);
@@ -796,10 +798,11 @@ DataElementOpen62541::dbgWriteScalar () const
 {
     if (isLeaf() && debug()) {
         UA_String datastring;
+        UA_String_init(&datastring);
         UA_print(&outgoingData, outgoingData.type, &datastring);
         std::cout << pconnector->getRecordName() << ": set outgoing data ("
                   << variantTypeString(outgoingData) << ") to value "
-                  << datastring.data;
+                  << datastring;
         UA_String_clear(&datastring);
     }
 }

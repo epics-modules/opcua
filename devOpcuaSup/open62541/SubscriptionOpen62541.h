@@ -145,22 +145,24 @@ public:
     void clear();
 
     // SubscriptionCallback interface
-/*
     void subscriptionStatusChanged(
-            UA_UInt32       clientSubscriptionHandle,
+            UA_UInt32       subscriptionId,
             UA_StatusCode   status
             );
-*/
+
+    void subscriptionInactive(
+            UA_UInt32       subscriptionId
+    );
 /*
     void dataChange(
-            UA_UInt32                  clientSubscriptionHandle,
+            UA_UInt32                  subscriptionId,
             const UaDataNotifications& dataNotifications,
             const UaDiagnosticInfos&   diagnosticInfos
             );
 */
 /*
     void newEvents(
-            UA_UInt32                   clientSubscriptionHandle,
+            UA_UInt32                   subscriptionId,
             UaEventFieldLists&          eventFieldList
             );
 */

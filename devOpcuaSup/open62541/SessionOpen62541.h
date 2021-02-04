@@ -35,6 +35,24 @@ class ItemOpen62541;
 struct WriteRequest;
 struct ReadRequest;
 
+// some helpers
+inline const char* toStr(const UA_String& ua_string) {
+    return reinterpret_cast<char*>(ua_string.data);
+}
+
+inline std::ostream& operator<<(std::ostream& os, const UA_String& ua_string) {
+    return os << ua_string.data;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const UA_NodeId& ua_nodeId) {
+    UA_String s;
+    UA_String_init(&s);
+    UA_NodeId_print(&ua_nodeId, &s);
+    os << s.data;
+    UA_String_clear(&s);
+    return os;
+}
+
 /**
  * @brief The SessionOpen62541 implementation of an open62541 client session.
  *
@@ -200,7 +218,6 @@ public:
      */
     void removeItemOpen62541(ItemOpen62541 *item);
 
- private:
     /**
      * @brief Map namespace index (local -> server)
      *
@@ -210,6 +227,7 @@ public:
      */
     UA_UInt16 mapNamespaceIndex(const UA_UInt16 nsIndex) const;
 
+ private:
     /**
      * @brief EPICS IOC Database initHook function.
      *

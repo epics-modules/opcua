@@ -115,8 +115,14 @@ SubscriptionOpen62541::getSessionOpen62541 () const
 void
 SubscriptionOpen62541::create ()
 {
-    subscriptionSettings = UA_Client_Subscriptions_create(psessionuasdk->client, requestedSettings,
-                                                                            NULL, NULL, NULL);
+    errlogPrintf("SubscriptionOpen62541::create %s on session %s\n", name.c_str(), psessionuasdk->getName().c_str());
+
+    subscriptionSettings = UA_Client_Subscriptions_create(psessionuasdk->client,
+        requestedSettings, this, [] (UA_Client *client, UA_UInt32 subscriptionId,
+            void *context, UA_StatusChangeNotification *notification) {
+                static_cast<SubscriptionOpen62541*>(context)->
+                    subscriptionStatusChanged(subscriptionId, notification->status);
+            }, NULL);
     if (subscriptionSettings.responseHeader.serviceResult != UA_STATUSCODE_GOOD) {
         errlogPrintf("OPC UA subscription %s: createSubscription on session %s failed (%s)\n",
                     name.c_str(), psessionuasdk->getName().c_str(),
@@ -129,68 +135,64 @@ SubscriptionOpen62541::create ()
     }
 }
 
+static void UA_dataChange(UA_Client *client, UA_UInt32 subId, void *subContext,
+                         UA_UInt32 monId, void *monContext, UA_DataValue *value)
+{
+    errlogPrintf("data changed subId=%u subContext=%p, monId=%u, monContext=%p, value at %p\n",
+        subId, subContext, monId, monContext, value);
+}
+
 void
 SubscriptionOpen62541::addMonitoredItems ()
 {
-    UA_StatusCode status;
-//    ServiceSettings serviceSettings;
     UA_UInt32 i;
-//    UaMonitoredItemCreateRequests monitoredItemCreateRequests;
-//    UaMonitoredItemCreateResults monitoredItemCreateResults;
+    UA_MonitoredItemCreateRequest monitoredItemCreateRequest;
+    UA_MonitoredItemCreateResult monitoredItemCreateResult;
+
+    errlogPrintf("SubscriptionOpen62541::addMonitoredItems [%zu]\n", items.size());
 
     if (items.size()) {
-/*
-        monitoredItemCreateRequests.create(static_cast<UA_UInt32>(items.size()));
         i = 0;
         for (auto &it : items) {
-            it->getNodeId().copyTo(&monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
-            monitoredItemCreateRequests[i].ItemToMonitor.AttributeId = OpcUa_Attributes_Value;
-            monitoredItemCreateRequests[i].MonitoringMode = OpcUa_MonitoringMode_Reporting;
-            monitoredItemCreateRequests[i].RequestedParameters.ClientHandle = i;
-            monitoredItemCreateRequests[i].RequestedParameters.SamplingInterval = it->linkinfo.samplingInterval;
-            monitoredItemCreateRequests[i].RequestedParameters.QueueSize = it->linkinfo.queueSize;
-            monitoredItemCreateRequests[i].RequestedParameters.DiscardOldest = it->linkinfo.discardOldest;
+            UA_MonitoredItemCreateRequest_init(&monitoredItemCreateRequest);
+            monitoredItemCreateRequest.itemToMonitor.nodeId = it->getNodeId();
+            monitoredItemCreateRequest.itemToMonitor.attributeId = UA_ATTRIBUTEID_VALUE;
+            monitoredItemCreateRequest.monitoringMode = UA_MONITORINGMODE_REPORTING;
+            monitoredItemCreateRequest.requestedParameters.clientHandle = i;
+            monitoredItemCreateRequest.requestedParameters.samplingInterval = it->linkinfo.samplingInterval;
+            monitoredItemCreateRequest.requestedParameters.queueSize = it->linkinfo.queueSize;
+            monitoredItemCreateRequest.requestedParameters.discardOldest = it->linkinfo.discardOldest;
+
+            monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
+                psessionuasdk->client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
+                monitoredItemCreateRequest,
+                nullptr, UA_dataChange, nullptr);
+
+            if (monitoredItemCreateResult.statusCode == UA_STATUSCODE_GOOD) {
+                items[i]->setRevisedSamplingInterval(monitoredItemCreateResult.revisedSamplingInterval);
+                items[i]->setRevisedQueueSize(monitoredItemCreateResult.revisedQueueSize);
+            }
+            if (debug >= 5) {
+                if (monitoredItemCreateResult.statusCode == UA_STATUSCODE_GOOD)
+                    std::cout << "** Monitored item " << monitoredItemCreateRequest.itemToMonitor.nodeId
+                              << " succeeded with id " << monitoredItemCreateResult.monitoredItemId
+                              << " revised sampling interval " << monitoredItemCreateResult.revisedSamplingInterval
+                              << " revised queue size " << monitoredItemCreateResult.revisedQueueSize
+                              << std::endl;
+                else
+                    std::cout << "** Monitored item " << monitoredItemCreateRequest.itemToMonitor.nodeId
+                              << " failed with error "
+                              << UA_StatusCode_name(monitoredItemCreateResult.statusCode)
+                              << std::endl;
+            }
             i++;
         }
-        status = puasubscription->createMonitoredItems(
-                    serviceSettings,               // Use default settings
-                    OpcUa_TimestampsToReturn_Both, // Select timestamps to return
-                    monitoredItemCreateRequests,   // monitored items to create
-                    monitoredItemCreateResults);   // Returned monitored items create result
-*/
-
-        if (UA_STATUS_IS_BAD(status)) {
-            errlogPrintf("OPC UA subscription %s@%s: createMonitoredItems failed with status %s\n",
-                         name.c_str(), psessionuasdk->getName().c_str(), UA_StatusCode_name(status));
-        } else {
-            for (i = 0; i < items.size(); i++) {
-//                items[i]->setRevisedSamplingInterval(monitoredItemCreateResults[i].RevisedSamplingInterval);
-//                items[i]->setRevisedQueueSize(monitoredItemCreateResults[i].RevisedQueueSize);
-            }
-            if (debug)
-                std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
-                          << ": created " << items.size() << " monitored items ("
-                          << UA_StatusCode_name(status) << ")" << std::endl;
-            if (debug >= 5) {
-                for (i = 0; i < items.size(); i++) {
-/*
-                    UaNodeId node(monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
-                    if (!UA_STATUS_IS_BAD(monitoredItemCreateResults[i].StatusCode))
-                        std::cout << "** Monitored item " << node.toXmlString().toUtf8()
-                                  << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
-                                  << " revised sampling interval " << monitoredItemCreateResults[i].RevisedSamplingInterval
-                                  << " revised queue size " << monitoredItemCreateResults[i].RevisedQueueSize
-                                  << std::endl;
-                    else
-                        std::cout << "** Monitored item " << node.toXmlString().toUtf8()
-                                  << " failed with error "
-                                  << UA_StatusCode_name(monitoredItemCreateResults[i].StatusCode)
-                                  << std::endl;
-*/
-                }
-            }
-        }
+        if (debug)
+            std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
+                      << ": created " << items.size() << " monitored items ("
+                      << UA_StatusCode_name(monitoredItemCreateResult.statusCode) << ")" << std::endl;
     }
+    errlogPrintf("SubscriptionOpen62541::addMonitoredItems DONE\n");
 }
 
 void
@@ -216,12 +218,20 @@ SubscriptionOpen62541::removeItemOpen62541 (ItemOpen62541 *item)
 
 // UaSubscriptionCallback interface
 
-/*
 void
-SubscriptionOpen62541::subscriptionStatusChanged (UA_UInt32 clientSubscriptionHandle,
+SubscriptionOpen62541::subscriptionInactive(UA_UInt32 subscriptionId)
+{
+    errlogPrintf("Subscription %s=%u inactive\n",
+        name.c_str(), subscriptionId);
+}
+
+void
+SubscriptionOpen62541::subscriptionStatusChanged (UA_UInt32 subscriptionId,
                                               UA_StatusCode status)
-{}
-*/
+{
+    errlogPrintf("Subscription %s=%u status changed to %s\n",
+        name.c_str(), subscriptionId, UA_StatusCode_name(status));
+}
 
 /*
 void
