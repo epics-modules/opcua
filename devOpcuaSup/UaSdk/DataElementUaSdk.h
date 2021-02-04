@@ -14,11 +14,6 @@
 #ifndef DEVOPCUA_DATAELEMENTUASDK_H
 #define DEVOPCUA_DATAELEMENTUASDK_H
 
-// Avoid problems on Windows (macros min, max clash with numeric_limits<>)
-#ifdef _WIN32
-#  define NOMINMAX
-#endif
-
 #include <unordered_map>
 #include <limits>
 
