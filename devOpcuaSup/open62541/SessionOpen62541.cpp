@@ -11,9 +11,6 @@
  */
 
 #define epicsExportSharedSymbols
-#ifdef _WIN32
-#define MAXHOSTNAMELEN 256
-#endif
 
 #include <iostream>
 #include <string>
@@ -26,6 +23,7 @@
 #include <epicsExit.h>
 #include <epicsThread.h>
 #include <epicsAtomic.h>
+#include <osdSock.h>
 #include <initHooks.h>
 #include <errlog.h>
 
