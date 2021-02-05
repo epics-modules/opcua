@@ -1,7 +1,1 @@
-# Second-level dependencies of the UA SDK
-
-# the "vs2015" part depends on the UASDK version
-USR_LDFLAGS_WIN32 += /LIBPATH:$(UASDK)/third-party/win64/vs2015/libxml2/out32dll
-USR_LDFLAGS_WIN32 += /LIBPATH:$(UASDK)/third-party/win64/vs2015/openssl/out32dll
-
-USR_SYS_LIBS_WIN32 += ssleay32 libeay32 crypt32 libxml2 oleaut32 ole32 ws2_32
+include $(TOP)/configure/CONFIG_SITE.Common.win32-x86

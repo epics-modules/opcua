@@ -47,7 +47,7 @@ TEST(RangeCheckTest, ToSByte) {
     EXPECT_FALSE(isWithinRange<OpcUa_SByte>(static_cast<epicsUInt32>(128))) << "SByte<-UInt32: 128 not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_SByte>(static_cast<epicsUInt32>(4294967295))) << "SByte<-UInt32: MAX (2^32-1) not detected as out of range";
 
-    EXPECT_FALSE(isWithinRange<OpcUa_SByte>(static_cast<epicsInt32>(-2147483648))) << "SByte<-Int32: MIN (-2^31) not detected as out of range";
+    EXPECT_FALSE(isWithinRange<OpcUa_SByte>(static_cast<epicsInt32>(-2147483648ll))) << "SByte<-Int32: MIN (-2^31) not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_SByte>(static_cast<epicsInt32>(-129))) << "SByte<-Int32: -129 not detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_SByte>(static_cast<epicsInt32>(-128))) << "SByte<-Int32: -128 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_SByte>(static_cast<epicsInt32>(0))) << "SByte<-Int32: 0 detected as out of range";
@@ -115,7 +115,7 @@ TEST(RangeCheckTest, ToByte) {
     EXPECT_FALSE(isWithinRange<OpcUa_Byte>(static_cast<epicsUInt32>(256))) << "Byte<-UInt32: 256 not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_Byte>(static_cast<epicsUInt32>(4294967295))) << "Byte<-UInt32: MAX (2^32-1) not detected as out of range";
 
-    EXPECT_FALSE(isWithinRange<OpcUa_Byte>(static_cast<epicsInt32>(-2147483648))) << "Byte<-Int32: MIN (-2^31) not detected as out of range";
+    EXPECT_FALSE(isWithinRange<OpcUa_Byte>(static_cast<epicsInt32>(-2147483648ll))) << "Byte<-Int32: MIN (-2^31) not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_Byte>(static_cast<epicsInt32>(-1))) << "Byte<-Int32: -1 not detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Byte>(static_cast<epicsInt32>(0))) << "Byte<-Int32: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Byte>(static_cast<epicsInt32>(255))) << "Byte<-Int32: 255 detected as out of range";
@@ -175,7 +175,7 @@ TEST(RangeCheckTest, ToInt16) {
     EXPECT_FALSE(isWithinRange<OpcUa_Int16>(static_cast<epicsUInt32>(32768))) << "Int16<-UInt32: 32768 not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_Int16>(static_cast<epicsUInt32>(4294967295))) << "Int16<-UInt32: MAX (2^32-1) not detected as out of range";
 
-    EXPECT_FALSE(isWithinRange<OpcUa_Int16>(static_cast<epicsInt32>(-2147483648))) << "Int16<-Int32: MIN (-2^31) not detected as out of range";
+    EXPECT_FALSE(isWithinRange<OpcUa_Int16>(static_cast<epicsInt32>(-2147483648ll))) << "Int16<-Int32: MIN (-2^31) not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_Int16>(static_cast<epicsInt32>(-32769))) << "Int16<-Int32: -32769 not detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int16>(static_cast<epicsInt32>(-32768))) << "Int16<-Int32: -32768 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int16>(static_cast<epicsInt32>(0))) << "Int16<-Int32: 0 detected as out of range";
@@ -240,7 +240,7 @@ TEST(RangeCheckTest, ToUInt16) {
     EXPECT_FALSE(isWithinRange<OpcUa_UInt16>(static_cast<epicsUInt32>(65536))) << "UInt16<-UInt32: 65536 not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_UInt16>(static_cast<epicsUInt32>(4294967295))) << "UInt16<-UInt32: MAX (2^32-1) not detected as out of range";
 
-    EXPECT_FALSE(isWithinRange<OpcUa_UInt16>(static_cast<epicsInt32>(-2147483648))) << "UInt16<-Int32: MIN (-2^31) not detected as out of range";
+    EXPECT_FALSE(isWithinRange<OpcUa_UInt16>(static_cast<epicsInt32>(-2147483648ll))) << "UInt16<-Int32: MIN (-2^31) not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_UInt16>(static_cast<epicsInt32>(-1))) << "UInt16<-Int32: -1 not detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_UInt16>(static_cast<epicsInt32>(0))) << "UInt16<-Int32: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_UInt16>(static_cast<epicsInt32>(65535))) << "UInt16<-Int32: 65535 detected as out of range";
@@ -299,7 +299,7 @@ TEST(RangeCheckTest, ToInt32) {
     EXPECT_FALSE(isWithinRange<OpcUa_Int32>(static_cast<epicsUInt32>(2147483648))) << "Int32<-UInt32: 2^31 not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_Int32>(static_cast<epicsUInt32>(4294967295))) << "Int32<-UInt32: MAX (2^32-1) not detected as out of range";
 
-    EXPECT_TRUE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt32>(-2147483648))) << "Int32<-Int32: MIN (-2^31) detected as out of range";
+    EXPECT_TRUE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt32>(-2147483648ll))) << "Int32<-Int32: MIN (-2^31) detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt32>(0))) << "Int32<-Int32: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt32>(2147483647))) << "Int32<-Int32: MAX (2^31-1) detected as out of range";
 
@@ -309,8 +309,8 @@ TEST(RangeCheckTest, ToInt32) {
     EXPECT_FALSE(isWithinRange<OpcUa_Int32>(static_cast<epicsUInt64>(18446744073709551615ull))) << "Int32<-UInt64: MAX (2^64-1) not detected as out of range";
 
     EXPECT_FALSE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt64>(-9223372036854775807ll-1))) << "Int32<-Int64: MIN (-2^63) not detected as out of range";
-    EXPECT_FALSE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt64>(-2147483649))) << "Int32<-Int64: -2^31-1 not detected as out of range";
-    EXPECT_TRUE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt64>(-2147483648))) << "Int32<-Int64: -2^31 detected as out of range";
+    EXPECT_FALSE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt64>(-2147483649ll))) << "Int32<-Int64: -2^31-1 not detected as out of range";
+    EXPECT_TRUE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt64>(-2147483648ll))) << "Int32<-Int64: -2^31 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt64>(0))) << "Int32<-Int64: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt64>(2147483647))) << "Int32<-Int64: 2^31-1 detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_Int32>(static_cast<epicsInt64>(2147483648))) << "Int32<-Int64: 2^31 not detected as out of range";
@@ -361,7 +361,7 @@ TEST(RangeCheckTest, ToUInt32) {
     EXPECT_TRUE(isWithinRange<OpcUa_UInt32>(static_cast<epicsUInt32>(65536))) << "UInt32<-UInt32: 65536 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_UInt32>(static_cast<epicsUInt32>(4294967295))) << "UInt32<-UInt32: MAX (2^32-1) detected as out of range";
 
-    EXPECT_FALSE(isWithinRange<OpcUa_UInt32>(static_cast<epicsInt32>(-2147483648))) << "UInt32<-Int32: MIN (-2^31) not detected as out of range";
+    EXPECT_FALSE(isWithinRange<OpcUa_UInt32>(static_cast<epicsInt32>(-2147483648ll))) << "UInt32<-Int32: MIN (-2^31) not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_UInt32>(static_cast<epicsInt32>(-1))) << "UInt32<-Int32: -1 not detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_UInt32>(static_cast<epicsInt32>(0))) << "UInt32<-Int32: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_UInt32>(static_cast<epicsInt32>(65536))) << "UInt32<-Int32: 65536 detected as out of range";
@@ -419,7 +419,7 @@ TEST(RangeCheckTest, ToInt64) {
     EXPECT_TRUE(isWithinRange<OpcUa_Int64>(static_cast<epicsUInt32>(2147483648))) << "Int64<-UInt32: 2^31 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int64>(static_cast<epicsUInt32>(4294967295))) << "Int64<-UInt32: MAX (2^32-1) detected as out of range";
 
-    EXPECT_TRUE(isWithinRange<OpcUa_Int64>(static_cast<epicsInt64>(-2147483648))) << "Int64<-Int64: MIN (-2^31) detected as out of range";
+    EXPECT_TRUE(isWithinRange<OpcUa_Int64>(static_cast<epicsInt64>(-2147483648ll))) << "Int64<-Int64: MIN (-2^31) detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int64>(static_cast<epicsInt64>(0))) << "Int64<-Int64: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Int64>(static_cast<epicsInt64>(2147483647))) << "Int64<-Int64: MAX (2^31-1) detected as out of range";
 
@@ -479,7 +479,7 @@ TEST(RangeCheckTest, ToUInt64) {
     EXPECT_TRUE(isWithinRange<OpcUa_UInt64>(static_cast<epicsUInt32>(65536))) << "UInt64<-UInt32: 65536 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_UInt64>(static_cast<epicsUInt32>(4294967295))) << "UInt64<-UInt32: MAX (2^32-1) detected as out of range";
 
-    EXPECT_FALSE(isWithinRange<OpcUa_UInt64>(static_cast<epicsInt32>(-2147483648))) << "UInt64<-Int32: MIN (-2^31) not detected as out of range";
+    EXPECT_FALSE(isWithinRange<OpcUa_UInt64>(static_cast<epicsInt32>(-2147483648ll))) << "UInt64<-Int32: MIN (-2^31) not detected as out of range";
     EXPECT_FALSE(isWithinRange<OpcUa_UInt64>(static_cast<epicsInt32>(-1))) << "UInt64<-Int32: -1 not detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_UInt64>(static_cast<epicsInt32>(0))) << "UInt64<-Int32: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_UInt64>(static_cast<epicsInt32>(2147483647))) << "UInt64<-Int32: MAX (2^31-1) detected as out of range";
@@ -534,7 +534,7 @@ TEST(RangeCheckTest, ToFloat) {
     EXPECT_TRUE(isWithinRange<OpcUa_Float>(static_cast<epicsUInt32>(2147483648))) << "Float<-UInt32: 2^31 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Float>(static_cast<epicsUInt32>(4294967295))) << "Float<-UInt32: MAX (2^32-1) detected as out of range";
 
-    EXPECT_TRUE(isWithinRange<OpcUa_Float>(static_cast<epicsInt64>(-2147483648))) << "Float<-Int64: MIN (-2^31) detected as out of range";
+    EXPECT_TRUE(isWithinRange<OpcUa_Float>(static_cast<epicsInt64>(-2147483648ll))) << "Float<-Int64: MIN (-2^31) detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Float>(static_cast<epicsInt64>(0))) << "Float<-Int64: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Float>(static_cast<epicsInt64>(2147483647))) << "Float<-Int64: MAX (2^31-1) detected as out of range";
 
@@ -581,7 +581,7 @@ TEST(RangeCheckTest, ToDouble) {
     EXPECT_TRUE(isWithinRange<OpcUa_Double>(static_cast<epicsUInt32>(2147483648))) << "Double<-UInt32: 2^31 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Double>(static_cast<epicsUInt32>(4294967295))) << "Double<-UInt32: MAX (2^32-1) detected as out of range";
 
-    EXPECT_TRUE(isWithinRange<OpcUa_Double>(static_cast<epicsInt64>(-2147483648))) << "Double<-Int64: MIN (-2^31) detected as out of range";
+    EXPECT_TRUE(isWithinRange<OpcUa_Double>(static_cast<epicsInt64>(-2147483648ll))) << "Double<-Int64: MIN (-2^31) detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Double>(static_cast<epicsInt64>(0))) << "Double<-Int64: 0 detected as out of range";
     EXPECT_TRUE(isWithinRange<OpcUa_Double>(static_cast<epicsInt64>(2147483647))) << "Double<-Int64: MAX (2^31-1) detected as out of range";
 

@@ -8,6 +8,8 @@
 to the OPC UA protocol. The architecture allows supporting different
 implementations of the low level client library.
 
+Linux and Windows builds are supported.
+
 ## Status
 
 :warning:
@@ -21,7 +23,9 @@ The second one one is the open source implementation open62541.
 
 ## Prerequisites
 
-*   A C++ compiler that supports the C++11 standard.
+*   A C++ compiler that supports the C++11 standard. \
+    Microsoft Visual C++ needs to be from Visual Studio 2015 or newer.
+    g++ needs to be 4.6 or above.
 
 *   [EPICS Base](https://epics-controls.org/resources-and-support/base/)
     3.15.5 (and up; EPICS 7 is supported).
@@ -32,11 +36,11 @@ The second one one is the open source implementation open62541.
 ### Using the Unified Automation Client SDK
 
 *   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk]
-    (1.5/1.6/1.7 are supported, as well as their evaluation bundle).
+    (1.5/1.6/1.7 are supported, as well as their evaluation bundles).
 
 *   For OPC UA security support (authentication/encryption), you need
-    libcrypto on your system - both when compiling the SDK and when generating
-    any binaries (IOCs).
+    openssl/libcrypto on your system - both when compiling the SDK and when
+    generating any binaries (IOCs).
 
 *  In `CONFIG_SITE.local`, set `UASDK` to the path of the SDK installation.
 
@@ -100,8 +104,9 @@ Please use the GitHub project's
 
 This module is based on extensive
 [prototype work](https://github.com/bkuner/opcUaUnifiedAutomation)
-by Bernhard Kuner (HZB/BESSY II) and uses ideas and code snippets from
+by Bernhard Kuner (HZB/BESSY) and uses ideas and code snippets from
 Michael Davidsaver (Osprey DCS).
+Additional help from Carsten Winkler (HZB/BESSY).
 
 ## License
 

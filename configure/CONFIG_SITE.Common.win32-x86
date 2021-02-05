@@ -1,7 +1,21 @@
+# Windows builds define NOMINMAX (macros min, max clash with numeric_limits<>)
+USR_CXXFLAGS_WIN32 += -DNOMINMAX
+
 # Second-level dependencies of the UA SDK
 
-# the "vs2015" part depends on the UASDK version
-USR_LDFLAGS_WIN32 += /LIBPATH:$(UASDK)/third-party/win32/vs2015/libxml2/out32dll
-USR_LDFLAGS_WIN32 += /LIBPATH:$(UASDK)/third-party/win32/vs2015/openssl/out32dll
+# Different UASDK bundles have third-party modules in different locations
+# and different versions of the openssl library with different library names
 
-USR_SYS_LIBS_WIN32 += ssleay32 libeay32 crypt32 libxml2 oleaut32 ole32 ws2_32
+UASDK_3RDPARTY = $(firstword $(wildcard $(UASDK)/third-party/win64/vs2015 \
+$(UASDK)/third-party/win32/vs2015))
+
+UASDK_CRYPTO_LIBS = $(patsubst %.dll,%$(D),$(notdir $(wildcard \
+$(UASDK_3RDPARTY)/openssl/out32dll/libssl.dll \
+$(UASDK_3RDPARTY)/openssl/out32dll/libcrypto.dll \
+$(UASDK_3RDPARTY)/openssl/out32dll/ssleay32.dll \
+$(UASDK_3RDPARTY)/openssl/out32dll/libeay32.dll)))
+
+USR_LDFLAGS_WIN32 += /LIBPATH:$(UASDK_3RDPARTY)/openssl/out32dll$(D_DIR)
+USR_LDFLAGS_WIN32 += /LIBPATH:$(UASDK_3RDPARTY)/libxml2/out32dll$(D_DIR)
+USR_INCLUDES_WIN32 += -I$(UASDK_3RDPARTY)/openssl/inc32 -I$(UASDK_3RDPARTY)/libxml2/include
+USR_SYS_LIBS_WIN32 += $(UASDK_CRYPTO_LIBS) libxml2$(D) oleaut32 ole32 ws2_32

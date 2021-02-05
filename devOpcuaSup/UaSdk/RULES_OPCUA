@@ -1,5 +1,5 @@
 #*************************************************************************
-# Copyright (c) 2018 ITER Organization.
+# Copyright (c) 2018-2021 ITER Organization.
 # This module is distributed subject to a Software License Agreement found
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
@@ -33,15 +33,21 @@ ifeq ($(UASDK_USE_CRYPTO),YES)
 USR_SYS_LIBS_Linux += crypto
 endif
 
+# Debug builds need the d-marker to be set
 # Depending on SDK version, C++ modules may have a 'cpp' suffix
-UASDK_LIBS = $(notdir $(foreach module, $(UASDK_MODULES), \
-$(firstword $(wildcard $(UASDK)/include/$(module)cpp $(UASDK)/include/$(module)))))
+ifeq ($(HOST_OPT),NO)
+D_MARKER = d
+endif
+UASDK_MODS = $(notdir $(foreach module, $(UASDK_MODULES), \
+$(firstword $(wildcard $(UASDK)/include/$(module)cpp \
+$(UASDK)/include/$(module)))))
+UASDK_LIBS = $(addsuffix $(D_MARKER), $(UASDK_MODS))
 
 ifdef OPCUA_NEEDS_INCLUDES
 USR_INCLUDES += -I$(UASDK)/include
-USR_INCLUDES += $(foreach lib, $(UASDK_LIBS),-I$(UASDK)/include/$(lib))
+USR_INCLUDES += $(foreach lib, $(UASDK_MODS),-I$(UASDK)/include/$(lib))
 # SDK libraries are not built with correct RUNPATH - rely on executable
-USR_LDFLAGS += -Wl,--disable-new-dtags
+USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
 endif
 
 ifeq ($(UASDK_DEPLOY_MODE),SYSTEM)

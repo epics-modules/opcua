@@ -17,6 +17,7 @@
 #include <map>
 
 #include <epicsTypes.h>
+#include <shareLib.h>
 
 namespace DevOpcua {
 
@@ -28,7 +29,7 @@ class Session;
  * The interface provides all subscription related UA services.
  */
 
-class Subscription
+class epicsShareClass Subscription
 {
 public:
     virtual ~Subscription();
