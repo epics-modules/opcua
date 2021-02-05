@@ -153,13 +153,16 @@ public:
     void subscriptionInactive(
             UA_UInt32       subscriptionId
     );
-/*
+
     void dataChange(
-            UA_UInt32                  subscriptionId,
-            const UaDataNotifications& dataNotifications,
-            const UaDiagnosticInfos&   diagnosticInfos
+            UA_UInt32       subscriptionId,
+            UA_UInt32       monitorId,
+            ItemOpen62541   &item,
+            UA_DataValue    *value
+//            const UaDataNotifications& dataNotifications,
+//            const UaDiagnosticInfos&   diagnosticInfos
             );
-*/
+
 /*
     void newEvents(
             UA_UInt32                   subscriptionId,

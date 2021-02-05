@@ -133,13 +133,6 @@ SubscriptionOpen62541::create ()
     }
 }
 
-static void UA_dataChange(UA_Client *client, UA_UInt32 subId, void *subContext,
-                         UA_UInt32 monId, void *monContext, UA_DataValue *value)
-{
-    errlogPrintf("data changed subId=%u subContext=%p, monId=%u, monContext=%p, value at %p\n",
-        subId, subContext, monId, monContext, value);
-}
-
 void
 SubscriptionOpen62541::addMonitoredItems ()
 {
@@ -147,7 +140,7 @@ SubscriptionOpen62541::addMonitoredItems ()
     UA_MonitoredItemCreateRequest monitoredItemCreateRequest;
     UA_MonitoredItemCreateResult monitoredItemCreateResult;
 
-    errlogPrintf("SubscriptionOpen62541::addMonitoredItems [%zu]\n", items.size());
+    errlogPrintf("SubscriptionOpen62541::addMonitoredItems [%zu] (this=%p)\n", items.size(), this);
 
     if (items.size()) {
         i = 0;
@@ -160,11 +153,15 @@ SubscriptionOpen62541::addMonitoredItems ()
             monitoredItemCreateRequest.requestedParameters.samplingInterval = it->linkinfo.samplingInterval;
             monitoredItemCreateRequest.requestedParameters.queueSize = it->linkinfo.queueSize;
             monitoredItemCreateRequest.requestedParameters.discardOldest = it->linkinfo.discardOldest;
+            errlogPrintf("SubscriptionOpen62541::addMonitoredItems Item %u @ %p\n", i, items[i]);
 
             monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
                 session.client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
-                monitoredItemCreateRequest,
-                nullptr, UA_dataChange, nullptr);
+                monitoredItemCreateRequest, items[i], [] (UA_Client *client, UA_UInt32 subId, void *subContext,
+                         UA_UInt32 monId, void *monContext, UA_DataValue *value) {
+                            static_cast<SubscriptionOpen62541*>(subContext)->
+                                dataChange(subId, monId, *static_cast<ItemOpen62541*>(monContext), value);
+                         }, nullptr /* deleteCallback */);
 
             if (monitoredItemCreateResult.statusCode == UA_STATUSCODE_GOOD) {
                 items[i]->setRevisedSamplingInterval(monitoredItemCreateResult.revisedSamplingInterval);
@@ -231,39 +228,47 @@ SubscriptionOpen62541::subscriptionStatusChanged (UA_UInt32 subscriptionId,
         name.c_str(), subscriptionId, UA_StatusCode_name(status));
 }
 
+
+
 /*
-void
-SubscriptionOpen62541::dataChange (UA_UInt32 clientSubscriptionHandle,
-                               const UaDataNotifications& dataNotifications,
-                               const UaDiagnosticInfos&   diagnosticInfos)
+static void UA_dataChange(UA_Client *client, UA_UInt32 subId, void *subContext,
+                         UA_UInt32 monId, void *monContext, UA_DataValue *value)
 {
-    UA_UInt32 i;
-
-    if (debug)
-        std::cout << "Subscription " << name.c_str()
-                  << "@" << session.getName()
-                  << ": (dataChange) getting data for "
-                  << dataNotifications.length() << " items" << std::endl;
-
-    for (i = 0; i < dataNotifications.length(); i++) {
-        ItemOpen62541 *item = items[dataNotifications[i].ClientHandle];
-        if (debug >= 5) {
-            std::cout << "** Subscription " << name.c_str()
-                      << "@" << session.getName()
-                      << ": (dataChange) getting data for item " << dataNotifications[i].ClientHandle
-                      << " (" << item->getNodeId().toXmlString().toUtf8();
-            if (item->isRegistered() && ! item->linkinfo.identifierIsNumeric)
-                std::cout << "/" << item->linkinfo.identifierString;
-            std::cout << ")" << std::endl;
-        }
-        item->setIncomingData(dataNotifications[i].Value, ProcessReason::incomingData);
-    }
+    errlogPrintf("data changed subId=%u subContext=%p, monId=%u, monContext=%p, value at %p\n",
+        subId, subContext, monId, monContext, value);
 }
 */
 
+void
+SubscriptionOpen62541::dataChange (UA_UInt32 subscriptionId, UA_UInt32 monitorId, ItemOpen62541 &item, UA_DataValue *value)
+//                               const UaDataNotifications& dataNotifications,
+//                               const UaDiagnosticInfos&   diagnosticInfos)
+{
+//    UA_UInt32 i;
+    if (debug)
+        std::cout << "Subscription " << name.c_str()
+                  << "@" << session.getName()
+                  << ": (dataChange) getting data for item " << monitorId
+                  << "node" << item.getNodeId()
+                  << std::endl;
+//    for (i = 0; i < dataNotifications.length(); i++) {
+        if (debug >= 5) {
+            std::cout << "** Subscription " << name.c_str()
+                      << "@" << session.getName()
+                      << ": (dataChange) getting data for item " << monitorId
+                      << " (" << item.getNodeId();
+            if (item.isRegistered() && ! item.linkinfo.identifierIsNumeric)
+                std::cout << "/" << item.linkinfo.identifierString;
+            std::cout << ")" << std::endl;
+        }
+        item.setIncomingData(*value, ProcessReason::incomingData);
+//    }
+}
+
+
 /*
 void
-SubscriptionOpen62541::newEvents (UA_UInt32 clientSubscriptionHandle,
+SubscriptionOpen62541::newEvents (UA_UInt32 subscriptionId,
                               UaEventFieldLists& eventFieldList)
 {}
 */
