@@ -27,7 +27,7 @@ Subscription::createSubscription (const std::string &name, const std::string &se
                                   const double publishingInterval, const epicsUInt8 priority,
                                   const int debug)
 {
-    new SubscriptionOpen62541(name, &(SessionOpen62541::findSession(session)),
+    new SubscriptionOpen62541(name, SessionOpen62541::findSession(session),
                           publishingInterval, priority, debug);
 }
 

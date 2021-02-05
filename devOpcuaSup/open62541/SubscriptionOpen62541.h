@@ -44,7 +44,7 @@ public:
      * @param priority  priority (default 0=lowest)
      * @param debug  debug verbosity (default 0=no debug)
      */
-    SubscriptionOpen62541(const std::string &name, SessionOpen62541 *session,
+    SubscriptionOpen62541(const std::string &name, SessionOpen62541 &session,
                       const double publishingInterval, const epicsUInt8 priority = 0,
                       const int debug = 0);
 
@@ -170,12 +170,11 @@ public:
 private:
     static std::map<std::string, SubscriptionOpen62541*> subscriptions;
 
-//    UaSubscription *puasubscription;            /**< pointer to low level subscription */
-    SessionOpen62541 *psessionuasdk;                /**< pointer to session */
-    std::vector<ItemOpen62541 *> items;             /**< items on this subscription */
+    SessionOpen62541 &session;                           /**< reference to session */
+    std::vector<ItemOpen62541 *> items;                  /**< items on this subscription */
     UA_CreateSubscriptionResponse subscriptionSettings;  /**< subscription specific settings */
     UA_CreateSubscriptionRequest requestedSettings;      /**< requested subscription specific settings */
-    bool enable;                                /**< subscription enable flag */
+    bool enable;                                         /**< subscription enable flag */
 };
 
 } // namespace DevOpcua

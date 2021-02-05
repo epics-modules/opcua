@@ -287,37 +287,37 @@ private:
 
     static std::map<std::string, SessionOpen62541 *> sessions;    /**< session management */
 
-    const std::string name;                                   /**< unique session name */
-    const std::string serverURL;                              /**< server URL */
-    bool autoConnect;                                         /**< auto (re)connect flag */
+    const std::string name;                         /**< unique session name */
+    const std::string serverURL;                    /**< server URL */
+    bool autoConnect;                               /**< auto (re)connect flag */
     std::map<std::string, SubscriptionOpen62541*> subscriptions;  /**< subscriptions on this session */
-    std::vector<ItemOpen62541 *> items;                           /**< items on this session */
-    UA_UInt32 registeredItemsNo;                           /**< number of registered items */
-    std::map<std::string, UA_UInt16> namespaceMap;         /**< local namespace map (URI->index) */
-    std::map<UA_UInt16, UA_UInt16> nsIndexMap;          /**< namespace index map (local->server-side) */
-//    UaSession* puasession;                                    /**< pointer to low level session */
-//    SessionConnectInfo connectInfo;                           /**< connection metadata */
-//    SessionSecurityInfo securityInfo;                         /**< security metadata */
-//    UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
+    std::vector<ItemOpen62541 *> items;             /**< items on this session */
+    UA_UInt32 registeredItemsNo;                    /**< number of registered items */
+    std::map<std::string, UA_UInt16> namespaceMap;  /**< local namespace map (URI->index) */
+    std::map<UA_UInt16, UA_UInt16> nsIndexMap;      /**< namespace index map (local->server-side) */
+//    UaSession* puasession;                          /**< pointer to low level session */
+//    SessionConnectInfo connectInfo;                 /**< connection metadata */
+//    SessionSecurityInfo securityInfo;               /**< security metadata */
+//    UaClient::ServerStatus serverConnectionStatus;  /**< connection status for this session */
 
-    int transactionId;                                        /**< next transaction id */
+    int transactionId;                              /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */
     std::map<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>> outstandingOps;
-    epicsMutex opslock;                                       /**< lock for outstandingOps map */
+    epicsMutex opslock;                             /**< lock for outstandingOps map */
 
-    RequestQueueBatcher<WriteRequest> writer;                 /**< batcher for write requests */
-    unsigned int writeNodesMax;                               /**< max number of nodes per write request */
-    unsigned int writeTimeoutMin;                             /**< timeout after write request batch of 1 node [ms] */
-    unsigned int writeTimeoutMax;                             /**< timeout after write request of NodesMax nodes [ms] */
-    RequestQueueBatcher<ReadRequest> reader;                  /**< batcher for read requests */
-    unsigned int readNodesMax;                                /**< max number of nodes per read request */
-    unsigned int readTimeoutMin;                              /**< timeout after read request batch of 1 node [ms] */
-    unsigned int readTimeoutMax;                              /**< timeout after read request batch of NodesMax nodes [ms] */
+    RequestQueueBatcher<WriteRequest> writer;       /**< batcher for write requests */
+    unsigned int writeNodesMax;                     /**< max number of nodes per write request */
+    unsigned int writeTimeoutMin;                   /**< timeout after write request batch of 1 node [ms] */
+    unsigned int writeTimeoutMax;                   /**< timeout after write request of NodesMax nodes [ms] */
+    RequestQueueBatcher<ReadRequest> reader;        /**< batcher for read requests */
+    unsigned int readNodesMax;                      /**< max number of nodes per read request */
+    unsigned int readTimeoutMin;                    /**< timeout after read request batch of 1 node [ms] */
+    unsigned int readTimeoutMax;                    /**< timeout after read request batch of NodesMax nodes [ms] */
 
     /** open62541 interfaces */
-    static UA_ClientConfig defaultClientConfig;               /**< configuration for each new session */
-    UA_Client *client;                                        /**< low level handle for this session */
-    epicsMutex clientlock;                                    /**< lock for client implementation */
+    static UA_ClientConfig defaultClientConfig;     /**< configuration for each new session */
+    UA_Client *client;                              /**< low level handle for this session */
+    epicsMutex clientlock;                          /**< lock for client implementation */
     UA_StatusCode connectStatus;
     UA_SecureChannelState channelState;
     UA_SessionState sessionState;

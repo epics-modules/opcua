@@ -28,12 +28,12 @@ namespace DevOpcua {
 
 std::map<std::string, SubscriptionOpen62541*> SubscriptionOpen62541::subscriptions;
 
-SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOpen62541 *session,
+SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOpen62541 &session,
                                       const double publishingInterval, const epicsUInt8 priority,
                                       const int debug)
     : Subscription(name, debug)
 //    , puasubscription(nullptr)
-    , psessionuasdk(session)
+    , session(session)
     //TODO: add runtime support for subscription enable/disable
     , requestedSettings(UA_CreateSubscriptionRequest_default())
     , enable(true)
@@ -45,14 +45,14 @@ SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOp
     requestedSettings.priority = priority;
 
     subscriptions[name] = this;
-    psessionuasdk->subscriptions[name] = this;
+    session.subscriptions[name] = this;
 }
 
 void
 SubscriptionOpen62541::show (int level) const
 {
     std::cout << "subscription=" << name
-              << " session="     << psessionuasdk->getName()
+              << " session="     << session.getName()
               << " interval="    << subscriptionSettings.revisedPublishingInterval
               << "("             << requestedSettings.requestedPublishingInterval  << ")"
               << " prio="        << static_cast<int>(requestedSettings.priority)
@@ -102,22 +102,22 @@ SubscriptionOpen62541::showAll (int level)
 Session &
 SubscriptionOpen62541::getSession () const
 {
-    return static_cast<Session &>(*psessionuasdk);
+    return static_cast<Session &>(session);
 }
 
 
 SessionOpen62541 &
 SubscriptionOpen62541::getSessionOpen62541 () const
 {
-    return *psessionuasdk;
+    return session;
 }
 
 void
 SubscriptionOpen62541::create ()
 {
-    errlogPrintf("SubscriptionOpen62541::create %s on session %s\n", name.c_str(), psessionuasdk->getName().c_str());
+    errlogPrintf("SubscriptionOpen62541::create %s on session %s\n", name.c_str(), session.getName().c_str());
 
-    subscriptionSettings = UA_Client_Subscriptions_create(psessionuasdk->client,
+    subscriptionSettings = UA_Client_Subscriptions_create(session.client,
         requestedSettings, this, [] (UA_Client *client, UA_UInt32 subscriptionId,
             void *context, UA_StatusChangeNotification *notification) {
                 static_cast<SubscriptionOpen62541*>(context)->
@@ -125,12 +125,12 @@ SubscriptionOpen62541::create ()
             }, NULL);
     if (subscriptionSettings.responseHeader.serviceResult != UA_STATUSCODE_GOOD) {
         errlogPrintf("OPC UA subscription %s: createSubscription on session %s failed (%s)\n",
-                    name.c_str(), psessionuasdk->getName().c_str(),
+                    name.c_str(), session.getName().c_str(),
                     UA_StatusCode_name(subscriptionSettings.responseHeader.serviceResult));
     } else {
         if (debug)
             errlogPrintf("OPC UA subscription %s on session %s created (%s)\n",
-                    name.c_str(), psessionuasdk->getName().c_str(),
+                    name.c_str(), session.getName().c_str(),
                     UA_StatusCode_name(subscriptionSettings.responseHeader.serviceResult));
     }
 }
@@ -164,7 +164,7 @@ SubscriptionOpen62541::addMonitoredItems ()
             monitoredItemCreateRequest.requestedParameters.discardOldest = it->linkinfo.discardOldest;
 
             monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
-                psessionuasdk->client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
+                session.client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
                 monitoredItemCreateRequest,
                 nullptr, UA_dataChange, nullptr);
 
@@ -188,7 +188,7 @@ SubscriptionOpen62541::addMonitoredItems ()
             i++;
         }
         if (debug)
-            std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
+            std::cout << "Subscription " << name << "@" << session.getName()
                       << ": created " << items.size() << " monitored items ("
                       << UA_StatusCode_name(monitoredItemCreateResult.statusCode) << ")" << std::endl;
     }
@@ -216,7 +216,7 @@ SubscriptionOpen62541::removeItemOpen62541 (ItemOpen62541 *item)
 }
 
 
-// UaSubscriptionCallback interface
+// callbacks
 
 void
 SubscriptionOpen62541::subscriptionInactive(UA_UInt32 subscriptionId)
@@ -243,7 +243,7 @@ SubscriptionOpen62541::dataChange (UA_UInt32 clientSubscriptionHandle,
 
     if (debug)
         std::cout << "Subscription " << name.c_str()
-                  << "@" << psessionuasdk->getName()
+                  << "@" << session.getName()
                   << ": (dataChange) getting data for "
                   << dataNotifications.length() << " items" << std::endl;
 
@@ -251,7 +251,7 @@ SubscriptionOpen62541::dataChange (UA_UInt32 clientSubscriptionHandle,
         ItemOpen62541 *item = items[dataNotifications[i].ClientHandle];
         if (debug >= 5) {
             std::cout << "** Subscription " << name.c_str()
-                      << "@" << psessionuasdk->getName()
+                      << "@" << session.getName()
                       << ": (dataChange) getting data for item " << dataNotifications[i].ClientHandle
                       << " (" << item->getNodeId().toXmlString().toUtf8();
             if (item->isRegistered() && ! item->linkinfo.identifierIsNumeric)
