@@ -10,11 +10,8 @@
  *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
-// Avoid problems on Windows (macros min, max clash with numeric_limits<>)
-#ifdef _WIN32
-#  define NOMINMAX
-#endif
 #define epicsExportSharedSymbols
+#define MAXHOSTNAMELEN 256
 
 #include <iostream>
 #include <string>
