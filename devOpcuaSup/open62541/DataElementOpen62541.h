@@ -960,7 +960,7 @@ private:
                         if (UA_STATUS_IS_UNCERTAIN(stat)) {
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
-                        elemsWritten = num < data.arrayLength ? num : data.arrayLength;
+                        elemsWritten = static_cast<epicsUInt32>(num) < data.arrayLength ? num : static_cast<epicsUInt32>(data.arrayLength);
                         memcpy(value, data.data, sizeof(ET) * elemsWritten);
                         prec->udf = false;
                     }
