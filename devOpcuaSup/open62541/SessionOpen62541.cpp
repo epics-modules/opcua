@@ -11,7 +11,9 @@
  */
 
 #define epicsExportSharedSymbols
+#ifdef _WIN32
 #define MAXHOSTNAMELEN 256
+#endif
 
 #include <iostream>
 #include <string>
