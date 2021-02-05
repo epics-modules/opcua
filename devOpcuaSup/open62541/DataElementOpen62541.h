@@ -214,7 +214,7 @@ inline bool string_to(const char* s, epicsUInt32& value) {
     try {
         long long v = std::stoll(std::string(s), 0, 0);
         if (!isWithinRange<epicsUInt32>(v)) return false;
-        value = v;
+        value = static_cast<epicsUInt32>(v);
         return true;
     } catch (...) {
         return false;
@@ -840,25 +840,25 @@ private:
                             break;
                         case UA_TYPES_INT64:
                             if (isWithinRange<ET, UA_Int64>(*static_cast<UA_Int64*>(data.data)))
-                                *value = *static_cast<UA_Int64*>(data.data);
+                                *value = *static_cast<ET*>(data.data);
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_UINT64:
                             if (isWithinRange<ET, UA_UInt64>(*static_cast<UA_UInt64*>(data.data)))
-                                *value = *static_cast<UA_UInt64*>(data.data);
+                                *value = *static_cast<ET*>(data.data);
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_FLOAT:
                             if (isWithinRange<ET, UA_Float>(*static_cast<UA_Float*>(data.data)))
-                                *value = *static_cast<UA_Float*>(data.data);
+                                *value = *static_cast<ET*>(data.data);
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_DOUBLE:
                             if (isWithinRange<ET, UA_Double>(*static_cast<UA_Double*>(data.data)))
-                                *value = *static_cast<UA_Double*>(data.data);
+                                *value = *static_cast<ET*>(data.data);
                             else
                                 ret = 1;
                             break;
@@ -960,7 +960,7 @@ private:
                         if (UA_STATUS_IS_UNCERTAIN(stat)) {
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
-                        elemsWritten = num < data.arrayLength ? num : data.arrayLength;
+                        elemsWritten = num < static_cast<epicsUInt32>(data.arrayLength) ? num : static_cast<epicsUInt32>(data.arrayLength);
                         memcpy(value, data.data, sizeof(ET) * elemsWritten);
                         prec->udf = false;
                     }
