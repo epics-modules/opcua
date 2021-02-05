@@ -10,9 +10,9 @@
  *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
-#include <errlog.h>
-
 #define epicsExportSharedSymbols
+
+#include <errlog.h>
 #include "Session.h"
 #include "Subscription.h"
 #include "SessionOpen62541.h"

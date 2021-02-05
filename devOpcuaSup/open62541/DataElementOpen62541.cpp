@@ -66,7 +66,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
 void
 DataElementOpen62541::show (const int level, const unsigned int indent) const
 {
-    std::string ind(indent*2, ' ');
+    std::string ind(static_cast<epicsInt64>(indent)*2, ' '); // static_cast to avoid warning C26451
     std::cout << ind;
     if (isLeaf()) {
         std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")="
@@ -635,7 +635,7 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
                     UA_Variant &data = upd->getData();
-                    elemsWritten = num < data.arrayLength ? num : data.arrayLength;
+                    elemsWritten = num < static_cast<epicsUInt32>(data.arrayLength) ? num : static_cast<epicsUInt32>(data.arrayLength);
                     for (epicsUInt32 i = 0; i < elemsWritten; i++) {
                         strncpy(value[i], reinterpret_cast<char*>(static_cast<UA_String *>(data.data)[i].data), len);
                         value[i][len-1] = '\0';
@@ -1039,7 +1039,7 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
                 const char *pval;
                 // add zero termination if necessary
                 if (memchr(value[i], '\0', len) == nullptr) {
-                    val = new char[len+1];
+                    val = new char[static_cast<epicsInt64>(len)+1]; // static_cast to avoid warning C26451
                     strncpy(val, value[i], len);
                     val[len] = '\0';
                     pval = val;

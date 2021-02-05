@@ -10,10 +10,10 @@
  *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
+#define epicsExportSharedSymbols
+
 #include <iostream>
-
 #include <epicsThread.h>
-
 #include "Session.h"
 #include "SessionOpen62541.h"
 

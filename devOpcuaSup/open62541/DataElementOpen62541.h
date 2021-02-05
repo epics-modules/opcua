@@ -204,7 +204,7 @@ inline bool string_to(const char* s, epicsUInt32& value) {
     try {
         long long v = std::stoll(std::string(s), 0, 0);
         if (v > ULONG_MAX) return false;
-        value = v;
+        value = static_cast<epicsUInt32>(v);
         return true;
     } catch (...) {
         return false;
@@ -950,7 +950,7 @@ private:
                         if (UA_STATUS_IS_UNCERTAIN(stat)) {
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
-                        elemsWritten = num < data.arrayLength ? num : data.arrayLength;
+                        elemsWritten = static_cast< epicsUInt32>(num) < data.arrayLength ? num : static_cast<epicsUInt32>(data.arrayLength);
                         memcpy(value, data.data, sizeof(ET) * elemsWritten);
                         prec->udf = false;
                     }

@@ -14,16 +14,13 @@
 #ifdef _WIN32
 #  define NOMINMAX
 #endif
+#define epicsExportSharedSymbols
 
 #include <iostream>
 #include <string>
 #include <map>
-
 #include <open62541/client_subscriptions.h>
-
 #include <errlog.h>
-
-#define epicsExportSharedSymbols
 #include "SubscriptionOpen62541.h"
 #include "ItemOpen62541.h"
 #include "DataElementOpen62541.h"

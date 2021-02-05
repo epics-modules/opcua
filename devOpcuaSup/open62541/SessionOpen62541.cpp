@@ -14,6 +14,7 @@
 #ifdef _WIN32
 #  define NOMINMAX
 #endif
+#define epicsExportSharedSymbols
 
 #include <iostream>
 #include <string>
