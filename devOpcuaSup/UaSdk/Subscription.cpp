@@ -12,6 +12,9 @@
 
 #include <errlog.h>
 
+#include <epicsThread.h>
+#include <epicsEvent.h>
+
 #define epicsExportSharedSymbols
 #include "Session.h"
 #include "Subscription.h"

@@ -144,7 +144,7 @@ ItemUaSdk::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 {
     epicsTimeStamp ts;
     ts.secPastEpoch = static_cast<epicsUInt32>(dt.toTime_t()) - POSIX_TIME_AT_EPICS_EPOCH;
-    ts.nsec         = static_cast<epicsUInt32>(dt.msec()) * 1000000 + pico10 / 100;
+    ts.nsec         = static_cast<epicsUInt32>(static_cast<OpcUa_Int64>(dt) % UA_SECS_TO_100NS) * 100 + pico10 / 100;
     return epicsTime(ts);
 }
 

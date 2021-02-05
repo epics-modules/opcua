@@ -101,84 +101,99 @@ inline bool isWithinRange (const FROM &value) {
 
 // Specializations for unsigned to signed to avoid compiler warnings
 template<>
-inline bool isWithinRange<UA_SByte, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > static_cast<UA_UInt32>(std::numeric_limits<UA_SByte>::max()));
+inline bool isWithinRange<signed char, unsigned int> (const unsigned int &value) {
+    return !(value > static_cast<unsigned int>(std::numeric_limits<signed char>::max()));
 }
 
 template<>
-inline bool isWithinRange<UA_Int16, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > (UA_UInt32)(std::numeric_limits<UA_Int16>::max()));
+inline bool isWithinRange<short, unsigned int> (const unsigned int &value) {
+    return !(value > static_cast<unsigned int>(std::numeric_limits<short>::max()));
 }
 
 template<>
-inline bool isWithinRange<UA_Int32, epicsUInt32> (const epicsUInt32 &value) {
-    return !(value > (UA_UInt32)(std::numeric_limits<UA_Int32>::max()));
+inline bool isWithinRange<int, unsigned int> (const unsigned int &value) {
+    return !(value > static_cast<unsigned int>(std::numeric_limits<int>::max()));
 }
 
 template<>
-inline bool isWithinRange<UA_SByte, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > (UA_UInt64)(std::numeric_limits<UA_SByte>::max()));
+inline bool isWithinRange<int, unsigned long> (const unsigned long &value) {
+    return !(value > static_cast<unsigned long>(std::numeric_limits<int>::max()));
 }
 
 template<>
-inline bool isWithinRange<UA_Int16, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > (UA_UInt64)(std::numeric_limits<UA_Int16>::max()));
+inline bool isWithinRange<long, unsigned long> (const unsigned long &value) {
+    return !(value > static_cast<unsigned long>(std::numeric_limits<long>::max()));
 }
 
 template<>
-inline bool isWithinRange<UA_Int32, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > (UA_UInt64)(std::numeric_limits<UA_Int32>::max()));
+inline bool isWithinRange<long long, unsigned long> (const unsigned long &value) {
+    return !(value > std::numeric_limits<long long>::max());
 }
 
 template<>
-inline bool isWithinRange<UA_Int64, epicsUInt64> (const epicsUInt64 &value) {
-    return !(value > (UA_UInt64)(std::numeric_limits<UA_Int64>::max()));
+inline bool isWithinRange<signed char, unsigned long long> (const unsigned long long &value) {
+    return !(value > static_cast<unsigned long long>(std::numeric_limits<signed char>::max()));
 }
 
-//template<>                                                                                                      // same as bool isWithinRange<UA_Uint32, epicsUInt64>(const epicsUInt64 &value)
-//inline bool isWithinRange<epicsInt32, UA_UInt64> (const UA_UInt64 &value) {
-//    return !(value > static_cast<UA_UInt64>(std::numeric_limits<epicsInt32>::max()));
-//}
+template<>
+inline bool isWithinRange<short, unsigned long long> (const unsigned long long &value) {
+    return !(value > static_cast<unsigned long long>(std::numeric_limits<short>::max()));
+}
 
-//template<>                                                                                                      // same as bool isWithinRange<UA_Uint64, epicsUInt64>(const epicsUInt64 &value)
-//inline bool isWithinRange<epicsInt64, UA_UInt64> (const UA_UInt64 &value) {
-//    return !(value > static_cast<UA_UInt64>(std::numeric_limits<epicsInt64>::max()));
-//}
+template<>
+inline bool isWithinRange<int, unsigned long long> (const unsigned long long &value) {
+    return !(value > static_cast<unsigned long long>(std::numeric_limits<int>::max()));
+}
+
+template<>
+inline bool isWithinRange<long long, unsigned long long> (const unsigned long long &value) {
+    return !(value > static_cast<unsigned long long>(std::numeric_limits<long long>::max()));
+}
 
 // Simple-check specializations for converting signed to unsigned of same or wider type
-template<> inline bool isWithinRange<UA_UInt32, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<UA_UInt32, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<UA_UInt32, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<UA_UInt64, epicsInt8> (const epicsInt8 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<UA_UInt64, epicsInt16> (const epicsInt16 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<UA_UInt64, epicsInt32> (const epicsInt32 &value) { return !(value < 0); }
-template<> inline bool isWithinRange<UA_UInt64, epicsInt64> (const epicsInt64 &value) { return !(value < 0); }
-
-template<> inline bool isWithinRange<epicsUInt32, UA_SByte> (const UA_SByte &value) { return !(value < 0); }
-template<> inline bool isWithinRange<epicsUInt64, UA_SByte> (const UA_SByte &value) { return !(value < 0); }
-//template<> inline bool isWithinRange<epicsUInt64, UA_Int16> (const UA_Int16 &value) { return !(value < 0); } // same as bool isWithinRange<UA_Uint64, epicsInt16>(const epics16 &value)
-//template<> inline bool isWithinRange<epicsUInt64, UA_Int32> (const UA_Int32 &value) { return !(value < 0); } // same as bool isWithinRange<UA_Uint64, epicsInt32>(const epics32 &value)
-//template<> inline bool isWithinRange<epicsUInt64, UA_Int64> (const UA_Int64 &value) { return !(value < 0); } // same as bool isWithinRange<UA_Uint64, epicsInt64>(const epics64 &value)
-
+template<> inline bool isWithinRange<unsigned int, char> (const char &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned int, signed char> (const signed char &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned int, short> (const short &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned int, int> (const int &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long, char> (const char &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long, short> (const short &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long, int> (const int &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long, long> (const long &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long long, char> (const char &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long long, signed char> (const signed char &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long long, short> (const short &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long long, int> (const int &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long long, long> (const long &value) { return !(value < 0); }
+template<> inline bool isWithinRange<unsigned long long, long long> (const long long &value) { return !(value < 0); }
 
 // No-check-needed specializations for converting to same or wider type
-template<> inline bool isWithinRange<UA_Int32, epicsInt32> (const epicsInt32 &) { return true; }
-template<> inline bool isWithinRange<UA_Int64, epicsInt32> (const epicsInt32 &) { return true; }
-template<> inline bool isWithinRange<UA_Float, epicsInt32> (const epicsInt32 &) { return true; }
-template<> inline bool isWithinRange<UA_Double, epicsInt32> (const epicsInt32 &) { return true; }
+template<> inline bool isWithinRange<int, int> (const int &) { return true; }
+template<> inline bool isWithinRange<long, int> (const int &) { return true; }
+template<> inline bool isWithinRange<long long, int> (const int &) { return true; }
+template<> inline bool isWithinRange<float, int> (const int &) { return true; }
+template<> inline bool isWithinRange<double, int> (const int &) { return true; }
 
-template<> inline bool isWithinRange<UA_UInt32, epicsUInt32> (const epicsUInt32 &) { return true; }
-template<> inline bool isWithinRange<UA_Int64, epicsUInt32> (const epicsUInt32 &) { return true; }
-template<> inline bool isWithinRange<UA_UInt64, epicsUInt32> (const epicsUInt32 &) { return true; }
-template<> inline bool isWithinRange<UA_Float, epicsUInt32> (const epicsUInt32 &) { return true; }
-template<> inline bool isWithinRange<UA_Double, epicsUInt32> (const epicsUInt32 &) { return true; }
+template<> inline bool isWithinRange<unsigned int, unsigned int> (const unsigned int &) { return true; }
+template<> inline bool isWithinRange<unsigned long, unsigned int> (const unsigned int &) { return true; }
+template<> inline bool isWithinRange<long long, unsigned int> (const unsigned int &) { return true; }
+template<> inline bool isWithinRange<unsigned long long, unsigned int> (const unsigned int &) { return true; }
+template<> inline bool isWithinRange<float, unsigned int> (const unsigned int &) { return true; }
+template<> inline bool isWithinRange<double, unsigned int> (const unsigned int &) { return true; }
 
-template<> inline bool isWithinRange<UA_Int64, epicsInt64> (const epicsInt64 &) { return true; }
-template<> inline bool isWithinRange<UA_Float, epicsInt64> (const epicsInt64 &) { return true; }
-template<> inline bool isWithinRange<UA_Double, epicsInt64> (const epicsInt64 &) { return true; }
+template<> inline bool isWithinRange<long, long> (const long &) { return true; }
+template<> inline bool isWithinRange<long long, long> (const long &) { return true; }
 
-template<> inline bool isWithinRange<UA_Double, epicsFloat64> (const epicsFloat64 &) { return true; }
+template<> inline bool isWithinRange<long long, long long> (const long long &) { return true; }
+template<> inline bool isWithinRange<float, long long> (const long long &) { return true; }
+template<> inline bool isWithinRange<double, long long> (const long long &) { return true; }
 
+template<> inline bool isWithinRange<double, double> (const double &) { return true; }
+
+// long long may or may not be the same size as long
+template<>
+inline bool isWithinRange<unsigned long, long long> (const long long &value) {
+    return sizeof(long long) > sizeof(long) ? !(value < 0 || value > static_cast<long long>(std::numeric_limits<unsigned long>::max())) : !(value < 0);
+}
 
 // Helper function to convert C-strings to numeric types
 
@@ -203,8 +218,8 @@ inline bool string_to(const char* s, epicsInt64& value) {
 inline bool string_to(const char* s, epicsUInt32& value) {
     try {
         long long v = std::stoll(std::string(s), 0, 0);
-        if (v > ULONG_MAX) return false;
-        value = static_cast<epicsUInt32>(v);
+        if (!isWithinRange<epicsUInt32>(v)) return false;
+        value = v;
         return true;
     } catch (...) {
         return false;
@@ -950,7 +965,7 @@ private:
                         if (UA_STATUS_IS_UNCERTAIN(stat)) {
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
-                        elemsWritten = static_cast< epicsUInt32>(num) < data.arrayLength ? num : static_cast<epicsUInt32>(data.arrayLength);
+                        elemsWritten = num < data.arrayLength ? num : data.arrayLength;
                         memcpy(value, data.data, sizeof(ET) * elemsWritten);
                         prec->udf = false;
                     }

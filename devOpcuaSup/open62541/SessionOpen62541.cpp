@@ -59,12 +59,6 @@ struct ReadRequest {
 };
 
 inline const char *
-toStr(UA_StatusCode status) {
-    return UA_StatusCode_name(status);
-}
-
-
-inline const char *
 toStr(UA_SecureChannelState channelState) {
     switch (channelState) {
         case UA_SECURECHANNELSTATE_CLOSED:       return "Closed";
@@ -122,18 +116,24 @@ void SessionOpen62541::initOnce(void*)
     defaultClientConfig.clientDescription.applicationType = UA_APPLICATIONTYPE_CLIENT;
     defaultClientConfig.clientDescription.applicationName = UA_LOCALIZEDTEXT_ALLOC("en-US", "EPICS IOC");
     defaultClientConfig.clientDescription.productUri = UA_STRING_ALLOC("urn:EPICS:IOC");
-    char applicationUri[HOST_NAME_MAX+15] = { "urn:" };
-    if (gethostname(applicationUri+4, HOST_NAME_MAX) != 0)
+    char applicationUri[MAXHOSTNAMELEN+15] = { "urn:" };
+    if (gethostname(applicationUri+4, MAXHOSTNAMELEN) != 0)
         strcpy(applicationUri+4, "unknown-host");
     strcat(applicationUri, ":EPICS:IOC");
     defaultClientConfig.clientDescription.applicationUri = UA_STRING_ALLOC(applicationUri);
 
     /* set callbacks */
     defaultClientConfig.stateCallback = [] (UA_Client *client,
-            UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode connectStatus) {
+        UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode connectStatus) {
             static_cast<SessionOpen62541*>(UA_Client_getContext(client))->
                 connectionStatusChanged(channelState, sessionState, connectStatus);
         };
+    defaultClientConfig.subscriptionInactivityCallback = [] (UA_Client *client,
+        UA_UInt32 subscriptionId, void *subContext) {
+            static_cast<SubscriptionOpen62541*>(subContext)->subscriptionInactive(subscriptionId);
+        };
+    defaultClientConfig.connectivityCheckInterval = 1000; // [ms]
+    defaultClientConfig.outStandingPublishRequests = 5;
 
 /*
     connectInfo.bAutomaticReconnect = autoConnect;
@@ -324,7 +324,7 @@ SessionOpen62541::connect ()
                   << ": invalid session, cannot connect" << std::endl;
         return -1;
     }
-    if (isConnected()) { // TODO: what exactly to check for sessionState/channelState ?
+    if (isConnected()) {
         if (debug) std::cerr << "Session " << name.c_str() << ": already connected ("
                              << toStr(sessionState) << "," << toStr(channelState) << ")" << std::endl;
         return 0;
@@ -337,7 +337,7 @@ SessionOpen62541::connect ()
     if (connectStatus != UA_STATUSCODE_GOOD) {
         std::cerr << "Session " << name.c_str()
                   << ": connect service failed with status "
-                  << toStr(connectStatus) << std::endl;
+                  << UA_StatusCode_name(connectStatus) << std::endl;
         return -1;
     }
     if (debug) std::cerr << "Session " << name.c_str()
@@ -391,6 +391,7 @@ SessionOpen62541::requestRead (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
+    errlogPrintf("SessionOpen62541::processRequests ReadRequest UNIMPLEMENTED\n");
 /*
     UA_StatusCode status;
     UaReadValueIds nodesToRead;
@@ -417,7 +418,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
 
 	    if (!UA_STATUS_IS_BAD(status)) {
 	        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
-	                     name.c_str(), toStr(status);
+	                     name.c_str(), UA_StatusCode_name(status);
             //TODO: create writeFailure events for all items of the batch
 //	        item.setIncomingEvent(ProcessReason::readFailure);
 
@@ -448,6 +449,7 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
+    errlogPrintf("SessionOpen62541::processRequests WriteRequest UNIMPLEMENTED\n");
 /*
     UA_StatusCode status;
     UaWriteValues nodesToWrite;
@@ -473,7 +475,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
 
         if (UA_STATUS_IS_BAD(status)) {
             errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
-                         name.c_str(), toStr(status));
+                         name.c_str(), UA_StatusCode_name(status));
             //TODO: create writeFailure events for all items of the batch
 //          item.setIncomingEvent(ProcessReason::writeFailure);
 
@@ -493,70 +495,72 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
 void
 SessionOpen62541::createAllSubscriptions ()
 {
+    errlogPrintf("SessionOpen62541::createAllSubscriptions session %s [%zu]\n", name.c_str(), subscriptions.size());
     for (auto &it : subscriptions) {
         it.second->create();
     }
+    errlogPrintf("SessionOpen62541::createAllSubscriptions DONE\n");
 }
 
 void
 SessionOpen62541::addAllMonitoredItems ()
 {
+    errlogPrintf("SessionOpen62541::addAllMonitoredItems session %s %zu subscriptions\n", name.c_str(), subscriptions.size());
     for (auto &it : subscriptions) {
         it.second->addMonitoredItems();
     }
+    errlogPrintf("SessionOpen62541::addAllMonitoredItems DONE\n");
 }
 
 void
 SessionOpen62541::registerNodes ()
 {
-/*
-    UA_StatusCode     status;
-    UaNodeIdArray     nodesToRegister;
-    UaNodeIdArray     registeredNodes;
-    ServiceSettings   serviceSettings;
-
-    nodesToRegister.create(static_cast<UA_UInt32>(items.size()));
+    errlogPrintf("SessionOpen62541::registerNodes\n");
+    UA_RegisterNodesRequest request;
+    UA_RegisterNodesRequest_init(&request);
+    request.nodesToRegister = static_cast<UA_NodeId*>(UA_Array_new(items.size(), &UA_TYPES[UA_TYPES_NODEID]));
     UA_UInt32 i = 0;
     for (auto &it : items) {
         if (it->linkinfo.registerNode) {
-            it->getNodeId().copyTo(&nodesToRegister[i]);
+            it->show(0);
+            request.nodesToRegister[i] = it->getNodeId();
             i++;
         }
     }
-    nodesToRegister.resize(i);
+    errlogPrintf("SessionOpen62541::registerNodes %u of %zu nodes to register\n", registeredItemsNo, items.size());
     registeredItemsNo = i;
-
+    request.nodesToRegisterSize = registeredItemsNo;
     if (registeredItemsNo) {
-        status = puasession->registerNodes(serviceSettings,     // Use default settings
-                                           nodesToRegister,     // Array of nodeIds to register
-                                           registeredNodes);    // Returns an array of registered nodeIds
-
-        if (UA_STATUS_IS_BAD(status)) {
+        UA_RegisterNodesResponse response = UA_Client_Service_registerNodes(client, request);
+        if (response.responseHeader.serviceResult != UA_STATUSCODE_GOOD) {
             errlogPrintf("OPC UA session %s: (registerNodes) registerNodes service failed with status %s\n",
-                         name.c_str(), toStr(status));
+                         name.c_str(), UA_StatusCode_name(response.responseHeader.serviceResult));
         } else {
             if (debug)
                 std::cout << "Session " << name.c_str()
                           << ": (registerNodes) registerNodes service ok"
-                          << " (" << registeredNodes.length() << " nodes registered)" << std::endl;
+                          << " (" << response.registeredNodeIdsSize << " nodes registered)" << std::endl;
             i = 0;
             for (auto &it : items) {
                 if (it->linkinfo.registerNode) {
-                    it->setRegisteredNodeId(registeredNodes[i]);
+                    it->setRegisteredNodeId(response.registeredNodeIds[i]);
                     i++;
                 }
             }
             registeredItemsNo = i;
         }
     }
-*/
+    UA_Array_delete(request.nodesToRegister, items.size(), &UA_TYPES[UA_TYPES_NODEID]);
+    errlogPrintf("SessionOpen62541::registerNodes [%u] DONE\n", registeredItemsNo);
 }
 
 void
 SessionOpen62541::rebuildNodeIds ()
 {
-    for (auto &it : items)
+    errlogPrintf("SessionOpen62541::rebuildNodeIds [%zu]\n", items.size());
+    for (auto &it : items) {
         it->rebuildNodeId();
+    }
 }
 
 /* Add a mapping to the session's map, replacing any existing mappings with the same
@@ -564,9 +568,11 @@ SessionOpen62541::rebuildNodeIds ()
 void
 SessionOpen62541::addNamespaceMapping (const unsigned short nsIndex, const std::string &uri)
 {
-/*
+    errlogPrintf("SessionOpen62541::addNamespaceMappingindex %u = %s\n", nsIndex, uri.c_str());
     for (auto &it : namespaceMap) {
         if (it.second == nsIndex) {
+            errlogPrintf("SessionOpen62541::addNamespaceMappingindex: erase old %u = %s\n",
+                nsIndex, it.first.c_str());
             namespaceMap.erase(it.first);
             break;
         }
@@ -575,7 +581,6 @@ SessionOpen62541::addNamespaceMapping (const unsigned short nsIndex, const std::
     if (it != namespaceMap.end())
         namespaceMap.erase(uri);
     namespaceMap.insert({uri, nsIndex});
-*/
 }
 
 /* If a local namespaceMap exists, create a local->remote numerical index mapping
@@ -612,7 +617,7 @@ SessionOpen62541::show (const int level) const
 {
     std::cout << "session="      << name
               << " url="         << serverURL.c_str()
-              << " connect status=" << toStr(connectStatus)
+              << " connect status=" << UA_StatusCode_name(connectStatus)
               << " sessionState="   << toStr(sessionState)
               << " channelState="   << toStr(channelState)
               << " cert="        << "[none]"
@@ -701,7 +706,7 @@ void SessionOpen62541::connectionStatusChanged(
     if (newConnectStatus != UA_STATUSCODE_GOOD) {
         connectStatus = newConnectStatus;
         errlogPrintf("open62541 session %s: Connection irrecoverably failed: %s\n",
-                 name.c_str(), toStr(connectStatus));
+                 name.c_str(), UA_StatusCode_name(connectStatus));
         return;
     }
 
@@ -732,7 +737,13 @@ void SessionOpen62541::connectionStatusChanged(
             case UA_SESSIONSTATE_CREATE_REQUESTED:   break;
             case UA_SESSIONSTATE_CREATED:            break;
             case UA_SESSIONSTATE_ACTIVATE_REQUESTED: break;
-            case UA_SESSIONSTATE_ACTIVATED:          break;
+            case UA_SESSIONSTATE_ACTIVATED:
+                //updateNamespaceMap(puasession->getNamespaceTable());
+                rebuildNodeIds();
+                registerNodes();
+                createAllSubscriptions();
+                addAllMonitoredItems();
+                break;
             case UA_SESSIONSTATE_CLOSING:            break;
         }
     }
@@ -849,7 +860,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) for read service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << toStr(result) << std::endl;
+                      << ") failed with status " << UA_StatusCode_name(result) << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
@@ -902,7 +913,7 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) for write service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << toStr(result) << std::endl;
+                      << ") failed with status " << UA_StatusCode_name(result) << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
@@ -959,7 +970,7 @@ SessionOpen62541::initHook (initHookState state)
     switch (state) {
     case initHookAfterDatabaseRunning:
     {
-        errlogPrintf("OPC UA: Autoconnecting sessions\n");
+        errlogPrintf("OPC UA: Autoconnecting %zu sessions\n", sessions.size());
         for (auto &it : sessions) {
             if (it.second->autoConnect)
                 it.second->connect();
@@ -974,7 +985,7 @@ SessionOpen62541::initHook (initHookState state)
 void
 SessionOpen62541::atExit (void *)
 {
-    errlogPrintf("OPC UA: Disconnecting sessions\n");
+    errlogPrintf("OPC UA: Disconnecting %zu sessions\n", sessions.size());
     for (auto &it : sessions) {
         it.second->disconnect();
     }

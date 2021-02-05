@@ -102,13 +102,13 @@ public:
      * @brief Setter for the node id of this item.
      * @return node id
      */
-    void setRegisteredNodeId(const UA_NodeId &id) { (*nodeid) = id; registered = true; }
+    void setRegisteredNodeId(const UA_NodeId &id) { nodeid = id; registered = true; }
 
     /**
      * @brief Getter that returns the node id of this item.
      * @return node id
      */
-    UA_NodeId &getNodeId() const { return (*nodeid); }
+    const UA_NodeId &getNodeId() const { return nodeid; }
 
     /**
      * @brief Setter for the status of a read operation.
@@ -212,14 +212,14 @@ public:
     int debug() const;
 
 private:
-    SubscriptionOpen62541 *subscription;       /**< raw pointer to subscription (if monitored) */
-    SessionOpen62541 *session;                 /**< raw pointer to session */
-    std::unique_ptr<UA_NodeId> nodeid;      /**< node id of this item */
+    SubscriptionOpen62541 *subscription;   /**< raw pointer to subscription (if monitored) */
+    SessionOpen62541 *session;             /**< raw pointer to session */
+    UA_NodeId nodeid;                      /**< node id of this item */
     bool registered;                       /**< flag for registration status */
-    UA_Double revisedSamplingInterval;  /**< server-revised sampling interval */
-    UA_UInt32 revisedQueueSize;         /**< server-revised queue size */
+    UA_Double revisedSamplingInterval;     /**< server-revised sampling interval */
+    UA_UInt32 revisedQueueSize;            /**< server-revised queue size */
     std::weak_ptr<DataElementOpen62541> rootElement;  /**< top level data element */
-    UA_StatusCode lastStatus;               /**< status code of most recent service */
+    UA_StatusCode lastStatus;              /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
     ConnectionStatus connState;            /**< Connection state of the item */
     epicsTime tsClient;                    /**< client (local) time stamp */

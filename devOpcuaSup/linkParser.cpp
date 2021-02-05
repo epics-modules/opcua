@@ -19,9 +19,11 @@
 #include <algorithm>
 
 #include <dbCommon.h>
+#include <dbAccess.h>
 #include <epicsStdlib.h>
 #include <link.h>
 
+#define epicsExportSharedSymbols
 #include "devOpcua.h"
 #include "linkParser.h"
 #include "opcuaItemRecord.h"

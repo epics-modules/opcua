@@ -38,6 +38,7 @@ ItemOpen62541::ItemOpen62541 (const linkInfo &info)
     : Item(info)
     , subscription(nullptr)
     , session(nullptr)
+    , nodeid({0})
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
@@ -59,19 +60,18 @@ ItemOpen62541::~ItemOpen62541 ()
 {
     subscription->removeItemOpen62541(this);
     session->removeItemOpen62541(this);
+    UA_NodeId_clear(&nodeid);
 }
 
 void
 ItemOpen62541::rebuildNodeId ()
 {
-/*
     UA_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
     if (linkinfo.identifierIsNumeric) {
-        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierNumber, ns));
+        nodeid = UA_NODEID_NUMERIC(ns, linkinfo.identifierNumber);
     } else {
-        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierString.c_str(), ns));
+        nodeid = UA_NODEID_STRING_ALLOC(ns, linkinfo.identifierString.c_str());
     }
-*/
     registered = false;
 }
 
@@ -80,14 +80,15 @@ ItemOpen62541::show (int level) const
 {
     std::cout << "item"
               << " ns=";
-//    if (nodeid && (nodeid->namespaceIndex() != linkinfo.namespaceIndex))
-//        std::cout << nodeid->namespaceIndex() << "(" << linkinfo.namespaceIndex << ")";
-//    else
+    if (nodeid.namespaceIndex != linkinfo.namespaceIndex)
+        std::cout << nodeid.namespaceIndex << "(" << linkinfo.namespaceIndex << ")";
+    else
         std::cout << linkinfo.namespaceIndex;
     if (linkinfo.identifierIsNumeric)
         std::cout << ";i=" << linkinfo.identifierNumber;
     else
         std::cout << ";s=" << linkinfo.identifierString;
+
     std::cout << " record=" << recConnector->getRecordName()
               << " state=" << connectionStatusString(connState)
               << " status=" << UA_StatusCode_name(lastStatus)
@@ -103,8 +104,11 @@ ItemOpen62541::show (int level) const
               << " bini=" << linkOptionBiniString(linkinfo.bini)
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
-//              << " registered=" << (registered ? nodeid->toString().toUtf8() : "-" )
-              << "(" << (linkinfo.registerNode ? "y" : "n") << ")"
+              << " registered=";
+    if (registered)
+        std::cout << nodeid;
+        else std::cout << "-";
+    std::cout << "(" << (linkinfo.registerNode ? "y" : "n") << ")"
               << std::endl;
 
     if (level >= 1) {

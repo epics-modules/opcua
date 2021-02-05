@@ -14,11 +14,6 @@
 #ifndef DEVOPCUA_DATAELEMENTUASDK_H
 #define DEVOPCUA_DATAELEMENTUASDK_H
 
-// Avoid problems on Windows (macros min, max clash with numeric_limits<>)
-#ifdef _WIN32
-#  define NOMINMAX
-#endif
-
 #include <unordered_map>
 #include <limits>
 
@@ -952,7 +947,7 @@ private:
             if (isWithinRange<OpcUa_Int32>(value)) {
                 Guard G(outgoingLock);
                 isdirty = true;
-                outgoingData.setInt32(static_cast<OpcUa_UInt32>(value));
+                outgoingData.setInt32(static_cast<OpcUa_Int32>(value));
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
