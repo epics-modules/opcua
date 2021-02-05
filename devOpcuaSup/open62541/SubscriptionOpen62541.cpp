@@ -154,15 +154,16 @@ SubscriptionOpen62541::addMonitoredItems ()
             monitoredItemCreateRequest.requestedParameters.queueSize = it->linkinfo.queueSize;
             monitoredItemCreateRequest.requestedParameters.discardOldest = it->linkinfo.discardOldest;
             errlogPrintf("SubscriptionOpen62541::addMonitoredItems Item %u @ %p\n", i, items[i]);
-
-            monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
-                session.client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
-                monitoredItemCreateRequest, items[i], [] (UA_Client *client, UA_UInt32 subId, void *subContext,
-                         UA_UInt32 monId, void *monContext, UA_DataValue *value) {
-                            static_cast<SubscriptionOpen62541*>(subContext)->
-                                dataChange(subId, monId, *static_cast<ItemOpen62541*>(monContext), value);
-                         }, nullptr /* deleteCallback */);
-
+            {
+                Guard G(session.clientlock);
+                monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
+                    session.client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
+                    monitoredItemCreateRequest, items[i], [] (UA_Client *client, UA_UInt32 subId, void *subContext,
+                             UA_UInt32 monId, void *monContext, UA_DataValue *value) {
+                                static_cast<SubscriptionOpen62541*>(subContext)->
+                                    dataChange(subId, monId, *static_cast<ItemOpen62541*>(monContext), value);
+                             }, nullptr /* deleteCallback */);
+            }
             if (monitoredItemCreateResult.statusCode == UA_STATUSCODE_GOOD) {
                 items[i]->setRevisedSamplingInterval(monitoredItemCreateResult.revisedSamplingInterval);
                 items[i]->setRevisedQueueSize(monitoredItemCreateResult.revisedQueueSize);
@@ -228,21 +229,8 @@ SubscriptionOpen62541::subscriptionStatusChanged (UA_UInt32 subscriptionId,
         name.c_str(), subscriptionId, UA_StatusCode_name(status));
 }
 
-
-
-/*
-static void UA_dataChange(UA_Client *client, UA_UInt32 subId, void *subContext,
-                         UA_UInt32 monId, void *monContext, UA_DataValue *value)
-{
-    errlogPrintf("data changed subId=%u subContext=%p, monId=%u, monContext=%p, value at %p\n",
-        subId, subContext, monId, monContext, value);
-}
-*/
-
 void
 SubscriptionOpen62541::dataChange (UA_UInt32 subscriptionId, UA_UInt32 monitorId, ItemOpen62541 &item, UA_DataValue *value)
-//                               const UaDataNotifications& dataNotifications,
-//                               const UaDiagnosticInfos&   diagnosticInfos)
 {
 //    UA_UInt32 i;
     if (debug)
