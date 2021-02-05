@@ -115,8 +115,8 @@ void SessionOpen62541::initOnce(void*)
     defaultClientConfig.clientDescription.applicationType = UA_APPLICATIONTYPE_CLIENT;
     defaultClientConfig.clientDescription.applicationName = UA_LOCALIZEDTEXT_ALLOC("en-US", "EPICS IOC");
     defaultClientConfig.clientDescription.productUri = UA_STRING_ALLOC("urn:EPICS:IOC");
-    char applicationUri[HOST_NAME_MAX+15] = { "urn:" };
-    if (gethostname(applicationUri+4, HOST_NAME_MAX) != 0)
+    char applicationUri[MAXHOSTNAMELEN+15] = { "urn:" };
+    if (gethostname(applicationUri+4, MAXHOSTNAMELEN) != 0)
         strcpy(applicationUri+4, "unknown-host");
     strcat(applicationUri, ":EPICS:IOC");
     defaultClientConfig.clientDescription.applicationUri = UA_STRING_ALLOC(applicationUri);
