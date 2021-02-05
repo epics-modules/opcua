@@ -816,49 +816,49 @@ private:
                             break;
                         case UA_TYPES_INT16:
                             if (isWithinRange<ET, UA_Int16>(*static_cast<UA_Int16*>(data.data)))
-                            *value = *static_cast<UA_Int16*>(data.data);
+                                *value = static_cast<ET>(*static_cast<UA_Int16*>(data.data));
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_UINT16:
                             if (isWithinRange<ET, UA_UInt16>(*static_cast<UA_UInt16*>(data.data)))
-                                *value = *static_cast<UA_UInt16*>(data.data);
+                                *value = static_cast<ET>(*static_cast<UA_UInt16*>(data.data));
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_INT32:
                             if (isWithinRange<ET, UA_Int32>(*static_cast<UA_Int32*>(data.data)))
-                                *value = *static_cast<UA_Int32*>(data.data);
+                                *value = static_cast<ET>(*static_cast<UA_Int32*>(data.data));
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_UINT32:
                             if (isWithinRange<ET, UA_UInt32>(*static_cast<UA_UInt32*>(data.data)))
-                                *value = *static_cast<UA_UInt32*>(data.data);
+                                *value = static_cast<ET>(*static_cast<UA_UInt32*>(data.data));
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_INT64:
                             if (isWithinRange<ET, UA_Int64>(*static_cast<UA_Int64*>(data.data)))
-                                *value = *static_cast<ET*>(data.data);
+                                *value = static_cast<ET>(*static_cast<UA_Int64*>(data.data));
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_UINT64:
                             if (isWithinRange<ET, UA_UInt64>(*static_cast<UA_UInt64*>(data.data)))
-                                *value = *static_cast<ET*>(data.data);
+                                *value = static_cast<ET>(*static_cast<UA_UInt64*>(data.data));
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_FLOAT:
                             if (isWithinRange<ET, UA_Float>(*static_cast<UA_Float*>(data.data)))
-                                *value = *static_cast<ET*>(data.data);
+                                *value = static_cast<ET>(*static_cast<UA_Float*>(data.data));
                             else
                                 ret = 1;
                             break;
                         case UA_TYPES_DOUBLE:
                             if (isWithinRange<ET, UA_Double>(*static_cast<UA_Double*>(data.data)))
-                                *value = *static_cast<ET*>(data.data);
+                                *value = static_cast<ET>(*static_cast<UA_Double*>(data.data));
                             else
                                 ret = 1;
                             break;
@@ -960,7 +960,7 @@ private:
                         if (UA_STATUS_IS_UNCERTAIN(stat)) {
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
-                        elemsWritten = num < static_cast<epicsUInt32>(data.arrayLength) ? num : static_cast<epicsUInt32>(data.arrayLength);
+                        elemsWritten = num < data.arrayLength ? num : data.arrayLength;
                         memcpy(value, data.data, sizeof(ET) * elemsWritten);
                         prec->udf = false;
                     }
