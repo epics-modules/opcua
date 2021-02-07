@@ -26,6 +26,6 @@ GTESTPROD_HOST += NamespaceMapTest
 NamespaceMapTest_SRCS += NamespaceMapTest.cpp
 NamespaceMapTest_LIBS_DEFAULT += opcua
 NamespaceMapTest_OBJS_WIN32 += SessionUaSdk SubscriptionUaSdk ItemUaSdk DataElementUaSdk
-NamespaceMapTest_OBJS_WIN32 += RecordConnector Subscription
+NamespaceMapTest_OBJS_WIN32 += RecordConnector Session Subscription
 NamespaceMapTest_LIBS_WIN32 += $(EPICS_BASE_IOC_LIBS)
 GTESTS += NamespaceMapTest

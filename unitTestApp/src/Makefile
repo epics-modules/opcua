@@ -24,6 +24,10 @@ GTESTPROD_HOST += RequestQueueBatcherTest
 RequestQueueBatcherTest_SRCS += RequestQueueBatcherTest.cpp
 GTESTS += RequestQueueBatcherTest
 
+GTESTPROD_HOST += RegistryTest
+RegistryTest_SRCS += RegistryTest.cpp
+GTESTS += RegistryTest
+
 #==================================================
 # Tests for different client libraries
 # are in separate directories, added by reading
