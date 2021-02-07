@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -134,10 +134,11 @@ parseLink (dbCommon *prec, const DBEntry &ent)
     send = linkstr.find_first_of("; \t", 0);
     std::string name = linkstr.substr(0, send);
 
-    if (Subscription::subscriptionExists(name)) {
+    Subscription *sub = Subscription::find(name);
+    if (sub) {
         pinfo->subscription = name;
-        pinfo->session = Subscription::findSubscription(name).getSession().getName();
-    } else if (Session::sessionExists(name)) {
+        pinfo->session = sub->getSession().getName();
+    } else if (Session::find(name)) {
         pinfo->session = name;
     } else if (name != "") {
         DBENTRY entry;

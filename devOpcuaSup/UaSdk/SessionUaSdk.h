@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -28,6 +28,7 @@
 
 #include "RequestQueueBatcher.h"
 #include "Session.h"
+#include "Registry.h"
 
 namespace DevOpcua {
 
@@ -156,20 +157,15 @@ public:
     /**
      * @brief Find a session by name.
      *
-     * @param name session name
-     *
-     * @return SessionUaSdk & session
-     */
-    static SessionUaSdk & findSession(const std::string &name);
-
-    /**
-     * @brief Check if a session with the specified name exists.
-     *
      * @param name  session name to search for
      *
-     * @return bool
+     * @return  pointer to session, nullptr if not found
      */
-    static bool sessionExists(const std::string &name);
+    static SessionUaSdk *
+    find(const std::string &name)
+    {
+        return sessions.find(name);
+    }
 
     /**
      * @brief Set an option for the session. See DevOpcua::Session::setOption
@@ -265,7 +261,7 @@ private:
      */
     void updateNamespaceMap(const UaStringArray &nsArray);
 
-    static std::map<std::string, SessionUaSdk *> sessions;    /**< session management */
+    static Registry<SessionUaSdk> sessions;                   /**< session management */
 
     const std::string name;                                   /**< unique session name */
     UaString serverURL;                                       /**< server URL */

@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -42,12 +42,14 @@ public:
      * @param publishingInterval  initial publishing interval
      * @param priority  priority (default 0=lowest)
      * @param debug  initial debug verbosity (default 0=no debug)
+     *
+     * @return  pointer to the new subscription, nullptr if not created
      */
-    static void createSubscription(const std::string &name,
-                                   const std::string &session,
-                                   const double publishingInterval,
-                                   const epicsUInt8 priority = 0,
-                                   const int debug = 0);
+    static Subscription *createSubscription(const std::string &name,
+                                            const std::string &session,
+                                            const double publishingInterval,
+                                            const epicsUInt8 priority = 0,
+                                            const int debug = 0);
     /**
      * @brief Print configuration and status on stdout.
      *
@@ -78,22 +80,13 @@ public:
     virtual Session & getSession() const = 0;
 
     /**
-     * @brief Find a subscription by name.
+     * @brief Find a subscription by name (implementation specific).
      *
      * @param name subscription name
      *
-     * @return Subscription & subscription
+     * @return  pointer to subscription, nullptr if not found
      */
-    static Subscription & findSubscription(const std::string &name);
-
-    /**
-     * @brief Check if a subscription with the specified name exists.
-     *
-     * @param name subscription name
-     *
-     * @return bool
-     */
-    static bool subscriptionExists(const std::string &name);
+    static Subscription *find(const std::string &name);
 
     const std::string name; /**< subscription name */
     int debug;              /**< debug verbosity level */

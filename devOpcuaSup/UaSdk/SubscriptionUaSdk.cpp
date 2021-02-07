@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -26,13 +26,14 @@
 #include "SubscriptionUaSdk.h"
 #include "ItemUaSdk.h"
 #include "DataElementUaSdk.h"
+#include "Registry.h"
 #include "devOpcua.h"
 
 namespace DevOpcua {
 
 using namespace UaClientSdk;
 
-std::map<std::string, SubscriptionUaSdk*> SubscriptionUaSdk::subscriptions;
+Registry<SubscriptionUaSdk> SubscriptionUaSdk::subscriptions;
 
 SubscriptionUaSdk::SubscriptionUaSdk (const std::string &name, SessionUaSdk *session,
                                       const double publishingInterval, const epicsUInt8 priority,
@@ -49,7 +50,7 @@ SubscriptionUaSdk::SubscriptionUaSdk (const std::string &name, SessionUaSdk *ses
     subscriptionSettings.lifetimeCount = requestedSettings.lifetimeCount = static_cast<OpcUa_UInt32>(deftimeout / publishingInterval);
     subscriptionSettings.priority = requestedSettings.priority = priority;
 
-    subscriptions[name] = this;
+    subscriptions.insert({name, this});
     psessionuasdk->subscriptions[name] = this;
 }
 
@@ -81,23 +82,6 @@ SubscriptionUaSdk::show (int level) const
             it->show(level-1);
         }
     }
-}
-
-SubscriptionUaSdk &
-SubscriptionUaSdk::findSubscription (const std::string &name)
-{
-    auto it = subscriptions.find(name);
-    if (it == subscriptions.end()) {
-        throw std::runtime_error("no such subscription");
-    }
-    return *(it->second);
-}
-
-bool
-SubscriptionUaSdk::subscriptionExists (const std::string &name)
-{
-    auto it = subscriptions.find(name);
-    return !(it == subscriptions.end());
 }
 
 void
