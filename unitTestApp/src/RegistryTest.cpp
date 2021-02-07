@@ -58,6 +58,21 @@ TEST_F(RegistryTest, insert_fill_ReturnCorrectSizes)
     EXPECT_EQ(r0.size(), 3u) << "registry with 3 obj has size != 3";
 }
 
+TEST_F(RegistryTest, iterators_full_GetOrderedElements)
+{
+    r0.insert({"object0", &t0});
+    r0.insert({"object2", &t2});
+    r0.insert({"object1", &t1});
+    auto i = r0.begin();
+    EXPECT_EQ(i->first, "object0") << "first object is not 'object0'";
+    i++;
+    EXPECT_EQ(i->first, "object1") << "second object is not 'object1'";
+    i++;
+    EXPECT_EQ(i->first, "object2") << "third object is not 'object2'";
+    i++;
+    EXPECT_EQ(i, r0.end()) << "invalid end() marker";
+}
+
 TEST_F(RegistryTest, insert_sameKey_FirstEntryIsRetained)
 {
     long status;

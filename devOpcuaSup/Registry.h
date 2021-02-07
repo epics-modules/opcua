@@ -121,16 +121,13 @@ public:
         return !!find(name);
     }
 
-    /**
-     * @brief Return the size of the registry, i.e the number of registered elements.
-     *
-     * @return  size of the registry
-     */
-    size_t
-    size() const noexcept
-    {
-        return registry.size();
-    }
+    // STL standards: size() and iterators
+    size_t size() const noexcept { return registry.size(); }
+
+    typedef typename std::map<std::string, T *>::iterator iterator;
+    typedef typename std::map<std::string, T *>::const_iterator const_iterator;
+    iterator begin() { return registry.begin(); }
+    iterator end() { return registry.end(); }
 
 private:
     RegistryKeyNamespace &keys;
