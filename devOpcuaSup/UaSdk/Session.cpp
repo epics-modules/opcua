@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -20,6 +20,7 @@
 #define epicsExportSharedSymbols
 #include "Session.h"
 #include "SessionUaSdk.h"
+#include "Registry.h"
 
 #define st(s) #s
 #define str(s) st(s)
@@ -28,6 +29,8 @@ namespace DevOpcua {
 
 static epicsThreadOnceId opcuaUaSdk_once = EPICS_THREAD_ONCE_INIT;
 
+RegistryKeyNamespace RegistryKeyNamespace::global;
+
 static
 void opcuaUaSdk_init (void *junk)
 {
@@ -35,24 +38,22 @@ void opcuaUaSdk_init (void *junk)
     UaPlatformLayer::init();
 }
 
-void
-Session::createSession (const std::string &name, const std::string &url,
-                        const int debuglevel, const bool autoconnect)
+Session *
+Session::createSession(const std::string &name,
+                       const std::string &url,
+                       const int debuglevel,
+                       const bool autoconnect)
 {
     epicsThreadOnce(&opcuaUaSdk_once, &opcuaUaSdk_init, nullptr);
-    new SessionUaSdk(name, url, autoconnect, debuglevel);
+    if (RegistryKeyNamespace::global.contains(name))
+        return nullptr;
+    return new SessionUaSdk(name, url, autoconnect, debuglevel);
 }
 
-Session &
-Session::findSession (const std::string &name)
+Session *
+Session::find(const std::string &name)
 {
-    return static_cast<Session &>(SessionUaSdk::findSession(name));
-}
-
-bool
-Session::sessionExists (const std::string &name)
-{
-    return SessionUaSdk::sessionExists(name);
+    return SessionUaSdk::find(name);
 }
 
 void

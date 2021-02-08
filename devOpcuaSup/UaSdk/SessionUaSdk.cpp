@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -44,7 +44,7 @@ using namespace UaClientSdk;
 static epicsThreadOnceId session_uasdk_ihooks_once = EPICS_THREAD_ONCE_INIT;
 static epicsThreadOnceId session_uasdk_atexit_once = EPICS_THREAD_ONCE_INIT;
 
-std::map<std::string, SessionUaSdk*> SessionUaSdk::sessions;
+Registry<SessionUaSdk> SessionUaSdk::sessions;
 
 // Cargo structure and batcher for write requests
 struct WriteRequest {
@@ -128,7 +128,7 @@ SessionUaSdk::SessionUaSdk (const std::string &name, const std::string &serverUr
             || (clientPrivateKey && (clientPrivateKey[0] != '\0')))
         errlogPrintf("OPC UA security not supported yet\n");
 
-    sessions[name] = this;
+    sessions.insert({name, this});
     epicsThreadOnce(&DevOpcua::session_uasdk_ihooks_once, &DevOpcua::session_uasdk_ihooks_register, nullptr);
 }
 
@@ -142,23 +142,6 @@ OpcUa_UInt32
 SessionUaSdk::getTransactionId ()
 {
     return static_cast<OpcUa_UInt32>(epics::atomic::increment(transactionId));
-}
-
-SessionUaSdk &
-SessionUaSdk::findSession (const std::string &name)
-{
-    auto it = sessions.find(name);
-    if (it == sessions.end()) {
-        throw std::runtime_error("no such session");
-    }
-    return *(it->second);
-}
-
-bool
-SessionUaSdk::sessionExists (const std::string &name)
-{
-    auto it = sessions.find(name);
-    return !(it == sessions.end());
 }
 
 void

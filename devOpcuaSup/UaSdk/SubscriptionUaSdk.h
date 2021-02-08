@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -23,6 +23,7 @@
 
 #include "SessionUaSdk.h"
 #include "Subscription.h"
+#include "Registry.h"
 
 namespace DevOpcua {
 
@@ -77,7 +78,11 @@ public:
      *
      * @return SubscriptionUaSdk & subscription
      */
-    static SubscriptionUaSdk & findSubscription(const std::string &name);
+    static SubscriptionUaSdk *
+    find(const std::string &name)
+    {
+        return subscriptions.find(name);
+    }
 
     /**
      * @brief Check if a subscription with the specified name exists.
@@ -165,7 +170,7 @@ public:
             ) override;
 
 private:
-    static std::map<std::string, SubscriptionUaSdk*> subscriptions;
+    static Registry<SubscriptionUaSdk> subscriptions; /**< subscription management */
 
     UaSubscription *puasubscription;            /**< pointer to low level subscription */
     SessionUaSdk *psessionuasdk;                /**< pointer to session */

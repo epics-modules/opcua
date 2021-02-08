@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -48,11 +48,11 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , connState(ConnectionStatus::down)
 {
     if (linkinfo.subscription != "" && linkinfo.monitor) {
-        subscription = &SubscriptionUaSdk::findSubscription(linkinfo.subscription);
+        subscription = SubscriptionUaSdk::find(linkinfo.subscription);
         subscription->addItemUaSdk(this);
         session = &subscription->getSessionUaSdk();
     } else {
-        session = &SessionUaSdk::findSession(linkinfo.session);
+        session = SessionUaSdk::find(linkinfo.session);
     }
     session->addItemUaSdk(this);
 }
