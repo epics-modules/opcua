@@ -146,33 +146,17 @@ public:
 
     // SubscriptionCallback interface
     void subscriptionStatusChanged(
-            UA_UInt32       subscriptionId,
             UA_StatusCode   status
             );
 
-    void subscriptionInactive(
-            UA_UInt32       subscriptionId
-    );
-
     void dataChange(
-            UA_UInt32       subscriptionId,
             UA_UInt32       monitorId,
             ItemOpen62541   &item,
             UA_DataValue    *value
-//            const UaDataNotifications& dataNotifications,
-//            const UaDiagnosticInfos&   diagnosticInfos
             );
-
-/*
-    void newEvents(
-            UA_UInt32                   subscriptionId,
-            UaEventFieldLists&          eventFieldList
-            );
-*/
 
 private:
     static std::map<std::string, SubscriptionOpen62541*> subscriptions;
-
     SessionOpen62541 &session;                           /**< reference to session */
     std::vector<ItemOpen62541 *> items;                  /**< items on this subscription */
     UA_CreateSubscriptionResponse subscriptionSettings;  /**< subscription specific settings */

@@ -170,9 +170,8 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
 
     setLastStatus(value.status);
 
-    if (auto pd = rootElement.lock())
+    if (auto pd = rootElement.lock()) 
         pd->setIncomingData(value.value, reason);
-
     if (linkinfo.isItemRecord) {
         if (state() == ConnectionStatus::initialRead
                 && reason == ProcessReason::readComplete

@@ -82,27 +82,20 @@ toStr(UA_SessionState sessionState) {
         default:                                 return "<unknown>";
     }
 }
-/*
-inline const char *
-serverStatusString (UaClient::ServerStatus type)
-{
-    switch (type) {
-    case UaClient::Disconnected:                      return "Disconnected";
-    case UaClient::Connected:                         return "Connected";
-    case UaClient::ConnectionWarningWatchdogTimeout:  return "ConnectionWarningWatchdogTimeout";
-    case UaClient::ConnectionErrorApiReconnect:       return "ConnectionErrorApiReconnect";
-    case UaClient::ServerShutdown:                    return "ServerShutdown";
-    case UaClient::NewSessionCreated:                 return "NewSessionCreated";
-    default:                                          return "<unknown>";
-    }
+
+inline std::ostream& operator<<(std::ostream& os, UA_SecureChannelState channelState) {
+    return os << toStr(channelState);
 }
-*/
+
+inline std::ostream& operator<<(std::ostream& os, UA_SessionState sessionState) {
+    return os << toStr(sessionState);
+}
+
 
 UA_ClientConfig SessionOpen62541::defaultClientConfig;
 
 void SessionOpen62541::initOnce(void*)
 {
-    errlogPrintf("SessionOpen62541::initOnce\n");
     if (UA_STATUSCODE_GOOD != UA_ClientConfig_setDefault(&defaultClientConfig))
     {
         /* unrecoverable failure */
@@ -125,11 +118,6 @@ void SessionOpen62541::initOnce(void*)
             static_cast<SessionOpen62541*>(UA_Client_getContext(client))->
                 connectionStatusChanged(channelState, sessionState, connectStatus);
         };
-    defaultClientConfig.subscriptionInactivityCallback = [] (UA_Client *client,
-        UA_UInt32 subscriptionId, void *subContext) {
-            static_cast<SubscriptionOpen62541*>(subContext)->subscriptionInactive(subscriptionId);
-        };
-    defaultClientConfig.connectivityCheckInterval = 1000; // [ms]
     defaultClientConfig.outStandingPublishRequests = 5;
 
 /*
@@ -142,7 +130,6 @@ void SessionOpen62541::initOnce(void*)
 
     initHookRegister(SessionOpen62541::initHook);
     epicsAtExit(SessionOpen62541::atExit, nullptr);
-    errlogPrintf("SessionOpen62541::initOnce DONE\n");
 }
 
 SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &serverUrl,
@@ -168,7 +155,6 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     , timerQueue(epicsTimerQueueActive::allocate (false,epicsThreadPriorityLow))
     , sessionPollTimer(timerQueue.createTimer())
 {
-    errlogPrintf("SessionOpen62541 constructor %s\n", name.c_str());
     static epicsThreadOnceId init_once_id = EPICS_THREAD_ONCE_INIT;
     epicsThreadOnce(&init_once_id, initOnce, nullptr);
 
@@ -192,8 +178,6 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
         errlogPrintf("OPC UA security not supported yet\n");
 
     sessions[name] = this;
-
-    errlogPrintf("SessionOpen62541 constructor %s DONE\n", name.c_str());
 }
 
 const std::string &
@@ -315,7 +299,6 @@ epicsTimerNotify::expireStatus SessionOpen62541::expire (const epicsTime &curren
 long
 SessionOpen62541::connect ()
 {
-    errlogPrintf("SessionOpen62541::connect %s\n", name.c_str());
     if (!client) {
         std::cerr << "Session " << name.c_str()
                   << ": invalid session, cannot connect" << std::endl;
@@ -341,14 +324,12 @@ SessionOpen62541::connect ()
                          << ": connect service ok" << std::endl;
     // asynchronous: remaining actions are done on the connectionStatusChanged callback
     sessionPollTimer.start(*this, 0);
-    errlogPrintf("SessionOpen62541::connect %s DONE\n", name.c_str());
     return 0;
 }
 
 long
 SessionOpen62541::disconnect ()
 {
-    errlogPrintf("SessionOpen62541::disconnect %s\n", name.c_str());
     sessionPollTimer.cancel();
     if (client && (channelState != UA_SECURECHANNELSTATE_CLOSED ||
                    sessionState != UA_SESSIONSTATE_CLOSED)) {
@@ -362,7 +343,6 @@ SessionOpen62541::disconnect ()
     for (auto &it : subscriptions) {
         it.second->clear();
     }
-    errlogPrintf("SessionOpen62541::disconnect %s DONE\n", name.c_str());
     return 0;
 }
 
@@ -492,27 +472,22 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
 void
 SessionOpen62541::createAllSubscriptions ()
 {
-    errlogPrintf("SessionOpen62541::createAllSubscriptions session %s [%zu]\n", name.c_str(), subscriptions.size());
     for (auto &it : subscriptions) {
         it.second->create();
     }
-    errlogPrintf("SessionOpen62541::createAllSubscriptions DONE\n");
 }
 
 void
 SessionOpen62541::addAllMonitoredItems ()
 {
-    errlogPrintf("SessionOpen62541::addAllMonitoredItems session %s %zu subscriptions\n", name.c_str(), subscriptions.size());
     for (auto &it : subscriptions) {
         it.second->addMonitoredItems();
     }
-    errlogPrintf("SessionOpen62541::addAllMonitoredItems DONE\n");
 }
 
 void
 SessionOpen62541::registerNodes ()
 {
-    errlogPrintf("SessionOpen62541::registerNodes\n");
     UA_RegisterNodesRequest request;
     UA_RegisterNodesRequest_init(&request);
     request.nodesToRegister = static_cast<UA_NodeId*>(UA_Array_new(items.size(), &UA_TYPES[UA_TYPES_NODEID]));
@@ -524,7 +499,6 @@ SessionOpen62541::registerNodes ()
             i++;
         }
     }
-    errlogPrintf("SessionOpen62541::registerNodes %u of %zu nodes to register\n", registeredItemsNo, items.size());
     registeredItemsNo = i;
     request.nodesToRegisterSize = registeredItemsNo;
     if (registeredItemsNo) {
@@ -548,13 +522,11 @@ SessionOpen62541::registerNodes ()
         }
     }
     UA_Array_delete(request.nodesToRegister, items.size(), &UA_TYPES[UA_TYPES_NODEID]);
-    errlogPrintf("SessionOpen62541::registerNodes [%u] DONE\n", registeredItemsNo);
 }
 
 void
 SessionOpen62541::rebuildNodeIds ()
 {
-    errlogPrintf("SessionOpen62541::rebuildNodeIds [%zu]\n", items.size());
     for (auto &it : items) {
         it->rebuildNodeId();
     }
@@ -702,17 +674,20 @@ void SessionOpen62541::connectionStatusChanged(
 {
     if (newConnectStatus != UA_STATUSCODE_GOOD) {
         connectStatus = newConnectStatus;
-        errlogPrintf("open62541 session %s: Connection irrecoverably failed: %s\n",
+        errlogPrintf("Session %s irrecoverably failed: %s\n",
                  name.c_str(), UA_StatusCode_name(connectStatus));
+        UA_Client_delete(client);
+        client = nullptr;
         return;
     }
 
     if (newChannelState != channelState) {
-        errlogPrintf("open62541session %s: secure channel state changed from %s to %s\n",
-            name.c_str(), toStr(channelState), toStr(newChannelState));
-        channelState = newChannelState;
+        if (debug)
+            std::cout << "Session " << name.c_str()
+                      << ": secure channel state changed from "
+                      << channelState << " to " << newChannelState  << std::endl;
 // TODO: What to do for each channelState change?
-        switch (channelState) {
+        switch (newChannelState) {
             case UA_SECURECHANNELSTATE_CLOSED:       break;
             case UA_SECURECHANNELSTATE_HEL_SENT:     break;
             case UA_SECURECHANNELSTATE_HEL_RECEIVED: break;
@@ -722,94 +697,58 @@ void SessionOpen62541::connectionStatusChanged(
             case UA_SECURECHANNELSTATE_OPEN:         break;
             case UA_SECURECHANNELSTATE_CLOSING:      break;
         }
+        channelState = newChannelState;
     }
 
     if (newSessionState != sessionState) {
-        errlogPrintf("open62541session %s: session state changed from %s to %s\n",
-            name.c_str(), toStr(sessionState), toStr(newSessionState));
-        sessionState = newSessionState;
+        if (debug)
+            std::cout << "Session " << name.c_str()
+                      << ": session state changed from "
+                      << sessionState << " to " << newSessionState  << std::endl;
 // TODO: What to do for each sessionState change?
-        switch (sessionState) {
+        switch (newSessionState) {
+            case UA_SESSIONSTATE_CLOSING:
+            {
+                reader.clear();
+                writer.clear();
+                for (auto it : items) {
+                    it->setState(ConnectionStatus::down);
+                    it->setIncomingEvent(ProcessReason::connectionLoss);
+                }
+                registeredItemsNo = 0;
+                break;
+            }
             case UA_SESSIONSTATE_CLOSED:             break;
             case UA_SESSIONSTATE_CREATE_REQUESTED:   break;
             case UA_SESSIONSTATE_CREATED:            break;
             case UA_SESSIONSTATE_ACTIVATE_REQUESTED: break;
             case UA_SESSIONSTATE_ACTIVATED:
+            {
                 //updateNamespaceMap(puasession->getNamespaceTable());
                 rebuildNodeIds();
                 registerNodes();
                 createAllSubscriptions();
                 addAllMonitoredItems();
+                if (debug) {
+                    std::cout << "Session " << name.c_str()
+                              << ": triggering initial read for all "
+                              << items.size() << " items" << std::endl;
+                }
+                auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
+                unsigned int i = 0;
+                for (auto it : items) {
+                    it->setState(ConnectionStatus::initialRead);
+                    cargo[i] = std::make_shared<ReadRequest>();
+                    cargo[i]->item = it;
+                    i++;
+                }
+                // status needs to be updated before requests are being issued
+                reader.pushRequest(cargo, menuPriorityHIGH);
                 break;
-            case UA_SESSIONSTATE_CLOSING:            break;
-        }
-    }
-
-/*
-    switch (serverStatus) {
-        // "The monitoring of the connection to the server detected an error
-        // and is trying to reconnect to the server."
-    case UaClient::ConnectionErrorApiReconnect:
-        // "The server sent a shut-down event and the client API tries a reconnect."
-    case UaClient::ServerShutdown:
-        // "The connection to the server is deactivated by the user of the client API."
-    case UaClient::Disconnected:
-        reader.clear();
-        writer.clear();
-        for (auto it : items) {
-            it->setState(ConnectionStatus::down);
-            it->setIncomingEvent(ProcessReason::connectionLoss);
-        }
-        registeredItemsNo = 0;
-        break;
-
-        // "The monitoring of the connection to the server indicated
-        // a potential connection problem."
-    case UaClient::ConnectionWarningWatchdogTimeout:
-        break;
-
-        // "The connection to the server is established and is working in normal mode."
-    case UaClient::Connected:
-        if (serverConnectionStatus == UaClient::Disconnected) {
-            updateNamespaceMap(puasession->getNamespaceTable());
-            rebuildNodeIds();
-            registerNodes();
-            createAllSubscriptions();
-            addAllMonitoredItems();
-        }
-        if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout) {
-            if (debug) {
-                std::cout << "Session " << name.c_str()
-                          << ": triggering initial read for all "
-                          << items.size() << " items" << std::endl;
             }
-            auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
-            unsigned int i = 0;
-            for (auto it : items) {
-                it->setState(ConnectionStatus::initialRead);
-                cargo[i] = std::make_shared<ReadRequest>();
-                cargo[i]->item = it;
-                i++;
-            }
-            // status needs to be updated before requests are being issued
-            serverConnectionStatus = serverStatus;
-            reader.pushRequest(cargo, menuPriorityHIGH);
         }
-        break;
-
-        // "The client was not able to reuse the old session
-        // and created a new session during reconnect.
-        // This requires to redo register nodes for the new session
-        // or to read the namespace array."
-    case UaClient::NewSessionCreated:
-        updateNamespaceMap(puasession->getNamespaceTable());
-        rebuildNodeIds();
-        registerNodes();
-        createAllSubscriptions();
-        addAllMonitoredItems();
-        break;
+        sessionState = newSessionState;
     }
-*/
 }
 /*
 void

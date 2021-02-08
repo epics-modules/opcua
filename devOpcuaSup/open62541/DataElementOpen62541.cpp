@@ -27,6 +27,15 @@
 
 namespace DevOpcua {
 
+inline std::ostream& operator<<(std::ostream& os, const UA_Variant &value) {
+    UA_String s;
+    UA_String_init(&s);
+    UA_print(&value, value.type, &s);
+    os << s.data;
+    UA_String_clear(&s);
+    return os;
+}
+
 /* Specific implementation of DataElement's "factory" method */
 void
 DataElement::addElementToTree (Item *item,
@@ -198,9 +207,17 @@ void
 DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason reason)
 {
     // Make a copy of this element and cache it
+    std::cout << "DataElementOpen62541::setIncomingData for record "
+              << pconnector->getRecordName()
+              << " value: " << value << " (" << variantTypeString(value);
+    if (!UA_Variant_isScalar(&value))
+        std::cout << '[' << value.arrayLength << ']';
+    std::cout << ')' << std::endl;
+
     UA_copy(&value, &incomingData, value.type);
 
     if (isLeaf()) {
+        std::cout << "Item " << name <<" state:" << connectionStatusString(pitem->state()) << " reason:" << processReasonString(reason) << std::endl;
         if ((pitem->state() == ConnectionStatus::initialRead && reason == ProcessReason::readComplete) ||
                 (pitem->state() == ConnectionStatus::up)) {
             Guard(pconnector->lock);
@@ -408,16 +425,12 @@ DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
         std::cout << pconnector->getRecordName() << ": ";
         if (reason == ProcessReason::incomingData || reason == ProcessReason::readComplete) {
             UA_Variant &data = upd->getData();
-            UA_String datastring;
-            UA_String_init(&datastring);
-            UA_print(&data, data.type, &datastring);
             std::cout << "(" << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device")
                       << " time " << time_buf << ") read " << processReasonString(reason) << " ("
                       << UA_StatusCode_name(upd->getStatus()) << ") "
-                      << datastring.data
+                      << data
                       << " (" << variantTypeString(data) << ")"
                       << " as " << targetTypeName;
-            UA_String_clear(&datastring);
             if (targetSize)
                 std::cout << "[" << targetSize << "]";
         } else {
@@ -797,13 +810,9 @@ void
 DataElementOpen62541::dbgWriteScalar () const
 {
     if (isLeaf() && debug()) {
-        UA_String datastring;
-        UA_String_init(&datastring);
-        UA_print(&outgoingData, outgoingData.type, &datastring);
         std::cout << pconnector->getRecordName() << ": set outgoing data ("
                   << variantTypeString(outgoingData) << ") to value "
-                  << datastring;
-        UA_String_clear(&datastring);
+                  << outgoingData;
     }
 }
 
