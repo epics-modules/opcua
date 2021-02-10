@@ -27,15 +27,6 @@
 
 namespace DevOpcua {
 
-inline std::ostream& operator<<(std::ostream& os, const UA_Variant &value) {
-    UA_String s;
-    UA_String_init(&s);
-    UA_print(&value, value.type, &s);
-    os << s.data;
-    UA_String_clear(&s);
-    return os;
-}
-
 /* Specific implementation of DataElement's "factory" method */
 void
 DataElement::addElementToTree (Item *item,
@@ -52,6 +43,8 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
+    , incomingData({0})
+    , outgoingData({0})
     , isdirty(false)
 {}
 
@@ -62,6 +55,8 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(0ul)
+    , incomingData({0})
+    , outgoingData({0})
     , isdirty(false)
 {
     elements.push_back(child);
@@ -209,15 +204,12 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
     // Make a copy of this element and cache it
     std::cout << "DataElementOpen62541::setIncomingData for record "
               << pconnector->getRecordName()
-              << " value: " << value << " (" << variantTypeString(value);
-    if (!UA_Variant_isScalar(&value))
-        std::cout << '[' << value.arrayLength << ']';
-    std::cout << ')' << std::endl;
+              << " value: " << value
+              << std::endl;
 
     UA_copy(&value, &incomingData, value.type);
 
     if (isLeaf()) {
-        std::cout << "Item " << name <<" state:" << connectionStatusString(pitem->state()) << " reason:" << processReasonString(reason) << std::endl;
         if ((pitem->state() == ConnectionStatus::initialRead && reason == ProcessReason::readComplete) ||
                 (pitem->state() == ConnectionStatus::up)) {
             Guard(pconnector->lock);
@@ -239,6 +231,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
             std::cout << "Element " << name << " splitting structured data to "
                       << elements.size() << " child elements" << std::endl;
         if (value.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+            errlogPrintf("UNSUPPORTED ExtensionObject %s", name.c_str());
 /*
             UA_ExtensionObject *extensionObject = value.data
             value.toExtensionObject(extensionObject);
@@ -352,6 +345,7 @@ DataElementOpen62541::getOutgoingData ()
         UA_copy(&incomingData, &outgoingData, incomingData.type);
         isdirty = false;
         if (outgoingData.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+            errlogPrintf("UNSUPPORTED ExtensionObject %s", name.c_str());
             UA_ExtensionObject extensionObject;
             UA_ExtensionObject_setValue(&extensionObject, &outgoingData, outgoingData.type);
 /*
@@ -534,8 +528,8 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 } else {
                     UA_String datastring;
                     UA_String_init(&datastring);
-                    UA_print(&data, data.type, &datastring);
-                    strncpy(value, reinterpret_cast<char*>(datastring.data), num);
+                    UA_print(&data, data.type, &datastring); // Not terminated!
+                    strncpy(value, reinterpret_cast<char*>(datastring.data), std::min(num, datastring.length));
                     UA_String_clear(&datastring);
                 }
                 value[num-1] = '\0';

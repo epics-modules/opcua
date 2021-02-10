@@ -50,37 +50,7 @@ inline const char *epicsTypeString (const char* &) { return "epicsString"; }
 inline const char *
 variantTypeString (const UA_DataType *type)
 {
-#ifdef UA_ENABLE_TYPEDESCRIPTION
-    if (type->typeName) return type->typeName;
-#endif
-    switch(type->typeKind) {
-        case UA_TYPES_BOOLEAN:         return "UA_Boolean";
-        case UA_TYPES_SBYTE:           return "UA_SByte";
-        case UA_TYPES_BYTE:            return "UA_Byte";
-        case UA_TYPES_INT16:           return "UA_Int16";
-        case UA_TYPES_UINT16:          return "UA_UInt16";
-        case UA_TYPES_INT32:           return "UA_Int32";
-        case UA_TYPES_UINT32:          return "UA_UInt32";
-        case UA_TYPES_INT64:           return "UA_Int64";
-        case UA_TYPES_UINT64:          return "UA_UInt64";
-        case UA_TYPES_FLOAT:           return "UA_Float";
-        case UA_TYPES_DOUBLE:          return "UA_Double";
-        case UA_TYPES_STRING:          return "UA_String";
-        case UA_TYPES_DATETIME:        return "UA_DataTime";
-        case UA_TYPES_GUID:            return "UA_Guid";
-        case UA_TYPES_BYTESTRING:      return "UA_ByteString";
-        case UA_TYPES_XMLELEMENT:      return "UA_XmlElement";
-        case UA_TYPES_NODEID:          return "UA_NodeId";
-        case UA_TYPES_EXPANDEDNODEID:  return "UA_ExpandedNodeId";
-        case UA_TYPES_STATUSCODE:      return "UA_StatusCode";
-        case UA_TYPES_QUALIFIEDNAME:   return "UA_QualifiedName";
-        case UA_TYPES_LOCALIZEDTEXT:   return "UA_LocalizedText";
-        case UA_TYPES_EXTENSIONOBJECT: return "UA_ExtensionObject";
-        case UA_TYPES_DATAVALUE:       return "UA_DataValue";
-        case UA_TYPES_VARIANT:         return "UA_Variant";
-        case UA_TYPES_DIAGNOSTICINFO:  return "UA_DiagnosticInfo";
-    }
-    return "Illegal Value";
+    return type->typeName;
 }
 
 inline const char *
@@ -800,7 +770,8 @@ private:
                     UA_Variant &data = upd->getData();
                     switch(data.type->typeKind) {
                         case UA_TYPES_BOOLEAN:
-                            *value = *static_cast<UA_Boolean*>(data.data) != 0;
+                            *value = (*static_cast<UA_Boolean*>(data.data) != 0);
+                            std::cout << "Boolean " << data << '=' << *static_cast<UA_Boolean*>(data.data) << "=" << *value << std::endl;
                             break;
                         case UA_TYPES_BYTE:
                             if (isWithinRange<ET, UA_Byte>(*static_cast<UA_Byte*>(data.data)))
@@ -869,10 +840,10 @@ private:
                     }
                     if (ret == 1) {
                         UA_String datastring;
-                        UA_print(&data, data.type, &datastring);
-                        errlogPrintf("%s : incoming data (%s) out-of-bounds\n",
+                        UA_print(&data, data.type, &datastring); // Not terminated!
+                        errlogPrintf("%s : incoming data (%.*s) out-of-bounds\n",
                                      prec->name,
-                                     datastring.data);
+                                     static_cast<int>(datastring.length), datastring.data);
                         UA_String_clear(&datastring);
                         (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     } else {

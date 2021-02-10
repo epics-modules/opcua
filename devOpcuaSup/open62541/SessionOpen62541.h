@@ -36,19 +36,26 @@ struct WriteRequest;
 struct ReadRequest;
 
 // some helpers
-inline const char* toStr(const UA_String& ua_string) {
-    return reinterpret_cast<char*>(ua_string.data);
-}
 
 inline std::ostream& operator<<(std::ostream& os, const UA_String& ua_string) {
-    return os << ua_string.data;
+    // ua_string.data is not terminated!
+    return os.write(reinterpret_cast<char*>(ua_string.data), ua_string.length);
 }
 
 inline std::ostream& operator<<(std::ostream& os, const UA_NodeId& ua_nodeId) {
     UA_String s;
     UA_String_init(&s);
     UA_NodeId_print(&ua_nodeId, &s);
-    os << s.data;
+    os << s;
+    UA_String_clear(&s);
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const UA_Variant &ua_variant) {
+    UA_String s;
+    UA_String_init(&s);
+    UA_print(ua_variant.data, ua_variant.type, &s);
+    os << s << " (" << ua_variant.type->typeName << ')';
     UA_String_clear(&s);
     return os;
 }
@@ -249,21 +256,14 @@ public:
     // Get a new (unique per session) transaction id
     UA_UInt32 getTransactionId();
 
-/*
-    // UaSessionCallback interface
-
-    virtual void readComplete(
+    // callbacks
+    void readComplete(
             UA_UInt32 transactionId,
-            const UA_StatusCode result,
-            const UaDataValues &values,
-            const UaDiagnosticInfos &diagnosticInfos) override;
+            UA_ReadResponse* response);
 
-    virtual void writeComplete(
+    void  writeComplete(
             UA_UInt32 transactionId,
-            const UA_StatusCode result,
-            const UaStatusCodeArray &results,
-            const UaDiagnosticInfos &diagnosticInfos) override;
-*/
+            UA_WriteResponse* response);
 
     // RequestConsumer<> interfaces
     virtual void processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch) override;

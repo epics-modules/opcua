@@ -47,7 +47,7 @@ std::map<std::string, SessionOpen62541*> SessionOpen62541::sessions;
 // Cargo structure and batcher for write requests
 struct WriteRequest {
     ItemOpen62541 *item;
-//    OpcUa_WriteValue wvalue;
+    UA_WriteValue wvalue;
 };
 
 // Cargo structure and batcher for read requests
@@ -90,7 +90,6 @@ inline std::ostream& operator<<(std::ostream& os, UA_SecureChannelState channelS
 inline std::ostream& operator<<(std::ostream& os, UA_SessionState sessionState) {
     return os << toStr(sessionState);
 }
-
 
 UA_ClientConfig SessionOpen62541::defaultClientConfig;
 
@@ -306,7 +305,7 @@ SessionOpen62541::connect ()
     }
     if (isConnected()) {
         if (debug) std::cerr << "Session " << name.c_str() << ": already connected ("
-                             << toStr(sessionState) << "," << toStr(channelState) << ")" << std::endl;
+                             << sessionState << "," << channelState << ")" << std::endl;
         return 0;
     }
     errlogPrintf("SessionOpen62541::connect %s: connecting to %s\n", name.c_str(), serverURL.c_str());
@@ -368,48 +367,54 @@ SessionOpen62541::requestRead (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
-    errlogPrintf("SessionOpen62541::processRequests ReadRequest UNIMPLEMENTED\n");
-/*
     UA_StatusCode status;
-    UaReadValueIds nodesToRead;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToRead(new std::vector<ItemOpen62541 *>);
-    ServiceSettings serviceSettings;
     UA_UInt32 id = getTransactionId();
+    UA_ReadRequest request;
 
-    nodesToRead.create(batch.size());
+    UA_ReadRequest_init(&request);
+    request.maxAge = 0;
+    request.timestampsToReturn = UA_TIMESTAMPSTORETURN_BOTH;
+    request.nodesToReadSize = batch.size();
+    request.nodesToRead = static_cast<UA_ReadValueId*>(UA_Array_new(batch.size(), &UA_TYPES[UA_TYPES_READVALUEID]));
+
     UA_UInt32 i = 0;
     for (auto c : batch) {
-        c->item->getNodeId().copyTo(&nodesToRead[i].NodeId);
-        nodesToRead[i].AttributeId = OpcUa_Attributes_Value;
+        UA_NodeId_copy(&c->item->getNodeId(), &request.nodesToRead[i].nodeId);
+        request.nodesToRead[i].attributeId = UA_ATTRIBUTEID_VALUE;
         itemsToRead->push_back(c->item);
         i++;
     }
 
     if (isConnected()) {
         Guard G(opslock);
-        status = puasession->beginRead(serviceSettings,                // Use default settings
-                                       0,                              // Max age
-                                       OpcUa_TimestampsToReturn_Both,  // Time stamps to return
-                                       nodesToRead,                    // Array of nodes to read
-                                       id);                            // Transaction id
-
-	    if (!UA_STATUS_IS_BAD(status)) {
-	        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
-	                     name.c_str(), UA_StatusCode_name(status);
-            //TODO: create writeFailure events for all items of the batch
-//	        item.setIncomingEvent(ProcessReason::readFailure);
+        {
+            Guard G(clientlock);
+            status=__UA_Client_AsyncService(client, &request,
+                &UA_TYPES[UA_TYPES_READREQUEST],
+                [] (UA_Client *client, void *userdata, UA_UInt32 requestId, void *response) {
+                    static_cast<SessionOpen62541*>(userdata)->
+                        readComplete(requestId, static_cast<UA_ReadResponse*>(response));
+                },
+                &UA_TYPES[UA_TYPES_READRESPONSE], this, &id);
+        }
+        UA_Array_delete(request.nodesToRead, request.nodesToReadSize, &UA_TYPES[UA_TYPES_READVALUEID]);
+        if (UA_STATUS_IS_BAD(status)) {
+            errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
+                         name.c_str(), UA_StatusCode_name(status));
+            //TODO: create readFailure events for all items of the batch
+//          item.setIncomingEvent(ProcessReason::readFailure);
 
         } else {
             if (debug >= 5)
                 std::cout << "Session " << name.c_str()
                           << ": (requestRead) beginRead service ok"
                           << " (transaction id " << id
-                          << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
+                          << "; retrieving " << request.nodesToReadSize << " nodes)" << std::endl;
             outstandingOps.insert(std::pair<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>>
                                   (id, std::move(itemsToRead)));
         }
     }
-*/
 }
 
 void
@@ -417,7 +422,7 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 {
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
-//    item.getOutgoingData().copyTo(&cargo->wvalue.Value.Value);
+    cargo->wvalue.value.value = item.getOutgoingData();
     item.clearOutgoingData();
     writer.pushRequest(cargo, item.recConnector->getRecordPriority());
 }
@@ -426,30 +431,38 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
-    errlogPrintf("SessionOpen62541::processRequests WriteRequest UNIMPLEMENTED\n");
-/*
     UA_StatusCode status;
-    UaWriteValues nodesToWrite;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToWrite(new std::vector<ItemOpen62541 *>);
-    ServiceSettings serviceSettings;
     UA_UInt32 id = getTransactionId();
+    UA_WriteRequest request;
 
-    nodesToWrite.create(batch.size());
+    UA_WriteRequest_init(&request);
+    request.nodesToWriteSize = batch.size();
+    request.nodesToWrite = static_cast<UA_WriteValue*>(UA_Array_new(batch.size(), &UA_TYPES[UA_TYPES_WRITEVALUE]));
+
     UA_UInt32 i = 0;
     for (auto c : batch) {
-        c->item->getNodeId().copyTo(&nodesToWrite[i].NodeId);
-        nodesToWrite[i].AttributeId = OpcUa_Attributes_Value;
-        nodesToWrite[i].Value.Value = c->wvalue.Value.Value;
+        UA_NodeId_copy(&c->item->getNodeId(), &request.nodesToWrite[i].nodeId);
+        request.nodesToWrite[i].attributeId = UA_ATTRIBUTEID_VALUE;
+        request.nodesToWrite[i].value.value = c->wvalue.value.value;
+        request.nodesToWrite[i].value.hasValue = true;
         itemsToWrite->push_back(c->item);
         i++;
     }
 
     if (isConnected()) {
         Guard G(opslock);
-        status = puasession->beginWrite(serviceSettings,        // Use default settings
-                                        nodesToWrite,           // Array of nodes/data to write
-                                        id);                    // Transaction id
-
+        {
+            Guard G(clientlock);
+            status=__UA_Client_AsyncService(client, &request,
+                &UA_TYPES[UA_TYPES_WRITEREQUEST],
+                [] (UA_Client *client, void *userdata, UA_UInt32 requestId, void *response) {
+                    static_cast<SessionOpen62541*>(userdata)->
+                        writeComplete(requestId, static_cast<UA_WriteResponse*>(response));
+                },
+                &UA_TYPES[UA_TYPES_WRITERESPONSE], this, &id);
+        }
+        UA_Array_delete(request.nodesToWrite, request.nodesToWriteSize, &UA_TYPES[UA_TYPES_WRITEVALUE]);
         if (UA_STATUS_IS_BAD(status)) {
             errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
                          name.c_str(), UA_StatusCode_name(status));
@@ -461,12 +474,11 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
                 std::cout << "Session " << name.c_str()
                           << ": (requestWrite) beginWrite service ok"
                           << " (transaction id " << id
-                          << "; writing " << nodesToWrite.length() << " nodes)" << std::endl;
+                          << "; writing " << request.nodesToWriteSize << " nodes)" << std::endl;
             outstandingOps.insert(std::pair<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>>
                                   (id, std::move(itemsToWrite)));
         }
     }
-*/
 }
 
 void
@@ -495,7 +507,7 @@ SessionOpen62541::registerNodes ()
     for (auto &it : items) {
         if (it->linkinfo.registerNode) {
             it->show(0);
-            request.nodesToRegister[i] = it->getNodeId();
+            UA_NodeId_copy(&it->getNodeId(), &request.nodesToRegister[i]);
             i++;
         }
     }
@@ -587,8 +599,8 @@ SessionOpen62541::show (const int level) const
     std::cout << "session="      << name
               << " url="         << serverURL.c_str()
               << " connect status=" << UA_StatusCode_name(connectStatus)
-              << " sessionState="   << toStr(sessionState)
-              << " channelState="   << toStr(channelState)
+              << " sessionState="   << sessionState
+              << " channelState="   << channelState
               << " cert="        << "[none]"
               << " key="         << "[none]"
               << " debug="       << debug
@@ -750,12 +762,10 @@ void SessionOpen62541::connectionStatusChanged(
         sessionState = newSessionState;
     }
 }
-/*
+
 void
 SessionOpen62541::readComplete (UA_UInt32 transactionId,
-                            UA_StatusCode result,
-                            const UaDataValues &values,
-                            const UaDiagnosticInfos &diagnosticInfos)
+                            UA_ReadResponse* response)
 {
     Guard G(opslock);
     auto it = outstandingOps.find(transactionId);
@@ -763,30 +773,32 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
         errlogPrintf("OPC UA session %s: (readComplete) received a callback "
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
-    } else if (!UA_STATUS_IS_BAD(result)) {
+    } else if (!UA_STATUS_IS_BAD(response->responseHeader.serviceResult)) {
         if (debug >= 2)
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) getting data for read service"
                       << " (transaction id " << transactionId
-                      << "; data for " << values.length() << " items)" << std::endl;
-        if ((*it->second).size() != values.length())
+                      << "; data for " << response->resultsSize << " items)" << std::endl;
+        if ((*it->second).size() != response->resultsSize)
             errlogPrintf("OPC UA session %s: (readComplete) received a callback "
-                         "with %u values for a request containing %lu items\n",
-                         name.c_str(), values.length(), (*it->second).size());
+                         "with %zu values for a request containing %zu items\n",
+                         name.c_str(), response->resultsSize, (*it->second).size());
         UA_UInt32 i = 0;
         for (auto item : (*it->second)) {
-            if (i >= values.length()) {
+            if (i >= response->resultsSize) {
                 item->setIncomingEvent(ProcessReason::readFailure);
             } else {
                 if (debug >= 5) {
                     std::cout << "** Session " << name.c_str()
                               << ": (readComplete) getting data for item "
-                              << item->getNodeId().toXmlString().toUtf8() << std::endl;
+                              << item->getNodeId()
+                              << " = " << response->results[i].value
+                              << std::endl;
                 }
                 ProcessReason reason = ProcessReason::readComplete;
-                if (OpcUa_IsNotGood(values[i].StatusCode))
+                if (UA_STATUS_IS_BAD(response->results[i].status))
                     reason = ProcessReason::readFailure;
-                item->setIncomingData(values[i], reason);
+                item->setIncomingData(response->results[i], reason);
             }
             i++;
         }
@@ -796,12 +808,14 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) for read service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << UA_StatusCode_name(result) << std::endl;
+                      << ") failed with status "
+                      << UA_StatusCode_name(response->responseHeader.serviceResult)
+                      << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
                           << ": (readComplete) filing read error (no data) for item "
-                          << item->getNodeId().toXmlString().toUtf8() << std::endl;
+                          << item->getNodeId() << std::endl;
             }
             item->setIncomingEvent(ProcessReason::readFailure);
             // Not doing initial write if the read has failed
@@ -813,9 +827,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
 
 void
 SessionOpen62541::writeComplete (UA_UInt32 transactionId,
-                             UA_StatusCode result,
-                             const UaStatusCodeArray& results,
-                             const UaDiagnosticInfos& diagnosticInfos)
+                            UA_WriteResponse* response)
 {
     Guard G(opslock);
     auto it = outstandingOps.find(transactionId);
@@ -823,21 +835,21 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
         errlogPrintf("OPC UA session %s: (writeComplete) received a callback "
                      "with unknown transaction id %u - ignored\n",
                      name.c_str(), transactionId);
-    } else if (!UA_STATUS_IS_BAD(result)) {
+    } else if (!UA_STATUS_IS_BAD(response->responseHeader.serviceResult)) {
         if (debug >= 2)
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) getting results for write service"
                       << " (transaction id " << transactionId
-                      << "; results for " << results.length() << " items)" << std::endl;
+                      << "; results for " << response->resultsSize << " items)" << std::endl;
         UA_UInt32 i = 0;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
                           << ": (writeComplete) getting results for item "
-                          << item->getNodeId().toXmlString().toUtf8() << std::endl;
+                          << item->getNodeId() << std::endl;
             }
             ProcessReason reason = ProcessReason::writeComplete;
-            if (UA_STATUS_IS_BAD(results[i]))
+            if (UA_STATUS_IS_BAD(response->results[i]))
                 reason = ProcessReason::writeFailure;
             item->setIncomingEvent(reason);
             item->setState(ConnectionStatus::up);
@@ -849,12 +861,14 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) for write service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << UA_StatusCode_name(result) << std::endl;
+                      << ") failed with status "
+                      << UA_StatusCode_name(response->responseHeader.serviceResult)
+                      << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
                           << ": (writeComplete) filing write error for item "
-                          << item->getNodeId().toXmlString().toUtf8() << std::endl;
+                          << item->getNodeId() << std::endl;
             }
             item->setIncomingEvent(ProcessReason::writeFailure);
             item->setState(ConnectionStatus::up);
@@ -862,7 +876,6 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
         outstandingOps.erase(it);
     }
 }
-*/
 
 void
 SessionOpen62541::showAll (const int level)

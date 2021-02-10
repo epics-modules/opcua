@@ -102,7 +102,7 @@ public:
      * @brief Setter for the node id of this item.
      * @return node id
      */
-    void setRegisteredNodeId(const UA_NodeId &id) { nodeid = id; registered = true; }
+    void setRegisteredNodeId(const UA_NodeId &id) { UA_NodeId_copy(&id, &nodeid); registered = true; }
 
     /**
      * @brief Getter that returns the node id of this item.
