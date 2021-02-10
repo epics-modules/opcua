@@ -771,7 +771,6 @@ private:
                     switch(data.type->typeKind) {
                         case UA_TYPES_BOOLEAN:
                             *value = (*static_cast<UA_Boolean*>(data.data) != 0);
-                            std::cout << "Boolean " << data << '=' << *static_cast<UA_Boolean*>(data.data) << "=" << *value << std::endl;
                             break;
                         case UA_TYPES_BYTE:
                             if (isWithinRange<ET, UA_Byte>(*static_cast<UA_Byte*>(data.data)))

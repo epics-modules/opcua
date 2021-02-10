@@ -202,12 +202,8 @@ void
 DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason reason)
 {
     // Make a copy of this element and cache it
-    std::cout << "DataElementOpen62541::setIncomingData for record "
-              << pconnector->getRecordName()
-              << " value: " << value
-              << std::endl;
 
-    UA_copy(&value, &incomingData, value.type);
+    UA_Variant_copy(&value, &incomingData);
 
     if (isLeaf()) {
         if ((pitem->state() == ConnectionStatus::initialRead && reason == ProcessReason::readComplete) ||
@@ -215,7 +211,9 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
             Guard(pconnector->lock);
             bool wasFirst = false;
             // Make a copy of the value for this element and put it on the queue
-            UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason, value, getIncomingReadStatus()));
+            UA_Variant *valuecopy (new UA_Variant);
+            UA_Variant_copy(&value, valuecopy); // As a non-C++ object, UA_Variant has no copy constructor
+            UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason, std::unique_ptr<UA_Variant>(valuecopy), getIncomingReadStatus()));
             incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
             if (debug() >= 5)
                 std::cout << "Element " << name << " set data ("
@@ -342,7 +340,7 @@ DataElementOpen62541::getOutgoingData ()
             std::cout << "Element " << name << " updating structured data from "
                       << elements.size() << " child elements" << std::endl;
 
-        UA_copy(&incomingData, &outgoingData, incomingData.type);
+        UA_Variant_copy(&incomingData, &outgoingData);
         isdirty = false;
         if (outgoingData.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
             errlogPrintf("UNSUPPORTED ExtensionObject %s", name.c_str());
@@ -524,16 +522,18 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 }
                 UA_Variant &data = upd->getData();
                 if (data.type->typeKind == UA_TYPES_STRING) {
-                    strncpy(value, reinterpret_cast<char*>(static_cast<UA_String *>(data.data)->data), num);
+                    UA_String *datastring = static_cast<UA_String *>(data.data);
+                    strncpy(value, reinterpret_cast<char*>(datastring->data), std::min(num, datastring->length));
                 } else {
                     UA_String datastring;
                     UA_String_init(&datastring);
-                    UA_print(&data, data.type, &datastring); // Not terminated!
+                    UA_print(data.data, data.type, &datastring); // Not terminated!
                     strncpy(value, reinterpret_cast<char*>(datastring.data), std::min(num, datastring.length));
                     UA_String_clear(&datastring);
                 }
                 value[num-1] = '\0';
                 prec->udf = false;
+                UA_Variant_clear(&data);
             }
             if (statusCode) *statusCode = stat;
             if (statusText) {
@@ -804,9 +804,9 @@ void
 DataElementOpen62541::dbgWriteScalar () const
 {
     if (isLeaf() && debug()) {
-        std::cout << pconnector->getRecordName() << ": set outgoing data ("
-                  << variantTypeString(outgoingData) << ") to value "
-                  << outgoingData;
+        std::cout << pconnector->getRecordName()
+                  << ": set outgoing data to value "
+                  << outgoingData << std::endl;
     }
 }
 

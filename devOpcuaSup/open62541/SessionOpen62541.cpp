@@ -422,7 +422,7 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 {
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
-    cargo->wvalue.value.value = item.getOutgoingData();
+    UA_Variant_copy(&item.getOutgoingData(), &cargo->wvalue.value.value);
     item.clearOutgoingData();
     writer.pushRequest(cargo, item.recConnector->getRecordPriority());
 }
@@ -444,8 +444,8 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
     for (auto c : batch) {
         UA_NodeId_copy(&c->item->getNodeId(), &request.nodesToWrite[i].nodeId);
         request.nodesToWrite[i].attributeId = UA_ATTRIBUTEID_VALUE;
-        request.nodesToWrite[i].value.value = c->wvalue.value.value;
         request.nodesToWrite[i].value.hasValue = true;
+        UA_Variant_copy(&c->wvalue.value.value, &request.nodesToWrite[i].value.value);
         itemsToWrite->push_back(c->item);
         i++;
     }
@@ -462,7 +462,6 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
                 },
                 &UA_TYPES[UA_TYPES_WRITERESPONSE], this, &id);
         }
-        UA_Array_delete(request.nodesToWrite, request.nodesToWriteSize, &UA_TYPES[UA_TYPES_WRITEVALUE]);
         if (UA_STATUS_IS_BAD(status)) {
             errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
                          name.c_str(), UA_StatusCode_name(status));
@@ -479,6 +478,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
                                   (id, std::move(itemsToWrite)));
         }
     }
+    UA_Array_delete(request.nodesToWrite, request.nodesToWriteSize, &UA_TYPES[UA_TYPES_WRITEVALUE]);
 }
 
 void
