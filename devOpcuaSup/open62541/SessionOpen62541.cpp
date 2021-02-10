@@ -288,7 +288,7 @@ epicsTimerNotify::expireStatus SessionOpen62541::expire (const epicsTime &curren
     {
         Guard G(clientlock);
         if (UA_Client_run_iterate(client, 0) == UA_STATUSCODE_GOOD)
-        return expireStatus(restart, PollPeriod);
+            return expireStatus(restart, PollPeriod);
         // One last time read status
         UA_Client_getState(client, &channelState, &sessionState, &connectStatus);
     }
@@ -514,7 +514,11 @@ SessionOpen62541::registerNodes ()
     registeredItemsNo = i;
     request.nodesToRegisterSize = registeredItemsNo;
     if (registeredItemsNo) {
-        UA_RegisterNodesResponse response = UA_Client_Service_registerNodes(client, request);
+        UA_RegisterNodesResponse response;
+        {
+            Guard G(clientlock);
+            response = UA_Client_Service_registerNodes(client, request);
+        }
         if (response.responseHeader.serviceResult != UA_STATUSCODE_GOOD) {
             errlogPrintf("OPC UA session %s: (registerNodes) registerNodes service failed with status %s\n",
                          name.c_str(), UA_StatusCode_name(response.responseHeader.serviceResult));
@@ -688,6 +692,7 @@ void SessionOpen62541::connectionStatusChanged(
         connectStatus = newConnectStatus;
         errlogPrintf("Session %s irrecoverably failed: %s\n",
                  name.c_str(), UA_StatusCode_name(connectStatus));
+        Guard G(clientlock);
         UA_Client_delete(client);
         client = nullptr;
         return;

@@ -113,12 +113,15 @@ SubscriptionOpen62541::getSessionOpen62541 () const
 void
 SubscriptionOpen62541::create ()
 {
-    subscriptionSettings = UA_Client_Subscriptions_create(session.client,
-        requestedSettings, this, [] (UA_Client *client, UA_UInt32 subscriptionId,
-            void *context, UA_StatusChangeNotification *notification) {
-                static_cast<SubscriptionOpen62541*>(context)->
-                    subscriptionStatusChanged(notification->status);
-            }, NULL);
+    {
+        Guard G(session.clientlock);
+        subscriptionSettings = UA_Client_Subscriptions_create(session.client,
+            requestedSettings, this, [] (UA_Client *client, UA_UInt32 subscriptionId,
+                void *context, UA_StatusChangeNotification *notification) {
+                    static_cast<SubscriptionOpen62541*>(context)->
+                        subscriptionStatusChanged(notification->status);
+                }, NULL);
+    }
     if (subscriptionSettings.responseHeader.serviceResult != UA_STATUSCODE_GOOD) {
         errlogPrintf("OPC UA subscription %s: createSubscription on session %s failed (%s)\n",
                     name.c_str(), session.getName().c_str(),
@@ -188,6 +191,7 @@ SubscriptionOpen62541::addMonitoredItems ()
 void
 SubscriptionOpen62541::clear ()
 {
+    Guard G(session.clientlock);
     UA_Client_Subscriptions_deleteSingle(session.client, subscriptionSettings.subscriptionId);
 }
 
