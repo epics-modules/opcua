@@ -290,7 +290,8 @@ epicsTimerNotify::expireStatus SessionOpen62541::expire (const epicsTime &curren
         if (UA_Client_run_iterate(client, 0) == UA_STATUSCODE_GOOD)
         return expireStatus(restart, PollPeriod);
         // One last time read status
-        UA_Client_getState(client, &channelState, &sessionState, &connectStatus);
+        if (client) // UA_Client_run_iterate can set client to NULL
+            UA_Client_getState(client, &channelState, &sessionState, &connectStatus);
     }
     return noRestart;
 }
