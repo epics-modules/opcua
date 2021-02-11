@@ -20,7 +20,7 @@
 
 #include <epicsMutex.h>
 #include <epicsTypes.h>
-#include <epicsTimer.h>
+#include <epicsThread.h>
 #include <initHooks.h>
 
 #include <open62541/client_config_default.h>
@@ -75,7 +75,7 @@ class SessionOpen62541
         : public Session
         , public RequestConsumer<WriteRequest>
         , public RequestConsumer<ReadRequest>
-        , public epicsTimerNotify
+        , public epicsThreadRunable
 {
     // Cannot copy a Session
     SessionOpen62541(const SessionOpen62541 &);
@@ -99,7 +99,6 @@ public:
     SessionOpen62541(const std::string &name, const std::string &serverUrl,
                  bool autoConnect = true, int debug = 0, epicsUInt32 batchNodes = 0,
                  const char *clientCertificate = nullptr, const char *clientPrivateKey = nullptr);
- private:
     ~SessionOpen62541() override;
 
     /**
@@ -124,7 +123,6 @@ public:
      * @param level
      */
     virtual void show(const int level) const override;
- public:
 
     /**
      * @brief Get session name. See DevOpcua::Session::getName
@@ -154,7 +152,6 @@ public:
      */
     void requestWrite(ItemOpen62541 &item);
 
- private:
     /**
      * @brief Create all subscriptions related to this session.
      */
@@ -165,7 +162,6 @@ public:
      */
     void addAllMonitoredItems();
 
- public:
     /**
      * @brief Print configuration and status of all sessions on stdout.
      *
@@ -196,7 +192,6 @@ public:
      */
     static bool sessionExists(const std::string &name);
 
- private:
     /**
      * @brief Set an option for the session. See DevOpcua::Session::setOption
      */
@@ -210,7 +205,6 @@ public:
     unsigned int noOfSubscriptions() const { return static_cast<unsigned int>(subscriptions.size()); }
     unsigned int noOfItems() const { return static_cast<unsigned int>(items.size()); }
 
- public:
     /**
      * @brief Add an item to the session.
      *
@@ -234,7 +228,12 @@ public:
      */
     UA_UInt16 mapNamespaceIndex(const UA_UInt16 nsIndex) const;
 
- private:
+private:
+    /**
+     * @brief Initialize global resources.
+     */
+    static void initOnce(void*);
+
     /**
      * @brief EPICS IOC Database initHook function.
      *
@@ -251,7 +250,7 @@ public:
      * Hook function called when the EPICS IOC is exiting.
      * Disconnects all sessions.
      */
-    static void atExit(void *junk);
+    static void atExit(void *);
 
     // Get a new (unique per session) transaction id
     UA_UInt32 getTransactionId();
@@ -269,7 +268,6 @@ public:
     virtual void processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch) override;
     virtual void processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch) override;
 
-private:
     /**
      * @brief Register all nodes that are configured to be registered.
      */
@@ -287,6 +285,19 @@ private:
 
     static std::map<std::string, SessionOpen62541 *> sessions;    /**< session management */
 
+    /**
+     * @brief Asynchronous worker thread body.
+     */
+    virtual void run() override;
+
+    /**
+     * @brief Client connection status callback.
+     */
+    void connectionStatusChanged(
+            UA_SecureChannelState channelState,
+            UA_SessionState sessionState,
+            UA_StatusCode connectStatus);
+
     const std::string name;                         /**< unique session name */
     const std::string serverURL;                    /**< server URL */
     bool autoConnect;                               /**< auto (re)connect flag */
@@ -295,10 +306,6 @@ private:
     UA_UInt32 registeredItemsNo;                    /**< number of registered items */
     std::map<std::string, UA_UInt16> namespaceMap;  /**< local namespace map (URI->index) */
     std::map<UA_UInt16, UA_UInt16> nsIndexMap;      /**< namespace index map (local->server-side) */
-//    UaSession* puasession;                          /**< pointer to low level session */
-//    SessionConnectInfo connectInfo;                 /**< connection metadata */
-//    SessionSecurityInfo securityInfo;               /**< security metadata */
-//    UaClient::ServerStatus serverConnectionStatus;  /**< connection status for this session */
 
     int transactionId;                              /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */
@@ -315,34 +322,13 @@ private:
     unsigned int readTimeoutMax;                    /**< timeout after read request batch of NodesMax nodes [ms] */
 
     /** open62541 interfaces */
-    static UA_ClientConfig defaultClientConfig;     /**< configuration for each new session */
     UA_Client *client;                              /**< low level handle for this session */
     epicsMutex clientlock;                          /**< lock for client implementation */
-    UA_StatusCode connectStatus;
-    UA_SecureChannelState channelState;
-    UA_SessionState sessionState;
-
-
-    /**
-     * @brief EPICS Timer callback to poll client session
-     */
-    epicsTimerNotify::expireStatus expire (const epicsTime & currentTime );
-
-    epicsTimerQueueActive &timerQueue;                        /**< for polling the client */
-    epicsTimer &sessionPollTimer;                             /**< for polling the client */
-
-    /**
-     * @brief Initialize global resources.
-     */
-    static void initOnce(void*);
-
-    /**
-     * @brief Client connection status callback.
-     */
-    void connectionStatusChanged(
-            UA_SecureChannelState channelState,
-            UA_SessionState sessionState,
-            UA_StatusCode connectStatus);
+    UA_SecureChannelState channelState;             /**< status for this session */
+    UA_SessionState sessionState;                   /**< status for this session */
+    UA_StatusCode connectStatus;                    /**< status for this session */
+    bool wantToDisconnect;                          /**< disconnect flag */
+    epicsThread *workerThread;                      /**< Asynchronous worker thread */
 };
 
 } // namespace DevOpcua

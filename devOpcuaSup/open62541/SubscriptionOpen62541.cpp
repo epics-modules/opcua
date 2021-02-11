@@ -22,6 +22,10 @@
 #include "DataElementOpen62541.h"
 #include "devOpcua.h"
 
+// Note: No guard needed for UA_Client_* functions calls because SubscriptionOpen62541 methods
+// are either called by UA_Client_run_iterate via SessionOpen62541::connectionStatusChanged
+// or via guarded Session methods
+
 namespace DevOpcua {
 
 std::map<std::string, SubscriptionOpen62541*> SubscriptionOpen62541::subscriptions;
@@ -113,15 +117,12 @@ SubscriptionOpen62541::getSessionOpen62541 () const
 void
 SubscriptionOpen62541::create ()
 {
-    {
-        Guard G(session.clientlock);
-        subscriptionSettings = UA_Client_Subscriptions_create(session.client,
-            requestedSettings, this, [] (UA_Client *client, UA_UInt32 subscriptionId,
-                void *context, UA_StatusChangeNotification *notification) {
-                    static_cast<SubscriptionOpen62541*>(context)->
-                        subscriptionStatusChanged(notification->status);
-                }, NULL);
-    }
+    subscriptionSettings = UA_Client_Subscriptions_create(session.client,
+        requestedSettings, this, [] (UA_Client *client, UA_UInt32 subscriptionId,
+            void *context, UA_StatusChangeNotification *notification) {
+                static_cast<SubscriptionOpen62541*>(context)->
+                    subscriptionStatusChanged(notification->status);
+            }, NULL);
     if (subscriptionSettings.responseHeader.serviceResult != UA_STATUSCODE_GOOD) {
         errlogPrintf("OPC UA subscription %s: createSubscription on session %s failed (%s)\n",
                     name.c_str(), session.getName().c_str(),
@@ -152,16 +153,13 @@ SubscriptionOpen62541::addMonitoredItems ()
             monitoredItemCreateRequest.requestedParameters.samplingInterval = it->linkinfo.samplingInterval;
             monitoredItemCreateRequest.requestedParameters.queueSize = it->linkinfo.queueSize;
             monitoredItemCreateRequest.requestedParameters.discardOldest = it->linkinfo.discardOldest;
-            {
-                Guard G(session.clientlock);
-                monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
-                    session.client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
-                    monitoredItemCreateRequest, items[i], [] (UA_Client *client, UA_UInt32 subId, void *subContext,
-                             UA_UInt32 monId, void *monContext, UA_DataValue *value) {
-                                static_cast<SubscriptionOpen62541*>(subContext)->
-                                    dataChange(monId, *static_cast<ItemOpen62541*>(monContext), value);
-                             }, nullptr /* deleteCallback */);
-            }
+            monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
+                session.client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
+                monitoredItemCreateRequest, items[i], [] (UA_Client *client, UA_UInt32 subId, void *subContext,
+                         UA_UInt32 monId, void *monContext, UA_DataValue *value) {
+                            static_cast<SubscriptionOpen62541*>(subContext)->
+                                dataChange(monId, *static_cast<ItemOpen62541*>(monContext), value);
+                         }, nullptr /* deleteCallback */);
             if (monitoredItemCreateResult.statusCode == UA_STATUSCODE_GOOD) {
                 items[i]->setRevisedSamplingInterval(monitoredItemCreateResult.revisedSamplingInterval);
                 items[i]->setRevisedQueueSize(monitoredItemCreateResult.revisedQueueSize);
@@ -191,7 +189,6 @@ SubscriptionOpen62541::addMonitoredItems ()
 void
 SubscriptionOpen62541::clear ()
 {
-    Guard G(session.clientlock);
     UA_Client_Subscriptions_deleteSingle(session.client, subscriptionSettings.subscriptionId);
 }
 
@@ -223,7 +220,7 @@ void
 SubscriptionOpen62541::dataChange (UA_UInt32 monitorId, ItemOpen62541 &item, UA_DataValue *value)
 {
     if (debug >= 5) {
-        std::cout << "** Subscription " << name.c_str()
+        std::cout << "** Subscription " << name
                   << "@" << session.getName()
                   << ": (dataChange) getting data for item " << monitorId
                   << " (" << item.getNodeId();

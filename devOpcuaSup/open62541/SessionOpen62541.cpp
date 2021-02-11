@@ -40,8 +40,6 @@
 
 namespace DevOpcua {
 
-double PollPeriod = 0.01;
-
 std::map<std::string, SessionOpen62541*> SessionOpen62541::sessions;
 
 // Cargo structure and batcher for write requests
@@ -91,42 +89,8 @@ inline std::ostream& operator<<(std::ostream& os, UA_SessionState sessionState) 
     return os << toStr(sessionState);
 }
 
-UA_ClientConfig SessionOpen62541::defaultClientConfig;
-
 void SessionOpen62541::initOnce(void*)
 {
-    if (UA_STATUSCODE_GOOD != UA_ClientConfig_setDefault(&defaultClientConfig))
-    {
-        /* unrecoverable failure */
-    }
-
-    /* set clientDescription */
-    UA_ApplicationDescription_clear(&defaultClientConfig.clientDescription);
-    defaultClientConfig.clientDescription.applicationType = UA_APPLICATIONTYPE_CLIENT;
-    defaultClientConfig.clientDescription.applicationName = UA_LOCALIZEDTEXT_ALLOC("en-US", "EPICS IOC");
-    defaultClientConfig.clientDescription.productUri = UA_STRING_ALLOC("urn:EPICS:IOC");
-    char applicationUri[MAXHOSTNAMELEN+15] = { "urn:" };
-    if (gethostname(applicationUri+4, MAXHOSTNAMELEN) != 0)
-        strcpy(applicationUri+4, "unknown-host");
-    strcat(applicationUri, ":EPICS:IOC");
-    defaultClientConfig.clientDescription.applicationUri = UA_STRING_ALLOC(applicationUri);
-
-    /* set callbacks */
-    defaultClientConfig.stateCallback = [] (UA_Client *client,
-        UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode connectStatus) {
-            static_cast<SessionOpen62541*>(UA_Client_getContext(client))->
-                connectionStatusChanged(channelState, sessionState, connectStatus);
-        };
-    defaultClientConfig.outStandingPublishRequests = 5;
-
-/*
-    connectInfo.bAutomaticReconnect = autoConnect;
-    connectInfo.bRetryInitialConnect = autoConnect;
-    connectInfo.nMaxOperationsPerServiceCall = batchNodes;
-
-    connectInfo.typeDictionaryMode = UaClientSdk::UaClient::ReadTypeDictionaries_Reconnect;
-*/
-
     initHookRegister(SessionOpen62541::initHook);
     epicsAtExit(SessionOpen62541::atExit, nullptr);
 }
@@ -148,28 +112,14 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     , readNodesMax(0)
     , readTimeoutMin(0)
     , readTimeoutMax(0)
-    , connectStatus(UA_STATUSCODE_BADINVALIDSTATE)
+    , client(nullptr)
     , channelState(UA_SECURECHANNELSTATE_CLOSED)
     , sessionState(UA_SESSIONSTATE_CLOSED)
-    , timerQueue(epicsTimerQueueActive::allocate (false,epicsThreadPriorityLow))
-    , sessionPollTimer(timerQueue.createTimer())
+    , connectStatus(UA_STATUSCODE_BADINVALIDSTATE)
+    , wantToDisconnect(false)
 {
     static epicsThreadOnceId init_once_id = EPICS_THREAD_ONCE_INIT;
     epicsThreadOnce(&init_once_id, initOnce, nullptr);
-
-    client = UA_Client_newWithConfig(&defaultClientConfig);
-    UA_ClientConfig *config = UA_Client_getConfig(client);
-    config->clientContext = this;
-
-/*
-    connectInfo.sSessionName     = UaString(name.c_str());
-
-    connectInfo.bAutomaticReconnect = autoConnect;
-    connectInfo.bRetryInitialConnect = autoConnect;
-    connectInfo.nMaxOperationsPerServiceCall = batchNodes;
-
-    connectInfo.typeDictionaryMode = UaClientSdk::UaClient::ReadTypeDictionaries_Reconnect;
-*/
 
     //TODO: init security settings
     if ((clientCertificate && (clientCertificate[0] != '\0'))
@@ -277,82 +227,87 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     if (updateWriteBatcher) writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
 }
 
-epicsTimerNotify::expireStatus SessionOpen62541::expire (const epicsTime &currentTime)
-{
-    // Currently (open62541 version 1.2), the client has no internal mechanism
-    // to run asynchronous tasks. We need to call UA_Client_run_iterate() regularly
-    // for asynchronous events to happen.
-    // Also until now, the client is not thread save. We have to protect it
-    // with our own mutex.
-    if (client)
-    {
-        Guard G(clientlock);
-        if (UA_Client_run_iterate(client, 0) == UA_STATUSCODE_GOOD)
-            return expireStatus(restart, PollPeriod);
-        // One last time read status
-        UA_Client_getState(client, &channelState, &sessionState, &connectStatus);
-    }
-    return noRestart;
-}
-
 long
 SessionOpen62541::connect ()
 {
-    if (!client) {
-        std::cerr << "Session " << name.c_str()
-                  << ": invalid session, cannot connect" << std::endl;
-        return -1;
-    }
-    if (isConnected()) {
-        if (debug) std::cerr << "Session " << name.c_str() << ": already connected ("
-                             << sessionState << "," << channelState << ")" << std::endl;
+    if (client) {
+        std::cerr << "Session " << name << " already connected ("
+                  << sessionState << '/' << channelState << ')' << std::endl;
         return 0;
     }
-    errlogPrintf("SessionOpen62541::connect %s: connecting to %s\n", name.c_str(), serverURL.c_str());
-    {
-        Guard G(clientlock);
-        connectStatus = UA_Client_connectAsync(client, serverURL.c_str());
+    Guard G(clientlock);
+    std::cerr << "Session " << name << "new client" << std::endl;
+    UA_ClientConfig config = {0};
+    UA_ClientConfig_setDefault(&config);
+    UA_ApplicationDescription_clear(&config.clientDescription);
+    config.clientDescription.applicationType = UA_APPLICATIONTYPE_CLIENT;
+    config.clientDescription.applicationName = UA_LOCALIZEDTEXT_ALLOC("en-US", "EPICS IOC");
+    config.clientDescription.productUri = UA_STRING_ALLOC("urn:EPICS:IOC");
+    char applicationUri[MAXHOSTNAMELEN+15] = { "urn:" };
+    if (gethostname(applicationUri+4, MAXHOSTNAMELEN) != 0)
+        strcpy(applicationUri+4, "unknown-host");
+    strcat(applicationUri, ":EPICS:IOC");
+    config.clientDescription.applicationUri = UA_STRING_ALLOC(applicationUri);
+    config.securityMode = UA_MESSAGESECURITYMODE_NONE;
+
+    /* set callbacks */
+    config.stateCallback = [] (UA_Client *client,
+        UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode connectStatus) {
+            static_cast<SessionOpen62541*>(UA_Client_getContext(client))->
+                connectionStatusChanged(channelState, sessionState, connectStatus);
+        };
+    config.outStandingPublishRequests = 5;
+/*
+    connectInfo.nMaxOperationsPerServiceCall = batchNodes;
+*/
+    client = UA_Client_newWithConfig(&config);
+    if (!client) {
+        std::cerr << "Session " << name
+                  << ": cannot create new client (out of memory?)" << std::endl;
+        return -1;
     }
+    UA_Client_getConfig(client)->clientContext = this;
+    wantToDisconnect = false;
+    connectStatus = UA_Client_connectAsync(client, serverURL.c_str());
     if (connectStatus != UA_STATUSCODE_GOOD) {
-        std::cerr << "Session " << name.c_str()
+        std::cerr << "Session " << name
                   << ": connect service failed with status "
                   << UA_StatusCode_name(connectStatus) << std::endl;
         return -1;
     }
-    if (debug) std::cerr << "Session " << name.c_str()
+    std::cerr << "Session " << name
                          << ": connect service ok" << std::endl;
     // asynchronous: remaining actions are done on the connectionStatusChanged callback
-    sessionPollTimer.start(*this, 0);
+    workerThread = new epicsThread(*this, ("wrk-" + name).c_str(),
+                 epicsThreadGetStackSize(epicsThreadStackSmall),
+                 epicsThreadPriorityMedium);
+    workerThread->start();
     return 0;
 }
 
 long
 SessionOpen62541::disconnect ()
 {
-    sessionPollTimer.cancel();
-    if (client && (channelState != UA_SECURECHANNELSTATE_CLOSED ||
-                   sessionState != UA_SESSIONSTATE_CLOSED)) {
+    if (!client) {
+        std::cerr << "Session " << name << " already disconnected" << std::endl;
+        return 0;
+    }
+    {
+        wantToDisconnect = true;
         Guard G(clientlock);
-        // Close the session and the secure channel
-        // and remove all subscriptions.
-        // Cannot fail.
+        if(!client) return 0;
         UA_Client_disconnect(client);
     }
-    // Detach all subscriptions of this session from driver
-    for (auto &it : subscriptions) {
-        it.second->clear();
-    }
+    workerThread->exitWait();
+    delete workerThread;
+    workerThread = nullptr;
     return 0;
 }
 
 bool
 SessionOpen62541::isConnected () const
 {
-    if (!client) return false;
-    if (connectStatus != UA_STATUSCODE_GOOD) return false;
-    if (channelState != UA_SECURECHANNELSTATE_OPEN) return false;
-    if (sessionState != UA_SESSIONSTATE_ACTIVATED) return false;
-    return true;
+    return client && sessionState == UA_SESSIONSTATE_ACTIVATED;
 }
 
 void
@@ -390,6 +345,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
         Guard G(opslock);
         {
             Guard G(clientlock);
+            if (!isConnected()) return;
             status=__UA_Client_AsyncService(client, &request,
                 &UA_TYPES[UA_TYPES_READREQUEST],
                 [] (UA_Client *client, void *userdata, UA_UInt32 requestId, void *response) {
@@ -402,12 +358,13 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
         if (UA_STATUS_IS_BAD(status)) {
             errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
                          name.c_str(), UA_StatusCode_name(status));
-            //TODO: create readFailure events for all items of the batch
-//          item.setIncomingEvent(ProcessReason::readFailure);
-
+            // Create readFailure events for all items of the batch
+            for (auto c : batch) {
+                c->item->setIncomingEvent(ProcessReason::readFailure);
+            }
         } else {
             if (debug >= 5)
-                std::cout << "Session " << name.c_str()
+                std::cout << "Session " << name
                           << ": (requestRead) beginRead service ok"
                           << " (transaction id " << id
                           << "; retrieving " << request.nodesToReadSize << " nodes)" << std::endl;
@@ -454,6 +411,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
         Guard G(opslock);
         {
             Guard G(clientlock);
+            if (!isConnected()) return;
             status=__UA_Client_AsyncService(client, &request,
                 &UA_TYPES[UA_TYPES_WRITEREQUEST],
                 [] (UA_Client *client, void *userdata, UA_UInt32 requestId, void *response) {
@@ -465,12 +423,13 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
         if (UA_STATUS_IS_BAD(status)) {
             errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
                          name.c_str(), UA_StatusCode_name(status));
-            //TODO: create writeFailure events for all items of the batch
-//          item.setIncomingEvent(ProcessReason::writeFailure);
-
+            // Create writeFailure events for all items of the batch
+            for (auto c : batch) {
+                c->item->setIncomingEvent(ProcessReason::writeFailure);
+            }
         } else {
             if (debug >= 5)
-                std::cout << "Session " << name.c_str()
+                std::cout << "Session " << name
                           << ": (requestWrite) beginWrite service ok"
                           << " (transaction id " << id
                           << "; writing " << request.nodesToWriteSize << " nodes)" << std::endl;
@@ -514,17 +473,13 @@ SessionOpen62541::registerNodes ()
     registeredItemsNo = i;
     request.nodesToRegisterSize = registeredItemsNo;
     if (registeredItemsNo) {
-        UA_RegisterNodesResponse response;
-        {
-            Guard G(clientlock);
-            response = UA_Client_Service_registerNodes(client, request);
-        }
+        UA_RegisterNodesResponse response = UA_Client_Service_registerNodes(client, request);
         if (response.responseHeader.serviceResult != UA_STATUSCODE_GOOD) {
             errlogPrintf("OPC UA session %s: (registerNodes) registerNodes service failed with status %s\n",
                          name.c_str(), UA_StatusCode_name(response.responseHeader.serviceResult));
         } else {
             if (debug)
-                std::cout << "Session " << name.c_str()
+                std::cout << "Session " << name
                           << ": (registerNodes) registerNodes service ok"
                           << " (" << response.registeredNodeIdsSize << " nodes registered)" << std::endl;
             i = 0;
@@ -575,7 +530,7 @@ void
 SessionOpen62541::updateNamespaceMap(const UaStringArray &nsArray)
 {
     if (debug)
-        std::cout << "Session " << name.c_str()
+        std::cout << "Session " << name
                   << ": (updateNamespaceMap) namespace array with " << nsArray.length()
                   << " elements read; updating index map with " << namespaceMap.size()
                   << " entries" << std::endl;
@@ -601,7 +556,7 @@ void
 SessionOpen62541::show (const int level) const
 {
     std::cout << "session="      << name
-              << " url="         << serverURL.c_str()
+              << " url="         << serverURL
               << " connect status=" << UA_StatusCode_name(connectStatus)
               << " sessionState="   << sessionState
               << " channelState="   << channelState
@@ -681,9 +636,40 @@ SessionOpen62541::mapNamespaceIndex (const UA_UInt16 nsIndex) const
     return serverIndex;
 }
 
+void SessionOpen62541::run ()
+{
+    // Currently (open62541 version 1.2), the client has no internal mechanism
+    // to run asynchronous tasks. We need to create our own thread to repeatedly
+    // call UA_Client_run_iterate() for asynchronous events to happen.
+    // Also until now, the client is not thread save. We have to protect it
+    // with our own mutex.
+    while (client)
+    {
+        {
+            Guard G(clientlock);
+            connectStatus = UA_Client_run_iterate(client, 1000);
+        }
+        if (wantToDisconnect) {
+            if (sessionState == UA_SESSIONSTATE_CLOSED) break;
+            epicsThreadSleep(0.1);
+        }
+        if (connectStatus != UA_STATUSCODE_GOOD) {
+            std::cerr << "Session " << name << " worker thread error:  connectStatus:"
+                << UA_StatusCode_name(connectStatus)
+                << " sessionState:" << sessionState
+                << " channelState:" << channelState
+                << std::endl;
+            break;
+        }
+    }
+    Guard G(clientlock);
+    UA_Client_delete(client);
+    client = nullptr;
+}
+
 // callbacks
 
-void SessionOpen62541::connectionStatusChanged(
+void SessionOpen62541::connectionStatusChanged (
     UA_SecureChannelState newChannelState,
     UA_SessionState newSessionState,
     UA_StatusCode newConnectStatus)
@@ -692,15 +678,12 @@ void SessionOpen62541::connectionStatusChanged(
         connectStatus = newConnectStatus;
         errlogPrintf("Session %s irrecoverably failed: %s\n",
                  name.c_str(), UA_StatusCode_name(connectStatus));
-        Guard G(clientlock);
-        UA_Client_delete(client);
-        client = nullptr;
         return;
     }
 
     if (newChannelState != channelState) {
-        if (debug)
-            std::cout << "Session " << name.c_str()
+        if (1 || debug)
+            std::cout << "Session " << name
                       << ": secure channel state changed from "
                       << channelState << " to " << newChannelState  << std::endl;
 // TODO: What to do for each channelState change?
@@ -718,8 +701,8 @@ void SessionOpen62541::connectionStatusChanged(
     }
 
     if (newSessionState != sessionState) {
-        if (debug)
-            std::cout << "Session " << name.c_str()
+        if (1 || debug)
+            std::cout << "Session " << name
                       << ": session state changed from "
                       << sessionState << " to " << newSessionState  << std::endl;
 // TODO: What to do for each sessionState change?
@@ -733,6 +716,10 @@ void SessionOpen62541::connectionStatusChanged(
                     it->setIncomingEvent(ProcessReason::connectionLoss);
                 }
                 registeredItemsNo = 0;
+                // Detach all subscriptions of this session from driver
+                for (auto &it : subscriptions) {
+                    it.second->clear();
+                }
                 break;
             }
             case UA_SESSIONSTATE_CLOSED:             break;
@@ -747,7 +734,7 @@ void SessionOpen62541::connectionStatusChanged(
                 createAllSubscriptions();
                 addAllMonitoredItems();
                 if (debug) {
-                    std::cout << "Session " << name.c_str()
+                    std::cout << "Session " << name
                               << ": triggering initial read for all "
                               << items.size() << " items" << std::endl;
                 }
@@ -780,7 +767,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                      name.c_str(), transactionId);
     } else if (!UA_STATUS_IS_BAD(response->responseHeader.serviceResult)) {
         if (debug >= 2)
-            std::cout << "Session " << name.c_str()
+            std::cout << "Session " << name
                       << ": (readComplete) getting data for read service"
                       << " (transaction id " << transactionId
                       << "; data for " << response->resultsSize << " items)" << std::endl;
@@ -794,7 +781,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                 item->setIncomingEvent(ProcessReason::readFailure);
             } else {
                 if (debug >= 5) {
-                    std::cout << "** Session " << name.c_str()
+                    std::cout << "** Session " << name
                               << ": (readComplete) getting data for item "
                               << item->getNodeId()
                               << " = " << response->results[i].value
@@ -810,7 +797,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
         outstandingOps.erase(it);
     } else {
         if (debug)
-            std::cout << "Session " << name.c_str()
+            std::cout << "Session " << name
                       << ": (readComplete) for read service"
                       << " (transaction id " << transactionId
                       << ") failed with status "
@@ -818,7 +805,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                       << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
-                std::cout << "** Session " << name.c_str()
+                std::cout << "** Session " << name
                           << ": (readComplete) filing read error (no data) for item "
                           << item->getNodeId() << std::endl;
             }
@@ -842,14 +829,14 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
                      name.c_str(), transactionId);
     } else if (!UA_STATUS_IS_BAD(response->responseHeader.serviceResult)) {
         if (debug >= 2)
-            std::cout << "Session " << name.c_str()
+            std::cout << "Session " << name
                       << ": (writeComplete) getting results for write service"
                       << " (transaction id " << transactionId
                       << "; results for " << response->resultsSize << " items)" << std::endl;
         UA_UInt32 i = 0;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
-                std::cout << "** Session " << name.c_str()
+                std::cout << "** Session " << name
                           << ": (writeComplete) getting results for item "
                           << item->getNodeId() << std::endl;
             }
@@ -863,7 +850,7 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
         outstandingOps.erase(it);
     } else {
         if (debug)
-            std::cout << "Session " << name.c_str()
+            std::cout << "Session " << name
                       << ": (writeComplete) for write service"
                       << " (transaction id " << transactionId
                       << ") failed with status "
@@ -871,7 +858,7 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
                       << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
-                std::cout << "** Session " << name.c_str()
+                std::cout << "** Session " << name
                           << ": (writeComplete) filing write error for item "
                           << item->getNodeId() << std::endl;
             }
@@ -908,14 +895,7 @@ SessionOpen62541::showAll (const int level)
 
 SessionOpen62541::~SessionOpen62541 ()
 {
-    if (client) {
-        Guard G(clientlock);
-        // Cancel all asynchronous operations,
-        // disconnect and remove all subscriptions.
-        // Frees the client memory.
-        UA_Client_delete(client);
-        client = nullptr;
-    }
+    disconnect();
 }
 
 void
@@ -924,7 +904,6 @@ SessionOpen62541::initHook (initHookState state)
     switch (state) {
     case initHookAfterDatabaseRunning:
     {
-        errlogPrintf("OPC UA: Autoconnecting %zu sessions\n", sessions.size());
         for (auto &it : sessions) {
             if (it.second->autoConnect)
                 it.second->connect();
@@ -939,9 +918,8 @@ SessionOpen62541::initHook (initHookState state)
 void
 SessionOpen62541::atExit (void *)
 {
-    errlogPrintf("OPC UA: Disconnecting %zu sessions\n", sessions.size());
     for (auto &it : sessions) {
-        it.second->disconnect();
+        delete it.second;
     }
 }
 
