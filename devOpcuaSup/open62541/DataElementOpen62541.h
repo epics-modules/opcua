@@ -160,29 +160,29 @@ inline bool isWithinRange<unsigned long, long long> (const long long &value) {
     return sizeof(long long) > sizeof(long) ? !(value < 0 || value > static_cast<long long>(std::numeric_limits<unsigned long>::max())) : !(value < 0);
 }
 
-// Helper function to convert C-strings to numeric types
+// Helper function to convert strings to numeric types
 
-inline bool string_to(const char* s, epicsInt32& value) {
+inline bool string_to(const std::string& s, epicsInt32& value) {
     try {
-        value = std::stol(std::string(s), 0, 0);
+        value = std::stol(s, 0, 0);
         return true;
     } catch (...) {
         return false;
     }
 }
 
-inline bool string_to(const char* s, epicsInt64& value) {
+inline bool string_to(const std::string& s, epicsInt64& value) {
     try {
-        value = std::stoll(std::string(s), 0, 0);
+        value = std::stoll(s, 0, 0);
         return true;
     } catch (...) {
         return false;
     }
 }
 
-inline bool string_to(const char* s, epicsUInt32& value) {
+inline bool string_to(const std::string& s, epicsUInt32& value) {
     try {
-        long long v = std::stoll(std::string(s), 0, 0);
+        long long v = std::stoll(s, 0, 0);
         if (!isWithinRange<epicsUInt32>(v)) return false;
         value = static_cast<epicsUInt32>(v);
         return true;
@@ -191,9 +191,9 @@ inline bool string_to(const char* s, epicsUInt32& value) {
     }
 }
 
-inline bool string_to(const char* s, epicsFloat64& value) {
+inline bool string_to(const std::string& s, epicsFloat64& value) {
     try {
-        value = std::stod(std::string(s), 0);
+        value = std::stod(s, 0);
         return true;
     } catch (...) {
         return false;
@@ -833,7 +833,8 @@ private:
                                 ret = 1;
                             break;
                         case UA_TYPES_STRING:
-                            if (!string_to(reinterpret_cast<char*>(static_cast<UA_String*>(data.data)->data), *value))
+                            UA_String* s = static_cast<UA_String*>(data.data); // Not terminated!
+                            if (!string_to(std::string(reinterpret_cast<const char*>(s->data), s->length), *value))
                                 ret = 1;
                             break;
                     }
