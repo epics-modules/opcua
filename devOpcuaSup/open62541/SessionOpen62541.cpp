@@ -648,7 +648,7 @@ void SessionOpen62541::run ()
             if (!client) return;
             connectStatus = UA_Client_run_iterate(client, 1000);
         }
-        epicsThreadSleep(0); // give disconnect() a chance to execute
+        epicsThreadSleep(0.01); // give disconnect() a chance to execute
     }
     std::cerr << "Session " << name << " worker thread error: connectStatus:"
         << UA_StatusCode_name(connectStatus)
