@@ -203,6 +203,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
 {
     // Make a copy of this element and cache it
 
+    UA_Variant_clear(&incomingData);
     UA_Variant_copy(&value, &incomingData);
 
     if (isLeaf()) {
@@ -340,6 +341,7 @@ DataElementOpen62541::getOutgoingData ()
             std::cout << "Element " << name << " updating structured data from "
                       << elements.size() << " child elements" << std::endl;
 
+        UA_Variant_clear(&outgoingData);
         UA_Variant_copy(&incomingData, &outgoingData);
         isdirty = false;
         if (outgoingData.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
