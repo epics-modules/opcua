@@ -116,7 +116,6 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     , channelState(UA_SECURECHANNELSTATE_CLOSED)
     , sessionState(UA_SESSIONSTATE_CLOSED)
     , connectStatus(UA_STATUSCODE_BADINVALIDSTATE)
-    , wantToDisconnect(false)
 {
     static epicsThreadOnceId init_once_id = EPICS_THREAD_ONCE_INIT;
     epicsThreadOnce(&init_once_id, initOnce, nullptr);
@@ -267,7 +266,6 @@ SessionOpen62541::connect ()
         return -1;
     }
     UA_Client_getConfig(client)->clientContext = this;
-    wantToDisconnect = false;
     connectStatus = UA_Client_connectAsync(client, serverURL.c_str());
     if (connectStatus != UA_STATUSCODE_GOOD) {
         std::cerr << "Session " << name
@@ -293,11 +291,10 @@ SessionOpen62541::disconnect ()
         return 0;
     }
     {
-        wantToDisconnect = true;
         Guard G(clientlock);
         if(!client) return 0;
-        UA_Client_disconnectSecureChannel(client);
-        UA_Client_disconnect(client);
+        UA_Client_delete(client);
+        client = nullptr;
     }
     workerThread->exitWait();
     delete workerThread;
@@ -644,28 +641,21 @@ void SessionOpen62541::run ()
     // call UA_Client_run_iterate() for asynchronous events to happen.
     // Also until now, the client is not thread save. We have to protect it
     // with our own mutex.
-    while (client)
+    while (connectStatus == UA_STATUSCODE_GOOD)
     {
         {
             Guard G(clientlock);
+            if (!client) return;
             connectStatus = UA_Client_run_iterate(client, 1000);
         }
-        if (wantToDisconnect) {
-            if (sessionState == UA_SESSIONSTATE_CLOSED) break;
-            epicsThreadSleep(0.1);
-        }
-        if (connectStatus != UA_STATUSCODE_GOOD) {
-            std::cerr << "Session " << name << " worker thread error:  connectStatus:"
-                << UA_StatusCode_name(connectStatus)
-                << " sessionState:" << sessionState
-                << " channelState:" << channelState
-                << std::endl;
-            break;
-        }
+        epicsThreadSleep(0); // give disconnect() a chance to execute
     }
-    Guard G(clientlock);
-    UA_Client_delete(client);
-    client = nullptr;
+    std::cerr << "Session " << name << " worker thread error: connectStatus:"
+        << UA_StatusCode_name(connectStatus)
+        << " sessionState:" << sessionState
+        << " channelState:" << channelState
+        << std::endl;
+    disconnect();
 }
 
 // callbacks
@@ -896,7 +886,7 @@ SessionOpen62541::showAll (const int level)
 
 SessionOpen62541::~SessionOpen62541 ()
 {
-    disconnect();
+    if (client) disconnect();
 }
 
 void

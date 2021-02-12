@@ -327,7 +327,6 @@ private:
     UA_SecureChannelState channelState;             /**< status for this session */
     UA_SessionState sessionState;                   /**< status for this session */
     UA_StatusCode connectStatus;                    /**< status for this session */
-    bool wantToDisconnect;                          /**< disconnect flag */
     epicsThread *workerThread;                      /**< Asynchronous worker thread */
 };
 
