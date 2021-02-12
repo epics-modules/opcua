@@ -296,6 +296,7 @@ SessionOpen62541::disconnect ()
         wantToDisconnect = true;
         Guard G(clientlock);
         if(!client) return 0;
+        UA_Client_disconnectSecureChannel(client);
         UA_Client_disconnect(client);
     }
     workerThread->exitWait();
