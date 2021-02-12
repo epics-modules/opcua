@@ -673,7 +673,7 @@ void SessionOpen62541::connectionStatusChanged (
     }
 
     if (newChannelState != channelState) {
-        if (1 || debug)
+        if (debug)
             std::cout << "Session " << name
                       << ": secure channel state changed from "
                       << channelState << " to " << newChannelState  << std::endl;
@@ -692,7 +692,7 @@ void SessionOpen62541::connectionStatusChanged (
     }
 
     if (newSessionState != sessionState) {
-        if (1 || debug)
+        if (debug)
             std::cout << "Session " << name
                       << ": session state changed from "
                       << sessionState << " to " << newSessionState  << std::endl;
