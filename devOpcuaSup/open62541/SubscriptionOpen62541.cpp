@@ -189,7 +189,8 @@ SubscriptionOpen62541::addMonitoredItems ()
 void
 SubscriptionOpen62541::clear ()
 {
-    UA_Client_Subscriptions_deleteSingle(session.client, subscriptionSettings.subscriptionId);
+    if(session.client)
+        UA_Client_Subscriptions_deleteSingle(session.client, subscriptionSettings.subscriptionId);
 }
 
 void
