@@ -31,3 +31,4 @@ O.*/
 *.vcxproj
 *.filters
 *.user
+/devOpcuaSup/opcuaIoc/x64
