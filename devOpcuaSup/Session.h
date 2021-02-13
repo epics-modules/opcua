@@ -291,6 +291,18 @@ protected:
         }
     }
 
+    /** @brief Replace invalid characters in file name with '_' */
+    static std::string
+    replaceInvalidFilenameChars(const std::string &name)
+    {
+        static const std::string invalid = "<>:\"/\\|?*";
+        std::string cleaned = name;
+        for (auto it = cleaned.begin(); it != cleaned.end(); ++it)
+            if (invalid.find(*it) != invalid.npos)
+                *it = '_';
+        return cleaned;
+    }
+
     /** @brief Delay timer for reconnecting whenever connection is down. */
     class AutoConnect : public epicsTimerNotify {
     public:

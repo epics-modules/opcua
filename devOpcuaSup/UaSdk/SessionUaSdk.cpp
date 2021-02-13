@@ -771,9 +771,11 @@ SessionUaSdk::setupSecurity ()
                             }
                         }
                         if (save) {
+                            UaString cleanCN(
+                                replaceInvalidFilenameChars(id.commonName.toUtf8()).c_str());
                             UaString fileName = UaString("%1/%2 [%3].der")
                                                     .arg(securitySaveRejectedDir.c_str())
-                                                    .arg(id.commonName)
+                                                    .arg(cleanCN)
                                                     .arg(cert.thumbPrint().toHex());
                             int status = cert.toDERFile(fileName.toUtf8());
                             if (status)
