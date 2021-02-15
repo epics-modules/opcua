@@ -399,7 +399,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
         UA_NodeId_copy(&c->item->getNodeId(), &request.nodesToWrite[i].nodeId);
         request.nodesToWrite[i].attributeId = UA_ATTRIBUTEID_VALUE;
         request.nodesToWrite[i].value.hasValue = true;
-        UA_Variant_copy(&c->wvalue.value.value, &request.nodesToWrite[i].value.value);
+        request.nodesToWrite[i].value.value = c->wvalue.value.value; // structure copy
         itemsToWrite->push_back(c->item);
         i++;
     }

@@ -640,7 +640,6 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
                     if (UA_STATUS_IS_UNCERTAIN(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
-                    UA_Variant &data = upd->getData();
                     elemsWritten = num < static_cast<epicsUInt32>(data.arrayLength) ? num : static_cast<epicsUInt32>(data.arrayLength);
                     for (epicsUInt32 i = 0; i < elemsWritten; i++) {
                         strncpy(value[i], reinterpret_cast<char*>(static_cast<UA_String *>(data.data)[i].data), len);
@@ -648,6 +647,7 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
                     }
                     prec->udf = false;
                 }
+                UA_Variant_clear(&data);
             }
             if (statusCode) *statusCode = stat;
             if (statusText) {

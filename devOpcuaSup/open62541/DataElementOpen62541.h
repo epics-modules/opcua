@@ -852,6 +852,7 @@ private:
                         }
                         prec->udf = false;
                     }
+                    UA_Variant_clear(&data);
                 }
                 if (statusCode) *statusCode = stat;
                 if (statusText) {
@@ -935,6 +936,7 @@ private:
                         memcpy(value, data.data, sizeof(ET) * elemsWritten);
                         prec->udf = false;
                     }
+                    UA_Variant_clear(&data);
                 }
                 if (statusCode) *statusCode = stat;
                 if (statusText) {
