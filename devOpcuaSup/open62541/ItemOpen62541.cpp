@@ -62,6 +62,7 @@ void
 ItemOpen62541::rebuildNodeId ()
 {
     UA_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
+    UA_NodeId_clear(&nodeid);
     if (linkinfo.identifierIsNumeric) {
         nodeid = UA_NODEID_NUMERIC(ns, linkinfo.identifierNumber);
     } else {
