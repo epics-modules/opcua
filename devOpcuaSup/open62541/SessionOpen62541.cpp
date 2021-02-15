@@ -339,11 +339,10 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
         i++;
     }
 
+    Guard G(clientlock);
     if (isConnected()) {
         Guard G(opslock);
         {
-            Guard G(clientlock);
-            if (!isConnected()) return;
             status=__UA_Client_AsyncService(client, &request,
                 &UA_TYPES[UA_TYPES_READREQUEST],
                 [] (UA_Client *client, void *userdata, UA_UInt32 requestId, void *response) {
@@ -405,11 +404,10 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
         i++;
     }
 
+    Guard G(clientlock);
     if (isConnected()) {
         Guard G(opslock);
         {
-            Guard G(clientlock);
-            if (!isConnected()) return;
             status=__UA_Client_AsyncService(client, &request,
                 &UA_TYPES[UA_TYPES_WRITEREQUEST],
                 [] (UA_Client *client, void *userdata, UA_UInt32 requestId, void *response) {
@@ -648,7 +646,7 @@ void SessionOpen62541::run ()
             if (!client) return;
             connectStatus = UA_Client_run_iterate(client, 1000);
         }
-        epicsThreadSleep(0.01); // give disconnect() a chance to execute
+        epicsThreadSleep(0.01); // give other threads a chance to execute
     }
     std::cerr << "Session " << name << " worker thread error: connectStatus:"
         << UA_StatusCode_name(connectStatus)
