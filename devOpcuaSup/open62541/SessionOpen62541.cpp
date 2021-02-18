@@ -842,7 +842,13 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             }
             ProcessReason reason = ProcessReason::writeComplete;
             if (UA_STATUS_IS_BAD(response->results[i]))
+            {
+                std::cerr << "OPC UA session " << name
+                          << " writing " << item->getNodeId()
+                          << " failed: " << UA_StatusCode_name(response->results[i])
+                          << std::endl;
                 reason = ProcessReason::writeFailure;
+            }
             item->setIncomingEvent(reason);
             item->setState(ConnectionStatus::up);
             i++;
