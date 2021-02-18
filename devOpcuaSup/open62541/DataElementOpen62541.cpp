@@ -523,17 +523,20 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                     (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                 }
                 UA_Variant &data = upd->getData();
+                size_t n = num-1;
                 if (data.type->typeKind == UA_TYPES_STRING) {
-                    UA_String *datastring = static_cast<UA_String *>(data.data);
-                    strncpy(value, reinterpret_cast<char*>(datastring->data), std::min(num, datastring->length));
+                    UA_String *datastring = static_cast<UA_String *>(data.data); // Not terminated!
+                    if (n > datastring->length) n = datastring->length;
+                    strncpy(value, reinterpret_cast<char*>(datastring->data), n);
                 } else {
                     UA_String datastring;
                     UA_String_init(&datastring);
                     UA_print(data.data, data.type, &datastring); // Not terminated!
-                    strncpy(value, reinterpret_cast<char*>(datastring.data), std::min(num, datastring.length));
+                    if (n > datastring.length) n = datastring.length;
+                    strncpy(value, reinterpret_cast<char*>(datastring.data), n);
                     UA_String_clear(&datastring);
                 }
-                value[num-1] = '\0';
+                value[n] = '\0';
                 prec->udf = false;
                 UA_Variant_clear(&data);
             }
