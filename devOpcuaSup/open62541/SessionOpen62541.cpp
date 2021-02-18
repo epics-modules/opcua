@@ -28,6 +28,7 @@
 #include <errlog.h>
 
 #include <open62541/client.h>
+#include <open62541/client_highlevel_async.h>
 
 #define epicsExportSharedSymbols
 #include "Session.h"
@@ -251,7 +252,10 @@ SessionOpen62541::connect ()
 
     /* set callbacks */
     config.stateCallback = [] (UA_Client *client,
-        UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode connectStatus) {
+        UA_SecureChannelState channelState,
+        UA_SessionState sessionState,
+        UA_StatusCode connectStatus)
+        {
             static_cast<SessionOpen62541*>(UA_Client_getContext(client))->
                 connectionStatusChanged(channelState, sessionState, connectStatus);
         };
@@ -342,13 +346,16 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
     {
         Guard G(clientlock);
         if (!isConnected()) return;
-        status=__UA_Client_AsyncService(client, &request,
-            &UA_TYPES[UA_TYPES_READREQUEST],
-            [] (UA_Client *client, void *userdata, UA_UInt32 requestId, void *response) {
-                static_cast<SessionOpen62541*>(userdata)->
-                    readComplete(requestId, static_cast<UA_ReadResponse*>(response));
+        status=UA_Client_sendAsyncReadRequest(client, &request,
+            [] (UA_Client *client,
+                void *userdata,
+                UA_UInt32
+                requestId,
+                UA_ReadResponse *response)
+            {
+                static_cast<SessionOpen62541*>(userdata)->readComplete(requestId, response);
             },
-            &UA_TYPES[UA_TYPES_READRESPONSE], this, &id);
+            this, &id);
     }
 
     UA_Array_delete(request.nodesToRead, request.nodesToReadSize, &UA_TYPES[UA_TYPES_READVALUEID]);
@@ -407,13 +414,15 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
     {
         Guard G(clientlock);
         if (!isConnected()) return;
-        status=__UA_Client_AsyncService(client, &request,
-            &UA_TYPES[UA_TYPES_WRITEREQUEST],
-            [] (UA_Client *client, void *userdata, UA_UInt32 requestId, void *response) {
-                static_cast<SessionOpen62541*>(userdata)->
-                    writeComplete(requestId, static_cast<UA_WriteResponse*>(response));
+        status=UA_Client_sendAsyncWriteRequest(client, &request,
+            [] (UA_Client *client,
+                void *userdata,
+                UA_UInt32 requestId,
+                UA_WriteResponse *response)
+            {
+                static_cast<SessionOpen62541*>(userdata)->writeComplete(requestId, response);
             },
-            &UA_TYPES[UA_TYPES_WRITERESPONSE], this, &id);
+            this, &id);
     }
 
     UA_Array_delete(request.nodesToWrite, request.nodesToWriteSize, &UA_TYPES[UA_TYPES_WRITEVALUE]);
