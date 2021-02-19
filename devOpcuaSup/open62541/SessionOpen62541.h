@@ -52,6 +52,8 @@ inline std::ostream& operator<<(std::ostream& os, const UA_NodeId& ua_nodeId) {
 }
 
 inline std::ostream& operator<<(std::ostream& os, const UA_Variant &ua_variant) {
+    if (ua_variant.data == nullptr) return os << "NO_DATA";
+    if (ua_variant.type == nullptr) return os << "NO_TYPE";
     UA_String s;
     UA_String_init(&s);
     UA_print(ua_variant.data, ua_variant.type, &s);
