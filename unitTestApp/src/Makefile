@@ -28,6 +28,10 @@ GTESTPROD_HOST += RegistryTest
 RegistryTest_SRCS += RegistryTest.cpp
 GTESTS += RegistryTest
 
+GTESTPROD_HOST += LinkParserTest
+LinkParserTest_SRCS += LinkParserTest.cpp
+LinkParserTest_LIBS += opcua
+GTESTS += LinkParserTest
 #==================================================
 # Tests for different client libraries
 # are in separate directories, added by reading
