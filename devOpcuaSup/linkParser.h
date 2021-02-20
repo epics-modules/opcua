@@ -20,9 +20,25 @@
 
 namespace DevOpcua {
 
+static const char defaultElementDelimiter = '.';
+
 bool getYesNo(const char c);
 
-std::unique_ptr<linkInfo> parseLink(dbCommon* prec, const DBEntry &ent);
+/**
+ * @brief Split configuration string along delimiters into a vector<string>.
+ *
+ * Delimiters at the beginning or end of the string or multiple delimiters in a row
+ * generate empty vector elements.
+ *
+ * @param str  string to split
+ * @param delim  token delimiter
+ *
+ * @return  tokens in order of appearance as vector<string>
+ */
+std::vector<std::string> splitString(const std::string &str,
+                                     const char delim = defaultElementDelimiter);
+
+std::unique_ptr<linkInfo> parseLink(dbCommon *prec, const DBEntry &ent);
 
 } // namespace DevOpcua
 
