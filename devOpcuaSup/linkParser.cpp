@@ -16,7 +16,7 @@
 #include <cstring>
 #include <cstddef>
 #include <cmath>
-#include <vector>
+#include <list>
 #include <algorithm>
 
 #include <dbCommon.h>
@@ -45,10 +45,10 @@ getYesNo (const char c)
         throw std::runtime_error(SB() << "illegal value '" << c << "'");
 }
 
-std::vector<std::string>
+std::list<std::string>
 splitString(const std::string &str, const char delim)
 {
-    std::vector<std::string> tokens;
+    std::list<std::string> tokens;
     size_t prev = 0, sep = 0;
     do {
         sep = str.find_first_of(delim, prev);
