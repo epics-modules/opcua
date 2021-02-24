@@ -1179,6 +1179,8 @@ private:
     std::shared_ptr<DataElementOpen62541> parent;               /**< parent */
 
     std::unordered_map<int, std::weak_ptr<DataElementOpen62541>> elementMap;
+    typedef struct {ptrdiff_t offs; size_t size; const UA_DataType *type;} ElementDesc;
+    std::vector<ElementDesc> elementDesc;
 
     bool mapped;                             /**< child name to index mapping done */
     UpdateQueue<UpdateOpen62541> incomingQueue;  /**< queue of incoming values */

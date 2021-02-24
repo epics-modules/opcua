@@ -230,49 +230,75 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
             std::cout << "Element " << name << " splitting structured data to "
                       << elements.size() << " child elements" << std::endl;
         if (value.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
-            errlogPrintf("UNSUPPORTED ExtensionObject %s", name.c_str());
-/*
-            UA_ExtensionObject *extensionObject = value.data
-            value.toExtensionObject(extensionObject);
-
-            // Try to get the structure definition from the dictionary
-            UA_StructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
-            if (!definition.isNull()) {
-                if (!definition.isUnion()) {
-                    // ExtensionObject is a structure
-                    // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
-                    UaGenericStructureValue genericValue;
-                    genericValue.setGenericValue(extensionObject, definition);
-
+            UA_ExtensionObject &extensionObject = *static_cast<UA_ExtensionObject *>(value.data);
+            if (extensionObject.encoding < UA_EXTENSIONOBJECT_DECODED) {
+                std::cerr << name << " is not decoded" << std::endl;
+            } else {
+                const UA_DataType *type = extensionObject.content.decoded.type;
+                if (type->typeKind != UA_DATATYPEKIND_STRUCTURE) {
+                    std::cerr << name << " is not a structure" << std::endl;
+                } else {
                     if (!mapped) {
                         if (debug() >= 5)
                             std::cout << " ** creating index-to-element map for child elements" << std::endl;
+
+                        // Cache byte offset, array size (0 for scalars), and UA_DataType for each struct member
+                        const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+                        char* ptr = static_cast<char*>(extensionObject.content.decoded.data);
+                        for (int i = 0; i < type->membersSize; ++i) {
+                            const UA_DataTypeMember *m = &type->members[i];
+                            const UA_DataType *mt = &typelists[!m->namespaceZero][m->memberTypeIndex];
+                            ptr += m->padding;
+                            size_t size;
+                            char* data;
+                            if (m->isArray) {
+                                size = *((size_t*)ptr);
+                                ptr += sizeof(size_t);
+                                if (size) data = ptr; else data = (char*)UA_EMPTY_ARRAY_SENTINEL;
+                                ptr += sizeof(void*);
+                            } else {
+                                size = 0;
+                                data = ptr;
+                                ptr += mt->memSize;
+                            }
+                            ptrdiff_t offs = data - static_cast<char*>(extensionObject.content.decoded.data);
+                            elementDesc.push_back({offs, size, mt});
+                        }
                         for (auto &it : elements) {
                             auto pelem = it.lock();
-                            for (int i = 0; i < definition.childrenCount(); i++) {
-                                if (pelem->name == definition.child(i).name().toUtf8()) {
+                            int i;
+                            for (i = 0; i < type->membersSize; i++) {
+                                if (pelem->name == type->members[i].memberName) {
                                     elementMap.insert({i, it});
-                                    pelem->setIncomingData(genericValue.value(i), reason);
+                                    std::cerr << name << " element " << pelem->name << " found at index " << i << std::endl;
+                                    break;
                                 }
+                            }
+                            if (i == type->membersSize) {
+                                std::cerr << name << " element " << pelem->name << " not found" << std::endl;
                             }
                         }
                         if (debug() >= 5)
                             std::cout << " ** " << elementMap.size() << "/" << elements.size()
                                       << " child elements mapped to a "
-                                      << "structure of " << definition.childrenCount() << " elements" << std::endl;
+                                      << "structure of " << type->membersSize << " elements" << std::endl;
                         mapped = true;
-                    } else {
-                        for (auto &it : elementMap) {
-                            auto pelem = it.second.lock();
-                            pelem->setIncomingData(genericValue.value(it.first), reason);
-                        }
+                    }
+                    for (auto &it : elementMap) {
+                        auto pelem = it.second.lock();
+                        ElementDesc& ed = elementDesc[it.first];
+                        void* data = static_cast<char*>(extensionObject.content.decoded.data)+ed.offs;
+                        if (type->members[it.first].isArray && ed.size == 0)
+                            data = UA_EMPTY_ARRAY_SENTINEL;
+                        UA_Variant value;
+                        UA_Variant_setArray(&value, data, ed.size, ed.type);
+                        std::cerr << name << " forwarding " << value << " to " << pelem->name << std::endl;
+                        pelem->setIncomingData(value, reason);
                     }
                 }
-
-            } else
-                errlogPrintf("Cannot get a structure definition for %s - check access to type dictionary\n",
-                             extensionObject.dataTypeId().toString().toUtf8());
-*/
+            }
+        } else {
+            std::cerr << name << " got no extensionObject but a " << variantTypeString(value.type) << std::endl;
         }
     }
 }
