@@ -226,15 +226,19 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
                 pconnector->requestRecordProcessing(reason);
         }
     } else {
+        if (UA_Variant_isEmpty(&value))
+            return;
         if (debug() >= 5)
             std::cout << "Element " << name << " splitting structured data to "
                       << elements.size() << " child elements" << std::endl;
+        char* data = static_cast<char*>(value.data);
         if (value.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
-            UA_ExtensionObject &extensionObject = *static_cast<UA_ExtensionObject *>(value.data);
+            UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(data);
             if (extensionObject.encoding < UA_EXTENSIONOBJECT_DECODED) {
                 std::cerr << name << " is not decoded" << std::endl;
             } else {
                 const UA_DataType *type = extensionObject.content.decoded.type;
+                data = static_cast<char*>(extensionObject.content.decoded.data);
                 if (type->typeKind != UA_DATATYPEKIND_STRUCTURE) {
                     std::cerr << name << " is not a structure" << std::endl;
                 } else {
@@ -242,28 +246,29 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
                         if (debug() >= 5)
                             std::cout << " ** creating index-to-element map for child elements" << std::endl;
 
-                        // Cache byte offset, array size (0 for scalars), and UA_DataType for each struct member
+                        // Walk the structure and cache offset, array size (0 for scalars), and type for each member
                         const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
-                        char* ptr = static_cast<char*>(extensionObject.content.decoded.data);
+                        char* ptr = data;
+                        ptrdiff_t memberOffs = 0;
                         for (int i = 0; i < type->membersSize; ++i) {
-                            const UA_DataTypeMember *m = &type->members[i];
-                            const UA_DataType *mt = &typelists[!m->namespaceZero][m->memberTypeIndex];
-                            ptr += m->padding;
-                            size_t size;
-                            char* data;
-                            if (m->isArray) {
-                                size = *((size_t*)ptr);
+                            const UA_DataTypeMember *member = &type->members[i];
+                            const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
+                            ptr += member->padding;
+                            size_t memberSize;
+                            if (member->isArray) {
+                                memberSize = *((size_t*)ptr);
                                 ptr += sizeof(size_t);
-                                if (size) data = ptr; else data = (char*)UA_EMPTY_ARRAY_SENTINEL;
+                                memberOffs = ptr - data;
                                 ptr += sizeof(void*);
                             } else {
-                                size = 0;
-                                data = ptr;
-                                ptr += mt->memSize;
+                                memberSize = 0;
+                                memberOffs = ptr - data;
+                                ptr += memberType->memSize;
                             }
-                            ptrdiff_t offs = data - static_cast<char*>(extensionObject.content.decoded.data);
-                            elementDesc.push_back({offs, size, mt});
+                            elementDesc.push_back({memberOffs, memberSize, memberType});
                         }
+
+                        // Map member names to index
                         for (auto &it : elements) {
                             auto pelem = it.lock();
                             int i;
@@ -284,21 +289,39 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
                                       << "structure of " << type->membersSize << " elements" << std::endl;
                         mapped = true;
                     }
-                    for (auto &it : elementMap) {
-                        auto pelem = it.second.lock();
-                        ElementDesc& ed = elementDesc[it.first];
-                        void* data = static_cast<char*>(extensionObject.content.decoded.data)+ed.offs;
-                        if (type->members[it.first].isArray && ed.size == 0)
-                            data = UA_EMPTY_ARRAY_SENTINEL;
-                        UA_Variant value;
-                        UA_Variant_setArray(&value, data, ed.size, ed.type);
-                        std::cerr << name << " forwarding " << value << " to " << pelem->name << std::endl;
-                        pelem->setIncomingData(value, reason);
-                    }
                 }
             }
+        } else if (value.type->typeKind == UA_TYPES_LOCALIZEDTEXT) {
+            if (!mapped) {
+                elementDesc = {
+                    {0, 0, &UA_TYPES[UA_TYPES_STRING]},                 // Locale
+                    {sizeof(UA_String), 0, &UA_TYPES[UA_TYPES_STRING]}  // Text
+                };
+                for (auto &it : elements) {
+                    auto pelem = it.lock();
+                    if (pelem->name == "Locale" || pelem->name == "locale") {
+                        elementMap.insert({0, it});
+                    } else if (pelem->name == "Text" || pelem->name == "text") {
+                        elementMap.insert({1, it});
+                    }
+                }
+                mapped = true;
+            }
         } else {
-            std::cerr << name << " got no extensionObject but a " << variantTypeString(value.type) << std::endl;
+            std::cerr << name << " got unimplemented " << variantTypeString(value.type) << std::endl;
+            return;
+        }
+        for (auto &it : elementMap) {
+            auto pelem = it.second.lock();
+            ElementDesc& ed = elementDesc[it.first];
+            void* memberData = data + ed.offs;
+            if (ed.size == 0 && ed.type->members && ed.type->members[it.first].isArray)
+                memberData = UA_EMPTY_ARRAY_SENTINEL;
+            UA_Variant value;
+            std::cerr << name << " member " << pelem->name << " index " << it.first << " offs " << ed.offs << " ptr " << memberData << std::endl;
+            UA_Variant_setArray(&value, memberData, ed.size, ed.type);
+            std::cerr << name << " forwarding " << value << " to " << pelem->name << std::endl;
+            pelem->setIncomingData(value, reason);
         }
     }
 }
