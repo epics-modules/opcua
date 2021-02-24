@@ -196,6 +196,86 @@ DataElementOpen62541::addElementToTree (ItemOpen62541 *item,
     }
 }
 
+bool
+DataElementOpen62541::createMap (const UA_DataType *type)
+{
+    switch (type->typeKind) {
+    case UA_DATATYPEKIND_STRUCTURE:
+    {
+         if (debug() >= 5)
+             std::cout << " ** creating index-to-element map for child elements" << std::endl;
+
+         // Walk the structure and cache offset, array size (0 for scalars), and type for each member
+         const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+         ptrdiff_t memberOffs = 0;
+         for (int i = 0; i < type->membersSize; ++i) {
+             const UA_DataTypeMember *member = &type->members[i];
+             const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
+             memberOffs += member->padding;
+             if (member->isArray) {
+                 memberOffs += sizeof(size_t); // array length
+                 elementDesc.push_back({memberOffs, memberType});
+                 memberOffs += sizeof(void*);  // array data pointer
+             } else {
+                 elementDesc.push_back({memberOffs, memberType});
+                 memberOffs += memberType->memSize;
+             }
+         }
+
+         // Map member names to index
+         for (auto &it : elements) {
+             auto pelem = it.lock();
+             int i;
+             for (i = 0; i < type->membersSize; i++) {
+                 if (pelem->name == type->members[i].memberName) {
+                     elementMap.insert({i, it});
+                     break;
+                 }
+             }
+             if (i == type->membersSize) {
+                 std::cerr << "Item " << pitem->getNodeId()
+                           << ": element " << pelem->name
+                           << " not found in " << variantTypeString(type)
+                           << std::endl;
+             }
+         }
+         if (debug() >= 5)
+             std::cout << " ** " << elementMap.size() << "/" << elements.size()
+                       << " child elements mapped to a "
+                       << "structure of " << type->membersSize << " elements" << std::endl;
+         break;
+    }
+    case UA_TYPES_LOCALIZEDTEXT:
+    {
+        elementDesc = {
+            {0, &UA_TYPES[UA_TYPES_STRING]},                 // Locale
+            {sizeof(UA_String), &UA_TYPES[UA_TYPES_STRING]}  // Text
+        };
+        for (auto &it : elements) {
+            auto pelem = it.lock();
+            if (pelem->name == "Locale" || pelem->name == "locale") {
+                elementMap.insert({0, it});
+            } else if (pelem->name == "Text" || pelem->name == "text") {
+                elementMap.insert({1, it});
+            } else {
+                 std::cerr << "Item " << pitem->getNodeId()
+                           << ": element " << pelem->name
+                           << " not found in " << variantTypeString(type)
+                           << std::endl;
+            }
+        }
+        break;
+    }
+    default:
+         std::cerr << "Item " << pitem->getNodeId()
+                   << " has unimplemented type " << variantTypeString(type)
+                   << std::endl;
+        return false;
+    }
+    mapped = true;
+    return true;
+}
+
 // Getting the timestamp and status information from the Item assumes that only one thread
 // is pushing data into the Item's DataElement structure at any time.
 void
@@ -249,94 +329,20 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
             }
         }
         if (!mapped) {
-            switch (type->typeKind) {
-            case UA_DATATYPEKIND_STRUCTURE:
-            {
-                 if (debug() >= 5)
-                     std::cout << " ** creating index-to-element map for child elements" << std::endl;
-
-                 // Walk the structure and cache offset, array size (0 for scalars), and type for each member
-                 const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
-                 char* ptr = data;
-                 ptrdiff_t memberOffs = 0;
-                 for (int i = 0; i < type->membersSize; ++i) {
-                     const UA_DataTypeMember *member = &type->members[i];
-                     const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
-                     ptr += member->padding;
-                     size_t memberSize;
-                     if (member->isArray) {
-                         memberSize = *((size_t*)ptr);
-                         ptr += sizeof(size_t);
-                         memberOffs = ptr - data;
-                         ptr += sizeof(void*);
-                     } else {
-                         memberSize = 0;
-                         memberOffs = ptr - data;
-                         ptr += memberType->memSize;
-                     }
-                     elementDesc.push_back({memberOffs, memberSize, memberType});
-                 }
-
-                 // Map member names to index
-                 for (auto &it : elements) {
-                     auto pelem = it.lock();
-                     int i;
-                     for (i = 0; i < type->membersSize; i++) {
-                         if (pelem->name == type->members[i].memberName) {
-                             elementMap.insert({i, it});
-                             break;
-                         }
-                     }
-                     if (i == type->membersSize) {
-                         std::cerr << "Item " << pitem->getNodeId()
-                                   << ": element " << pelem->name
-                                   << " not found " << variantTypeString(type)
-                                   << std::endl;
-                     }
-                 }
-                 if (debug() >= 5)
-                     std::cout << " ** " << elementMap.size() << "/" << elements.size()
-                               << " child elements mapped to a "
-                               << "structure of " << type->membersSize << " elements" << std::endl;
-                 break;
-            }
-            case UA_TYPES_LOCALIZEDTEXT:
-            {
-                elementDesc = {
-                    {0, 0, &UA_TYPES[UA_TYPES_STRING]},                 // Locale
-                    {sizeof(UA_String), 0, &UA_TYPES[UA_TYPES_STRING]}  // Text
-                };
-                for (auto &it : elements) {
-                    auto pelem = it.lock();
-                    if (pelem->name == "Locale" || pelem->name == "locale") {
-                        elementMap.insert({0, it});
-                    } else if (pelem->name == "Text" || pelem->name == "text") {
-                        elementMap.insert({1, it});
-                    } else {
-                         std::cerr << "Item " << pitem->getNodeId()
-                                   << ": element " << pelem->name
-                                   << " not found in " << variantTypeString(type)
-                                   << std::endl;
-                    }
-                }
-                break;
-            }
-            default:
-                 std::cerr << "Item " << pitem->getNodeId()
-                           << " has unimplemented type " << variantTypeString(type)
-                           << std::endl;
-                return;
-            }
-            mapped = true;
+            createMap(type);
         }
         for (auto &it : elementMap) {
             auto pelem = it.second.lock();
             ElementDesc& ed = elementDesc[it.first];
             void* memberData = data + ed.offs;
-            if (ed.size == 0 && ed.type->members && ed.type->members[it.first].isArray)
-                memberData = UA_EMPTY_ARRAY_SENTINEL;
+            size_t size = 0;
+            if (ed.type->members && ed.type->members[it.first].isArray)
+            {
+                size = static_cast<size_t*>(memberData)[-1];
+                if (size == 0) memberData = UA_EMPTY_ARRAY_SENTINEL;
+            }
             UA_Variant value;
-            UA_Variant_setArray(&value, memberData, ed.size, ed.type);
+            UA_Variant_setArray(&value, memberData, size, ed.type);
             pelem->setIncomingData(value, reason);
         }
     }

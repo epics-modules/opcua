@@ -704,6 +704,8 @@ private:
                                   const int index,
                                   std::shared_ptr<DataElementOpen62541> pelem);
 */
+    bool createMap(const UA_DataType *type);
+
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
 
@@ -1179,7 +1181,7 @@ private:
     std::shared_ptr<DataElementOpen62541> parent;               /**< parent */
 
     std::unordered_map<int, std::weak_ptr<DataElementOpen62541>> elementMap;
-    typedef struct {ptrdiff_t offs; size_t size; const UA_DataType *type;} ElementDesc;
+    typedef struct {ptrdiff_t offs; const UA_DataType *type;} ElementDesc;
     std::vector<ElementDesc> elementDesc;
 
     bool mapped;                             /**< child name to index mapping done */
