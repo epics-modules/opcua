@@ -217,8 +217,9 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
             UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason, std::unique_ptr<UA_Variant>(valuecopy), getIncomingReadStatus()));
             incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
             if (debug() >= 5)
-                std::cout << "Element " << name << " set data ("
-                          << processReasonString(reason)
+                std::cout << "Item " << pitem->getNodeId()
+                          << " element " << name
+                          << " set data (" << processReasonString(reason)
                           << ") for record " << pconnector->getRecordName()
                           << " (queue use " << incomingQueue.size()
                           << "/" << incomingQueue.capacity() << ")" << std::endl;
@@ -229,70 +230,78 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
         if (UA_Variant_isEmpty(&value))
             return;
         if (debug() >= 5)
-            std::cout << "Element " << name << " splitting structured data to "
-                      << elements.size() << " child elements" << std::endl;
+            std::cout << "Item " << pitem->getNodeId()
+                      << " element " << name
+                      << " splitting structured data to "
+                      << elements.size() << " child elements"
+                      << std::endl;
+        const UA_DataType *type = value.type;
         char* data = static_cast<char*>(value.data);
         if (value.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(data);
-            if (extensionObject.encoding < UA_EXTENSIONOBJECT_DECODED) {
-                std::cerr << name << " is not decoded" << std::endl;
-            } else {
-                const UA_DataType *type = extensionObject.content.decoded.type;
+            if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
+                // Unpack decoded extension objects
+                type = extensionObject.content.decoded.type;
                 data = static_cast<char*>(extensionObject.content.decoded.data);
-                if (type->typeKind != UA_DATATYPEKIND_STRUCTURE) {
-                    std::cerr << name << " is not a structure" << std::endl;
-                } else {
-                    if (!mapped) {
-                        if (debug() >= 5)
-                            std::cout << " ** creating index-to-element map for child elements" << std::endl;
-
-                        // Walk the structure and cache offset, array size (0 for scalars), and type for each member
-                        const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
-                        char* ptr = data;
-                        ptrdiff_t memberOffs = 0;
-                        for (int i = 0; i < type->membersSize; ++i) {
-                            const UA_DataTypeMember *member = &type->members[i];
-                            const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
-                            ptr += member->padding;
-                            size_t memberSize;
-                            if (member->isArray) {
-                                memberSize = *((size_t*)ptr);
-                                ptr += sizeof(size_t);
-                                memberOffs = ptr - data;
-                                ptr += sizeof(void*);
-                            } else {
-                                memberSize = 0;
-                                memberOffs = ptr - data;
-                                ptr += memberType->memSize;
-                            }
-                            elementDesc.push_back({memberOffs, memberSize, memberType});
-                        }
-
-                        // Map member names to index
-                        for (auto &it : elements) {
-                            auto pelem = it.lock();
-                            int i;
-                            for (i = 0; i < type->membersSize; i++) {
-                                if (pelem->name == type->members[i].memberName) {
-                                    elementMap.insert({i, it});
-                                    std::cerr << name << " element " << pelem->name << " found at index " << i << std::endl;
-                                    break;
-                                }
-                            }
-                            if (i == type->membersSize) {
-                                std::cerr << name << " element " << pelem->name << " not found" << std::endl;
-                            }
-                        }
-                        if (debug() >= 5)
-                            std::cout << " ** " << elementMap.size() << "/" << elements.size()
-                                      << " child elements mapped to a "
-                                      << "structure of " << type->membersSize << " elements" << std::endl;
-                        mapped = true;
-                    }
-                }
+            } else {
+                std::cerr << "Item " << pitem->getNodeId() << " is not decoded" << std::endl;
+                return;
             }
-        } else if (value.type->typeKind == UA_TYPES_LOCALIZEDTEXT) {
-            if (!mapped) {
+        }
+        if (!mapped) {
+            switch (type->typeKind) {
+            case UA_DATATYPEKIND_STRUCTURE:
+            {
+                 if (debug() >= 5)
+                     std::cout << " ** creating index-to-element map for child elements" << std::endl;
+
+                 // Walk the structure and cache offset, array size (0 for scalars), and type for each member
+                 const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+                 char* ptr = data;
+                 ptrdiff_t memberOffs = 0;
+                 for (int i = 0; i < type->membersSize; ++i) {
+                     const UA_DataTypeMember *member = &type->members[i];
+                     const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
+                     ptr += member->padding;
+                     size_t memberSize;
+                     if (member->isArray) {
+                         memberSize = *((size_t*)ptr);
+                         ptr += sizeof(size_t);
+                         memberOffs = ptr - data;
+                         ptr += sizeof(void*);
+                     } else {
+                         memberSize = 0;
+                         memberOffs = ptr - data;
+                         ptr += memberType->memSize;
+                     }
+                     elementDesc.push_back({memberOffs, memberSize, memberType});
+                 }
+
+                 // Map member names to index
+                 for (auto &it : elements) {
+                     auto pelem = it.lock();
+                     int i;
+                     for (i = 0; i < type->membersSize; i++) {
+                         if (pelem->name == type->members[i].memberName) {
+                             elementMap.insert({i, it});
+                             break;
+                         }
+                     }
+                     if (i == type->membersSize) {
+                         std::cerr << "Item " << pitem->getNodeId()
+                                   << ": element " << pelem->name
+                                   << " not found " << variantTypeString(type)
+                                   << std::endl;
+                     }
+                 }
+                 if (debug() >= 5)
+                     std::cout << " ** " << elementMap.size() << "/" << elements.size()
+                               << " child elements mapped to a "
+                               << "structure of " << type->membersSize << " elements" << std::endl;
+                 break;
+            }
+            case UA_TYPES_LOCALIZEDTEXT:
+            {
                 elementDesc = {
                     {0, 0, &UA_TYPES[UA_TYPES_STRING]},                 // Locale
                     {sizeof(UA_String), 0, &UA_TYPES[UA_TYPES_STRING]}  // Text
@@ -303,13 +312,22 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
                         elementMap.insert({0, it});
                     } else if (pelem->name == "Text" || pelem->name == "text") {
                         elementMap.insert({1, it});
+                    } else {
+                         std::cerr << "Item " << pitem->getNodeId()
+                                   << ": element " << pelem->name
+                                   << " not found in " << variantTypeString(type)
+                                   << std::endl;
                     }
                 }
-                mapped = true;
+                break;
             }
-        } else {
-            std::cerr << name << " got unimplemented " << variantTypeString(value.type) << std::endl;
-            return;
+            default:
+                 std::cerr << "Item " << pitem->getNodeId()
+                           << " has unimplemented type " << variantTypeString(type)
+                           << std::endl;
+                return;
+            }
+            mapped = true;
         }
         for (auto &it : elementMap) {
             auto pelem = it.second.lock();
@@ -318,9 +336,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
             if (ed.size == 0 && ed.type->members && ed.type->members[it.first].isArray)
                 memberData = UA_EMPTY_ARRAY_SENTINEL;
             UA_Variant value;
-            std::cerr << name << " member " << pelem->name << " index " << it.first << " offs " << ed.offs << " ptr " << memberData << std::endl;
             UA_Variant_setArray(&value, memberData, ed.size, ed.type);
-            std::cerr << name << " forwarding " << value << " to " << pelem->name << std::endl;
             pelem->setIncomingData(value, reason);
         }
     }
