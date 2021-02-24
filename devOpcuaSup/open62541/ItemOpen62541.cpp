@@ -151,6 +151,7 @@ ItemOpen62541::uaToEpicsTime (const UA_DateTime &dt, const UA_UInt16 pico10)
 void
 ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
 {
+    std::cout << "#### ItemOpen62541::setIncomingData (" << processReasonString(reason) << ") from " << nodeid << " for " << recConnector->getRecordName() << std::endl;
     tsClient = epicsTime::getCurrent();
     if (!UA_STATUS_IS_BAD(value.status)) {
         tsSource = uaToEpicsTime(value.sourceTimestamp, value.sourcePicoseconds);

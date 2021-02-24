@@ -785,6 +785,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                               << ": (readComplete) getting data for item "
                               << item->getNodeId()
                               << " = " << response->results[i].value
+                              << ' '<< UA_StatusCode_name(response->results[i].status)
                               << std::endl;
                 }
                 ProcessReason reason = ProcessReason::readComplete;
@@ -838,7 +839,9 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             if (debug >= 5) {
                 std::cout << "** Session " << name
                           << ": (writeComplete) getting results for item "
-                          << item->getNodeId() << std::endl;
+                         << item->getNodeId()
+                         << ' '<< UA_StatusCode_name(response->results[i])
+                         << std::endl;
             }
             ProcessReason reason = ProcessReason::writeComplete;
             if (UA_STATUS_IS_BAD(response->results[i]))
