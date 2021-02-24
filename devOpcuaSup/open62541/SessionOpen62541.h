@@ -35,32 +35,16 @@ class ItemOpen62541;
 struct WriteRequest;
 struct ReadRequest;
 
-// some helpers
+// print some UA types
 
 inline std::ostream& operator<<(std::ostream& os, const UA_String& ua_string) {
     // ua_string.data is not terminated!
     return os.write(reinterpret_cast<char*>(ua_string.data), ua_string.length);
 }
 
-inline std::ostream& operator<<(std::ostream& os, const UA_NodeId& ua_nodeId) {
-    UA_String s;
-    UA_String_init(&s);
-    UA_NodeId_print(&ua_nodeId, &s);
-    os << s;
-    UA_String_clear(&s);
-    return os;
-}
+std::ostream& operator<<(std::ostream& os, const UA_NodeId& ua_nodeId);
 
-inline std::ostream& operator<<(std::ostream& os, const UA_Variant &ua_variant) {
-    if (ua_variant.data == nullptr) return os << "NO_DATA";
-    if (ua_variant.type == nullptr) return os << "NO_TYPE";
-    UA_String s;
-    UA_String_init(&s);
-    UA_print(ua_variant.data, ua_variant.type, &s);
-    os << s << " (" << ua_variant.type->typeName << ')';
-    UA_String_clear(&s);
-    return os;
-}
+std::ostream& operator<<(std::ostream& os, const UA_Variant &ua_variant);
 
 /**
  * @brief The SessionOpen62541 implementation of an open62541 client session.

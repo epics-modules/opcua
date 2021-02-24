@@ -41,6 +41,41 @@
 
 namespace DevOpcua {
 
+// print some UA types
+
+std::ostream& operator<<(std::ostream& os, const UA_NodeId& ua_nodeId) {
+    UA_String s;
+    UA_String_init(&s);
+    UA_NodeId_print(&ua_nodeId, &s);
+    os << s;
+    UA_String_clear(&s);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const UA_Variant &ua_variant) {
+    if (ua_variant.data == nullptr) return os << "NO_DATA";
+    if (ua_variant.type == nullptr) return os << "NO_TYPE";
+    UA_String s;
+    UA_String_init(&s);
+    if (UA_Variant_isScalar(&ua_variant)) {
+        UA_print(ua_variant.data, ua_variant.type, &s);
+        os << s << " (" << ua_variant.type->typeName << ')';
+    } else {
+        os << s << "{";
+        char* data = static_cast<char*>(ua_variant.data);
+        for (size_t i = 0; i < ua_variant.arrayLength; i++) {
+            UA_print(data, ua_variant.type, &s);
+            data += ua_variant.type->memSize;
+            if (i) os << ", ";
+            os << s;
+            UA_String_clear(&s);
+        }
+        os << s << "} (" << ua_variant.type->typeName << '[' << ua_variant.arrayLength << "])";
+    }
+    UA_String_clear(&s);
+    return os;
+}
+
 std::map<std::string, SessionOpen62541*> SessionOpen62541::sessions;
 
 // Cargo structure and batcher for write requests
