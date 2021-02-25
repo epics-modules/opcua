@@ -1,0 +1,6 @@
+record(ai, "Tst-01") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=0:\\\\Test-01")
+    field(SCAN, "I/O Intr")
+    field( TSE, "-2")
+}
