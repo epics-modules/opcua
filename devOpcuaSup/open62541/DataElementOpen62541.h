@@ -699,11 +699,10 @@ private:
                       const std::string &targetTypeName) const;
     void checkWriteArray(const UA_DataType *expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
-/*
-    bool updateDataInGenericValue(UaGenericStructureValue &value,
-                                  const int index,
-                                  std::shared_ptr<DataElementOpen62541> pelem);
-*/
+    bool updateDataInStruct(void* container,
+                            const int index,
+                            std::shared_ptr<DataElementOpen62541> pelem);
+
     bool createMap(const UA_DataType *type);
 
     // Structure always returns true to ensure full traversal

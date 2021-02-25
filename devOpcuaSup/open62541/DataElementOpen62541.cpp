@@ -315,14 +315,15 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
                       << " splitting structured data to "
                       << elements.size() << " child elements"
                       << std::endl;
+
         const UA_DataType *type = value.type;
-        char* data = static_cast<char*>(value.data);
-        if (value.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
-            UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(data);
+        char* container = static_cast<char*>(value.data);
+        if (type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+            UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
-                // Unpack decoded extension objects
+                // Access content of decoded extension objects
                 type = extensionObject.content.decoded.type;
-                data = static_cast<char*>(extensionObject.content.decoded.data);
+                container = static_cast<char*>(extensionObject.content.decoded.data);
             } else {
                 std::cerr << "Item " << pitem->getNodeId() << " is not decoded" << std::endl;
                 return;
@@ -333,16 +334,18 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
         }
         for (auto &it : elementMap) {
             auto pelem = it.second.lock();
-            ElementDesc& ed = elementDesc[it.first];
-            void* memberData = data + ed.offs;
-            size_t size = 0;
-            if (ed.type->members && ed.type->members[it.first].isArray)
-            {
-                size = static_cast<size_t*>(memberData)[-1];
-                if (size == 0) memberData = UA_EMPTY_ARRAY_SENTINEL;
-            }
+            int index = it.first;
+            const ElementDesc& ed = elementDesc[index];
+            void* memberData = container + ed.offs;
             UA_Variant value;
-            UA_Variant_setArray(&value, memberData, size, ed.type);
+            if (ed.type->members && ed.type->members[index].isArray)
+            {
+                size_t arrayLength = static_cast<size_t*>(memberData)[-1];
+                if (arrayLength == 0) memberData = UA_EMPTY_ARRAY_SENTINEL;
+                UA_Variant_setArray(&value, memberData, arrayLength, ed.type);
+            } else {
+                UA_Variant_setScalar(&value, memberData, ed.type);
+            }
             pelem->setIncomingData(value, reason);
         }
     }
@@ -402,6 +405,52 @@ DataElementOpen62541::updateDataInGenericValue (UaGenericStructureValue &value,
     return updated;
 }
 */
+bool
+DataElementOpen62541::updateDataInStruct (void* container,
+                                          const int index,
+                                          std::shared_ptr<DataElementOpen62541> pelem)
+{
+    bool updated = false;
+    { // Scope of Guard G
+        Guard G(pelem->outgoingLock);
+        if (pelem->isDirty()) {
+            const ElementDesc& ed = elementDesc[index];
+            void* memberData = static_cast<char*>(container) + ed.offs;
+            const UA_Variant& data = pelem->getOutgoingData();
+            assert(ed.type == data.type);
+            if (ed.type->members && ed.type->members[index].isArray)
+            {
+                size_t &arrayLength = static_cast<size_t*>(memberData)[-1];
+                UA_Array_delete(memberData, arrayLength, ed.type);
+                UA_StatusCode status = UA_Array_copy(data.data, data.arrayLength, &memberData, ed.type);
+                if (status == UA_STATUSCODE_GOOD) {
+                    arrayLength = data.arrayLength;
+                } else {
+                    arrayLength = 0;
+                    std::cerr << "Item " << pitem->getNodeId()
+                              << ": inserting data from from child element" << pelem->name
+                              << " failed (" << UA_StatusCode_name(status) << ')'
+                              << std::endl;
+                    return false;
+                }
+            } else {
+                UA_copy(data.data, memberData, ed.type);
+            }
+            pelem->isdirty = false;
+            updated = true;
+        }
+    }
+    if (debug() >= 4) {
+        if (updated) {
+            std::cout << "Data from child element " << pelem->name
+                      << " inserted into data structure" << std::endl;
+        } else {
+            std::cout << "Data from child element " << pelem->name
+                      << " ignored (not dirty)" << std::endl;
+        }
+    }
+    return updated;
+}
 
 
 const UA_Variant &
@@ -409,69 +458,44 @@ DataElementOpen62541::getOutgoingData ()
 {
     if (!isLeaf()) {
         if (debug() >= 4)
-            std::cout << "Element " << name << " updating structured data from "
-                      << elements.size() << " child elements" << std::endl;
+            std::cout << "Item " << pitem->getNodeId()
+                      << " element " << name
+                      << " updating structured data from "
+                      << elements.size() << " child elements"
+                      << std::endl;
 
         UA_Variant_clear(&outgoingData);
         UA_Variant_copy(&incomingData, &outgoingData);
         isdirty = false;
-        if (outgoingData.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
-            errlogPrintf("UNSUPPORTED ExtensionObject %s", name.c_str());
-            UA_ExtensionObject extensionObject;
-            UA_ExtensionObject_setValue(&extensionObject, &outgoingData, outgoingData.type);
-/*
-
-            // Try to get the structure definition from the dictionary
-            UA_StructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
-            if (!definition.isNull()) {
-                if (!definition.isUnion()) {
-                    // ExtensionObject is a structure
-                    // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
-                    UaGenericStructureValue genericValue;
-                    genericValue.setGenericValue(extensionObject, definition);
-
-                    if (!mapped) {
-                        if (debug() >= 5)
-                            std::cout << " ** creating index-to-element map for child elements" << std::endl;
-                        for (auto &it : elements) {
-                            auto pelem = it.lock();
-                            for (int i = 0; i < definition.childrenCount(); i++) {
-                                if (pelem->name == definition.child(i).name().toUtf8()) {
-                                    elementMap.insert({i, it});
-                                    if (updateDataInGenericValue(genericValue, i, pelem))
-                                        isdirty = true;
-                                }
-                            }
-                        }
-                        if (debug() >= 5)
-                            std::cout << " ** " << elementMap.size() << "/" << elements.size()
-                                      << " child elements mapped to a "
-                                      << "structure of " << definition.childrenCount() << " elements" << std::endl;
-                        mapped = true;
-                    } else {
-                        for (auto &it : elementMap) {
-                            auto pelem = it.second.lock();
-                            if (updateDataInGenericValue(genericValue, it.first, pelem))
-                               isdirty = true;
-                        }
-                    }
-                    if (isdirty) {
-                        if (debug() >= 4)
-                            std::cout << "Encoding changed data structure to outgoingData of element " << name
-                                      << std::endl;
-                        genericValue.toExtensionObject(extensionObject);
-                        outgoingData.setExtensionObject(extensionObject, OpcUa_True);
-                    } else {
-                        if (debug() >= 4)
-                            std::cout << "Returning unchanged outgoingData of element " << name
-                                      << std::endl;
-                    }
-                }
-
-            } else
-                errlogPrintf("Cannot get a structure definition for %s - check access to type dictionary\n",
-                             extensionObject.dataTypeId().toString().toUtf8());
-*/
+        const UA_DataType *type = outgoingData.type;
+        char* container = static_cast<char*>(outgoingData.data);
+        if (type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+            UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
+            if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
+                // Access content decoded extension objects
+                type = extensionObject.content.decoded.type;
+                container = static_cast<char*>(extensionObject.content.decoded.data);
+            } else {
+                std::cerr << "Item " << pitem->getNodeId() << " is not decoded" << std::endl;
+                return outgoingData;
+            }
+        }
+        if (!mapped) {
+            createMap(type);
+        }
+        for (auto &it : elementMap) {
+            auto pelem = it.second.lock();
+            if (updateDataInStruct(container, it.first, pelem))
+               isdirty = true;
+        }
+        if (isdirty) {
+            if (debug() >= 4)
+                std::cout << "Encoding changed data structure to outgoingData of element " << name
+                          << std::endl;
+        } else {
+            if (debug() >= 4)
+                std::cout << "Returning unchanged outgoingData of element " << name
+                          << std::endl;
         }
     }
     return outgoingData;

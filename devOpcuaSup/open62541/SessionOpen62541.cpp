@@ -420,6 +420,13 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
     cargo->item = &item;
     UA_Variant_copy(&item.getOutgoingData(), &cargo->wvalue.value.value);
     item.clearOutgoingData();
+    if (debug >= 5) {
+        std::cout << "** Session " << name
+                  << ": (requestWrite) writing data for item "
+                  << item.getNodeId()
+                  << " = " << cargo->wvalue.value.value
+                  << std::endl;
+    }
     writer.pushRequest(cargo, item.recConnector->getRecordPriority());
 }
 
