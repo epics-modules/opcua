@@ -128,7 +128,7 @@ DataElementOpen62541::addElementToTree (ItemOpen62541 *item,
             found = false;
             sep = restpath.find_first_of(separator);
             // allow escaping separators
-            while (restpath[sep-1] == '\\') {
+            while (sep && sep != std::string::npos && restpath[sep-1] == '\\') {
                 restpath.erase(sep-1, 1);
                 sep = restpath.find_first_of(separator, sep);
             }
@@ -167,7 +167,7 @@ DataElementOpen62541::addElementToTree (ItemOpen62541 *item,
     while (restpath.length()) {
         sep = restpath.find_last_of(separator);
         // allow escaping separators
-        while (restpath[sep-1] == '\\') {
+        while (sep && sep != std::string::npos && restpath[sep-1] == '\\') {
             restpath.erase(--sep, 1);
             sep = restpath.find_last_of(separator, --sep);
         }
