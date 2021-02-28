@@ -64,6 +64,14 @@ class opcuaTestHarness:
             + " from Disconnected to ConnectionErrorApiReconnect"
         )
 
+        # Server variables
+        self.serverVars = [
+            "Feb 25 2021 05:30:02",
+            "open62541",
+            "open62541 OPC UA Server",
+            "1.1.2-291-gbb8ce4b",
+        ]
+
     def start_server(self):
         self.serverProc = subprocess.Popen(self.testServer, shell=False)
         print("\nOpened server with pid = %s" % self.serverProc.pid)
@@ -196,6 +204,29 @@ def test_no_connection(test_inst):
     assert (
         output.find(test_inst.reconnectMsg1) >= 0
     ), "%d: Failed to find reconnect message 1 in output\n%s" % (i, output)
+
+
+def test_server_status(test_inst):
+    """
+    Check the informational values provided by the server
+    are being translated via the module
+    """
+
+    ioc = test_inst.IOC
+
+    serverVars = [
+        "OPC:ServerBuildNumber",
+        "OPC:ServerManufacturerName",
+        "OPC:ServerProductName",
+        "OPC:ServerSoftwareVersion",
+    ]
+    i = 0
+    with ioc:
+        for pvName in serverVars:
+            pv = PV(pvName)
+            res = pv.get()
+            assert res == test_inst.serverVars[i]
+            i = i + 1
 
 
 def test_variable_pvget(test_inst):
