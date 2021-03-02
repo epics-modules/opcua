@@ -58,7 +58,7 @@ public:
      */
     static void addElementToTree(Item *item,
                                  RecordConnector *pconnector,
-                                 const std::string &path);
+                                 const std::list<std::string> elementPath);
 
     /**
      * @brief Get the type of element (inside a structure).
@@ -795,8 +795,6 @@ public:
     virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
     const std::string name;                     /**< element name */
-    //TODO: make separator configurable
-    static const char separator = '.';
 
 protected:
     /**
