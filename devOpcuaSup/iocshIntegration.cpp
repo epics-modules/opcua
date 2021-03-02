@@ -479,7 +479,7 @@ void opcuaShowDataCallFunc (const iocshArgBuf *args)
         } else {
             RecordConnector *rc = RecordConnector::findRecordConnector(args[0].sval);
             if (rc) {
-                rc->pitem->show(1);
+                rc->pitem->show(args[1].ival);
             } else {
                 errlogPrintf("record %s does not exist\n",
                              args[0].sval);
