@@ -38,7 +38,7 @@ namespace DevOpcua {
 void
 DataElement::addElementToTree(Item *item,
                               RecordConnector *pconnector,
-                              const std::list<std::string> elementPath)
+                              const std::list<std::string> &elementPath)
 {
     DataElementUaSdk::addElementToTree(static_cast<ItemUaSdk *>(item), pconnector, elementPath);
 }
