@@ -65,7 +65,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
 void
 DataElementUaSdk::addElementToTree(ItemUaSdk *item,
                                    RecordConnector *pconnector,
-                                   const std::list<std::string> elementPath)
+                                   const std::list<std::string> &elementPath)
 {
     std::string name("");
     if (elementPath.size())

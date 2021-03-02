@@ -54,11 +54,11 @@ public:
      *
      * @param pitem       pointer to corresponding Item
      * @param pconnector  pointer to record connector to link to
-     * @param path        path of leaf element inside the structure
+     * @param elementPath  path of leaf element inside the structure
      */
     static void addElementToTree(Item *item,
                                  RecordConnector *pconnector,
-                                 const std::list<std::string> elementPath);
+                                 const std::list<std::string> &elementPath);
 
     /**
      * @brief Get the type of element (inside a structure).

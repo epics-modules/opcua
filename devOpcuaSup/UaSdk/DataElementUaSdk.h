@@ -195,7 +195,7 @@ public:
      */
     static void addElementToTree(ItemUaSdk *item,
                                  RecordConnector *pconnector,
-                                 const std::list<std::string> elementPath);
+                                 const std::list<std::string> &elementPath);
 
     /* ElementTree node interface methods */
     void
