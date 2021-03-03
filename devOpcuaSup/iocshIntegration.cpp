@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -24,6 +24,7 @@
 #include "linkParser.h"
 #include "Session.h"
 #include "Subscription.h"
+#include "Registry.h"
 #include "RecordConnector.h"
 
 namespace DevOpcua {
@@ -90,7 +91,7 @@ void opcuaCreateSessionCallFunc (const iocshArgBuf *args)
             errlogPrintf("invalid argument #1 (session name) '%s'\n",
                          args[0].sval);
             ok = false;
-        } else if (Session::sessionExists(args[0].sval)) {
+        } else if (RegistryKeyNamespace::global.contains(args[0].sval)) {
             errlogPrintf("session name %s already in use\n",
                          args[0].sval);
             ok = false;
@@ -145,16 +146,19 @@ void opcuaSetOptionCallFunc (const iocshArgBuf *args)
     try {
         bool ok = true;
         bool help = false;
+        Session *s = nullptr;
 
         if (args[0].sval == nullptr) {
             errlogPrintf("missing argument #1 (session name)\n");
             ok = false;
         } else if (strcmp(args[0].sval, "help") == 0) {
             help = true;
-        } else if (!Session::sessionExists(args[0].sval)) {
-            errlogPrintf("'%s' - no such session\n",
-                         args[0].sval);
-            ok = false;
+        } else {
+            s = Session::find(args[0].sval);
+            if (!s) {
+                errlogPrintf("'%s' - no such session\n", args[0].sval);
+                ok = false;
+            }
         }
 
         if (!help) {
@@ -178,15 +182,12 @@ void opcuaSetOptionCallFunc (const iocshArgBuf *args)
         }
 
         if (ok) {
-            if (help) {
+            if (help)
                 Session::showOptionHelp();
-            } else {
-                Session &sess = Session::findSession(args[0].sval);
-                sess.setOption(args[1].sval, args[2].sval);
-            }
+            else
+                s->setOption(args[1].sval, args[2].sval);
         }
-    }
-    catch(std::exception& e) {
+    } catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
     }
 }
@@ -206,14 +207,17 @@ void opcuaMapNamespaceCallFunc (const iocshArgBuf *args)
     try {
         bool ok = true;
         unsigned short index = 0;
+        Session *s = nullptr;
 
         if (args[0].sval == nullptr) {
             errlogPrintf("missing argument #1 (session name)\n");
             ok = false;
-        } else if (!Session::sessionExists(args[0].sval)) {
-            errlogPrintf("'%s' - no such session\n",
-                         args[0].sval);
-            ok = false;
+        } else {
+            s = Session::find(args[0].sval);
+            if (!s) {
+                errlogPrintf("'%s' - no such session\n", args[0].sval);
+                ok = false;
+            }
         }
 
         if (args[1].ival < 0 || args[1].ival > USHRT_MAX) {
@@ -228,12 +232,9 @@ void opcuaMapNamespaceCallFunc (const iocshArgBuf *args)
             ok = false;
         }
 
-        if (ok) {
-            Session &sess = Session::findSession(args[0].sval);
-            sess.addNamespaceMapping(index, args[2].sval);
-        }
-    }
-    catch(std::exception& e) {
+        if (ok)
+            s->addNamespaceMapping(index, args[2].sval);
+    } catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
     }
 }
@@ -252,10 +253,11 @@ void opcuaShowSessionCallFunc (const iocshArgBuf *args)
         if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
             Session::showAll(args[1].ival);
         } else {
-            Session::findSession(args[0].sval).show(args[1].ival);
+            Session *s = Session::find(args[0].sval);
+            if (s)
+                s->show(args[1].ival);
         }
-    }
-    catch (std::exception &e) {
+    } catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
     }
 }
@@ -278,9 +280,10 @@ void opcuaConnectCallFunc (const iocshArgBuf *args)
 
     if (ok) {
         try {
-            DevOpcua::Session::findSession(args[0].sval).connect();
-        }
-        catch (std::exception &e) {
+            Session *s = Session::find(args[0].sval);
+            if (s)
+                s->connect();
+        } catch (std::exception &e) {
             std::cerr << "ERROR : " << e.what() << std::endl;
         }
     }
@@ -304,9 +307,10 @@ void opcuaDisconnectCallFunc (const iocshArgBuf *args)
 
     if (ok) {
         try {
-            DevOpcua::Session::findSession(args[0].sval).disconnect();
-        }
-        catch (std::exception &e) {
+            Session *s = Session::find(args[0].sval);
+            if (s)
+                s->disconnect();
+        } catch (std::exception &e) {
             std::cerr << "ERROR : " << e.what() << std::endl;
         }
     }
@@ -323,9 +327,10 @@ static
 void opcuaDebugSessionCallFunc (const iocshArgBuf *args)
 {
     try {
-        Session::findSession(args[0].sval).debug = args[1].ival;
-    }
-    catch (std::exception &e) {
+        Session *s = Session::find(args[0].sval);
+        if (s)
+            s->debug = args[1].ival;
+    } catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
     }
 }
@@ -358,7 +363,7 @@ void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
             errlogPrintf("invalid argument #1 (subscription name) '%s'\n",
                          args[0].sval);
             ok = false;
-        } else if (Subscription::subscriptionExists(args[0].sval)) {
+        } else if (Subscription::find(args[0].sval)) {
             errlogPrintf("subscription name %s already in use\n",
                          args[0].sval);
             ok = false;
@@ -371,7 +376,7 @@ void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
             errlogPrintf("invalid argument #2 (session name) '%s'\n",
                          args[1].sval);
             ok = false;
-        } else if (!Session::sessionExists(args[1].sval)) {
+        } else if (!Session::find(args[1].sval)) {
             errlogPrintf("session %s does not exist\n",
                          args[1].sval);
             ok = false;
@@ -429,10 +434,11 @@ void opcuaShowSubscriptionCallFunc (const iocshArgBuf *args)
         if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
             Subscription::showAll(args[1].ival);
         } else {
-            Subscription::findSubscription(args[0].sval).show(args[1].ival);
+            Subscription *s = Subscription::find(args[0].sval);
+            if (s)
+                s->show(args[1].ival);
         }
-    }
-    catch (std::exception &e) {
+    } catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
     }
 }
@@ -448,7 +454,9 @@ static
 void opcuaDebugSubscriptionCallFunc (const iocshArgBuf *args)
 {
     try {
-        Subscription::findSubscription(args[0].sval).debug = args[1].ival;
+        Subscription *s = Subscription::find(args[0].sval);
+        if (s)
+            s->debug = args[1].ival;
     }
     catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
@@ -471,7 +479,7 @@ void opcuaShowDataCallFunc (const iocshArgBuf *args)
         } else {
             RecordConnector *rc = RecordConnector::findRecordConnector(args[0].sval);
             if (rc) {
-                rc->pitem->show(1);
+                rc->pitem->show(args[1].ival);
             } else {
                 errlogPrintf("record %s does not exist\n",
                              args[0].sval);

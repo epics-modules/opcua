@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -33,26 +33,27 @@ using namespace UaClientSdk;
 Item *
 Item::newItem(const linkInfo &info)
 {
-    return static_cast<Item*>(new ItemUaSdk(info));
+    return new ItemUaSdk(info);
 }
 
-ItemUaSdk::ItemUaSdk (const linkInfo &info)
+ItemUaSdk::ItemUaSdk(const linkInfo &info)
     : Item(info)
     , subscription(nullptr)
     , session(nullptr)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
+    , dataTree(this)
     , lastStatus(OpcUa_BadServerNotConnected)
     , lastReason(ProcessReason::connectionLoss)
     , connState(ConnectionStatus::down)
 {
     if (linkinfo.subscription != "" && linkinfo.monitor) {
-        subscription = &SubscriptionUaSdk::findSubscription(linkinfo.subscription);
+        subscription = SubscriptionUaSdk::find(linkinfo.subscription);
         subscription->addItemUaSdk(this);
         session = &subscription->getSessionUaSdk();
     } else {
-        session = &SessionUaSdk::findSession(linkinfo.session);
+        session = SessionUaSdk::find(linkinfo.session);
     }
     session->addItemUaSdk(this);
 }
@@ -108,7 +109,7 @@ ItemUaSdk::show (int level) const
               << std::endl;
 
     if (level >= 1) {
-        if (auto re = rootElement.lock()) {
+        if (auto re = dataTree.root().lock()) {
             re->show(level, 1);
         }
         std::cout.flush();
@@ -124,7 +125,7 @@ int ItemUaSdk::debug() const
 const UaVariant &
 ItemUaSdk::getOutgoingData() const
 {
-    if (auto pd = rootElement.lock()) {
+    if (auto pd = dataTree.root().lock()) {
         return pd->getOutgoingData();
     } else {
         throw std::runtime_error(SB() << "stale pointer to root data element");
@@ -134,7 +135,7 @@ ItemUaSdk::getOutgoingData() const
 void
 ItemUaSdk::clearOutgoingData()
 {
-    if (auto pd = rootElement.lock()) {
+    if (auto pd = dataTree.root().lock()) {
         pd->clearOutgoingData();
     }
 }
@@ -171,7 +172,7 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 
     setLastStatus(value.StatusCode);
 
-    if (auto pd = rootElement.lock())
+    if (auto pd = dataTree.root().lock())
         pd->setIncomingData(value.Value, reason);
 
     if (linkinfo.isItemRecord) {
@@ -195,7 +196,7 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
         setLastStatus(OpcUa_BadServerNotConnected);
     }
 
-    if (auto pd = rootElement.lock()) {
+    if (auto pd = dataTree.root().lock()) {
         pd->setIncomingEvent(reason);
     }
 

@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -16,6 +16,7 @@
 #include <cstring>
 #include <cstddef>
 #include <cmath>
+#include <list>
 #include <algorithm>
 
 #include <dbCommon.h>
@@ -42,6 +43,31 @@ getYesNo (const char c)
         return false;
     else
         throw std::runtime_error(SB() << "illegal value '" << c << "'");
+}
+
+std::list<std::string>
+splitString(const std::string &str, const char delim)
+{
+    std::list<std::string> tokens;
+    size_t prev = 0, sep = 0;
+    do {
+        sep = str.find_first_of(delim, prev);
+        if (sep == std::string::npos)
+            sep = str.length();
+        std::string token = str.substr(prev, sep - prev);
+        // allow escaping delimiters
+        while (sep != std::string::npos && sep > 0 && str[sep - 1] == '\\') {
+            prev = sep + 1;
+            sep = str.find_first_of(delim, prev);
+            if (sep == std::string::npos)
+                sep = str.length();
+            token.pop_back();
+            token.append(str.substr(prev - 1, sep - prev + 1));
+        }
+        tokens.push_back(token);
+        prev = sep + 1;
+    } while (sep < str.length() && prev <= str.length());
+    return tokens;
 }
 
 std::unique_ptr<linkInfo>
@@ -118,8 +144,10 @@ parseLink (dbCommon *prec, const DBEntry &ent)
     s = ent.info("opcua:ELEMENT", "");
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:ELEMENT'='" << s << "'" << std::endl;
-    if (s[0] != '\0')
+    if (s[0] != '\0') {
         pinfo->element = s;
+        pinfo->elementPath = splitString(s);
+    }
 
     // parse INP/OUT link
     if (!link->value.instio.string)
@@ -134,10 +162,11 @@ parseLink (dbCommon *prec, const DBEntry &ent)
     send = linkstr.find_first_of("; \t", 0);
     std::string name = linkstr.substr(0, send);
 
-    if (Subscription::subscriptionExists(name)) {
+    Subscription *sub = Subscription::find(name);
+    if (sub) {
         pinfo->subscription = name;
-        pinfo->session = Subscription::findSubscription(name).getSession().getName();
-    } else if (Session::sessionExists(name)) {
+        pinfo->session = sub->getSession().getName();
+    } else if (Session::find(name)) {
         pinfo->session = name;
     } else if (name != "") {
         DBENTRY entry;
@@ -239,6 +268,7 @@ parseLink (dbCommon *prec, const DBEntry &ent)
             }
         } else if (optname == "element") {
             pinfo->element = optval;
+            pinfo->elementPath = splitString(optval);
         } else if (optname == "bini") {
             if (optval == "read")
                 pinfo->bini = LinkOptionBini::read;

@@ -5,7 +5,10 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
-USR_INCLUDES += -I$(TOP)/devOpcuaSup
+DEVSUP_SRC = $(TOP)/devOpcuaSup
+
+USR_INCLUDES += -I$(DEVSUP_SRC)
+SRC_DIRS += $(DEVSUP_SRC)
 
 TESTSRC = $(TOP)/unitTestApp/src
 
@@ -23,6 +26,28 @@ GTESTS += UpdateQueueTest
 GTESTPROD_HOST += RequestQueueBatcherTest
 RequestQueueBatcherTest_SRCS += RequestQueueBatcherTest.cpp
 GTESTS += RequestQueueBatcherTest
+
+GTESTPROD_HOST += RegistryTest
+RegistryTest_SRCS += RegistryTest.cpp
+GTESTS += RegistryTest
+
+GTESTPROD_HOST += LinkParserTest
+LinkParserTest_SRCS += LinkParserTest.cpp
+LinkParserTest_LIBS_DEFAULT += opcua
+LinkParserTest_OBJS_WIN32 += linkParser iocshIntegration
+LinkParserTest_OBJS_WIN32 += SessionUaSdk SubscriptionUaSdk ItemUaSdk DataElementUaSdk
+LinkParserTest_OBJS_WIN32 += RecordConnector Session Subscription
+LinkParserTest_LIBS_WIN32 += $(EPICS_BASE_IOC_LIBS)
+GTESTS += LinkParserTest
+
+GTESTPROD_HOST += ElementTreeTest
+ElementTreeTest_SRCS += ElementTreeTest.cpp
+ElementTreeTest_LIBS_DEFAULT += opcua
+ElementTreeTest_OBJS_WIN32 += linkParser iocshIntegration
+ElementTreeTest_OBJS_WIN32 += SessionUaSdk SubscriptionUaSdk ItemUaSdk DataElementUaSdk
+ElementTreeTest_OBJS_WIN32 += RecordConnector Session Subscription
+ElementTreeTest_LIBS_WIN32 += $(EPICS_BASE_IOC_LIBS)
+GTESTS += ElementTreeTest
 
 #==================================================
 # Tests for different client libraries

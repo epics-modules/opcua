@@ -57,7 +57,6 @@ Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 *   Binary libraries (DLLs and static) of openssl and libxml2 are provided under the
     `third-party` directory of the SDK bundle.
 
-
 ## Building the device support module
 
 Inside the `configure` subdirectory or one level above the TOP location,

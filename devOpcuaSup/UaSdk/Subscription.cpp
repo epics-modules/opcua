@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -25,25 +25,23 @@ namespace DevOpcua {
 
 Subscription::~Subscription() {}
 
-void
-Subscription::createSubscription (const std::string &name, const std::string &session,
-                                  const double publishingInterval, const epicsUInt8 priority,
-                                  const int debug)
+Subscription *
+Subscription::createSubscription(const std::string &name,
+                                 const std::string &session,
+                                 const double publishingInterval,
+                                 const epicsUInt8 priority,
+                                 const int debug)
 {
-    new SubscriptionUaSdk(name, &(SessionUaSdk::findSession(session)),
-                          publishingInterval, priority, debug);
+    SessionUaSdk *s = SessionUaSdk::find(session);
+    if (RegistryKeyNamespace::global.contains(name) || !s)
+        return nullptr;
+    return new SubscriptionUaSdk(name, s, publishingInterval, priority, debug);
 }
 
-Subscription &
-Subscription::findSubscription (const std::string &name)
+Subscription *
+Subscription::find (const std::string &name)
 {
-    return static_cast<Subscription &>(SubscriptionUaSdk::findSubscription(name));
-}
-
-bool
-Subscription::subscriptionExists (const std::string &name)
-{
-    return SubscriptionUaSdk::subscriptionExists(name);
+    return SubscriptionUaSdk::find(name);
 }
 
 void

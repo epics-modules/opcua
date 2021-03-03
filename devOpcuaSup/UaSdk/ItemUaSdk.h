@@ -25,6 +25,7 @@
 #include "Item.h"
 #include "opcuaItemRecord.h"
 #include "devOpcua.h"
+#include "ElementTree.h"
 #include "SessionUaSdk.h"
 
 namespace DevOpcua {
@@ -223,7 +224,7 @@ private:
     bool registered;                       /**< flag for registration status */
     OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
     OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
-    std::weak_ptr<DataElementUaSdk> rootElement;  /**< top level data element */
+    ElementTree<DataElementUaSdk, ItemUaSdk> dataTree; /**< data element tree */
     UaStatusCode lastStatus;               /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
     ConnectionStatus connState;            /**< Connection state of the item */

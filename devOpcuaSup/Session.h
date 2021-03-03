@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -133,29 +133,22 @@ public:
      * @param url          url of the server to connect
      * @param debuglevel   initial debug level
      * @param autoconnect  connect automatically at IOC init
+     *
+     * @return  pointer to the new session, nullptr if not created
      */
-    static void createSession(const std::string &name,
-                              const std::string &url,
-                              const int debuglevel,
-                              const bool autoconnect);
+    static Session *createSession(const std::string &name,
+                                  const std::string &url,
+                                  const int debuglevel,
+                                  const bool autoconnect);
 
     /**
      * @brief Find a session by name (implementation specific).
      *
      * @param name  session name to search for
      *
-     * @return Session  session
+     * @return  pointer to session, nullptr if not found
      */
-    static Session & findSession(const std::string &name);
-
-    /**
-     * @brief Check if a session with the specified name exists (implementation specific).
-     *
-     * @param name  session name to search for
-     *
-     * @return bool
-     */
-    static bool sessionExists(const std::string &name);
+    static Session *find(const std::string &name);
 
     /**
      * @brief Print help text for available options.
@@ -168,6 +161,7 @@ protected:
     Session (const int debug)
         : debug(debug) {}
 };
+
 
 } // namespace DevOpcua
 
