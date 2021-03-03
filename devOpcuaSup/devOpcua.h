@@ -16,6 +16,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include <list>
 #include <memory>
 
 #include <epicsMutex.h>
@@ -86,6 +87,7 @@ typedef struct linkInfo {
     bool discardOldest = true;
 
     std::string element;
+    std::list<std::string> elementPath;
     bool useServerTimestamp = true;
     LinkOptionBini bini = LinkOptionBini::read;
 

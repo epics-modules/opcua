@@ -36,11 +36,11 @@ namespace DevOpcua {
 
 /* Specific implementation of DataElement's "factory" method */
 void
-DataElement::addElementToTree (Item *item,
-                               RecordConnector *pconnector,
-                               const std::string &fullpath)
+DataElement::addElementToTree(Item *item,
+                              RecordConnector *pconnector,
+                              const std::list<std::string> &elementPath)
 {
-    DataElementUaSdk::addElementToTree(static_cast<ItemUaSdk*>(item), pconnector, fullpath);
+    DataElementUaSdk::addElementToTree(static_cast<ItemUaSdk *>(item), pconnector, elementPath);
 }
 
 DataElementUaSdk::DataElementUaSdk (const std::string &name,
@@ -54,15 +54,27 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
 {}
 
 DataElementUaSdk::DataElementUaSdk (const std::string &name,
-                                    ItemUaSdk *item,
-                                    std::weak_ptr<DataElementUaSdk> child)
+                                    ItemUaSdk *item)
     : DataElement(name)
     , pitem(item)
     , mapped(false)
     , incomingQueue(0ul)
     , isdirty(false)
+{}
+
+void
+DataElementUaSdk::addElementToTree(ItemUaSdk *item,
+                                   RecordConnector *pconnector,
+                                   const std::list<std::string> &elementPath)
 {
-    elements.push_back(child);
+    std::string name("");
+    if (elementPath.size())
+        name = elementPath.back();
+
+    auto leaf = std::make_shared<DataElementUaSdk>(name, item, pconnector);
+    item->dataTree.addLeaf(leaf, elementPath);
+    // reference from connector after adding to the tree worked
+    pconnector->setDataElement(leaf);
 }
 
 void
@@ -85,117 +97,6 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
                 pelem->show(level, indent + 1);
             }
         }
-    }
-}
-
-void
-DataElementUaSdk::addElementToTree (ItemUaSdk *item,
-                                    RecordConnector *pcon,
-                                    const std::string &fullpath)
-{
-    bool hasRootElement = true;
-    // Create final path element as leaf and link it to connector
-    std::string path(fullpath);
-    std::string restpath;
-    size_t sep = path.find_last_of(separator);
-    // allow escaping separators
-    while (sep && sep != std::string::npos && path[sep - 1] == '\\') {
-        path.erase(--sep, 1);
-        sep = path.find_last_of(separator, --sep);
-    }
-    std::string leafname = path.substr(sep + 1);
-    if (leafname.empty()) leafname = "[ROOT]";
-    if (sep != std::string::npos)
-        restpath = path.substr(0, sep);
-
-    auto chainelem = std::make_shared<DataElementUaSdk>(leafname, item, pcon);
-    pcon->setDataElement(chainelem);
-
-    // Starting from item...
-    std::weak_ptr<DataElementUaSdk> topelem = item->rootElement;
-
-    if (topelem.expired()) hasRootElement = false;
-
-    // Simple case (leaf is the root element)
-    if (leafname == "[ROOT]") {
-        if (hasRootElement) throw std::runtime_error(SB() << "root data element already set");
-        item->rootElement = chainelem;
-        return;
-    }
-
-    std::string name;
-    if (hasRootElement) {
-        // Find the existing part of the path
-        bool found;
-        do {
-            found = false;
-            sep = restpath.find_first_of(separator);
-            // allow escaping separators
-            while (restpath[sep-1] == '\\') {
-                restpath.erase(sep-1, 1);
-                sep = restpath.find_first_of(separator, sep);
-            }
-            if (sep == std::string::npos)
-                name = restpath;
-            else
-                name = restpath.substr(0, sep);
-
-            // Search for name in list of children
-            if (!name.empty()) {
-                if (auto pelem = topelem.lock()) {
-                    for (auto it : pelem->elements) {
-                        if (auto pit = it.lock()) {
-                            if (pit->name == name) {
-                                found = true;
-                                topelem = it;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (found) {
-                if (sep == std::string::npos)
-                    restpath.clear();
-                else
-                    restpath = restpath.substr(sep + 1);
-            }
-        } while (found && !restpath.empty());
-    }
-    // At this point, topelem is the element to add the chain to
-    // (otherwise, a root element has to be added), and
-    // restpath is the remaining chain that has to be created
-
-    // Create remaining chain, bottom up
-    while (restpath.length()) {
-        sep = restpath.find_last_of(separator);
-        // allow escaping separators
-        while (restpath[sep-1] == '\\') {
-            restpath.erase(--sep, 1);
-            sep = restpath.find_last_of(separator, --sep);
-        }
-        name = restpath.substr(sep + 1);
-        if (sep != std::string::npos)
-            restpath = restpath.substr(0, sep);
-        else
-            restpath.clear();
-
-        chainelem->parent = std::make_shared<DataElementUaSdk>(name, item, chainelem);
-        chainelem = chainelem->parent;
-    }
-
-    // Add to topelem, or create rootelem and add it to item
-    if (hasRootElement) {
-        if (auto pelem = topelem.lock()) {
-            pelem->elements.push_back(chainelem);
-            chainelem->parent = pelem;
-        } else {
-            throw std::runtime_error(SB() << "previously found top element invalidated");
-        }
-    } else {
-        chainelem->parent = std::make_shared<DataElementUaSdk>("[ROOT]", item, chainelem);
-        chainelem = chainelem->parent;
-        item->rootElement = chainelem;
     }
 }
 

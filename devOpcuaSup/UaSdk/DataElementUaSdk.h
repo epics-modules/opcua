@@ -182,25 +182,43 @@ public:
      *
      * @param name   name of the element
      * @param item   pointer to corresponding ItemUaSdk
-     * @param child  weak pointer to child
      */
     DataElementUaSdk(const std::string &name,
-                     ItemUaSdk *item,
-                     std::weak_ptr<DataElementUaSdk> child);
+                     ItemUaSdk *item);
 
     /**
-     * @brief Construct a linked list of data elements between a record connector and an item.
+     * @brief Create a DataElement and add it to the item's dataTree.
      *
-     * Creates the leaf element first, then identifies the part of the path that already exists
-     * on the item and creates the missing list of linked nodes.
-     *
-     * @param pitem       pointer to corresponding ItemUaSdk
-     * @param pconnector  pointer to record connector to link to
-     * @param path        path of leaf element inside the structure
+     * @param item  item to add the element to
+     * @param pconnector  pointer to the leaf's record connector
+     * @param elementPath  full path to the element
      */
     static void addElementToTree(ItemUaSdk *item,
                                  RecordConnector *pconnector,
-                                 const std::string &path);
+                                 const std::list<std::string> &elementPath);
+
+    /* ElementTree node interface methods */
+    void
+    addChild(std::weak_ptr<DataElementUaSdk> elem)
+    {
+        elements.push_back(elem);
+    }
+
+    std::shared_ptr<DataElementUaSdk>
+    findChild(const std::string &name)
+    {
+        for (auto it : elements)
+            if (auto pit = it.lock())
+                if (pit->name == name)
+                    return pit;
+        return std::shared_ptr<DataElementUaSdk>();
+    }
+
+    void
+    setParent(std::shared_ptr<DataElementUaSdk> elem)
+    {
+        parent = elem;
+    }
 
     /**
      * @brief Print configuration and status. See DevOpcua::DataElement::show

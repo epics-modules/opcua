@@ -100,7 +100,7 @@ opcua_add_record (dbCommon *prec)
         } else {
             pcon->pitem = pcon->plinkinfo->item;
         }
-        DataElement::addElementToTree(pcon->pitem, pcon.get(), pcon->plinkinfo->element);
+        DataElement::addElementToTree(pcon->pitem, pcon.get(), pcon->plinkinfo->elementPath);
         prec->dpvt = pcon.release();
         return 0;
     } catch(std::exception& e) {
