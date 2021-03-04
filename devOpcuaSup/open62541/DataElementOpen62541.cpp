@@ -863,7 +863,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     { // Scope of Guard G
         Guard G(outgoingLock);
         isdirty = true;
-        UA_Boolean val = strchr("YyTt1", *value);
+        UA_Boolean val = strchr("YyTt1", *value) != NULL;
         status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
         break;
     }
