@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -29,11 +29,11 @@ namespace DevOpcua {
 
 /* Specific implementation of DataElement's "factory" method */
 void
-DataElement::addElementToTree (Item *item,
-                               RecordConnector *pconnector,
-                               const std::string &fullpath)
+DataElement::addElementToTree(Item *item,
+                              RecordConnector *pconnector,
+                              const std::list<std::string> &elementPath)
 {
-    DataElementOpen62541::addElementToTree(static_cast<ItemOpen62541*>(item), pconnector, fullpath);
+    DataElementOpen62541::addElementToTree(static_cast<ItemOpen62541*>(item), pconnector, elementPath);
 }
 
 DataElementOpen62541::DataElementOpen62541 (const std::string &name,
@@ -49,8 +49,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
 {}
 
 DataElementOpen62541::DataElementOpen62541 (const std::string &name,
-                                    ItemOpen62541 *item,
-                                    std::weak_ptr<DataElementOpen62541> child)
+                                            ItemOpen62541 *item)
     : DataElement(name)
     , pitem(item)
     , mapped(false)
@@ -58,8 +57,21 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     , incomingData({0})
     , outgoingData({0})
     , isdirty(false)
+{}
+
+void
+DataElementOpen62541::addElementToTree(ItemOpen62541 *item,
+                                       RecordConnector *pconnector,
+                                       const std::list<std::string> &elementPath)
 {
-    elements.push_back(child);
+    std::string name("");
+    if (elementPath.size())
+        name = elementPath.back();
+
+    auto leaf = std::make_shared<DataElementOpen62541>(name, item, pconnector);
+    item->dataTree.addLeaf(leaf, elementPath);
+    // reference from connector after adding to the tree worked
+    pconnector->setDataElement(leaf);
 }
 
 void
@@ -82,117 +94,6 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
                 pelem->show(level, indent + 1);
             }
         }
-    }
-}
-
-void
-DataElementOpen62541::addElementToTree (ItemOpen62541 *item,
-                                    RecordConnector *pcon,
-                                    const std::string &fullpath)
-{
-    bool hasRootElement = true;
-    // Create final path element as leaf and link it to connector
-    std::string path(fullpath);
-    std::string restpath;
-    size_t sep = path.find_last_of(separator);
-    // allow escaping separators
-    while (sep && sep != std::string::npos && path[sep-1] == '\\') {
-        path.erase(--sep, 1);
-        sep = path.find_last_of(separator, --sep);
-    }
-    std::string leafname = path.substr(sep + 1);
-    if (leafname.empty()) leafname = "[ROOT]";
-    if (sep != std::string::npos)
-        restpath = path.substr(0, sep);
-
-    auto chainelem = std::make_shared<DataElementOpen62541>(leafname, item, pcon);
-    pcon->setDataElement(chainelem);
-
-    // Starting from item...
-    std::weak_ptr<DataElementOpen62541> topelem = item->rootElement;
-
-    if (topelem.expired()) hasRootElement = false;
-
-    // Simple case (leaf is the root element)
-    if (leafname == "[ROOT]") {
-        if (hasRootElement) throw std::runtime_error(SB() << "root data element already set");
-        item->rootElement = chainelem;
-        return;
-    }
-
-    std::string name;
-    if (hasRootElement) {
-        // Find the existing part of the path
-        bool found;
-        do {
-            found = false;
-            sep = restpath.find_first_of(separator);
-            // allow escaping separators
-            while (sep && sep != std::string::npos && restpath[sep-1] == '\\') {
-                restpath.erase(sep-1, 1);
-                sep = restpath.find_first_of(separator, sep);
-            }
-            if (sep == std::string::npos)
-                name = restpath;
-            else
-                name = restpath.substr(0, sep);
-
-            // Search for name in list of children
-            if (!name.empty()) {
-                if (auto pelem = topelem.lock()) {
-                    for (auto it : pelem->elements) {
-                        if (auto pit = it.lock()) {
-                            if (pit->name == name) {
-                                found = true;
-                                topelem = it;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (found) {
-                if (sep == std::string::npos)
-                    restpath.clear();
-                else
-                    restpath = restpath.substr(sep + 1);
-            }
-        } while (found && !restpath.empty());
-    }
-    // At this point, topelem is the element to add the chain to
-    // (otherwise, a root element has to be added), and
-    // restpath is the remaining chain that has to be created
-
-    // Create remaining chain, bottom up
-    while (restpath.length()) {
-        sep = restpath.find_last_of(separator);
-        // allow escaping separators
-        while (sep && sep != std::string::npos && restpath[sep-1] == '\\') {
-            restpath.erase(--sep, 1);
-            sep = restpath.find_last_of(separator, --sep);
-        }
-        name = restpath.substr(sep + 1);
-        if (sep != std::string::npos)
-            restpath = restpath.substr(0, sep);
-        else
-            restpath.clear();
-
-        chainelem->parent = std::make_shared<DataElementOpen62541>(name, item, chainelem);
-        chainelem = chainelem->parent;
-    }
-
-    // Add to topelem, or create rootelem and add it to item
-    if (hasRootElement) {
-        if (auto pelem = topelem.lock()) {
-            pelem->elements.push_back(chainelem);
-            chainelem->parent = pelem;
-        } else {
-            throw std::runtime_error(SB() << "previously found top element invalidated");
-        }
-    } else {
-        chainelem->parent = std::make_shared<DataElementOpen62541>("[ROOT]", item, chainelem);
-        chainelem = chainelem->parent;
-        item->rootElement = chainelem;
     }
 }
 

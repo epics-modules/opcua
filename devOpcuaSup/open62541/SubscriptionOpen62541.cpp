@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -20,6 +20,7 @@
 #include "SubscriptionOpen62541.h"
 #include "ItemOpen62541.h"
 #include "DataElementOpen62541.h"
+#include "Registry.h"
 #include "devOpcua.h"
 
 // Note: No guard needed for UA_Client_* functions calls because SubscriptionOpen62541 methods
@@ -28,7 +29,7 @@
 
 namespace DevOpcua {
 
-std::map<std::string, SubscriptionOpen62541*> SubscriptionOpen62541::subscriptions;
+Registry<SubscriptionOpen62541> SubscriptionOpen62541::subscriptions;
 
 SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOpen62541 &session,
                                       const double publishingInterval, const epicsUInt8 priority,
@@ -46,7 +47,7 @@ SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOp
     subscriptionSettings.revisedLifetimeCount = requestedSettings.requestedLifetimeCount = static_cast<UA_UInt32>(deftimeout / publishingInterval);
     requestedSettings.priority = priority;
 
-    subscriptions[name] = this;
+    subscriptions.insert({name, this});
     session.subscriptions[name] = this;
 }
 
@@ -69,23 +70,6 @@ SubscriptionOpen62541::show (int level) const
             it->show(level-1);
         }
     }
-}
-
-SubscriptionOpen62541 &
-SubscriptionOpen62541::findSubscription (const std::string &name)
-{
-    auto it = subscriptions.find(name);
-    if (it == subscriptions.end()) {
-        throw std::runtime_error("no such subscription");
-    }
-    return *(it->second);
-}
-
-bool
-SubscriptionOpen62541::subscriptionExists (const std::string &name)
-{
-    auto it = subscriptions.find(name);
-    return !(it == subscriptions.end());
 }
 
 void

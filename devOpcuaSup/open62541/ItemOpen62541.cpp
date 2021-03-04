@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -26,10 +26,10 @@ namespace DevOpcua {
 Item *
 Item::newItem(const linkInfo &info)
 {
-    return static_cast<Item*>(new ItemOpen62541(info));
+    return new ItemOpen62541(info);
 }
 
-ItemOpen62541::ItemOpen62541 (const linkInfo &info)
+ItemOpen62541::ItemOpen62541(const linkInfo &info)
     : Item(info)
     , subscription(nullptr)
     , session(nullptr)
@@ -37,16 +37,17 @@ ItemOpen62541::ItemOpen62541 (const linkInfo &info)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
+    , dataTree(this)
     , lastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED)
     , lastReason(ProcessReason::connectionLoss)
     , connState(ConnectionStatus::down)
 {
     if (linkinfo.subscription != "" && linkinfo.monitor) {
-        subscription = &SubscriptionOpen62541::findSubscription(linkinfo.subscription);
+        subscription = SubscriptionOpen62541::find(linkinfo.subscription);
         subscription->addItemOpen62541(this);
         session = &subscription->getSessionOpen62541();
     } else {
-        session = &SessionOpen62541::findSession(linkinfo.session);
+        session = SessionOpen62541::find(linkinfo.session);
     }
     session->addItemOpen62541(this);
 }
@@ -108,7 +109,7 @@ ItemOpen62541::show (int level) const
               << std::endl;
 
     if (level >= 1) {
-        if (auto re = rootElement.lock()) {
+        if (auto re = dataTree.root().lock()) {
             re->show(level, 1);
         }
         std::cout.flush();
@@ -124,7 +125,7 @@ int ItemOpen62541::debug() const
 const UA_Variant &
 ItemOpen62541::getOutgoingData() const
 {
-    if (auto pd = rootElement.lock()) {
+    if (auto pd = dataTree.root().lock()) {
         return pd->getOutgoingData();
     } else {
         throw std::runtime_error(SB() << "stale pointer to root data element");
@@ -134,7 +135,7 @@ ItemOpen62541::getOutgoingData() const
 void
 ItemOpen62541::clearOutgoingData()
 {
-    if (auto pd = rootElement.lock()) {
+    if (auto pd = dataTree.root().lock()) {
         pd->clearOutgoingData();
     }
 }
@@ -171,7 +172,7 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
 
     setLastStatus(value.status);
 
-    if (auto pd = rootElement.lock())
+    if (auto pd = dataTree.root().lock())
         pd->setIncomingData(value.value, reason);
     if (linkinfo.isItemRecord) {
         if (state() == ConnectionStatus::initialRead
@@ -194,7 +195,7 @@ ItemOpen62541::setIncomingEvent(const ProcessReason reason)
         setLastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED);
     }
 
-    if (auto pd = rootElement.lock()) {
+    if (auto pd = dataTree.root().lock()) {
         pd->setIncomingEvent(reason);
     }
 

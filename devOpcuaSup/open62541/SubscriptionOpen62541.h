@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -17,6 +17,7 @@
 
 #include "SessionOpen62541.h"
 #include "Subscription.h"
+#include "Registry.h"
 
 namespace DevOpcua {
 
@@ -72,7 +73,11 @@ public:
      *
      * @return SubscriptionOpen62541 & subscription
      */
-    static SubscriptionOpen62541 & findSubscription(const std::string &name);
+    static SubscriptionOpen62541 *
+    find(const std::string &name)
+    {
+        return subscriptions.find(name);
+    }
 
     /**
      * @brief Check if a subscription with the specified name exists.
@@ -156,12 +161,12 @@ public:
             );
 
 private:
-    static std::map<std::string, SubscriptionOpen62541*> subscriptions;
-    SessionOpen62541 &session;                           /**< reference to session */
-    std::vector<ItemOpen62541 *> items;                  /**< items on this subscription */
-    UA_CreateSubscriptionResponse subscriptionSettings;  /**< subscription specific settings */
-    UA_CreateSubscriptionRequest requestedSettings;      /**< requested subscription specific settings */
-    bool enable;                                         /**< subscription enable flag */
+    static Registry<SubscriptionOpen62541> subscriptions; /**< subscription management */
+    SessionOpen62541 &session;                            /**< reference to session */
+    std::vector<ItemOpen62541 *> items;                   /**< items on this subscription */
+    UA_CreateSubscriptionResponse subscriptionSettings;   /**< subscription specific settings */
+    UA_CreateSubscriptionRequest requestedSettings;       /**< requested subscription specific settings */
+    bool enable;                                          /**< subscription enable flag */
 };
 
 } // namespace DevOpcua

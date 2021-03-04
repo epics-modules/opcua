@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -16,26 +16,27 @@
 #include <epicsThread.h>
 #include "Session.h"
 #include "SessionOpen62541.h"
+#include "Registry.h"
 
 namespace DevOpcua {
 
-void
-Session::createSession (const std::string &name, const std::string &url,
-                        const int debuglevel, const bool autoconnect)
+RegistryKeyNamespace RegistryKeyNamespace::global;
+
+Session *
+Session::createSession(const std::string &name,
+                       const std::string &url,
+                       const int debuglevel,
+                       const bool autoconnect)
 {
-    new SessionOpen62541(name, url, autoconnect, debuglevel);
+    if (RegistryKeyNamespace::global.contains(name))
+        return nullptr;
+    return new SessionOpen62541(name, url, autoconnect, debuglevel);
 }
 
-Session &
-Session::findSession (const std::string &name)
+Session *
+Session::find(const std::string &name)
 {
-    return static_cast<Session &>(SessionOpen62541::findSession(name));
-}
-
-bool
-Session::sessionExists (const std::string &name)
-{
-    return SessionOpen62541::sessionExists(name);
+    return SessionOpen62541::find(name);
 }
 
 void

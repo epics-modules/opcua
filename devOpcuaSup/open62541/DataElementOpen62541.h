@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2020 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -232,25 +232,43 @@ public:
      *
      * @param name   name of the element
      * @param item   pointer to corresponding ItemOpen62541
-     * @param child  weak pointer to child
      */
     DataElementOpen62541(const std::string &name,
-                     ItemOpen62541 *item,
-                     std::weak_ptr<DataElementOpen62541> child);
+                     ItemOpen62541 *item);
 
     /**
-     * @brief Construct a linked list of data elements between a record connector and an item.
+     * @brief Create a DataElement and add it to the item's dataTree.
      *
-     * Creates the leaf element first, then identifies the part of the path that already exists
-     * on the item and creates the missing list of linked nodes.
-     *
-     * @param pitem       pointer to corresponding ItemOpen62541
-     * @param pconnector  pointer to record connector to link to
-     * @param path        path of leaf element inside the structure
+     * @param item  item to add the element to
+     * @param pconnector  pointer to the leaf's record connector
+     * @param elementPath  full path to the element
      */
     static void addElementToTree(ItemOpen62541 *item,
                                  RecordConnector *pconnector,
-                                 const std::string &path);
+                                 const std::list<std::string> &elementPath);
+
+    /* ElementTree node interface methods */
+    void
+    addChild(std::weak_ptr<DataElementOpen62541> elem)
+    {
+        elements.push_back(elem);
+    }
+
+    std::shared_ptr<DataElementOpen62541>
+    findChild(const std::string &name)
+    {
+        for (auto it : elements)
+            if (auto pit = it.lock())
+                if (pit->name == name)
+                    return pit;
+        return std::shared_ptr<DataElementOpen62541>();
+    }
+
+    void
+    setParent(std::shared_ptr<DataElementOpen62541> elem)
+    {
+        parent = elem;
+    }
 
     /**
      * @brief Print configuration and status. See DevOpcua::DataElement::show

@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -9,8 +9,6 @@
  *
  *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
-
-#define epicsExportSharedSymbols
 
 #include <iostream>
 #include <string>
@@ -76,7 +74,7 @@ std::ostream& operator<<(std::ostream& os, const UA_Variant &ua_variant) {
     return os;
 }
 
-std::map<std::string, SessionOpen62541*> SessionOpen62541::sessions;
+Registry<SessionOpen62541> SessionOpen62541::sessions;
 
 // Cargo structure and batcher for write requests
 struct WriteRequest {
@@ -161,7 +159,7 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
             || (clientPrivateKey && (clientPrivateKey[0] != '\0')))
         errlogPrintf("OPC UA security not supported yet\n");
 
-    sessions[name] = this;
+    sessions.insert({name, this});
 }
 
 const std::string &
@@ -174,23 +172,6 @@ UA_UInt32
 SessionOpen62541::getTransactionId ()
 {
     return static_cast<UA_UInt32>(epics::atomic::increment(transactionId));
-}
-
-SessionOpen62541 &
-SessionOpen62541::findSession (const std::string &name)
-{
-    auto it = sessions.find(name);
-    if (it == sessions.end()) {
-        throw std::runtime_error("no such session");
-    }
-    return *(it->second);
-}
-
-bool
-SessionOpen62541::sessionExists (const std::string &name)
-{
-    auto it = sessions.find(name);
-    return !(it == sessions.end());
 }
 
 void
@@ -245,7 +226,7 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     unsigned int max = 0;
 /*
     if (connectInfo.nMaxOperationsPerServiceCall > 0 && readNodesMax > 0) {
-        max = std::min(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
+        max = std::min<unsigned int>(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
     } else {
         max = connectInfo.nMaxOperationsPerServiceCall + readNodesMax;
     }
@@ -254,7 +235,7 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
 
 /*
     if (connectInfo.nMaxOperationsPerServiceCall > 0 && writeNodesMax > 0) {
-        max = std::min(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
+        max = std::min<unsigned int>(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
     } else {
         max = connectInfo.nMaxOperationsPerServiceCall + writeNodesMax;
     }

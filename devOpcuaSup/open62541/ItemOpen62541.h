@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -22,6 +22,7 @@
 #include "Item.h"
 #include "opcuaItemRecord.h"
 #include "devOpcua.h"
+#include "ElementTree.h"
 #include "SessionOpen62541.h"
 
 namespace DevOpcua {
@@ -218,7 +219,7 @@ private:
     bool registered;                       /**< flag for registration status */
     UA_Double revisedSamplingInterval;     /**< server-revised sampling interval */
     UA_UInt32 revisedQueueSize;            /**< server-revised queue size */
-    std::weak_ptr<DataElementOpen62541> rootElement;  /**< top level data element */
+    ElementTree<DataElementOpen62541, ItemOpen62541> dataTree; /**< data element tree */
     UA_StatusCode lastStatus;              /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
     ConnectionStatus connState;            /**< Connection state of the item */

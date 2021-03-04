@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2019 ITER Organization.
+* Copyright (c) 2018-2021 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -27,6 +27,7 @@
 
 #include "RequestQueueBatcher.h"
 #include "Session.h"
+#include "Registry.h"
 
 namespace DevOpcua {
 
@@ -64,8 +65,8 @@ class SessionOpen62541
         , public epicsThreadRunable
 {
     // Cannot copy a Session
-    SessionOpen62541(const SessionOpen62541 &);
-    SessionOpen62541 &operator=(const SessionOpen62541 &);
+    SessionOpen62541(const SessionOpen62541 &) = delete;
+    SessionOpen62541 &operator=(const SessionOpen62541 &) = delete;
 
     friend class SubscriptionOpen62541;
 
@@ -92,6 +93,7 @@ public:
      * @return long status (0 = OK)
      */
     virtual long connect() override;
+
     /**
      * @brief Disconnect session. See DevOpcua::Session::disconnect
      * @return long status (0 = OK)
@@ -163,20 +165,15 @@ public:
     /**
      * @brief Find a session by name.
      *
-     * @param name session name
-     *
-     * @return SessionOpen62541 & session
-     */
-    static SessionOpen62541 & findSession(const std::string &name);
-
-    /**
-     * @brief Check if a session with the specified name exists.
-     *
      * @param name  session name to search for
      *
-     * @return bool
+     * @return  pointer to session, nullptr if not found
      */
-    static bool sessionExists(const std::string &name);
+    static SessionOpen62541 *
+    find(const std::string &name)
+    {
+        return sessions.find(name);
+    }
 
     /**
      * @brief Set an option for the session. See DevOpcua::Session::setOption
@@ -238,10 +235,20 @@ private:
      */
     static void atExit(void *);
 
+    /**
+     * @brief Asynchronous worker thread body.
+     */
+    virtual void run() override;
+
     // Get a new (unique per session) transaction id
     UA_UInt32 getTransactionId();
 
     // callbacks
+    void connectionStatusChanged(
+            UA_SecureChannelState channelState,
+            UA_SessionState sessionState,
+            UA_StatusCode connectStatus);
+
     void readComplete(
             UA_UInt32 transactionId,
             UA_ReadResponse* response);
@@ -269,51 +276,38 @@ private:
      */
 //    void updateNamespaceMap(const UaStringArray &nsArray);
 
-    static std::map<std::string, SessionOpen62541 *> sessions;    /**< session management */
+    static Registry<SessionOpen62541> sessions;                   /**< session management */
 
-    /**
-     * @brief Asynchronous worker thread body.
-     */
-    virtual void run() override;
-
-    /**
-     * @brief Client connection status callback.
-     */
-    void connectionStatusChanged(
-            UA_SecureChannelState channelState,
-            UA_SessionState sessionState,
-            UA_StatusCode connectStatus);
-
-    const std::string name;                         /**< unique session name */
-    const std::string serverURL;                    /**< server URL */
-    bool autoConnect;                               /**< auto (re)connect flag */
+    const std::string name;                                       /**< unique session name */
+    const std::string serverURL;                                  /**< server URL */
+    bool autoConnect;                                             /**< auto (re)connect flag */
     std::map<std::string, SubscriptionOpen62541*> subscriptions;  /**< subscriptions on this session */
-    std::vector<ItemOpen62541 *> items;             /**< items on this session */
-    UA_UInt32 registeredItemsNo;                    /**< number of registered items */
-    std::map<std::string, UA_UInt16> namespaceMap;  /**< local namespace map (URI->index) */
-    std::map<UA_UInt16, UA_UInt16> nsIndexMap;      /**< namespace index map (local->server-side) */
+    std::vector<ItemOpen62541 *> items;                           /**< items on this session */
+    UA_UInt32 registeredItemsNo;                                  /**< number of registered items */
+    std::map<std::string, UA_UInt16> namespaceMap;                /**< local namespace map (URI->index) */
+    std::map<UA_UInt16, UA_UInt16> nsIndexMap;                    /**< namespace index map (local->server-side) */
 
-    int transactionId;                              /**< next transaction id */
+    int transactionId;                                            /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */
     std::map<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>> outstandingOps;
-    epicsMutex opslock;                             /**< lock for outstandingOps map */
+    epicsMutex opslock;                                           /**< lock for outstandingOps map */
 
-    RequestQueueBatcher<WriteRequest> writer;       /**< batcher for write requests */
-    unsigned int writeNodesMax;                     /**< max number of nodes per write request */
-    unsigned int writeTimeoutMin;                   /**< timeout after write request batch of 1 node [ms] */
-    unsigned int writeTimeoutMax;                   /**< timeout after write request of NodesMax nodes [ms] */
-    RequestQueueBatcher<ReadRequest> reader;        /**< batcher for read requests */
-    unsigned int readNodesMax;                      /**< max number of nodes per read request */
-    unsigned int readTimeoutMin;                    /**< timeout after read request batch of 1 node [ms] */
-    unsigned int readTimeoutMax;                    /**< timeout after read request batch of NodesMax nodes [ms] */
+    RequestQueueBatcher<WriteRequest> writer;                     /**< batcher for write requests */
+    unsigned int writeNodesMax;                                   /**< max number of nodes per write request */
+    unsigned int writeTimeoutMin;                                 /**< timeout after write request batch of 1 node [ms] */
+    unsigned int writeTimeoutMax;                                 /**< timeout after write request of NodesMax nodes [ms] */
+    RequestQueueBatcher<ReadRequest> reader;                      /**< batcher for read requests */
+    unsigned int readNodesMax;                                    /**< max number of nodes per read request */
+    unsigned int readTimeoutMin;                                  /**< timeout after read request batch of 1 node [ms] */
+    unsigned int readTimeoutMax;                                  /**< timeout after read request batch of NodesMax nodes [ms] */
 
     /** open62541 interfaces */
-    UA_Client *client;                              /**< low level handle for this session */
-    epicsMutex clientlock;                          /**< lock for client implementation */
-    UA_SecureChannelState channelState;             /**< status for this session */
-    UA_SessionState sessionState;                   /**< status for this session */
-    UA_StatusCode connectStatus;                    /**< status for this session */
-    epicsThread *workerThread;                      /**< Asynchronous worker thread */
+    UA_Client *client;                                            /**< low level handle for this session */
+    epicsMutex clientlock;                                        /**< lock for client implementation */
+    UA_SecureChannelState channelState;                           /**< status for this session */
+    UA_SessionState sessionState;                                 /**< status for this session */
+    UA_StatusCode connectStatus;                                  /**< status for this session */
+    epicsThread *workerThread;                                    /**< Asynchronous worker thread */
 };
 
 } // namespace DevOpcua
