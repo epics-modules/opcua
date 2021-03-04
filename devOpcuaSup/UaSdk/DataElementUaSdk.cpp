@@ -197,6 +197,10 @@ DataElementUaSdk::setIncomingEvent (ProcessReason reason)
             auto pelem = it.lock();
             pelem->setIncomingEvent(reason);
         }
+        if (reason == ProcessReason::connectionLoss) {
+            elementMap.clear();
+            mapped = false;
+        }
     }
 }
 
