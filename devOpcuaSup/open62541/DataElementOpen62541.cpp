@@ -43,10 +43,11 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
-    , incomingData({0})
-    , outgoingData({0})
     , isdirty(false)
-{}
+{
+    UA_Variant_init(&incomingData);
+    UA_Variant_init(&outgoingData);
+}
 
 DataElementOpen62541::DataElementOpen62541 (const std::string &name,
                                             ItemOpen62541 *item)
@@ -54,10 +55,11 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(0ul)
-    , incomingData({0})
-    , outgoingData({0})
     , isdirty(false)
-{}
+{
+    UA_Variant_init(&incomingData);
+    UA_Variant_init(&outgoingData);
+}
 
 void
 DataElementOpen62541::addElementToTree(ItemOpen62541 *item,

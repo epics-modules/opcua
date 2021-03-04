@@ -33,7 +33,6 @@ ItemOpen62541::ItemOpen62541(const linkInfo &info)
     : Item(info)
     , subscription(nullptr)
     , session(nullptr)
-    , nodeid({0})
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
@@ -42,6 +41,7 @@ ItemOpen62541::ItemOpen62541(const linkInfo &info)
     , lastReason(ProcessReason::connectionLoss)
     , connState(ConnectionStatus::down)
 {
+    UA_NodeId_init(&nodeid);
     if (linkinfo.subscription != "" && linkinfo.monitor) {
         subscription = SubscriptionOpen62541::find(linkinfo.subscription);
         subscription->addItemOpen62541(this);

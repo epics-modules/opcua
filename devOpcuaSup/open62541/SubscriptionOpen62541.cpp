@@ -36,12 +36,12 @@ SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOp
                                       const int debug)
     : Subscription(name, debug)
     , session(session)
-    , subscriptionSettings({0})
     //TODO: add runtime support for subscription enable/disable
     , requestedSettings(UA_CreateSubscriptionRequest_default())
     , enable(true)
 {
     // keep the default timeout
+    UA_CreateSubscriptionResponse_init(&subscriptionSettings);
     double deftimeout = requestedSettings.requestedPublishingInterval * requestedSettings.requestedLifetimeCount;
     subscriptionSettings.revisedPublishingInterval = requestedSettings.requestedPublishingInterval = publishingInterval;
     subscriptionSettings.revisedLifetimeCount = requestedSettings.requestedLifetimeCount = static_cast<UA_UInt32>(deftimeout / publishingInterval);
