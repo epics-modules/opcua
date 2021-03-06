@@ -112,6 +112,30 @@ securityModeString (const OpcUa_MessageSecurityMode mode)
 }
 
 inline const char *
+reqSecurityModeString(const RequestedSecurityMode mode)
+{
+    switch (mode) {
+    case RequestedSecurityMode::Best:            return "best";
+    case RequestedSecurityMode::None:            return "None";
+    case RequestedSecurityMode::Sign:            return "Sign";
+    case RequestedSecurityMode::SignAndEncrypt:  return "SignAndEncrypt";
+    default:                                     return "<unknown>";
+    }
+}
+
+inline OpcUa_MessageSecurityMode
+OpcUaSecurityMode(const RequestedSecurityMode mode)
+{
+    switch (mode) {
+    case RequestedSecurityMode::Best:            return OpcUa_MessageSecurityMode_Invalid;
+    case RequestedSecurityMode::None:            return OpcUa_MessageSecurityMode_None;
+    case RequestedSecurityMode::Sign:            return OpcUa_MessageSecurityMode_Sign;
+    case RequestedSecurityMode::SignAndEncrypt:  return OpcUa_MessageSecurityMode_SignAndEncrypt;
+    default:                                     return OpcUa_MessageSecurityMode_Invalid;
+    }
+}
+
+inline const char *
 SessionUaSdk::connectResultString (const ConnectResult result)
 {
     switch (result) {
@@ -131,9 +155,8 @@ SessionUaSdk::SessionUaSdk(const std::string &name,
     , serverURL(serverUrl.c_str())
     , registeredItemsNo(0)
     , puasession(new UaSession())
-    , reqSecurityMode(OpcUa_MessageSecurityMode_None)
+    , reqSecurityMode(RequestedSecurityMode::Best)
     , reqSecurityPolicyURI("http://opcfoundation.org/UA/SecurityPolicy#None")
-    , reqSecurityLevel(1)
     , serverConnectionStatus(UaClient::Disconnected)
     , transactionId(0)
     , writer("OPCwr-" + name, *this)
@@ -180,15 +203,16 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
     bool updateWriteBatcher = false;
 
     if (name == "sec-mode") {
-        if (value == "None") {
-            reqSecurityMode = OpcUa_MessageSecurityMode_None;
+        if (value == "best") {
+            reqSecurityMode = RequestedSecurityMode::Best;
+        } else if (value == "None") {
+            reqSecurityMode = RequestedSecurityMode::None;
         } else if (value == "SignAndEncrypt") {
-            reqSecurityMode = OpcUa_MessageSecurityMode_SignAndEncrypt;
+            reqSecurityMode = RequestedSecurityMode::SignAndEncrypt;
         } else if (value == "Sign") {
-            reqSecurityMode = OpcUa_MessageSecurityMode_Sign;
+            reqSecurityMode = RequestedSecurityMode::Sign;
         } else {
-            errlogPrintf("invalid security mode (valid: None Sign SignAndEncrypt)\n");
-            reqSecurityMode = OpcUa_MessageSecurityMode_Invalid;
+            errlogPrintf("invalid security mode (valid: best None Sign SignAndEncrypt)\n");
         }
     } else if (name == "sec-policy") {
         bool found = false;
@@ -204,9 +228,6 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
                 s += " " + p.second;
             errlogPrintf("invalid security policy (valid:%s)\n", s.c_str());
         }
-    } else if (name == "sec-level-min") {
-        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
-        reqSecurityLevel = static_cast<unsigned char>(ul);
     } else if (name == "sec-id") {
         securityIdentityFile = value;
     } else if (name == "batch-nodes") {
@@ -619,9 +640,8 @@ SessionUaSdk::showSecurity ()
                       << "\n  Server URL:  " << UaString(applicationDescriptions[i].DiscoveryUrls[j]).toUtf8();
             if (serverURL != applicationDescriptions[i].DiscoveryUrls[j])
                 std::cout << "    (using " << serverURL.toUtf8() << ")";
-            std::cout << "\n  Requested security mode: " << securityModeString(reqSecurityMode)
+            std::cout << "\n  Requested security mode: " << reqSecurityModeString(reqSecurityMode)
                       << "    policy: " << securityPolicyString(reqSecurityPolicyURI.toUtf8())
-                      << "    minimum level: " << +reqSecurityLevel
                       << "\n  Identity: ";
             if (securityInfo.pUserIdentityToken()->getTokenType() == OpcUa_UserTokenType_UserName)
                 std::cout << "Username token '" << securityUserName << "'"
@@ -695,8 +715,9 @@ SessionUaSdk::showSecurity ()
 SessionUaSdk::ConnectResult
 SessionUaSdk::setupSecurity ()
 {
-    if (reqSecurityMode == OpcUa_MessageSecurityMode_None
-        && reqSecurityPolicyURI == OpcUa_SecurityPolicy_None && reqSecurityLevel == 0) {
+#ifdef HAS_SECURITY
+    if (reqSecurityMode == RequestedSecurityMode::None) {
+#endif
         securityInfo.messageSecurityMode = OpcUa_MessageSecurityMode_None;
         securityInfo.sSecurityPolicy = OpcUa_SecurityPolicy_None;
         securityInfo.serverCertificate.clear();
@@ -729,15 +750,15 @@ SessionUaSdk::setupSecurity ()
                 return ConnectResult::cantConnect;
             }
 
-            OpcUa_Byte selectedSecurityLevel = reqSecurityLevel;
+            OpcUa_Byte selectedSecurityLevel = 0;
             OpcUa_UInt32 selectedEndpoint = 0;
             for (OpcUa_UInt32 k = 0; k < endpointDescriptions.length(); k++) {
                 if (std::string(UaString(endpointDescriptions[k].EndpointUrl).toUtf8()).compare(0, 7, "opc.tcp") == 0) {
-                    if (reqSecurityMode == OpcUa_MessageSecurityMode_None ||
-                            reqSecurityMode == endpointDescriptions[k].SecurityMode)
+                    if (reqSecurityMode == RequestedSecurityMode::Best ||
+                        OpcUaSecurityMode(reqSecurityMode) == endpointDescriptions[k].SecurityMode)
                         if (reqSecurityPolicyURI == OpcUa_SecurityPolicy_None ||
                                 reqSecurityPolicyURI == endpointDescriptions[k].SecurityPolicyUri)
-                            if (endpointDescriptions[k].SecurityLevel >= selectedSecurityLevel
+                            if (endpointDescriptions[k].SecurityLevel > selectedSecurityLevel
                                 && securitySupportedPolicies.count(
                                     UaString(endpointDescriptions[k].SecurityPolicyUri).toUtf8())) {
                                 selectedEndpoint = k;
@@ -810,9 +831,9 @@ SessionUaSdk::setupSecurity ()
                          name.c_str());
             return SessionUaSdk::fatal;
         }
-#endif // #ifdef HAS_SECURITY
     }
     return ConnectResult::ok;
+#endif // #ifdef HAS_SECURITY
 }
 
 void

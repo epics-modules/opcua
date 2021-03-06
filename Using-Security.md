@@ -78,7 +78,7 @@ Alternatively, you can use a general purpose client (e.g., the `UaExpert` tool) 
 
 The iocShell command `opcuaSetupPKI` sets the location(s) for the certificate store. The IOC needs to have read access to all files in the PKI store, further access should not be granted as this might compromise security.
 
-In its simple form, the single argument defines the location of the PKI certificate store, using default subdirectories for peer certificates (`trusted/certs`), peer certificate revocation lists (`trusted/crl`), issuer certificates (`issuers/certs`) and issuer certificate revocation lists (`issuers/crl`).
+In its simple form, the single argument defines the location of the PKI certificate store, using default subdirectories for trusted peer and CA certificates (`trusted/certs`), CA certificate revocation lists (`trusted/crl`), intermediate issuer certificates (`issuers/certs`) and their certificate revocation lists (`issuers/crl`).
 
 In the fully detailed form (using four arguments), the four locations are specified separately.
 
@@ -88,11 +88,11 @@ The iocShell command `setClientCertificate` sets the locations for the client ce
 
 ### Session Security Setting
 
-Three security-related session options can be used to configure the security features for a given OPC UA session, by calling `opcuaSetOption` in the iocShell.
+Two security-related session options are used to configure the security features for a given OPC UA session, by calling `opcuaSetOption` in the iocShell.
 
-Setting `sec-mode` requires the specified message security mode for the connection; setting `sec-policy` (to the short name, not the URI) requires a specific policy. Setting `sec-level` specifies the minimal security level for an endpoint to be used.
+Setting `sec-mode` selects the specified message security mode for the connection; the special keyword "best" (default) lets the IOC choose the best mode. Setting `sec-policy` (to the short name, not the full URI) selects a specific policy. If multiple endpoints match the option settings, the IOC will always choose the best available security.
 
-The IOC will always choose the best available security that matches all option settings. Leaving the options in their default setting (`None`/`None`/ `0`) will connect without security.
+By default, the IOC will use the endpoint with the best available setting. To connect without security, you have to explicitly set `sec-mode` to `None`.
 
 If no matching endpoint is discovered or the server certificate is untrusted, the IOC will not connect.
 

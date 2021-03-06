@@ -40,6 +40,11 @@ struct WriteRequest;
 struct ReadRequest;
 
 /**
+ * @brief Enum for the requested security mode
+ */
+enum RequestedSecurityMode { Best, None, Sign, SignAndEncrypt };
+
+/**
  * @brief The SessionUaSdk implementation of an OPC UA client session.
  *
  * See DevOpcua::Session
@@ -310,9 +315,8 @@ private:
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */
     unsigned char securityLevel;                              /**< actual security level */
-    OpcUa_MessageSecurityMode reqSecurityMode;                /**< requested security mode */
+    RequestedSecurityMode reqSecurityMode;                    /**< requested security mode */
     UaString reqSecurityPolicyURI;                            /**< requested security policy */
-    unsigned char reqSecurityLevel;                           /**< requested security level */
     UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
     int transactionId;                                        /**< next transaction id */
     /** itemUaSdk vectors of outstanding read or write operations, indexed by transaction id */
