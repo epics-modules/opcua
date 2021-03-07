@@ -10,7 +10,7 @@ In the basic, explicit form, trusting a certificate usually means that the certi
 
 When using certificate authorities (CAs), a certificate is trusted if it is signed by a trusted CA. This approach is preferable for a larger installation, as it does not require updating all servers and clients when new peers with new certificates are added.
 
-A good analogy to certificates are passports: In a world with only a handful people, fabricating your passport yourself is reasonable. In reality, it helps a lot that passports are fabricated by a government agency and this fact can be verified by checking holograms, watermarks etc.
+A good analogy to certificates are passports: In a world with only a handful people, fabricating your passport yourself is reasonable. In reality, with millions of passport holders, it helps a lot that passports are fabricated by government agencies and this fact can be verified by checking holograms, watermarks etc.
 
 ### Self-signed Certificates
 
@@ -24,7 +24,15 @@ Each OPC UA application (server and client) needs an *Application Instance Certi
 
 For a secure communication to be established, both peers must trust the certificate of the other.
 
-OPC UA defines *Security Policies* (sets of security algorithms and key lengths) with their unique URIs:
+OPC UA defines three *Message Security Modes*:
+
+| Message Security Mode |                                             |
+| --------------------- | ------------------------------------------- |
+| None                  | No security is applied.                     |
+| Sign                  | All messages are signed, but not encrypted. |
+| SignAndEncrypt        | All messages are signed and encrypted.      |
+
+As security algorithms are getting obsolete, an increasing number of *Security Policies* (sets of security algorithms and key lengths) are defined, by their unique URIs:
 
 | Security Policy            | URI                                                          |
 | -------------------------- | ------------------------------------------------------------ |
@@ -35,17 +43,9 @@ OPC UA defines *Security Policies* (sets of security algorithms and key lengths)
 | Aes128_Sha256_RsaOaep      | http://opcfoundation.org/UA/SecurityPolicy#Aes128_Sha256_RsaOaep |
 | Aes256_Sha256_RsaPss       | http://opcfoundation.org/UA/SecurityPolicy#Aes256_Sha256_RsaPss |
 
-Three *Message Security Modes* are defined:
-
-| Message Security Mode |                                             |
-| --------------------- | ------------------------------------------- |
-| None                  | No security is applied.                     |
-| Sign                  | All messages are signed, but not encrypted. |
-| SignAndEncrypt        | All messages are signed and encrypted.      |
-
 ### Client Authentication (Identity)
 
-For authentication related to managing the authorization of access to a server, OPC UA defines four *User Token Types* (methods of user authentication):
+For client authentication related to managing the authorization of access to a server, OPC UA defines four *User Token Types* (methods of user authentication):
 
 | User Token Type          |                                            |
 | ------------------------ | ------------------------------------------ |
@@ -68,7 +68,7 @@ An IOC using the OPC UA Device Support is considered to be a production system. 
 
 To support setting up the certificate store, the `opcuaSaveRejected` iocShell command will configure the IOC to save rejected (untrusted) server certificates in a specified location (default: `/tmp/<ioc>@<host>`), using DER format. Copying such a certificate file to the IOC's certificate store (under `trusted/certs`) will explicitly trust the certificate and allow secure connections to the server.
 
-When using the UA SDK low level client, the trusted server certificates (under `trusted/certs`) must use DER format. ([See below](#managing-certificates) for how to convert between formats.)
+When using the UA SDK low level client, the trusted server and CA certificates (under `trusted/certs`) must use DER format. ([See below](#managing-certificates) for how to convert between formats.)
 
 Alternatively, you can use a general purpose client (e.g., the `UaExpert` tool) to connect to the server, trust its certificate, and use the certificate file from that client's certificate store. (You could also import it into your certificate management tool, [see below]((#managing-certificates)).)
 
@@ -90,9 +90,9 @@ The iocShell command `setClientCertificate` sets the locations for the client ce
 
 Two security-related session options are used to configure the security features for a given OPC UA session, by calling `opcuaSetOption` in the iocShell.
 
-Setting `sec-mode` selects the specified message security mode for the connection; the special keyword "best" (default) lets the IOC choose the best mode. Setting `sec-policy` (to the short name, not the full URI) selects a specific policy. If multiple endpoints match the option settings, the IOC will always choose the best available security.
+Setting `sec-mode` selects the specified message security mode for the connection. The special keyword "best" (default) will have the IOC choose the best mode, based on the server-supplied *security level*. Setting `sec-policy` (to the short name, not the full URI) selects a specific policy. If multiple endpoints match the option settings, the IOC will always choose the best available security.
 
-By default, the IOC will use the endpoint with the best available setting. To connect without security, you have to explicitly set `sec-mode` to `None`.
+*Note:* To connect without security, you have to explicitly set `sec-mode` to `None`.
 
 If no matching endpoint is discovered or the server certificate is untrusted, the IOC will not connect.
 
@@ -110,7 +110,9 @@ To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<pri
 
 ## Managing Certificates
 
-[Xca](https://hohnstaedt.de/xca/) is a powerful and popular GUI for managing X.509 certificates and keys, including the certificate authority (CA) functionality needed for managing the certificates for a larger installation.
+The underlying openssl library provides a command line utility.
+
+For managing a larger number of certificates, [Xca](https://hohnstaedt.de/xca/) is a powerful and popular GUI for X.509 certificate and key management, including certificate authority (CA) functionality, which is the most efficient way to manage the certificates for a larger installation.
 
 The `openssl` command line utility can be used to convert certificates (and keys) between formats. To convert certificate `<cert>`  from DER to PEM format, use:
 
@@ -140,11 +142,17 @@ Creating a self-signed certificate for OPC UA use is pretty straight-forward. Fo
 
 -   X509v3 Subject Alternative Name: `URI:urn:<ioc>@<host>:EPICS:IOC`, `DNS:<host>`
     with `<ioc>` being the IOC name,`<host>` being the hostname (i.e., the result of a `gethostname()` call) of the machine that runs the IOC. The URI tag *must* match what the Device Support module sets as its application URI.
-    For server certificates, I have seen the URI not containing a hostname and a numerical `IP Address` tag instead of `DNS`.
+    Alternatively, a numerical `IP Address` tag can be used instead of `DNS`.
 
-The sources contain an Xca certificate template that can be imported and modified to fit your needs, which will simplify generating new IOC client certificates. 
+The source tree contains an Xca certificate template that can be imported and modified to fit your needs, which will simplify generating new IOC client certificates. 
 
 For the IOC, save the certificate in DER or PEM format, the private key as PEM. The server may need different formats - refer to the documentation of your server for more details.
+
+### Certificates and Network / DNS Setup
+
+The `URI:`, `DNS:` and `IP:` entries in the Subject Alternative Name section require the network and DNS to be set up correctly, otherwise the certificates will not work.
+
+The IOC uses the `gethostname()` result in the `URI:` entry, which might differ from its DNS host name that has to appear in the `DNS:` entry. Depending on your DNS setup, the host names in the `DNS:` entry need to be simple or fully qualified. Finding out the right way to set up your certificates may be frustrating and time consuming.
 
 ### Creating Identity Token Certificates
 
@@ -167,8 +175,10 @@ The basic steps are:
 
 -   Create a Certificate Authority.
     In the simplest form this means creating a Root CA certificate/key that is configured to sign other certificates.
-
+The CA certificate needs to be placed in the `trusted/certs` directory of the IOC's PKI store.
+-   Create a Certificate Revocation List.
+    Even if you do not plan to use the Certificate Revocation List (CRL) mechanism to deal with invalidation of certificates, you need to create an empty CRL for your CA certificate and place it in the `trusted/crl` directory of the IOC's PKI store. Otherwise your CA certificate will not work.
 -   Create Application Instance and Identity Token Certificates signed by your CA.
-    When creating a new certificate, under the "Source" tab, instead of selecting "Create a self-signed certificate", choose a different certificate (your Root CA) that will be used to sign the newly created certificate.
+    When creating new certificates for your servers and clients, instead of selecting "Create a self-signed certificate" under the "Source" tab, choose a different certificate (your CA certificate) that will be used to sign the newly created certificate.
 
-Setting up Xca templates can simplify certificate creation and greatly improve consistency.
+Using Xca templates can simplify certificate creation and greatly improve consistency.
