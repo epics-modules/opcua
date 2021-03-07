@@ -782,8 +782,10 @@ SessionUaSdk::setupSecurity ()
                         bool save = true;
                         struct stat info;
                         if (stat(securitySaveRejectedDir.c_str(), &info) != 0) {
-                            int status = mkdir(securitySaveRejectedDir.c_str(), 0700);
-                            if (status) {
+                            UaDir dirHelper("");
+                            UaUniString usSaveRejectedDir(dirHelper.filePath(
+                                UaDir::fromNativeSeparators(securitySaveRejectedDir.c_str())));
+                            if (!dirHelper.mkpath(usSaveRejectedDir)) {
                                 std::cout << "Session " << name
                                           << ": (setupSecurity) cannot create directory for "
                                              "rejected certificates ("
