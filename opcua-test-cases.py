@@ -41,7 +41,7 @@ class opcuaTestHarness:
         )
 
         # test sleep time ins seconds
-        self.sleepTime = 10
+        self.sleepTime = 3
 
         # Test server
         self.testServer = "test/server/opcuaTestServer"
@@ -66,10 +66,9 @@ class opcuaTestHarness:
 
         # Server variables
         self.serverVars = [
-            "Feb 25 2021 05:30:02",
             "open62541",
             "open62541 OPC UA Server",
-            "1.1.2-291-gbb8ce4b",
+            "1.2.0-29-g875d33a9",
         ]
 
     def start_server(self):
@@ -84,7 +83,8 @@ class opcuaTestHarness:
 # Standard test fixture
 @pytest.fixture()
 def test_inst():
-    """Instantiate test harness, start the server,
+    """
+    Instantiate test harness, start the server,
     yield the harness handle to the test,
     close the server on test end / failure
     """
@@ -215,7 +215,6 @@ def test_server_status(test_inst):
     ioc = test_inst.IOC
 
     serverVars = [
-        "OPC:ServerBuildNumber",
         "OPC:ServerManufacturerName",
         "OPC:ServerProductName",
         "OPC:ServerSoftwareVersion",
