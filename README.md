@@ -4,9 +4,7 @@ It consists of three main components:
 
 ## OPC-UA Server - open62541
 A simple test opcua server, created using open62541 [1]. The server configuration currently
-consists of a single variable ``0:\\\\Test-01`` that is simulated as an increasing ramp value, that
-increments by 1 every second. The limits of the ramp are constrained between 0 and 1000.
-The variable is defined in the source file [\(opcuaTestNodeSet.c\)](test/server/opcuaTestNodeSet.c).
+consists of a number of variables provided for testing purposes.
 
 The server listens for connections on ``opc.tcp://localhost:4840`` and the simulated
 signals are available in OPC UA namespace 2.
