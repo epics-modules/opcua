@@ -36,6 +36,8 @@ The pytest framework [2] is used to implement the test cases. Individual test ca
 as python functions (defs) in [\(opcua-test-cases.py\)](test/opcua-test-cases.py). Under the hood, run_iocsh [3] and pyepics [4] are
 used for communication with the test IOC.
 
+To add a new test case, simply add a new funtion (def) to [\(opcua-test-cases.py\)](test/opcua-test-cases.py), ensuring that the function name begins with the prefix ``test_``
+
 The test cases provided are:
 
  1. **_test_connect_disconnect_**: start and stop the test IOC 5 times. Parse the IOC output, and check it
@@ -49,9 +51,19 @@ The test cases provided are:
  4. **_test_server_status_**: Check the informational values provided by the server are being translated via the module.
 
 
- 5. **_test_variable_pvget_**: Start the test IOC and use pvget to read the 'Tst-01' PV value multiple times (every second).
+ 5. **_test_variable_pvget_**: Start the test IOC and use pvget to read the ``TstRamp`` PV value multiple times (every second).
    Check that it is incrementing as a ramp.
   
+## Running the test suite
+You can run the test suite from the root of the repository wuth the following command:
+```
+pytest -v test/opcua-test-cases.py 
+```
+
+To view the stdout output from the tests in real-time, you can provide the ``-s`` flag:
+```
+pytest -v -s test/opcua-test-cases.py 
+```
 
 ## References
 [1] https://open62541.org/
