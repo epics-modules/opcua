@@ -272,3 +272,33 @@ def test_variable_pvget(test_inst):
                 res[i],
                 res[i - 1] + captureIncr,
             )
+
+
+@pytest.mark.parametrize(
+    "pvName,expectedVal",
+    [
+        ("VarCheckBool", True),
+        ("VarCheckSByte", -128),
+        ("VarCheckByte", 255),
+        ("VarCheckInt16", -32768),
+        ("VarCheckUInt16", 65535),
+        ("VarCheckInt32", -2147483648),
+        ("VarCheckUInt32", 4294967295),
+        ("VarCheckInt64", -1294967296),
+        ("VarCheckUInt64", "{:.16e}".format(18446744073709551615)),
+        ("VarCheckFloat", -0.0625),
+        ("VarCheckDouble", 0.002),
+        ("VarCheckString", "TestString01"),
+    ],
+)
+def test_read_variable(test_inst, pvName, expectedVal):
+
+    ioc = test_inst.IOC
+
+    with ioc:
+        pv = PV(pvName)
+        res = pv.get()
+        if pvName == "VarCheckUInt64":
+            res = "%.16e" % res
+
+        assert res == expectedVal

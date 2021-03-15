@@ -346,7 +346,7 @@ attr.dataType = UA_NODEID_NUMERIC(ns[0], 10LU);
 UA_Float *variablenode_ns_1_s_sim_testvarfloat_variant_DataContents =  UA_Float_new();
 if (!variablenode_ns_1_s_sim_testvarfloat_variant_DataContents) return UA_STATUSCODE_BADOUTOFMEMORY;
 UA_Float_init(variablenode_ns_1_s_sim_testvarfloat_variant_DataContents);
-*variablenode_ns_1_s_sim_testvarfloat_variant_DataContents = (UA_Float) 0.001;
+*variablenode_ns_1_s_sim_testvarfloat_variant_DataContents = (UA_Float) -0.0625;
 UA_Variant_setScalar(&attr.value, variablenode_ns_1_s_sim_testvarfloat_variant_DataContents, &UA_TYPES[UA_TYPES_FLOAT]);
 attr.displayName = UA_LOCALIZEDTEXT("", "TestVarFloat");
 retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE,

@@ -5,7 +5,7 @@ record(ai, "TstRamp") {
     field( TSE, "-2")
 }
 
-record(ai, "VarCheckBool") {
+record(bi, "VarCheckBool") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarBool")
     field(SCAN, "I/O Intr")
@@ -68,7 +68,7 @@ record(ai, "VarCheckInt64") {
     field( TSE, "-2")
 }
 
-record(ai, "VarCheckString") {
+record(stringin, "VarCheckString") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarString")
     field(SCAN, "I/O Intr")

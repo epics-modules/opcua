@@ -81,7 +81,7 @@
             <uax:Int16>-32768</uax:Int16>
         </Value>
     </UAVariable>
-    <UAVariable DataType="UInt16" NodeId="ns=1;s=Sim.TestVarIUInt16" BrowseName="1:TestVarUInt16" AccessLevel="3">
+    <UAVariable DataType="UInt16" NodeId="ns=1;s=Sim.TestVarUInt16" BrowseName="1:TestVarUInt16" AccessLevel="3">
         <DisplayName>TestVarUInt16</DisplayName>
         <References>
             <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
@@ -118,7 +118,7 @@
             <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
         </References>
         <Value>
-            <uax:Float>0.001</uax:Float>
+            <uax:Float>-0.0625</uax:Float>
         </Value>
     </UAVariable>
     <UAVariable DataType="Int32" NodeId="ns=1;s=Sim.TestVarInt32" BrowseName="1:TestVarInt32" AccessLevel="3">
