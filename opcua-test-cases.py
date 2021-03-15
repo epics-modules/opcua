@@ -241,7 +241,7 @@ def test_variable_pvget(test_inst):
         ioc_executable=test_inst.IOCSH_PATH,
     ):
         # PV name
-        pvName = "Tst-01"
+        pvName = "TstRamp"
         pv = PV(pvName)
 
         # Test parameters
