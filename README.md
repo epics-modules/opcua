@@ -65,6 +65,11 @@ To view the stdout output from the tests in real-time, you can provide the ``-s`
 pytest -v -s test/opcua-test-cases.py 
 ```
 
+To run an individual test point:
+```
+pytest -v test/opcua-test-cases.py::test_connect_disconnect
+```
+
 ## References
 [1] https://open62541.org/
 
