@@ -300,7 +300,7 @@ class TestVariableTests:
             minVal = 0  # Ramp min, as defined by server
             maxVal = 1000  # Ramp max, as defined by server
             captureLen = 5  # Number of samples to capture
-            captureIncr = 1  # Time increment in seconds
+            captureIncr = 5  # Time increment in seconds
 
             res = [int(0)] * captureLen
             resCheck = [int(0)] * captureLen
@@ -317,12 +317,21 @@ class TestVariableTests:
                 if res[i] == minVal:
                     wrapOffset = maxVal + 1
                 resCheck[i] = res[i] + wrapOffset
+                expected = resCheck[i - 1] + captureIncr
+                print(
+                    "Captured value (%d) is %d. Expected %d +/-1"
+                    % (
+                        i,
+                        res[i],
+                        expected,
+                    )
+                )
                 assert (
-                    resCheck[i] == resCheck[i - 1] + captureIncr
-                ), "Captured value (%d) is %d. Expected %d" % (
+                    expected - 1 <= resCheck[i] <= expected + 1
+                ), "Captured value (%d) is %d. Expected %d +/-1" % (
                     i,
                     res[i],
-                    res[i - 1] + captureIncr,
+                    expected,
                 )
 
     @pytest.mark.parametrize(
