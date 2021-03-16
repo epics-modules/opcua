@@ -50,6 +50,8 @@ class opcuaTestHarness:
 
         # Test server
         self.testServer = "test/server/opcuaTestServer"
+        self.isServerRunning = False
+        self.serverURI = "opc.tcp://localhost.localdomain:4840"
 
         # Message catalog
         self.connectMsg = (
@@ -79,6 +81,14 @@ class opcuaTestHarness:
     def start_server(self):
         self.serverProc = subprocess.Popen(self.testServer, shell=False)
         print("\nOpened server with pid = %s" % self.serverProc.pid)
+        retryCount = 0
+        while (not self.isServerRunning) and retryCount < 5:
+            # Poll server to see if it is running
+            self.is_server_running()
+            retryCount = retryCount + 1
+            sleep(1)
+
+        assert retryCount < 5, "Unable to start server"
 
     def stop_server(self):
         print("\nClosing server with pid = %s" % self.serverProc.pid)
@@ -86,13 +96,29 @@ class opcuaTestHarness:
         self.serverProc.terminate()
         # Wait for processes to terminate.
         self.serverProc.wait(timeout=5)
+        # Update if server is running
+        self.is_server_running()
 
     def is_server_running(self):
-        ret = self.serverProc.poll()
-        if ret is None:
-            return True
-        else:
-            return False
+        from opcua import Client
+
+        c = Client(self.serverURI)
+        try:
+            # Connect to server
+            c.connect()
+            # NS0|2259 is the server state variable
+            # 0 -- Running
+            var = c.get_node("ns=0;i=2259")
+            val = var.get_value()
+            if val == 0:
+                self.isServerRunning = True
+            else:
+                self.isServerRunning = False
+            # Disconnect from server
+            c.disconnect()
+
+        except Exception:
+            self.isServerRunning = False
 
 
 # Standard test fixture
@@ -103,11 +129,21 @@ def test_inst():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+    # Create handle to Test Harness
     test_inst = opcuaTestHarness()
+    # Poll to see if the server is running
+    test_inst.is_server_running()
+    assert not (
+        test_inst.isServerRunning
+    ), "An instance of the OPC-UA test server is already running"
+    # Start server
     test_inst.start_server()
+    # Drop to test
     yield test_inst
+    # Shutdown server by sending terminate signal
     test_inst.stop_server()
-    assert not test_inst.is_server_running()
+    # Check server is stopped
+    assert not test_inst.isServerRunning
 
 
 class TestConnectionTests:
