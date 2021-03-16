@@ -40,6 +40,11 @@ class opcuaTestHarness:
             ioc_executable=self.IOCSH_PATH,
         )
 
+        # timeout value in seconds for pvput/pvget calls
+        self.timeout = 5
+        self.putTimeout = self.timeout
+        self.getTimeout = self.timeout
+
         # test sleep time ins seconds
         self.sleepTime = 3
 
@@ -235,7 +240,7 @@ class TestVariableTests:
         with ioc:
             for pvName in serverVars:
                 pv = PV(pvName)
-                res = pv.get()
+                res = pv.get(timeout=test_inst.getTimeout)
                 assert res == test_inst.serverVars[i]
                 i = i + 1
 
@@ -265,7 +270,7 @@ class TestVariableTests:
             resCheck = [int(0)] * captureLen
 
             for i in range(0, captureLen):
-                res[i] = int(pv.get())
+                res[i] = int(pv.get(timeout=test_inst.getTimeout))
                 sleep(captureIncr)
 
             wrapOffset = 0
@@ -311,7 +316,7 @@ class TestVariableTests:
 
         with ioc:
             pv = PV(pvName)
-            res = pv.get()
+            res = pv.get(timeout=test_inst.getTimeout)
             # Check UInt64 with correct scientific notation
             if pvName == "VarCheckUInt64":
                 res = "%.16e" % res
@@ -350,20 +355,24 @@ class TestVariableTests:
             pvOutName = pvName + "Out"
             pvWrite = PV(pvOutName)
             assert ioc.is_running()
-            assert pvWrite.put(writeVal, wait=True) is not None, (
-                "Failed to write to PV %s\n" % pvOutName
-            )
+            assert (
+                pvWrite.put(writeVal, wait=True, timeout=test_inst.putTimeout)
+                is not None
+            ), ("Failed to write to PV %s\n" % pvOutName)
             # Read back via input PV
             pvRead = PV(pvName)
             assert ioc.is_running()
-            res = pvRead.get(use_monitor=False)
+            res = pvRead.get(use_monitor=False, timeout=test_inst.getTimeout)
             retryCnt = 0
             while res is None:
                 print("%d: Read timeout. Try again...\n" % retryCnt)
                 ioc.exit()
                 ioc.start()
-                res = pvRead.get(use_monitor=False)
+                res = pvRead.get(
+                    use_monitor=False, timeout=test_inst.getTimeout
+                )  # NoQA: E501
                 if retryCnt > 3:
                     break
+
             # Compare
             assert res == writeVal
