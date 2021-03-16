@@ -33,17 +33,17 @@ cmd/ and db/ subdirectories.
 
 ## Python Test Files
 The pytest framework [2] is used to implement the test cases. Individual test cases are provided
-as python functions (defs) in [\(opcua-test-cases.py\)](test/opcua-test-cases.py). Under the hood, run_iocsh [3] and pyepics [4] are
+as python functions (defs) in [\(opcua_test_cases.py\)](test/opcua_test_cases.py). Under the hood, run_iocsh [3] and pyepics [4] are
 used for communication with the test IOC.
 
-To add a new test case, simply add a new funtion (def) to [\(opcua-test-cases.py\)](test/opcua-test-cases.py), ensuring that the function name begins with the prefix ``test_``
+To add a new test case, simply add a new funtion (def) to [\(opcua_test_cases.py\)](test/opcua_test_cases.py), ensuring that the function name begins with the prefix ``test_``
 
 The test cases provided are:
 
  1. **_test_connect_disconnect_**: start and stop the test IOC 5 times. Parse the IOC output, and check it
    connects and disconnects to the OPC-UA server successfully.
 
- 2. **_test_connect_reconnect_**: Start the server, start the IOC. Stop the server, check for appropriate messaging. 
+ 2. **_test_connect_reconnect_**: Start the server, start the IOC. Stop the server, check for appropriate messaging.
    Start the server, check that the IOC reconnects.
 
  3. **_test_no_connection_**: Start an IOC with no server running. Check the module reports appropriately.
@@ -53,21 +53,21 @@ The test cases provided are:
 
  5. **_test_variable_pvget_**: Start the test IOC and use pvget to read the ``TstRamp`` PV value multiple times (every second).
    Check that it is incrementing as a ramp.
-  
+
 ## Running the test suite
 You can run the test suite from the root of the repository wuth the following command:
 ```
-pytest -v test/opcua-test-cases.py 
+pytest -v test/opcua_test_cases.py
 ```
 
 To view the stdout output from the tests in real-time, you can provide the ``-s`` flag:
 ```
-pytest -v -s test/opcua-test-cases.py 
+pytest -v -s test/opcua_test_cases.py
 ```
 
 To run an individual test point:
 ```
-pytest -v test/opcua-test-cases.py::test_connect_disconnect
+pytest -v test/opcua_test_cases.py::TestConnectionTests::test_connect_disconnect
 ```
 
 ## References
