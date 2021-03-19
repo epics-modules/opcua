@@ -404,6 +404,10 @@ class TestVariableTests:
                 pvWrite.put(writeVal, wait=True, timeout=test_inst.putTimeout)
                 is not None
             ), ("Failed to write to PV %s\n" % pvOutName)
+            
+            # Wait 1s to ensure write has time to pass through asynchronours layers
+            sleep(1)
+            
             # Read back via input PV
             pvRead = PV(pvName)
             assert ioc.is_running()
