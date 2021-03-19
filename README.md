@@ -26,8 +26,15 @@ pip3 install pytest opcua pyepics
 pip3 install run-iocsh -i https://artifactory.esss.lu.se/artifactory/api/pypi/pypi-virtual/simple
 ```
 
-You must also configure the EPICS environment before running the test suite. 
+You must configure the EPICS environment before running the test suite. 
 For the E3 environment, this requires you to ``source setE3Env.bash``.
+
+Finally, compile the test server for use by the test suite:
+```
+cd test/server
+make
+```
+
 
 ## Test Suite Components
 
