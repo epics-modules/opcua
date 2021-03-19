@@ -80,8 +80,19 @@ class opcuaTestHarness:
             "1.2.0-29-g875d33a9",
         ]
 
-    def start_server(self):
-        self.serverProc = subprocess.Popen(self.testServer, shell=False)
+    def start_server(self, withPIPE=False):
+        if withPIPE:
+            self.serverProc = subprocess.Popen(
+                self.testServer,
+                shell=False,
+                stdout=subprocess.PIPE,
+            )
+        else:
+            self.serverProc = subprocess.Popen(
+                self.testServer,
+                shell=False,
+            )
+
         print("\nOpened server with pid = %s" % self.serverProc.pid)
         retryCount = 0
         while (not self.isServerRunning) and retryCount < 5:
@@ -260,6 +271,70 @@ class TestConnectionTests:
             output.find(test_inst.reconnectMsg1) >= 0
         ), "%d: Failed to find reconnect message 1 in output\n%s" % (i, output)
 
+    def test_shutdown_on_ioc_reboot(self, test_inst):
+        """
+        Start the server. Start an IOC and ensure connection
+        is made to the server. Shutdown the IOC and endure
+        that the subscriptions and sessions are cleanly
+        disconnected.
+        """
+        # Close connection to server, and open new connection
+        # with stdout PIPE
+        test_inst.stop_server()
+        test_inst.start_server(withPIPE=True)
+
+        ioc = test_inst.IOC
+        # Start the IOC
+        ioc.start()
+        assert ioc.is_running()
+        # Wait a second to allow it to get up and running
+        sleep(1)
+        # Stop the IOC
+        ioc.exit()
+        assert not ioc.is_running()
+        # Wait for it to close down
+        sleep(1)
+
+        # Shutdown the server to allow us to get the stdout messages
+        test_inst.stop_server()
+
+        # Read all lines from the stdout buffer
+        log = ""
+        for line in iter(test_inst.serverProc.stdout.readline, b""):
+            log = log + line.decode("utf-8")
+
+        print(log)
+
+        # Check the Session was activated
+        assert log.find("ActivateSession: Session activated") >= 0, (
+            "Failed to find ActivateSession message: %s" % log
+        )
+        # Check Subscription was created
+        assert log.find("Subscription 1 | Created the Subscription") >= 0, (
+            "Failed to find Subscription message: %s" % log
+        )
+
+        # Find the position in the log where the terminate signal
+        # is received
+        termPos = log.find("received ctrl-c")
+
+        # Check that the session and subscription close messages
+        # occur before the terminate signal is received.
+        # This means they were closed when the IOC was shutdown
+        closePos = log.find("Closing the Session")
+        deletePos = log.find("Subscription 1 | Subscription deleted")
+        assert 0 <= closePos <= termPos, (
+            "Session closed by terminate, not by IOC shutdown: %s" % log
+        )
+        assert 0 <= deletePos <= termPos, (
+            "Subscription closed by terminate, not by IOC shutdown: %s" % log
+        )
+
+        # Grab ioc output
+        ioc.check_output()
+        output = ioc.outs
+        print(output)
+
 
 class TestVariableTests:
     def test_server_status(self, test_inst):
@@ -406,10 +481,11 @@ class TestVariableTests:
                 pvWrite.put(writeVal, wait=True, timeout=test_inst.putTimeout)
                 is not None
             ), ("Failed to write to PV %s\n" % pvOutName)
-            
-            # Wait 1s to ensure write has time to pass through asynchronours layers
+
+            # Wait 1s to ensure write has time to pass through
+            # asynchronous layers
             sleep(1)
-            
+
             # Read back via input PV
             pvRead = PV(pvName)
             assert ioc.is_running()
@@ -427,63 +503,68 @@ class TestVariableTests:
 
             # Compare
             assert res == writeVal
- 
+
+
 class TestPerformanceTests:
     def test_write_performance(self, test_inst):
         """
-        Write 5000 variable values and measure time and memory consumption before and after.
-        Repeat 10 times
+        Write 5000 variable values and measure
+        time and memory consumption before
+        and after. Repeat 10 times
         """
         ioc = test_inst.IOC
 
         with ioc:
             # Get PV
             pvWrite = PV("VarCheckInt16Out")
-            
+
             # Check that IOC is running
             assert ioc.is_running()
 
             maxt = 0
-            mint = float('inf')
+            mint = float("inf")
             tott = 0
             totr = 0
-            testruns=10
-            writeperrun=5000
+            testruns = 10
+            writeperrun = 5000
 
             # Run test 10 times
-            for j in range (1,testruns):
+            for j in range(1, testruns):
 
                 # Get time and memory conspumtion before test
-                r0 = resource.getrusage(resource.RUSAGE_SELF)
+                r0 = resource.getrusage(resource.RUSAGE_THREAD)
                 t0 = time.perf_counter()
 
-                # Write 5000 PVs            
+                # Write 5000 PVs
                 for i in range(1, writeperrun):
                     pvWrite.put(i, wait=True, timeout=test_inst.putTimeout)
-                
+
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
-                r1 = resource.getrusage(resource.RUSAGE_SELF)
-                dr = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - r0.ru_maxrss
+                r1 = resource.getrusage(resource.RUSAGE_THREAD)
+                dr = (
+                    resource.getrusage(resource.RUSAGE_THREAD).ru_maxrss
+                    - r0.ru_maxrss  # NoQA: E501
+                )
 
                 # Collect data for statistics
-                if dt>maxt:
-                    maxt=dt
-                if dt<mint:
-                    mint=dt
-                tott+=dt
-                totr+=dr
+                if dt > maxt:
+                    maxt = dt
+                if dt < mint:
+                    mint = dt
+                tott += dt
+                totr += dr
                 print("Time: ", dt)
                 print("Memory: ", dr)
                 print("Memory: ", r0.ru_maxrss)
                 print("Memory: ", r1.ru_maxrss)
-            avgt=tott/testruns
+            avgt = tott / testruns
 
             print("Max time: ", maxt)
             print("Min time: ", mint)
             print("Average time: ", avgt)
             print("Total memory: ", totr)
-          
+
             assert maxt < 10
             assert mint > 1
             assert avgt < 5
@@ -491,7 +572,8 @@ class TestPerformanceTests:
 
     def test_read_performance(self, test_inst):
         """
-        Read 5000 variable values and measure time and memory consumption before and after.
+        Read 5000 variable values and measure time and
+        memory consumption before and after.
         Repeat 10 times
         """
         ioc = test_inst.IOC
@@ -499,52 +581,55 @@ class TestPerformanceTests:
         with ioc:
             # Get PV
             pvRead = PV("VarCheckInt16")
-            
+
             # Check that IOC is running
             assert ioc.is_running()
 
             maxt = 0
-            mint = float('inf')
+            mint = float("inf")
             tott = 0
             totr = 0
-            testruns=10
-            writeperrun=5000
+            testruns = 10
+            writeperrun = 5000
 
             # Run test 10 times
-            for j in range (1,testruns):
+            for j in range(1, testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_SELF)
                 t0 = time.perf_counter()
 
-                # Read 5000 PVs            
+                # Read 5000 PVs
                 for i in range(1, writeperrun):
-                    val = pvRead.get(timeout=test_inst.putTimeout)
-                
+                    pvRead.get(timeout=test_inst.putTimeout)
+
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
                 r1 = resource.getrusage(resource.RUSAGE_SELF)
-                dr = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - r0.ru_maxrss
+                dr = (
+                    resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+                    - r0.ru_maxrss  # NoQA: E501
+                )
 
                 # Collect data for statistics
-                if dt>maxt:
-                    maxt=dt
-                if dt<mint:
-                    mint=dt
-                tott+=dt
-                totr+=dr
+                if dt > maxt:
+                    maxt = dt
+                if dt < mint:
+                    mint = dt
+                tott += dt
+                totr += dr
                 print("Time: ", dt)
                 print("Memory: ", dr)
                 print("Memory: ", r0.ru_maxrss)
                 print("Memory: ", r1.ru_maxrss)
-            avgt=tott/testruns
+            avgt = tott / testruns
 
             print("Max time: ", maxt)
             print("Min time: ", mint)
             print("Average time: ", avgt)
             print("Total memory: ", totr)
-          
+
             assert maxt < 10
             assert mint > 0.01
             assert avgt < 5
-            assert totr < 1000   
+            assert totr < 1000
