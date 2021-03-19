@@ -4,6 +4,8 @@ from run_iocsh import IOC
 from os import environ
 import pytest
 import subprocess
+import resource
+import time
 
 
 class opcuaTestHarness:
@@ -425,3 +427,124 @@ class TestVariableTests:
 
             # Compare
             assert res == writeVal
+ 
+class TestPerformanceTests:
+    def test_write_performance(self, test_inst):
+        """
+        Write 5000 variable values and measure time and memory consumption before and after.
+        Repeat 10 times
+        """
+        ioc = test_inst.IOC
+
+        with ioc:
+            # Get PV
+            pvWrite = PV("VarCheckInt16Out")
+            
+            # Check that IOC is running
+            assert ioc.is_running()
+
+            maxt = 0
+            mint = float('inf')
+            tott = 0
+            totr = 0
+            testruns=10
+            writeperrun=5000
+
+            # Run test 10 times
+            for j in range (1,testruns):
+
+                # Get time and memory conspumtion before test
+                r0 = resource.getrusage(resource.RUSAGE_SELF)
+                t0 = time.perf_counter()
+
+                # Write 5000 PVs            
+                for i in range(1, writeperrun):
+                    pvWrite.put(i, wait=True, timeout=test_inst.putTimeout)
+                
+                # Get delta time and delta memory
+                dt = time.perf_counter() - t0
+                r1 = resource.getrusage(resource.RUSAGE_SELF)
+                dr = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - r0.ru_maxrss
+
+                # Collect data for statistics
+                if dt>maxt:
+                    maxt=dt
+                if dt<mint:
+                    mint=dt
+                tott+=dt
+                totr+=dr
+                print("Time: ", dt)
+                print("Memory: ", dr)
+                print("Memory: ", r0.ru_maxrss)
+                print("Memory: ", r1.ru_maxrss)
+            avgt=tott/testruns
+
+            print("Max time: ", maxt)
+            print("Min time: ", mint)
+            print("Average time: ", avgt)
+            print("Total memory: ", totr)
+          
+            assert maxt < 10
+            assert mint > 1
+            assert avgt < 5
+            assert totr < 1000
+
+    def test_read_performance(self, test_inst):
+        """
+        Read 5000 variable values and measure time and memory consumption before and after.
+        Repeat 10 times
+        """
+        ioc = test_inst.IOC
+
+        with ioc:
+            # Get PV
+            pvRead = PV("VarCheckInt16")
+            
+            # Check that IOC is running
+            assert ioc.is_running()
+
+            maxt = 0
+            mint = float('inf')
+            tott = 0
+            totr = 0
+            testruns=10
+            writeperrun=5000
+
+            # Run test 10 times
+            for j in range (1,testruns):
+
+                # Get time and memory conspumtion before test
+                r0 = resource.getrusage(resource.RUSAGE_SELF)
+                t0 = time.perf_counter()
+
+                # Read 5000 PVs            
+                for i in range(1, writeperrun):
+                    val = pvRead.get(timeout=test_inst.putTimeout)
+                
+                # Get delta time and delta memory
+                dt = time.perf_counter() - t0
+                r1 = resource.getrusage(resource.RUSAGE_SELF)
+                dr = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - r0.ru_maxrss
+
+                # Collect data for statistics
+                if dt>maxt:
+                    maxt=dt
+                if dt<mint:
+                    mint=dt
+                tott+=dt
+                totr+=dr
+                print("Time: ", dt)
+                print("Memory: ", dr)
+                print("Memory: ", r0.ru_maxrss)
+                print("Memory: ", r1.ru_maxrss)
+            avgt=tott/testruns
+
+            print("Max time: ", maxt)
+            print("Min time: ", mint)
+            print("Average time: ", avgt)
+            print("Total memory: ", totr)
+          
+            assert maxt < 10
+            assert mint > 0.01
+            assert avgt < 5
+            assert totr < 1000   
