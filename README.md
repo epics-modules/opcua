@@ -1,8 +1,39 @@
 # Test Setup - opcua
 This directory contains the sources for the automatic testing of the e3-opcua module.
-It consists of three main components:
 
-## OPC-UA Server - open62541
+## Prerequisites
+In order to run the test suite, you must install the following:
+
+ * python3
+
+On CentOS 7, run the following:
+
+```
+sudo yum install python3
+```
+
+And the following python modules:
+
+ * pytest
+ * pyepics
+ * opcua
+ * run-iocsh
+
+You can use the following pip3 commands:
+
+```
+pip3 install pytest opcua pyepics
+pip3 install run-iocsh -i https://artifactory.esss.lu.se/artifactory/api/pypi/pypi-virtual/simple
+```
+
+You must also configure the EPICS environment before running the test suite. 
+For the E3 environment, this requires you to ``source setE3Env.bash``.
+
+## Test Suite Components
+
+The test setup consists of three main components:
+
+### OPC-UA Server - open62541
 A simple test opcua server, created using open62541 [1]. The server configuration currently
 consists of a number of variables provided for testing purposes.
 
@@ -11,7 +42,7 @@ signals are available in OPC UA namespace 2.
 
 For further information on the server configuration, see [simulation server](test/server/README.md).
 
-## IOC
+### IOC
 A test IOC is provided that translates the OPC UA variables from the test server. The following PVs are defined:
 
  * TstRamp
@@ -54,7 +85,7 @@ The test cases provided are:
  5. **_test_variable_pvget_**: Start the test IOC and use pvget to read the ``TstRamp`` PV value multiple times (every second).
    Check that it is incrementing as a ramp.
 
-## Running the test suite
+### Running the test suite
 You can run the test suite from the root of the repository wuth the following command:
 ```
 pytest -v test/opcua_test_cases.py
