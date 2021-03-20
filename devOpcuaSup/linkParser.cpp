@@ -23,6 +23,8 @@
 #include <dbAccess.h>
 #include <epicsStdlib.h>
 #include <link.h>
+#include <epicsEvent.h>
+#include <epicsThread.h>
 
 #define epicsExportSharedSymbols
 #include "devOpcua.h"

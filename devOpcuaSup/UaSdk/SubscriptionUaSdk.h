@@ -19,7 +19,6 @@
 #include <uasubscription.h>
 
 #include <epicsTypes.h>
-#include <shareLib.h>
 
 #include "SessionUaSdk.h"
 #include "Subscription.h"
