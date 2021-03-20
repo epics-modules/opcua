@@ -19,8 +19,8 @@
 #include <fstream>
 
 #include <limits.h>
-#include <unistd.h>
 
+#include <osiSock.h>
 #include <shareLib.h>
 #include <epicsTimer.h>
 #include <errlog.h>

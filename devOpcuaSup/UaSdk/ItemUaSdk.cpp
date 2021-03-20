@@ -18,6 +18,8 @@
 #include <uanodeid.h>
 #include <opcua_statuscodes.h>
 
+#include <osiSock.h> // needed before callback.h to get Windows definition of CALLBACK in
+
 #include "RecordConnector.h"
 #include "opcuaItemRecord.h"
 #include "ItemUaSdk.h"
