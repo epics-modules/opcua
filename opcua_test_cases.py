@@ -2,10 +2,13 @@ from epics import PV
 from time import sleep
 from run_iocsh import IOC
 from os import environ
+from datetime import datetime
+import os
 import pytest
 import subprocess
 import resource
 import time
+import signal
 
 
 class opcuaTestHarness:
@@ -50,6 +53,7 @@ class opcuaTestHarness:
         self.testServer = "test/server/opcuaTestServer"
         self.isServerRunning = False
         self.serverURI = "opc.tcp://localhost.localdomain:4840"
+        self.serverFakeTime = "2019-05-02 09:22:52"
 
         # Message catalog
         self.connectMsg = (
@@ -98,7 +102,7 @@ class opcuaTestHarness:
                 shell=False,
             )
 
-        print("\nOpened server with pid = %s" % self.serverProc.pid)
+        print("\nOpening server with pid = %s" % self.serverProc.pid)
         retryCount = 0
         while (not self.isServerRunning) and retryCount < 5:
             # Poll server to see if it is running
@@ -107,6 +111,31 @@ class opcuaTestHarness:
             sleep(1)
 
         assert retryCount < 5, "Unable to start server"
+
+    def start_server_with_faketime(self):
+        self.serverProc = subprocess.Popen(
+            "faketime -f '%s' %s" % (self.serverFakeTime, self.testServer),
+            shell=True,
+            preexec_fn=os.setsid,
+        )
+
+        print("\nOpening server with pid = %s" % self.serverProc.pid)
+        retryCount = 0
+        while (not self.isServerRunning) and retryCount < 5:
+            # Poll server to see if it is running
+            self.is_server_running()
+            retryCount = retryCount + 1
+            sleep(1)
+
+        assert retryCount < 5, "Unable to start server"
+
+    def stop_server_group(self):
+        # Get the process group ID for the spawned shell,
+        # and send terminate signal
+        print("\nClosing server group with pgid = %s" % self.serverProc.pid)
+        os.killpg(os.getpgid(self.serverProc.pid), signal.SIGTERM)
+        # Update if server is running
+        self.is_server_running()
 
     def stop_server(self):
         print("\nClosing server with pid = %s" % self.serverProc.pid)
@@ -127,11 +156,8 @@ class opcuaTestHarness:
             # NS0|2259 is the server state variable
             # 0 -- Running
             var = c.get_node("ns=0;i=2259")
-            val = var.get_value()
-            if val == 0:
-                self.isServerRunning = True
-            else:
-                self.isServerRunning = False
+            val = var.get_data_value()
+            self.isServerRunning = val.StatusCode.is_good()
             # Disconnect from server
             c.disconnect()
 
@@ -162,6 +188,31 @@ def test_inst():
     test_inst.stop_server()
     # Check server is stopped
     assert not test_inst.isServerRunning
+
+
+# test fixture for use with timezone server
+@pytest.fixture(scope="function")
+def test_inst_TZ():
+    """
+    Instantiate test harness, start the server,
+    yield the harness handle to the test,
+    close the server on test end / failure
+    """
+    # Create handle to Test Harness
+    test_inst_TZ = opcuaTestHarness()
+    # Poll to see if the server is running
+    test_inst_TZ.is_server_running()
+    assert not (
+        test_inst_TZ.isServerRunning
+    ), "An instance of the OPC-UA test server is already running"
+    # Start server
+    test_inst_TZ.start_server_with_faketime()
+    # Drop to test
+    yield test_inst_TZ
+    # Shutdown server by sending terminate signal
+    test_inst_TZ.stop_server_group()
+    # Check server is stopped
+    assert not test_inst_TZ.isServerRunning
 
 
 class TestConnectionTests:
@@ -508,6 +559,31 @@ class TestVariableTests:
 
             # Compare
             assert res == writeVal
+
+    def test_timestamps(self, test_inst_TZ):
+        """
+        Start the test server in a shell session with
+        with a fake time in the past. Check that the
+        timestamp for the PV read matches the known
+        fake time given to the server.
+        If they match, the OPCUA EPICS module is
+        correctly pulling the timestamps from the
+        OPCUA server (and not using a local TS)
+        """
+
+        ioc = test_inst_TZ.IOC
+
+        # Get PV timestamp:
+
+        with ioc:
+            pvName = PV("TstRamp", form="time")
+            pvName.get(timeout=test_inst_TZ.getTimeout)
+            epicsTs = pvName.timestamp
+
+        form = "%Y-%m-%d %H:%M:%S"
+        pyTs = datetime.strptime(test_inst_TZ.serverFakeTime, form).timestamp()
+
+        assert epicsTs == pyTs, "Timestamp returned does not match"
 
 
 class TestPerformanceTests:

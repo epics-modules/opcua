@@ -5,11 +5,12 @@ This directory contains the sources for the automatic testing of the e3-opcua mo
 In order to run the test suite, you must install the following:
 
  * python3
+ * libfaketime
 
 On CentOS 7, run the following:
 
 ```
-sudo yum install python3
+sudo yum install -y python3 libfaketime
 ```
 
 And the following python modules:
