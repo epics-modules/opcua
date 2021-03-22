@@ -4,3 +4,10 @@ record(ai, "BadVarName") {
     field(SCAN, "I/O Intr")
     field( TSE, "-2")
 }
+
+record(bi, "VarNotBoolean") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarFloat")
+    field(SCAN, "I/O Intr")
+    field( TSE, "-2")
+}

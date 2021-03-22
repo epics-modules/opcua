@@ -700,3 +700,32 @@ class TestNegativeTests:
         assert output.find(test_inst.badNodeIdMsg) >= 0, (
             "Failed to find BadNodeIdUnknown message\n%s" % output
         )
+
+    def test_wrong_datatype(self, test_inst):
+        """
+        Specify an incorrect record type for an OPC-UA variable.
+        Binary input record for a float datatype.
+        """
+        import re
+
+        # Use startup script for negative tests
+        test_inst.cmd = "test/cmds/test_pv_neg.cmd"
+        ioc = test_inst.get_ioc()
+
+        # Start the IOC
+        ioc.start()
+        assert ioc.is_running()
+
+        # Wait some time
+        sleep(1)
+
+        # Stop IOC, and check output
+        ioc.exit()
+        assert not ioc.is_running()
+
+        ioc.check_output()
+        output = ioc.outs
+        print(output)
+
+        regx = "VarNotBoolean : incoming data (.*) out-of-bounds"
+        assert re.search(regx, output)
