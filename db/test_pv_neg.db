@@ -1,0 +1,6 @@
+record(ai, "BadVarName") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.BadVarName")
+    field(SCAN, "I/O Intr")
+    field( TSE, "-2")
+}

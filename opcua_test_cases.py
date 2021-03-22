@@ -36,11 +36,7 @@ class opcuaTestHarness:
         self.cmd = "test/cmds/test_pv.cmd"
 
         # Default IOC
-        self.IOC = IOC(
-            *self.TestArgs,
-            self.cmd,
-            ioc_executable=self.IOCSH_PATH,
-        )
+        self.IOC = self.get_ioc()
 
         # timeout value in seconds for pvput/pvget calls
         self.timeout = 5
@@ -73,12 +69,21 @@ class opcuaTestHarness:
             + " from Disconnected to ConnectionErrorApiReconnect"
         )
 
+        self.badNodeIdMsg = "item ns=2;s=Sim.BadVarName : BadNodeIdUnknown"
+
         # Server variables
         self.serverVars = [
             "open62541",
             "open62541 OPC UA Server",
             "1.2.0-29-g875d33a9",
         ]
+
+    def get_ioc(self):
+        return IOC(
+            *self.TestArgs,
+            self.cmd,
+            ioc_executable=self.IOCSH_PATH,
+        )
 
     def start_server(self, withPIPE=False):
         if withPIPE:
@@ -633,3 +638,65 @@ class TestPerformanceTests:
             assert mint > 0.01
             assert avgt < 5
             assert totr < 1000
+
+
+class TestNegativeTests:
+    def test_no_server(self, test_inst):
+        """
+        Start an OPC-UA IOC with no server running.
+        Check the module reports this correctly.
+        """
+
+        ioc = test_inst.IOC
+
+        # Stop the running server
+        test_inst.stop_server()
+
+        # Start the IOC
+        ioc.start()
+        assert ioc.is_running()
+
+        # Wait some time
+        sleep(1)
+
+        # Stop IOC, and check output
+        ioc.exit()
+        assert not ioc.is_running()
+
+        ioc.check_output()
+        output = ioc.outs
+        print(output)
+
+        assert output.find(test_inst.noConnectMsg) >= 0, (
+            "%d: Failed to find no connection message\n%s" % output
+        )
+
+    def test_bad_var_name(self, test_inst):
+        """
+        Specify an incorrect variable name in a db record.
+        Start the IOC and verify a sensible error is
+        displayed.
+        """
+
+        # Use startup script for negative tests
+        test_inst.cmd = "test/cmds/test_pv_neg.cmd"
+        ioc = test_inst.get_ioc()
+
+        # Start the IOC
+        ioc.start()
+        assert ioc.is_running()
+
+        # Wait some time
+        sleep(1)
+
+        # Stop IOC, and check output
+        ioc.exit()
+        assert not ioc.is_running()
+
+        ioc.check_output()
+        output = ioc.outs
+        print(output)
+
+        assert output.find(test_inst.badNodeIdMsg) >= 0, (
+            "Failed to find BadNodeIdUnknown message\n%s" % output
+        )
