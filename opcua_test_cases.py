@@ -646,9 +646,9 @@ class TestPerformanceTests:
             print("Average time: ", avgt)
             print("Total memory: ", totr)
 
-            assert maxt < 15
+            assert maxt < 17
             assert mint > 1
-            assert avgt < 7.5
+            assert avgt < 8
             assert totr < 1000
 
     def test_read_performance(self, test_inst):
