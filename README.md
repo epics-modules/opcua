@@ -52,23 +52,30 @@ For further information on the server configuration, see [simulation server](tes
 
 ### IOC
 A test IOC is provided that translates the OPC UA variables from the test server. 
-The following PVs are defined:
+The following records are defined:
 
- * TstRamp
- * VarCheckBool
- * VarCheckSByte
- * VarCheckByte
- * VarCheckUInt16
- * VarCheckInt16
- * VarCheckUInt32
- * VarCheckInt32
- * VarCheckUInt64
- * VarCheckInt64
- * VarCheckString
- * VarCheckFloat
- * VarCheckDouble
+| Record         | EPICS Type | OPC-UA Type | Record            | EPICS Type | OPC-UA Type |
+|----------------|------------|-------------|-------------------|------------|-------------|
+| TstRamp        | ai         | Double      |                   |            |             |
+| VarCheckBool   | bi         | Bool        | VarCheckBoolOut   | bo         | Bool        |
+| VarCheckSByte  | ai         | SByte       | VarCheckSByteOut  | ao         | SByte       |
+| VarCheckByte   | ai         | Byte        | VarCheckByteOut   | ao         | Byte        |
+| VarCheckUInt16 | ai         | Uint16      | VarCheckUInt16Out | ao         | Uint16      |
+| VarCheckInt16  | ai         | Int16       | VarCheckInt16Out  | ao         | Int16       |
+| VarCheckUInt32 | ai         | Uint32      | VarCheckUInt32Out | ao         | Uint32      |
+| VarCheckInt32  | ai         | Int32       | VarCheckInt32Out  | ao         | Int32       |
+| VarCheckUInt64 | ai         | Uint64      | VarCheckUInt64Out | ao         | Uint64      |
+| VarCheckInt64  | ai         | Int64       | VarCheckInt64Out  | ao         | Int64       |
+| VarCheckString | stringin   | String      | VarCheckStringOut | stringout  | String      |
+| VarCheckFloat  | ai         | Float       | VarCheckFloatOut  | ao         | Float       |
+| VarCheckDouble | ai         | Double      | VarCheckDoubleOut | ao         | Double      |
 
-A startup script and database file are provided in the
+A secondary IOC is provided for use with the negative tests, consisting of two records:
+
+ * BadVarName    - an analog input that specifies an incorrect OPC-UA variable name
+ * VarNotBoolean - a binary input that specifies an OPC-UA variable of float datatype
+
+Startup scripts and database files are provided in the
 cmd/ and db/ subdirectories.
 
 ## Python Test Files
