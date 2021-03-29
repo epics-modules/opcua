@@ -56,7 +56,6 @@ namespace DevOpcua {
 using namespace UaClientSdk;
 
 static epicsThreadOnceId session_uasdk_ihooks_once = EPICS_THREAD_ONCE_INIT;
-static epicsThreadOnceId session_uasdk_atexit_once = EPICS_THREAD_ONCE_INIT;
 
 Registry<SessionUaSdk> SessionUaSdk::sessions;
 
@@ -76,13 +75,6 @@ void session_uasdk_ihooks_register (void *junk)
 {
     (void)junk;
     (void) initHookRegister(SessionUaSdk::initHook);
-}
-
-static
-void session_uasdk_atexit_register (void *junk)
-{
-    (void)junk;
-    epicsAtExit(SessionUaSdk::atExit, nullptr);
 }
 
 inline const char *
@@ -1328,21 +1320,10 @@ SessionUaSdk::initHook (initHookState state)
             if (it.second->autoConnect)
                 it.second->connect();
         }
-        epicsThreadOnce(&DevOpcua::session_uasdk_atexit_once, &DevOpcua::session_uasdk_atexit_register, nullptr);
         break;
     }
     default:
         break;
-    }
-}
-
-void
-SessionUaSdk::atExit (void *junk)
-{
-    (void)junk;
-    errlogPrintf("OPC UA: Disconnecting sessions\n");
-    for (auto &it : sessions) {
-        it.second->disconnect();
     }
 }
 

@@ -222,14 +222,6 @@ public:
      */
     static void initHook(initHookState state);
 
-    /**
-     * @brief EPICS IOC Database atExit function.
-     *
-     * Hook function called when the EPICS IOC is exiting.
-     * Disconnects all sessions.
-     */
-    static void atExit(void *junk);
-
     // Get a new (unique per session) transaction id
     OpcUa_UInt32 getTransactionId();
 
