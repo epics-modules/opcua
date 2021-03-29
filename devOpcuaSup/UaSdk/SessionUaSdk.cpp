@@ -712,6 +712,7 @@ SessionUaSdk::setupSecurity ()
 #endif
         securityInfo.messageSecurityMode = OpcUa_MessageSecurityMode_None;
         securityInfo.sSecurityPolicy = OpcUa_SecurityPolicy_None;
+        securityLevel = 0;
         securityInfo.serverCertificate.clear();
 
         if (debug)
