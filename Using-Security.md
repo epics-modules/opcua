@@ -175,9 +175,11 @@ The basic steps are:
 
 -   Create a Certificate Authority.
     In the simplest form this means creating a Root CA certificate/key that is configured to sign other certificates.
-The CA certificate needs to be placed in the `trusted/certs` directory of the IOC's PKI store.
+    The CA certificate needs to be placed in DER format inside the `trusted/certs` directory of the IOC's PKI store.
+
 -   Create a Certificate Revocation List.
-    Even if you do not plan to use the Certificate Revocation List (CRL) mechanism to deal with invalidation of certificates, you need to create an empty CRL for your CA certificate and place it in the `trusted/crl` directory of the IOC's PKI store. Otherwise your CA certificate will not work.
+    Even if you do not plan to use the Certificate Revocation List (CRL) mechanism to deal with invalidation of certificates, you need to create an empty CRL for your CA certificate and place it in DER format inside the `trusted/crl` directory of the IOC's PKI store. Otherwise your CA certificate will not work.
+
 -   Create Application Instance and Identity Token Certificates signed by your CA.
     When creating new certificates for your servers and clients, instead of selecting "Create a self-signed certificate" under the "Source" tab, choose a different certificate (your CA certificate) that will be used to sign the newly created certificate.
 
