@@ -94,57 +94,86 @@ parseLink (dbCommon *prec, const DBEntry &ent)
         std::cerr << prec->name << " info 'opcua:SAMPLING'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->samplingInterval = opcua_DefaultSamplingInterval;
-    else
+    else {
+        std::cerr << prec->name
+                  << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
+                     "use link parameters instead."
+                  << std::endl;
         if (epicsParseDouble(s, &pinfo->samplingInterval, nullptr))
             throw std::runtime_error(SB() << "error converting '" << s << "' to Double");
+    }
 
     s = ent.info("opcua:QSIZE", "");
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:QSIZE'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->queueSize = static_cast<epicsUInt32>(opcua_DefaultServerQueueSize);
-    else
+    else {
+        std::cerr << prec->name
+                  << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
+                     "use link parameters instead."
+                  << std::endl;
         if (epicsParseUInt32(s, &pinfo->queueSize, 0, nullptr))
             throw std::runtime_error(SB() << "error converting '" << s << "' to UInt32");
+    }
 
     s = ent.info("opcua:DISCARD", "");
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:DISCARD'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->discardOldest = !!opcua_DefaultDiscardOldest;
-    else
+    else {
+        std::cerr << prec->name
+                  << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
+                     "use link parameters instead."
+                  << std::endl;
         if (strcmp(s, "new") == 0)
             pinfo->discardOldest = false;
         else if (strcmp(s, "old") == 0)
             pinfo->discardOldest = true;
         else
             throw std::runtime_error(SB() << "illegal value '" << s << "'");
+    }
 
     s = ent.info("opcua:TIMESTAMP", "");
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:TIMESTAMP'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->useServerTimestamp = !!opcua_DefaultUseServerTime;
-    else
+    else {
+        std::cerr << prec->name
+                  << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
+                     "use link parameters instead."
+                  << std::endl;
         if (strcmp(s, "server") == 0)
             pinfo->useServerTimestamp = true;
         else if (strcmp(s, "source") == 0)
             pinfo->useServerTimestamp = false;
         else
             throw std::runtime_error(SB() << "illegal value '" << s << "'");
+    }
 
     s = ent.info("opcua:READBACK", "");
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:READBACK'='" << s << "'" << std::endl;
     if (s[0] == '\0')
         pinfo->monitor = !!opcua_DefaultOutputReadback;
-    else
+    else {
+        std::cerr << prec->name
+                  << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
+                     "use link parameters instead."
+                  << std::endl;
         pinfo->monitor = getYesNo(s[0]);
+    }
 
     s = ent.info("opcua:ELEMENT", "");
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:ELEMENT'='" << s << "'" << std::endl;
     if (s[0] != '\0') {
+        std::cerr << prec->name
+                  << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
+                     "use link parameters instead."
+                  << std::endl;
         pinfo->element = s;
         pinfo->elementPath = splitString(s);
     }
