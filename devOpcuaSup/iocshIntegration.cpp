@@ -11,6 +11,7 @@
  */
 
 #include <iostream>
+#include <set>
 #include <string>
 #include <string.h>
 #include <stdexcept>
@@ -491,6 +492,47 @@ void opcuaShowDataCallFunc (const iocshArgBuf *args)
     }
 }
 
+static const iocshArg opcuaShowArg0 = {"pattern", iocshArgString};
+static const iocshArg opcuaShowArg1 = {"verbosity", iocshArgInt};
+
+static const iocshArg *const opcuaShowArg[2] = {&opcuaShowArg0, &opcuaShowArg1};
+
+static const iocshFuncDef opcuaShowFuncDef = {"opcuaShow", 2, opcuaShowArg};
+
+static void
+opcuaShowCallFunc(const iocshArgBuf *args)
+{
+    if (args[0].sval == NULL || args[0].sval[0] == '\0') {
+        errlogPrintf("missing argument #1 (pattern for name)\n");
+    } else {
+        bool foundSomething = false;
+        std::set<Session *> sessions = Session::glob(args[0].sval);
+        if (sessions.size()) {
+            foundSomething = true;
+            for (auto &s : sessions)
+                s->show(args[1].ival);
+        }
+        if (!foundSomething) {
+            std::set<Subscription *> subscriptions = Subscription::glob(args[0].sval);
+            if (subscriptions.size()) {
+                foundSomething = true;
+                for (auto &s : subscriptions)
+                    s->show(args[1].ival);
+            }
+        }
+        if (!foundSomething) {
+            std::set<RecordConnector *> connectors = RecordConnector::glob(args[0].sval);
+            if (connectors.size()) {
+                foundSomething = true;
+                for (auto &rc : connectors)
+                    rc->pitem->show(args[1].ival);
+            }
+        }
+        if (!foundSomething)
+            errlogPrintf("No matches for pattern '%s'\n", args[0].sval);
+    }
+}
+
 static
 void opcuaIocshRegister ()
 {
@@ -508,6 +550,7 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaDebugSubscriptionFuncDef, opcuaDebugSubscriptionCallFunc);
 
     iocshRegister(&opcuaShowDataFuncDef, opcuaShowDataCallFunc);
+    iocshRegister(&opcuaShowFuncDef, opcuaShowCallFunc);
 }
 
 extern "C" {
