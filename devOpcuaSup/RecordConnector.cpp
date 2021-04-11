@@ -188,13 +188,16 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
 RecordConnector *
 RecordConnector::findRecordConnector (const std::string &name)
 {
+    RecordConnector *result;
     DBENTRY entry;
     dbInitEntry(pdbbase, &entry);
     if (dbFindRecord(&entry, name.c_str())) {
         dbFinishEntry(&entry);
         return nullptr;
     }
-    return static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+    result = static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+    dbFinishEntry(&entry);
+    return result;
 }
 
 } // namespace DevOpcua
