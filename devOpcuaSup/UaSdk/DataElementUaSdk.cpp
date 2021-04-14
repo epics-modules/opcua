@@ -199,8 +199,9 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
     incomingData = value;
 
     if (isLeaf()) {
-        if ((pitem->state() == ConnectionStatus::initialRead && reason == ProcessReason::readComplete) ||
-                (pitem->state() == ConnectionStatus::up)) {
+        if ((pitem->state() == ConnectionStatus::initialRead
+             && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
+            || (pitem->state() == ConnectionStatus::up)) {
             Guard(pconnector->lock);
             bool wasFirst = false;
             // Make a copy of the value for this element and put it on the queue
