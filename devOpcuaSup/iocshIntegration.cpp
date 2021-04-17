@@ -20,6 +20,7 @@
 #include <epicsThread.h>
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
+#include "devOpcua.h"
 #include "iocshVariables.h"
 #include "linkParser.h"
 #include "Session.h"
@@ -332,12 +333,12 @@ static
         // Special case: only one arg => points to PKI root, use default structure
         if (args[0].sval != nullptr && args[1].sval == nullptr) {
             auto pki = std::string(args[0].sval);
-            if (pki.length() && pki.back() != '/')
-                pki.append("/");
-            Session::setupPKI(pki + "trusted/certs",
-                              pki + "trusted/crl",
-                              pki + "issuers/certs",
-                              pki + "issuers/crl");
+            if (pki.length() && pki.back() != pathsep)
+                pki.push_back(pathsep);
+            Session::setupPKI(pki + "trusted" + pathsep + "certs",
+                              pki + "trusted" + pathsep + "crl",
+                              pki + "issuers" + pathsep + "certs",
+                              pki + "issuers" + pathsep + "crl");
         } else {
             bool ok = true;
             for (unsigned i = 0; i < 4; i++) {

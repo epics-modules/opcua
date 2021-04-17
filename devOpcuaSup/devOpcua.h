@@ -194,6 +194,12 @@ typedef std::unique_ptr<linkInfo> (*linkParserFunc)(dbCommon*, DBEntry&);
  */
 const std::string &opcuaGetDriverName();
 
+#if defined(_WIN32)
+const char pathsep = '\\';
+#else
+const char pathsep = '/';
+#endif
+
 } // namespace DevOpcua
 
 #endif // DEVOPCUA_H

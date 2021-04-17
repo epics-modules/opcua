@@ -54,10 +54,10 @@ isWritable(const std::string &dir)
     bool writable = false;
 
     std::string testfile = dir;
-    if (testfile.back() == '/')
+    if (testfile.back() == pathsep)
         testfile.pop_back();
 
-    size_t pos = uniqname.find_last_of('/');
+    size_t pos = uniqname.find_last_of(pathsep);
     testfile.append(uniqname, pos, uniqname.length() - pos);
 
     std::ofstream file(testfile);
@@ -68,6 +68,7 @@ isWritable(const std::string &dir)
     }
     return writable;
 }
+
 Session *
 Session::createSession(const std::string &name,
                        const std::string &url,
