@@ -207,9 +207,6 @@ Session::saveRejected(const std::string &location)
         securitySaveRejectedDir = location;
         if (securitySaveRejectedDir.back() == '/')
             securitySaveRejectedDir.pop_back();
-    } else {
-        if (iocname.length())
-            securitySaveRejectedDir = "/tmp/" + iocname + "@" + hostname;
     }
 }
 

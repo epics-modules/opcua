@@ -233,8 +233,15 @@ protected:
 
         applicationUri = "urn:" + iocname + "@" + hostname + ":EPICS:IOC";
 
-        if (securitySaveRejectedDir.empty())
-            securitySaveRejectedDir = "/tmp/" + iocname + "@" + hostname;
+        if (securitySaveRejectedDir.empty()) {
+#if defined(_WIN32)
+            std::string tempdir(getenv("LOCALAPPDATA"));
+            std::string basedir = tempdir + "\\OPC_UA\\";
+#else
+            std::string basedir("/tmp/");
+#endif
+            securitySaveRejectedDir = basedir + iocname + "@" + hostname;
+        }
 
     }
 
