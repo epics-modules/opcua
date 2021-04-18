@@ -15,6 +15,11 @@
 #include <string.h>
 #include <stdexcept>
 
+#if defined(_WIN32)
+#include <cstdlib>
+#include <regex>
+#endif
+
 #include <iocsh.h>
 #include <errlog.h>
 #include <epicsThread.h>
@@ -66,6 +71,28 @@ epicsExportAddress(int, opcua_MinimumClientQueueSize);
 namespace {
 
 using namespace DevOpcua;
+
+// Create a std::string from a C string.
+// On Windows: replacing any %varname%
+//             with the value of the environment variable varname if it exists
+static std::string
+replaceEnvVars(const char *path)
+{
+    std::string result(path);
+#if defined(_WIN32)
+    std::string s(path);
+    std::regex e("%([^ ]+)%"); // env var in Windows notation (e.g. %AppData%)
+    std::smatch m;
+
+    while (std::regex_search(s, m, e)) {
+        char *v = std::getenv(m.str(1).c_str());
+        if (v)
+            result.replace(result.find(m.str(0)), m.str(0).length(), v);
+        s = m.suffix().str();
+    }
+#endif
+    return result;
+}
 
 static const iocshArg opcuaCreateSessionArg0 = {"session name", iocshArgString};
 static const iocshArg opcuaCreateSessionArg1 = {"server URL", iocshArgString};
@@ -309,7 +336,8 @@ static
         }
 
         if (ok)
-            Session::setClientCertificate(args[0].sval, args[1].sval);
+            Session::setClientCertificate(replaceEnvVars(args[0].sval),
+                                          replaceEnvVars(args[1].sval));
     }
     catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
@@ -332,7 +360,7 @@ static
     try {
         // Special case: only one arg => points to PKI root, use default structure
         if (args[0].sval != nullptr && args[1].sval == nullptr) {
-            auto pki = std::string(args[0].sval);
+            std::string pki(replaceEnvVars(args[0].sval));
             if (pki.length() && pki.back() != pathsep)
                 pki.push_back(pathsep);
             Session::setupPKI(pki + "trusted" + pathsep + "certs",
@@ -347,8 +375,12 @@ static
                     ok = false;
                 }
             }
-            if (ok)
-                Session::setupPKI(args[0].sval, args[1].sval, args[2].sval,args[3].sval);
+            if (ok) {
+                Session::setupPKI(replaceEnvVars(args[0].sval),
+                                  replaceEnvVars(args[1].sval),
+                                  replaceEnvVars(args[2].sval),
+                                  replaceEnvVars(args[3].sval));
+            }
         }
     }
     catch (std::exception &e) {
@@ -369,7 +401,7 @@ static
         if (args[0].sval == nullptr || args[0].sval[0] == '\0')
             Session::saveRejected();
         else
-            Session::saveRejected(args[0].sval);
+            Session::saveRejected(replaceEnvVars(args[0].sval));
     }
     catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
