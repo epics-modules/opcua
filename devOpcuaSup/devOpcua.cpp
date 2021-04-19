@@ -185,15 +185,15 @@ useReadValue (RecordConnector *pcon) {
 // helper: manage status and bini behavior
 
 inline void
-manageStateAndBiniProcessing (RecordConnector *pcon) {
-    if (pcon->state() == ConnectionStatus::initialRead &&
-            pcon->reason == ProcessReason::readComplete) {
-        if (pcon->bini() == LinkOptionBini::write) {
+manageStateAndBiniProcessing(RecordConnector *pcon)
+{
+    if (pcon->state() == ConnectionStatus::initialRead) {
+        if (pcon->reason == ProcessReason::readComplete && pcon->bini() == LinkOptionBini::write) {
             if (pcon->plinkinfo->linkedToItem) {
                 pcon->setState(ConnectionStatus::initialWrite);
             }
             pcon->requestRecordProcessing(ProcessReason::writeRequest);
-        } else {
+        } else if (pcon->reason == ProcessReason::readComplete || pcon->reason == ProcessReason::readFailure) {
             pcon->setState(ConnectionStatus::up);
         }
     }
