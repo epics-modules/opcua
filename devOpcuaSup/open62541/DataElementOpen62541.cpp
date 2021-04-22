@@ -344,13 +344,13 @@ DataElementOpen62541::getOutgoingData ()
         UA_Variant_copy(&incomingData, &outgoingData);
         isdirty = false;
         const UA_DataType *type = outgoingData.type;
-        char* container = static_cast<char*>(outgoingData.data);
+        void* container = outgoingData.data;
         if (type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content decoded extension objects
                 type = extensionObject.content.decoded.type;
-                container = static_cast<char*>(extensionObject.content.decoded.data);
+                container = extensionObject.content.decoded.data;
             } else {
                 std::cerr << "Item " << pitem->getNodeId() << " is not decoded" << std::endl;
                 return outgoingData;
