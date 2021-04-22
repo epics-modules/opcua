@@ -281,33 +281,6 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
 }
 
 // Helper to update one data structure element from pointer to child
-/*
-bool
-DataElementOpen62541::updateDataInGenericValue (UaGenericStructureValue &value,
-                                            const int index,
-                                            std::shared_ptr<DataElementOpen62541> pelem)
-{
-    bool updated = false;
-    { // Scope of Guard G
-        Guard G(pelem->outgoingLock);
-        if (pelem->isDirty()) {
-            value.setField(index, pelem->getOutgoingData());
-            pelem->isdirty = false;
-            updated = true;
-        }
-    }
-    if (debug() >= 4) {
-        if (updated) {
-            std::cout << "Data from child element " << pelem->name
-                      << " inserted into data structure" << std::endl;
-        } else {
-            std::cout << "Data from child element " << pelem->name
-                      << " ignored (not dirty)" << std::endl;
-        }
-    }
-    return updated;
-}
-*/
 bool
 DataElementOpen62541::updateDataInStruct (void* container,
                                           const int index,
