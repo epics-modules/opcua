@@ -396,7 +396,6 @@ DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
                       << " time " << time_buf << ") read " << processReasonString(reason) << " ("
                       << UA_StatusCode_name(upd->getStatus()) << ") "
                       << data
-                      << " (" << variantTypeString(data) << ")"
                       << " as " << targetTypeName;
             if (targetSize)
                 std::cout << "[" << targetSize << "]";

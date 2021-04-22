@@ -50,7 +50,7 @@ inline const char *epicsTypeString (const char* &) { return "epicsString"; }
 inline const char *
 variantTypeString (const UA_DataType *type)
 {
-    return type->typeName;
+    return type ? type->typeName : "Null";
 }
 
 inline const char *
