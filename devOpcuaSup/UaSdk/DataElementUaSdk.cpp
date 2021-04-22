@@ -67,7 +67,7 @@ DataElementUaSdk::addElementToTree(ItemUaSdk *item,
                                    RecordConnector *pconnector,
                                    const std::list<std::string> &elementPath)
 {
-    std::string name("");
+    std::string name("[ROOT]");
     if (elementPath.size())
         name = elementPath.back();
 
@@ -109,8 +109,9 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
     incomingData = value;
 
     if (isLeaf()) {
-        if ((pitem->state() == ConnectionStatus::initialRead && reason == ProcessReason::readComplete) ||
-                (pitem->state() == ConnectionStatus::up)) {
+        if ((pitem->state() == ConnectionStatus::initialRead
+             && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
+            || (pitem->state() == ConnectionStatus::up)) {
             Guard(pconnector->lock);
             bool wasFirst = false;
             // Make a copy of the value for this element and put it on the queue
@@ -196,6 +197,10 @@ DataElementUaSdk::setIncomingEvent (ProcessReason reason)
         for (auto &it : elements) {
             auto pelem = it.lock();
             pelem->setIncomingEvent(reason);
+        }
+        if (reason == ProcessReason::connectionLoss) {
+            elementMap.clear();
+            mapped = false;
         }
     }
 }
