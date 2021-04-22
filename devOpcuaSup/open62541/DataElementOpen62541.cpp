@@ -66,7 +66,7 @@ DataElementOpen62541::addElementToTree(ItemOpen62541 *item,
                                        RecordConnector *pconnector,
                                        const std::list<std::string> &elementPath)
 {
-    std::string name("");
+    std::string name("[ROOT]");
     if (elementPath.size())
         name = elementPath.back();
 
