@@ -41,10 +41,7 @@ OPCUA = $(TOP)/..
 
 # Inside an embedded TOP, use the following definitions
 # pointing to the configuration of the parent module
--include $(TOP)/../../RELEASE.local
--include $(TOP)/../../configure/RELEASE.local
--include $(TOP)/../configure/RELEASE.local
--include $(TOP)/configure/RELEASE.local
+-include $(OPCUA)/configure/RELEASE
 
 # Inside a standalone TOP, use the following definitions instead
 #-include $(TOP)/../RELEASE.local
