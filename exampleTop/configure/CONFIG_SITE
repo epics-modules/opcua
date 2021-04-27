@@ -62,8 +62,6 @@ USR_CXXFLAGS_Linux += -std=c++11
 -include $(TOP)/../../configure/CONFIG_SITE.local
 -include $(TOP)/../configure/CONFIG_SITE.local
 -include $(TOP)/configure/CONFIG_SITE.local
-# This not the Device Support, but an example using it
-OPCUA_DEVICE_SUPPORT=
 
 # Inside a standalone TOP, use the following definitions instead
 #-include $(TOP)/../CONFIG_SITE.local

@@ -84,10 +84,7 @@ include $(TOP)/configure/RULES
 #  ADD RULES AFTER THIS LINE
 
 ifdef UASDK
-ifndef UASDK_MODULES
 include $(OPCUA)/UaSdk/RULES_OPCUA
-endif
-include $(OPCUA)/UaSdk/RULES_UASDK
 endif
 
 # Can't use EXPAND as generated headers must appear

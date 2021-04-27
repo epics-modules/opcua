@@ -12,25 +12,11 @@
 #==================================================
 # Unified Automation SDK libraries
 
-# The OPC UA Device Support module itself needs some special treatment
-# and sets OPCUA_DEVICE_SUPPORT to indicate that
-
-ifneq ($(OPCUA_DEVICE_SUPPORT),)
-  OPCUA_NEEDS_INCLUDES=1
-else
-  ifneq ($(UASDK_DEPLOY_MODE),EMBED)
-  OPCUA_NEEDS_INCLUDES=1
-  endif
-endif
-
-# UASDK settings that have to be done after the overrides
-UASDK_MODULES = uaclient uapki uabase uastack
-ifeq ($(UASDK_USE_XMLPARSER),YES)
-UASDK_MODULES += xmlparser
-USR_SYS_LIBS_Linux += xml2
-endif
-ifeq ($(UASDK_USE_CRYPTO),YES)
-USR_SYS_LIBS_Linux += crypto
+# repeated as in CONFIG_OPCUA because in this case we do *not* want
+# these definitions for users but they are still neeeded internally
+ifeq ($(UASDK_DEPLOY_MODE),EMBED)
+UASDK_LIBS = $(notdir $(wildcard $(foreach module, $(UASDK_MODULES), \
+    $(UASDK)/include/$(module) $(UASDK)/include/$(module)cpp)))
 endif
 
 # Debug builds need the d-marker to be set
@@ -43,12 +29,10 @@ $(firstword $(wildcard $(UASDK)/include/$(module)cpp \
 $(UASDK)/include/$(module)))))
 UASDK_LIBS = $(addsuffix $(D_MARKER), $(UASDK_MODS))
 
-ifdef OPCUA_NEEDS_INCLUDES
 USR_INCLUDES += -I$(UASDK)/include
 USR_INCLUDES += $(foreach lib, $(UASDK_MODS),-I$(UASDK)/include/$(lib))
 # SDK libraries are not built with correct RUNPATH - rely on executable
 USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
-endif
 
 ifeq ($(UASDK_DEPLOY_MODE),SYSTEM)
 USR_SYS_LIBS += $(UASDK_LIBS)
@@ -60,7 +44,6 @@ $(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
 endif
 
 # Embed the SDK libraries in libopcua.so
-ifdef OPCUA_DEVICE_SUPPORT
 ifeq ($(UASDK_DEPLOY_MODE),EMBED)
 ifeq ($(LIBRARY_IOC),opcua)
 USR_LDFLAGS += -L$(UASDK_DIR)
@@ -75,13 +58,12 @@ USR_LIBS += $(UASDK_LIBS)
 $(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
 endif
 endif
-endif
 
 ifeq ($(UASDK_DEPLOY_MODE),INSTALL)
+$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
 USR_LIBS += $(UASDK_LIBS)
 
 # Installing the SDK libraries in the Device Support module
-ifneq ($(OPCUA_DEVICE_SUPPORT),)
 EXTLIB_INSTALLS += $(addprefix $(INSTALL_LIB)/, \
     $(notdir $(wildcard $(foreach lib, $(UASDK_LIBS), \
     $(UASDK_DIR)/$(LIB_PREFIX)$(lib)$(LIB_SUFFIX) ))))
@@ -100,5 +82,4 @@ $(INSTALL_LIB)/$(LIB_PREFIX)%$(LIB_SUFFIX) : $(UASDK_DIR)/$(LIB_PREFIX)%$(LIB_SU
 $(INSTALL_LIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX) : $(UASDK_DIR)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX)
 	$(ECHO) "Installing shared library $@ from Unified Automation SDK"
 	$(INSTALL) -d -m 555 $< $(@D)
-endif
 endif
