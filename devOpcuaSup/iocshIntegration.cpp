@@ -250,6 +250,9 @@ static const iocshFuncDef opcuaShowSessionFuncDef = {"opcuaShowSession", 2, opcu
 static
 void opcuaShowSessionCallFunc (const iocshArgBuf *args)
 {
+    std::cerr << "DEPRECATION WARNING: opcuaShowSession is obsolete; use the improved opcuaShow "
+                 "command instead (that supports glob patterns)."
+              << std::endl;
     try {
         if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
             Session::showAll(args[1].ival);
@@ -431,6 +434,10 @@ static const iocshFuncDef opcuaShowSubscriptionFuncDef = {"opcuaShowSubscription
 static
 void opcuaShowSubscriptionCallFunc (const iocshArgBuf *args)
 {
+    std::cerr
+        << "DEPRECATION WARNING: opcuaShowSubscription is obsolete; use the improved opcuaShow "
+           "command instead (that supports glob patterns)."
+        << std::endl;
     try {
         if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
             Subscription::showAll(args[1].ival);
@@ -474,6 +481,9 @@ static const iocshFuncDef opcuaShowDataFuncDef = {"opcuaShowData", 2, opcuaShowD
 static
 void opcuaShowDataCallFunc (const iocshArgBuf *args)
 {
+    std::cerr << "DEPRECATION WARNING: opcuaShowData is obsolete; use the improved opcuaShow "
+                 "command instead (that supports glob patterns)."
+              << std::endl;
     try {
         if (args[0].sval == NULL || args[0].sval[0] == '\0') {
             errlogPrintf("missing argument #1 (record name)\n");
