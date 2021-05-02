@@ -17,11 +17,13 @@
 #include <algorithm>
 #include <vector>
 #include <memory>
+#include <set>
 
 #include <uabase.h>
 #include <uaclientsdk.h>
 #include <uasession.h>
 
+#include <epicsString.h>
 #include <epicsMutex.h>
 #include <epicsTypes.h>
 #include <initHooks.h>
@@ -165,6 +167,12 @@ public:
     find(const std::string &name)
     {
         return sessions.find(name);
+    }
+
+    static std::set<Session *>
+    glob(const std::string &pattern)
+    {
+        return sessions.glob<Session>(pattern);
     }
 
     /**

@@ -17,6 +17,7 @@
 #include <memory>
 #include <cstddef>
 #include <iostream>
+#include <set>
 
 #include <epicsMutex.h>
 #include <dbCommon.h>
@@ -112,9 +113,17 @@ public:
      * @brief Find record connector by record name.
      *
      * @param name  record name
-     * @return record connector (nullptr if record not found)
+     * @return pointer to record connector (nullptr if record not found)
      */
     static RecordConnector *findRecordConnector(const std::string &name);
+
+    /**
+     * @brief Find record connector with record names matching a glob pattern.
+     *
+     * @param pattern  record name pattern to match
+     * @return set of record connector pointers
+     */
+    static std::set<RecordConnector *> glob(const std::string &pattern);
 
     epicsMutex lock;
     std::unique_ptr<linkInfo> plinkinfo;

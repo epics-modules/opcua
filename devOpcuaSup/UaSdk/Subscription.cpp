@@ -44,6 +44,12 @@ Subscription::find (const std::string &name)
     return SubscriptionUaSdk::find(name);
 }
 
+std::set<Subscription *>
+Subscription::glob(const std::string &pattern)
+{
+    return SubscriptionUaSdk::glob(pattern);
+}
+
 void
 Subscription::showAll (const int level)
 {
