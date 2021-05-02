@@ -21,7 +21,10 @@ namespace {
 using namespace DevOpcua;
 using namespace testing;
 
-class TestObject
+class TestBase
+{};
+
+class TestObject : public TestBase
 {
 public:
     TestObject(unsigned int val)
@@ -110,6 +113,50 @@ TEST_F(RegistryTest, contains_mixed_returnValuesCorrect)
     EXPECT_EQ(r0.contains("boo"), false) << "contains() is true for non-existing key";
     EXPECT_EQ(r0.contains("foo"), true) << "contains() is false for existing key 'foo'";
     EXPECT_EQ(r0.contains("bar"), true) << "contains() is false for existing key 'bar'";
+}
+
+TEST_F(RegistryTest, glob_fullmatch_EntryIsReturned)
+{
+    r0.insert({"foo", &t0});
+    r0.insert({"bar", &t1});
+    r0.insert({"boo", &t2});
+    std::set<TestBase *> result = r0.glob<TestBase>("bar");
+    EXPECT_EQ(result.size(), 1u) << "glob match 'bar' doesn't return single object";
+    auto it = result.begin();
+    EXPECT_EQ(*it, &t1) << "glob match 'bar' returns wrong object";
+}
+
+TEST_F(RegistryTest, glob_nomatch_EmptySetReturned)
+{
+    r0.insert({"foo", &t0});
+    r0.insert({"bar", &t1});
+    r0.insert({"boo", &t2});
+    std::set<TestBase *> result = r0.glob<TestBase>("xyz");
+    EXPECT_EQ(result.size(), 0u) << "glob match 'xyz' doesn't return empty set";
+}
+
+TEST_F(RegistryTest, glob_match2qmark_CorrectEntriesReturned)
+{
+    r0.insert({"foo", &t0});
+    r0.insert({"bar", &t1});
+    r0.insert({"boo", &t2});
+    std::set<TestBase *> result = r0.glob<TestBase>("?oo");
+    EXPECT_EQ(result.size(), 2u) << "glob match '?oo' doesn't return two objects";
+    auto it = result.begin();
+    EXPECT_EQ(*it++, &t0) << "glob match '?oo' deosn't return 'foo' as 1st object";
+    EXPECT_EQ(*it++, &t2) << "glob match '?oo' deosn't return 'boo' as 2nd object";
+}
+
+TEST_F(RegistryTest, glob_match2asterisk_CorrectEntriesReturned)
+{
+    r0.insert({"foo", &t0});
+    r0.insert({"bar", &t1});
+    r0.insert({"boo", &t2});
+    std::set<TestBase *> result = r0.glob<TestBase>("b*");
+    EXPECT_EQ(result.size(), 2u) << "glob match 'b*' doesn't return two objects";
+    auto it = result.begin();
+    EXPECT_EQ(*it++, &t1) << "glob match 'b*' deosn't return 'bar' as 1st object";
+    EXPECT_EQ(*it++, &t2) << "glob match 'b*' deosn't return 'boo' as 2nd object";
 }
 
 // Fixture for testing two Registries plus RegistryKeyNamespace (meta namespace watcher)

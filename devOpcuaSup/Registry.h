@@ -17,6 +17,7 @@
 
 #include <epicsMutex.h>
 #include <epicsGuard.h>
+#include <epicsString.h>
 
 namespace DevOpcua {
 
@@ -119,6 +120,27 @@ public:
     contains(const std::string &name)
     {
         return !!find(name);
+    }
+
+    /**
+     * @brief Return objects with names matching a glob pattern.
+     *
+     * Template parameter B is the base class of T that will be used
+     * in the returned set.
+     *
+     * @param pattern  name pattern to match
+     *
+     * @return  vector of pointers to matching objects
+     */
+    template<class B>
+    std::set<B *> glob(const std::string &pattern)
+    {
+        std::set<B *> result;
+        for (auto &it : registry) {
+            if (epicsStrGlobMatch(it.first.c_str(), pattern.c_str()))
+                result.insert(static_cast<B *>(it.second));
+        }
+        return result;
     }
 
     // STL standards: size() and iterators
