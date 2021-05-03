@@ -56,6 +56,12 @@ Session::find(const std::string &name)
     return SessionUaSdk::find(name);
 }
 
+std::set<Session *>
+Session::glob(const std::string &pattern)
+{
+    return SessionUaSdk::glob(pattern);
+}
+
 void
 Session::showAll (const int level)
 {
