@@ -289,8 +289,11 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
 
 // Low level reader function called by the RequestQueueBatcher
 void
-SessionUaSdk::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
+SessionUaSdk::processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
+    if (!isConnected())
+        return;
+
     UaStatus status;
     UaReadValueIds nodesToRead;
     std::unique_ptr<std::vector<ItemUaSdk *>> itemsToRead(new std::vector<ItemUaSdk *>);
@@ -306,29 +309,29 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
         i++;
     }
 
-    if (isConnected()) {
-        Guard G(opslock);
-        status = puasession->beginRead(serviceSettings,                // Use default settings
-                                       0,                              // Max age
-                                       OpcUa_TimestampsToReturn_Both,  // Time stamps to return
-                                       nodesToRead,                    // Array of nodes to read
-                                       id);                            // Transaction id
+    Guard G(opslock);
+    status = puasession->beginRead(serviceSettings,               // Use default settings
+                                   0,                             // Max age
+                                   OpcUa_TimestampsToReturn_Both, // Time stamps to return
+                                   nodesToRead,                   // Array of nodes to read
+                                   id);                           // Transaction id
 
-	    if (status.isBad()) {
-	        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
-	                     name.c_str(), status.toString().toUtf8());
-            //TODO: create writeFailure events for all items of the batch
-//	        item.setIncomingEvent(ProcessReason::readFailure);
+    if (status.isBad()) {
+        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
+                     name.c_str(),
+                     status.toString().toUtf8());
+        //TODO: create writeFailure events for all items of the batch
+        //	        item.setIncomingEvent(ProcessReason::readFailure);
 
-        } else {
-            if (debug >= 5)
-                std::cout << "Session " << name.c_str()
-                          << ": (requestRead) beginRead service ok"
-                          << " (transaction id " << id
-                          << "; retrieving " << nodesToRead.length() << " nodes)" << std::endl;
-            outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
-                                  (id, std::move(itemsToRead)));
-        }
+    } else {
+        if (debug >= 5)
+            std::cout << "Session " << name.c_str() << ": (requestRead) beginRead service ok"
+                      << " (transaction id " << id << "; retrieving " << nodesToRead.length()
+                      << " nodes)" << std::endl;
+        outstandingOps.insert(
+            std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>(id,
+                                                                               std::move(
+                                                                                   itemsToRead)));
     }
 }
 
@@ -344,8 +347,11 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
 
 // Low level writer function called by the RequestQueueBatcher
 void
-SessionUaSdk::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch)
+SessionUaSdk::processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
+    if (!isConnected())
+        return;
+
     UaStatus status;
     UaWriteValues nodesToWrite;
     std::unique_ptr<std::vector<ItemUaSdk *>> itemsToWrite(new std::vector<ItemUaSdk *>);
@@ -362,27 +368,27 @@ SessionUaSdk::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch
         i++;
     }
 
-    if (isConnected()) {
-        Guard G(opslock);
-        status = puasession->beginWrite(serviceSettings,        // Use default settings
-                                        nodesToWrite,           // Array of nodes/data to write
-                                        id);                    // Transaction id
+    Guard G(opslock);
+    status = puasession->beginWrite(serviceSettings, // Use default settings
+                                    nodesToWrite,    // Array of nodes/data to write
+                                    id);             // Transaction id
 
-	    if (status.isBad()) {
-	        errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
-	                     name.c_str(), status.toString().toUtf8());
-            //TODO: create writeFailure events for all items of the batch
-//	        item.setIncomingEvent(ProcessReason::writeFailure);
+    if (status.isBad()) {
+        errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
+                     name.c_str(),
+                     status.toString().toUtf8());
+        //TODO: create writeFailure events for all items of the batch
+        //	        item.setIncomingEvent(ProcessReason::writeFailure);
 
-        } else {
-            if (debug >= 5)
-                std::cout << "Session " << name.c_str()
-                          << ": (requestWrite) beginWrite service ok"
-                          << " (transaction id " << id
-                          << "; writing " << nodesToWrite.length() << " nodes)" << std::endl;
-            outstandingOps.insert(std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>
-                                  (id, std::move(itemsToWrite)));
-        }
+    } else {
+        if (debug >= 5)
+            std::cout << "Session " << name.c_str() << ": (requestWrite) beginWrite service ok"
+                      << " (transaction id " << id << "; writing " << nodesToWrite.length()
+                      << " nodes)" << std::endl;
+        outstandingOps.insert(
+            std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>(id,
+                                                                               std::move(
+                                                                                   itemsToWrite)));
     }
 }
 
