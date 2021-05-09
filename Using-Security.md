@@ -110,21 +110,23 @@ To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<pri
 
 ## Managing Certificates
 
-The underlying openssl library provides a command line utility.
+The underlying OpenSSL library provides a command line utility.
 
 For managing a larger number of certificates, [Xca](https://hohnstaedt.de/xca/) is a powerful and popular GUI for X.509 certificate and key management, including certificate authority (CA) functionality, which is the most efficient way to manage the certificates for a larger installation.
 
 The `openssl` command line utility can be used to convert certificates (and keys) between formats. To convert certificate `<cert>`  from DER to PEM format, use:
 
 ```bash
-openssl x509 -inform der -in <cert>.der -out <cert>.crt
+openssl x509 -inform der -in <cert>.der -out <cert>.pem
 ```
 
 To convert in the other direction, use:
 
 ```bash
-openssl x509 -in <cert>.crt -outform der -out <cert>.der
+openssl x509 -in <cert>.pem -outform der -out <cert>.der
 ```
+
+The UA SDK client and the underlying OpenSSL library are picky in terms of file name extensions. DER format requires certificates to carry a `.der` extension and revocation lists to be named `.crl`, while PEM format works only if files have a `.pem` extension. Otherwise you may experience unspecific `Bad` status errors.
 
 ### Creating Application Instance Certificates
 
