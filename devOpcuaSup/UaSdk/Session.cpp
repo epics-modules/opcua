@@ -139,7 +139,7 @@ Session::showClientSecurity()
                   << "\n  Certificate file: " << securityClientCertificateFile
                   << "\n  Private key file: " << securityClientPrivateKeyFile;
     } else {
-        std::cout << "\nNo client cerificate loaded.";
+        std::cout << "\nNo client certificate loaded.";
     }
     std::cout << "\nSupported security policies: ";
     for (const auto &p : securitySupportedPolicies)

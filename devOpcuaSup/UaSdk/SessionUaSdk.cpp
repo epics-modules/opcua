@@ -773,36 +773,39 @@ SessionUaSdk::setupSecurity ()
                 UaPkiIdentity id = cert.subject();
                 if (securityInfo.verifyServerCertificate().isBad()) {
                     if (securitySaveRejected) {
+                        UaDir dirHelper("");
+                        UaUniString rejectedDir(UaDir::fromNativeSeparators(securitySaveRejectedDir.c_str()));
                         bool save = true;
-                        struct stat info;
-                        if (stat(securitySaveRejectedDir.c_str(), &info) != 0) {
-                            UaDir dirHelper("");
-                            UaUniString usSaveRejectedDir(dirHelper.filePath(
-                                UaDir::fromNativeSeparators(securitySaveRejectedDir.c_str())));
-                            if (!dirHelper.mkpath(usSaveRejectedDir)) {
+                        if (!dirHelper.exists(rejectedDir)) {
+                            if (!dirHelper.mkpath(rejectedDir)) {
                                 std::cout << "Session " << name
                                           << ": (setupSecurity) cannot create directory for "
                                              "rejected certificates ("
-                                          << securitySaveRejectedDir << ")" << std::endl;
+                                          << UaString(rejectedDir.toUtf16()).toUtf8() << ")" << std::endl;
                                 save = false;
                             }
                         }
                         if (save) {
-                            UaString cleanCN(
+                            std::string cleanCN(
                                 replaceInvalidFilenameChars(id.commonName.toUtf8()).c_str());
                             UaString fileName = UaString("%1/%2 [%3].der")
                                                     .arg(securitySaveRejectedDir.c_str())
-                                                    .arg(cleanCN)
-                                                    .arg(cert.thumbPrint().toHex());
-                            int status = cert.toDERFile(fileName.toUtf8());
-                            if (status)
-                                std::cout << "Session " << name
-                                          << ": (setupSecurity) ERROR - cannot save rejected certificate as "
-                                          << fileName.toUtf8() << std::endl;
-                            else
-                                std::cout << "Session " << name
-                                          << ": (setupSecurity) saved rejected certificate as "
-                                          << fileName.toUtf8() << std::endl;
+                                                    .arg(cleanCN.c_str())
+                                                    .arg(cert.thumbPrint().toHex().toUtf8());
+                            UaUniString uniFileName(UaDir::fromNativeSeparators(fileName.toUtf16()));
+                            if (!dirHelper.exists(uniFileName)) {
+                                int status = cert.toDERFile(
+                                    UaDir::toNativeSeparators(uniFileName).toLocal8Bit());
+                                if (status)
+                                    std::cout << "Session " << name
+                                              << ": (setupSecurity) ERROR - cannot save rejected "
+                                                 "certificate as "
+                                              << fileName.toUtf8() << std::endl;
+                                else
+                                    std::cout << "Session " << name
+                                              << ": (setupSecurity) saved rejected certificate as "
+                                              << UaString(uniFileName.toUtf16()).toUtf8() << std::endl;
+                            }
                         }
                     }
                 } else {
