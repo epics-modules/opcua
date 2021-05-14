@@ -1,0 +1,69 @@
+# Database connecting to the UaServerCpp example server
+# that is part of all Unified Automation bundles
+
+# Dynamic part of the Demo server
+
+# records connecting to variables of different types
+
+record(longin, "$(P)$(R)lichar") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.SByte")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(longin, "$(P)$(R)liint16") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Int16")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(longin, "$(P)$(R)liint32") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Int32")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(longin, "$(P)$(R)liuchar") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Byte")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(longin, "$(P)$(R)liuint16") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.UInt16")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(longin, "$(P)$(R)liuint32") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.UInt32")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(ai, "$(P)$(R)aifloat") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Float")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(ai, "$(P)$(R)aidouble") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Double")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(stringin, "$(P)$(R)sistring") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}

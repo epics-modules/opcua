@@ -1,0 +1,42 @@
+# Database connecting to the UaServerCpp example server
+# that is part of all Unified Automation bundles
+
+# Dynamic part of the Demo server
+
+# int64/uint64 aai/aao records connecting to array variables
+
+# This database works only on EPICS 7 !!
+
+record(aai, "$(P)$(R)aaiint64") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Int64")
+    field(FTVL, "INT64")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaoint64") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Int64")
+    field(FTVL, "INT64")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}
+
+record(aai, "$(P)$(R)aaiuint64") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.UInt64")
+    field(FTVL, "UINT64")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaouint64") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.UInt64")
+    field(FTVL, "UINT64")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}

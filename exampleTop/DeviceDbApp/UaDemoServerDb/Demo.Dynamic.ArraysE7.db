@@ -1,0 +1,26 @@
+# Database connecting to the UaServerCpp example server
+# that is part of all Unified Automation bundles
+
+# Dynamic part of the Demo server
+
+# int64/uint64 waveform records connecting to array variables
+
+# This database works only on EPICS 7 !!
+
+record(waveform, "$(P)$(R)wfint64") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.Int64")
+    field(FTVL, "INT64")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wfuint64") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.UInt64")
+    field(FTVL, "UINT64")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}

@@ -1,0 +1,142 @@
+# Database connecting to the UaServerCpp example server
+# that is part of all Unified Automation bundles
+
+# Dynamic part of the Demo server
+
+# aai/aao records connecting to arrays of different types
+
+record(aai, "$(P)$(R)aaichar") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.SByte")
+    field(FTVL, "CHAR")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaochar") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.SByte")
+    field(FTVL, "CHAR")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}
+
+record(aai, "$(P)$(R)aaiint16") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Int16")
+    field(FTVL, "SHORT")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaoint16") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Int16")
+    field(FTVL, "SHORT")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}
+
+record(aai, "$(P)$(R)aaiint32") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Int32")
+    field(FTVL, "LONG")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaoint32") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Int32")
+    field(FTVL, "LONG")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}
+
+record(aai, "$(P)$(R)aaiuchar") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Byte")
+    field(FTVL, "UCHAR")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaouchar") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Byte")
+    field(FTVL, "UCHAR")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}
+
+record(aai, "$(P)$(R)aaiuint32") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.UInt32")
+    field(FTVL, "ULONG")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaouint32") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.UInt32")
+    field(FTVL, "ULONG")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}
+
+record(aai, "$(P)$(R)aaifloat") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Float")
+    field(FTVL, "FLOAT")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaofloat") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Float")
+    field(FTVL, "FLOAT")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}
+
+record(aai, "$(P)$(R)aaidouble") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Double")
+    field(FTVL, "DOUBLE")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaodouble") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Double")
+    field(FTVL, "DOUBLE")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}
+
+record(aai, "$(P)$(R)aaistring") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.String")
+    field(FTVL, "STRING")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(aao, "$(P)$(R)aaostring") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.String")
+    field(FTVL, "STRING")
+    field(NELM, "10")
+    field(TSE,  "-2")
+}

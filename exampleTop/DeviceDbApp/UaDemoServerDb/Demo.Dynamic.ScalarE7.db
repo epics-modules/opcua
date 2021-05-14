@@ -1,0 +1,22 @@
+# Database connecting to the UaServerCpp example server
+# that is part of all Unified Automation bundles
+
+# Dynamic part of the Demo server
+
+# int64 records connecting to variables of different types
+
+# This database works only on EPICS 7 !!
+
+record(int64in, "$(P)$(R)int64in") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Int64")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(int64in, "$(P)$(R)uint64in") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.UInt64")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
