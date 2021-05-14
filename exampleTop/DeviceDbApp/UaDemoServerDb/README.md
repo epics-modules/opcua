@@ -10,11 +10,25 @@ start the `uaservercpp` binary.
 
 ## Provided Variables
 
-Use a GUI client (`UaExpert` or similar) to browse the server.
+When developing, using a professional GUI client for OPC UA is strongly
+suggested.
+The free [UaExpert][uaexpert] tool from Unified Automation is a good choice.
 
-Under `Demo`, there are examples of all OPC UA dfeatures that the
+Use that GUI client to browse the server:
+Under `Demo`, there are examples of all OPC UA types and features that the
 Unified Automation stack supports. The example IOC connects to a number
 of selected variables.
+
+## OPC UA Security
+
+The example server supports all modes of OPC UA security and is a good
+way to check your certificate setup.
+
+The server's PKI file store is located under the `bin` subdirectory of
+the UA software bundle inside `pkiserver`.
+
+The PKI file store for verification of user authentication certificates
+is located under the same `bin` subdirectory inside `pkiuser`.
 
 ## OPC UA Device Support Documentation
 
@@ -41,4 +55,3 @@ in file LICENSE that is included with its distribution.
 [requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
 [cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
 [uaexpert]: https://www.unified-automation.com/products/development-tools/uaexpert.html
-[release_notes_1500]: https://support.industry.siemens.com/cs/document/109478459/firmware-update-s7-1500-cpus-incl-displays-and-et200-cpus-(et200sp-et200pro)?dti=0&lc=en-WW
