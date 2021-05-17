@@ -19,6 +19,7 @@
 #include <shareLib.h>
 #include <epicsString.h>
 #include <epicsThread.h>
+#include <osiSock.h> // needed before callback.h to get Windows definition of CALLBACK in
 #include <callback.h>
 #include <recSup.h>
 #include <recGbl.h>

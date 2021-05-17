@@ -16,11 +16,17 @@
 #include <string.h>
 #include <stdexcept>
 
+#if defined(_WIN32)
+#include <cstdlib>
+#include <regex>
+#endif
+
 #include <iocsh.h>
 #include <errlog.h>
 #include <epicsThread.h>
 
 #include <epicsExport.h>  // defines epicsExportSharedSymbols
+#include "devOpcua.h"
 #include "iocshVariables.h"
 #include "linkParser.h"
 #include "Session.h"
@@ -66,6 +72,28 @@ epicsExportAddress(int, opcua_MinimumClientQueueSize);
 namespace {
 
 using namespace DevOpcua;
+
+// Create a std::string from a C string.
+// On Windows: replacing any %varname%
+//             with the value of the environment variable varname if it exists
+static std::string
+replaceEnvVars(const char *path)
+{
+    std::string result(path);
+#if defined(_WIN32)
+    std::string s(path);
+    std::regex e("%([^ ]+)%"); // env var in Windows notation (e.g. %AppData%)
+    std::smatch m;
+
+    while (std::regex_search(s, m, e)) {
+        char *v = std::getenv(m.str(1).c_str());
+        if (v)
+            result.replace(result.find(m.str(0)), m.str(0).length(), v);
+        s = m.suffix().str();
+    }
+#endif
+    return result;
+}
 
 static const iocshArg opcuaCreateSessionArg0 = {"session name", iocshArgString};
 static const iocshArg opcuaCreateSessionArg1 = {"server URL", iocshArgString};
@@ -262,6 +290,124 @@ void opcuaShowSessionCallFunc (const iocshArgBuf *args)
                 s->show(args[1].ival);
         }
     } catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
+static const iocshArg opcuaShowSecurityArg0 = {"session name [\"\"=client]", iocshArgString};
+
+static const iocshArg *const opcuaShowSecurityArg[1] = {&opcuaShowSecurityArg0};
+
+static const iocshFuncDef opcuaShowSecurityFuncDef = {"opcuaShowSecurity", 1, opcuaShowSecurityArg};
+
+static
+void opcuaShowSecurityCallFunc (const iocshArgBuf *args)
+{
+    try {
+        if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
+            Session::showClientSecurity();
+        } else {
+            Session *s = Session::find(args[0].sval);
+            if (s)
+                s->showSecurity();
+        }
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
+static const iocshArg opcuaClientCertificateArg0 = {"certificate (public key) file", iocshArgString};
+static const iocshArg opcuaClientCertificateArg1 = {"private key file", iocshArgString};
+
+static const iocshArg *const opcuaClientCertificateArg[2] = {&opcuaClientCertificateArg0, &opcuaClientCertificateArg1};
+
+static const iocshFuncDef opcuaClientCertificateFuncDef = {"opcuaClientCertificate", 2, opcuaClientCertificateArg};
+
+static
+    void opcuaClientCertificateCallFunc (const iocshArgBuf *args)
+{
+    try {
+        bool ok = true;
+
+        if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
+            errlogPrintf("missing argument #1 (certificate file)\n");
+            ok = false;
+        }
+        if (args[1].sval == nullptr || args[1].sval[0] == '\0') {
+            errlogPrintf("missing argument #2 (private key file)\n");
+            ok = false;
+        }
+
+        if (ok)
+            Session::setClientCertificate(replaceEnvVars(args[0].sval),
+                                          replaceEnvVars(args[1].sval));
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
+static const iocshArg opcuaSetupPKIArg0 = {"PKI / server certs location", iocshArgString};
+static const iocshArg opcuaSetupPKIArg1 = {"server revocation lists location", iocshArgString};
+static const iocshArg opcuaSetupPKIArg2 = {"issuer certs location", iocshArgString};
+static const iocshArg opcuaSetupPKIArg3 = {"issuer revocation lists location", iocshArgString};
+
+static const iocshArg *const opcuaSetupPKIArg[4] = {&opcuaSetupPKIArg0, &opcuaSetupPKIArg1,
+                                                    &opcuaSetupPKIArg2, &opcuaSetupPKIArg3};
+
+static const iocshFuncDef opcuaSetupPKIFuncDef = {"opcuaSetupPKI", 4, opcuaSetupPKIArg};
+
+static
+    void opcuaSetupPKICallFunc (const iocshArgBuf *args)
+{
+    try {
+        // Special case: only one arg => points to PKI root, use default structure
+        if (args[0].sval != nullptr && args[1].sval == nullptr) {
+            std::string pki(replaceEnvVars(args[0].sval));
+            if (pki.length() && pki.back() != pathsep)
+                pki.push_back(pathsep);
+            Session::setupPKI(pki + "trusted" + pathsep + "certs",
+                              pki + "trusted" + pathsep + "crl",
+                              pki + "issuers" + pathsep + "certs",
+                              pki + "issuers" + pathsep + "crl");
+        } else {
+            bool ok = true;
+            for (unsigned i = 0; i < 4; i++) {
+                if (args[i].sval == nullptr || args[i].sval[0] == '\0') {
+                    errlogPrintf("missing argument #%d - %s\n", i+1, opcuaSetupPKIArg[i]->name);
+                    ok = false;
+                }
+            }
+            if (ok) {
+                Session::setupPKI(replaceEnvVars(args[0].sval),
+                                  replaceEnvVars(args[1].sval),
+                                  replaceEnvVars(args[2].sval),
+                                  replaceEnvVars(args[3].sval));
+            }
+        }
+    }
+    catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
+static const iocshArg opcuaSaveRejectedArg0 = {"location for saving rejected certs", iocshArgString};
+
+static const iocshArg *const opcuaSaveRejectedArg[1] = {&opcuaSaveRejectedArg0};
+
+static const iocshFuncDef opcuaSaveRejectedFuncDef = {"opcuaSaveRejected", 1, opcuaSaveRejectedArg};
+
+static
+    void opcuaSaveRejectedCallFunc (const iocshArgBuf *args)
+{
+    try {
+        if (args[0].sval == nullptr || args[0].sval[0] == '\0')
+            Session::saveRejected();
+        else
+            Session::saveRejected(replaceEnvVars(args[0].sval));
+    }
+    catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
     }
 }
@@ -553,6 +699,10 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaConnectFuncDef, opcuaConnectCallFunc);
     iocshRegister(&opcuaDisconnectFuncDef, opcuaDisconnectCallFunc);
     iocshRegister(&opcuaShowSessionFuncDef, opcuaShowSessionCallFunc);
+    iocshRegister(&opcuaShowSecurityFuncDef, opcuaShowSecurityCallFunc);
+    iocshRegister(&opcuaClientCertificateFuncDef, opcuaClientCertificateCallFunc);
+    iocshRegister(&opcuaSetupPKIFuncDef, opcuaSetupPKICallFunc);
+    iocshRegister(&opcuaSaveRejectedFuncDef, opcuaSaveRejectedCallFunc);
     iocshRegister(&opcuaDebugSessionFuncDef, opcuaDebugSessionCallFunc);
 
     iocshRegister(&opcuaCreateSubscriptionFuncDef, opcuaCreateSubscriptionCallFunc);

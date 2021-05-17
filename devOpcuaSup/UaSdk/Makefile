@@ -18,6 +18,10 @@ SRC_DIRS += $(OPCUA)/UaSdk
 USR_INCLUDES += -I$(OPCUA)/UaSdk
 USR_DBDFLAGS += -I $(OPCUA)/UaSdk
 
+ifeq ($(UASDK_USE_CRYPTO),YES)
+USR_CXXFLAGS += -DHAS_SECURITY
+endif
+
 opcua_SRCS += Session.cpp
 opcua_SRCS += SessionUaSdk.cpp
 opcua_SRCS += Subscription.cpp
