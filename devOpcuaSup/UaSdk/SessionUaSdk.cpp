@@ -281,7 +281,7 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
 }
 
 long
-SessionUaSdk::connect()
+SessionUaSdk::connect(bool manual)
 {
     if (!puasession) {
         std::cerr << "Session " << name.c_str() << ": invalid session, cannot connect" << std::endl;
@@ -289,7 +289,7 @@ SessionUaSdk::connect()
     }
 
     if (isConnected()) {
-        if (debug)
+        if (debug || manual)
             std::cerr << "Session " << name.c_str() << ": already connected ("
                       << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
@@ -301,7 +301,7 @@ SessionUaSdk::connect()
 
     ConnectResult secResult = setupSecurity();
     if (secResult) {
-        if (!autoConnect || debug)
+        if (manual || debug)
             errlogPrintf("OPC UA session %s: security discovery and setup failed with status %s\n",
                          name.c_str(),
                          connectResultString(secResult));
@@ -319,7 +319,7 @@ SessionUaSdk::connect()
         if (debug)
             std::cerr << "Session " << name.c_str() << ": connect service succeeded" << std::endl;
     } else {
-        if (!autoConnect || debug)
+        if (manual || debug)
             errlogPrintf("OPC UA session %s: connect service failed with status %s\n",
                          name.c_str(),
                          result.toString().toUtf8());
