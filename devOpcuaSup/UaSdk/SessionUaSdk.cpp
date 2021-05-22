@@ -316,27 +316,11 @@ SessionUaSdk::connect()
                                           this);        // Callback interface
 
     if (result.isGood()) {
-        std::string token;
-        auto type = securityInfo.pUserIdentityToken()->getTokenType();
-        if (type == OpcUa_UserTokenType_UserName)
-            token = " (username token)";
-        else if (type == OpcUa_UserTokenType_Certificate)
-            token = " (certificate token)";
-        errlogPrintf("OPC UA session %s: connect succeeded as '%s'%s with security level %u "
-                     "(mode=%s; policy=%s)\n",
-                     name.c_str(),
-                     (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
-                     token.c_str(),
-                     securityLevel,
-                     securityModeString(securityInfo.messageSecurityMode),
-                     securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
-        if (securityInfo.messageSecurityMode == OpcUa_MessageSecurityMode_None) {
-            errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
-                         name.c_str());
-        }
+        if (debug)
+            std::cerr << "Session " << name.c_str() << ": connect service succeeded" << std::endl;
     } else {
         if (!autoConnect || debug)
-            errlogPrintf("OPC UA session %s: connect failed with status %s\n",
+            errlogPrintf("OPC UA session %s: connect service failed with status %s\n",
                          name.c_str(),
                          result.toString().toUtf8());
         if (autoConnect)
@@ -1135,6 +1119,27 @@ void SessionUaSdk::connectionStatusChanged (
 
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
+        if (serverConnectionStatus == UaClient::Disconnected
+            || serverConnectionStatus == UaClient::ConnectionErrorApiReconnect
+            || serverConnectionStatus == UaClient::NewSessionCreated) {
+            std::string token;
+            auto type = securityInfo.pUserIdentityToken()->getTokenType();
+            if (type == OpcUa_UserTokenType_UserName)
+                token = " (username token)";
+            else if (type == OpcUa_UserTokenType_Certificate)
+                token = " (certificate token)";
+            errlogPrintf(
+                "OPC UA session %s: connected as '%s'%s (sec-mode: %s; sec-policy: %s)\n",
+                name.c_str(),
+                (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
+                token.c_str(),
+                securityModeString(securityInfo.messageSecurityMode),
+                securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
+            if (securityInfo.messageSecurityMode == OpcUa_MessageSecurityMode_None) {
+                errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
+                             name.c_str());
+            }
+        }
         if (serverConnectionStatus == UaClient::Disconnected) {
             updateNamespaceMap(puasession->getNamespaceTable());
             rebuildNodeIds();
