@@ -12,6 +12,13 @@ SRC_DIRS += $(DEVSUP_SRC)
 
 TESTSRC = $(TOP)/unitTestApp/src
 
+# Link against objects as libopcua might be static (deploy mode EMBED)
+OPCUA_OBJS += linkParser iocshIntegration
+ifdef UASDK
+OPCUA_OBJS += SessionUaSdk SubscriptionUaSdk ItemUaSdk DataElementUaSdk
+endif
+OPCUA_OBJS += RecordConnector Session Subscription
+
 #==================================================
 # Build tests executables
 
@@ -33,20 +40,16 @@ GTESTS += RegistryTest
 
 GTESTPROD_HOST += LinkParserTest
 LinkParserTest_SRCS += LinkParserTest.cpp
-LinkParserTest_LIBS_DEFAULT += opcua
-LinkParserTest_OBJS_WIN32 += linkParser iocshIntegration
-LinkParserTest_OBJS_WIN32 += SessionUaSdk SubscriptionUaSdk ItemUaSdk DataElementUaSdk
-LinkParserTest_OBJS_WIN32 += RecordConnector Session Subscription
-LinkParserTest_LIBS_WIN32 += $(EPICS_BASE_IOC_LIBS)
+LinkParserTest_LIBS += $(OPCUA_LIBS) $(EPICS_BASE_IOC_LIBS)
+LinkParserTest_SYS_LIBS_Linux += $(OPCUA_SYS_LIBS_Linux)
+LinkParserTest_OBJS += $(OPCUA_OBJS)
 GTESTS += LinkParserTest
 
 GTESTPROD_HOST += ElementTreeTest
 ElementTreeTest_SRCS += ElementTreeTest.cpp
-ElementTreeTest_LIBS_DEFAULT += opcua
-ElementTreeTest_OBJS_WIN32 += linkParser iocshIntegration
-ElementTreeTest_OBJS_WIN32 += SessionUaSdk SubscriptionUaSdk ItemUaSdk DataElementUaSdk
-ElementTreeTest_OBJS_WIN32 += RecordConnector Session Subscription
-ElementTreeTest_LIBS_WIN32 += $(EPICS_BASE_IOC_LIBS)
+ElementTreeTest_LIBS += $(OPCUA_LIBS) $(EPICS_BASE_IOC_LIBS)
+ElementTreeTest_SYS_LIBS_Linux += $(OPCUA_SYS_LIBS_Linux)
+ElementTreeTest_OBJS += $(OPCUA_OBJS)
 GTESTS += ElementTreeTest
 
 #==================================================
@@ -66,3 +69,8 @@ USR_LIBS += Com
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
+
+# Unified Automation C++ Based OPC UA Client SDK
+ifdef UASDK
+include $(DEVSUP_SRC)/UaSdk/RULES_UASDK
+endif
