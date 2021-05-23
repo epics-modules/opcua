@@ -54,7 +54,7 @@ Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 
 ### Windows
 
-*   Binary libraries (DLLs and static) of openssl and libxml2 are provided under the
+*   Binary libraries (DLLs) of openssl and libxml2 are provided under the
     `third-party` directory of the SDK bundle.
 
 ## Building the device support module
@@ -74,6 +74,8 @@ UASDK = /usr/local/opcua/uasdkcppclient-v1.5.3-346/sdk
 #   SYSTEM = shared libs are in a system location
 #   PROVIDED = shared libs are in $(UASDK_DIR)
 #   INSTALL = shared libs are installed (copied) into this module
+#   EMBED = link SDK code statically into libopcua,
+#           SDK libraries are not required on target system
 UASDK_DEPLOY_MODE = PROVIDED
 UASDK_DIR = $(UASDK)/lib
 # How the Unified Automation SDK libraries were built
@@ -115,13 +117,15 @@ like
 path %PATH%C:\Users\foobar\EPICS\base\7.0.4.1;C:\PROGRA~2\UnifiedAutomation\UaSdkCppBundleEval\bin;
 ```
 
-Alternatively, you could copy all needed DLLs into the binary location of
-your IOC binary. Be aware that over time, this approach will lead to a large
-number of possibly different DLLs with the same name being used concurrently -
+Alternatively, you could set `UASDK_DEPLOY_MODE = INSTALL`, which copies all
+needed DLLs into the binary location of your IOC binary.
+Be aware that over time, this approach will lead to a large number of possibly
+different DLLs with the same name being used concurrently on the system -
 a situation that is hard to maintain.
 If you want your IOC binaries to be deployable without depending on
 specific DLLs being present on the target system, you should consider linking
-your IOCs statically.
+your IOCs statically. (As stated above, static builds are not available when
+using the evaluation bundles.)
 
 ## Feedback / Reporting issues
 
@@ -143,6 +147,7 @@ that are part of the UA SDK bundle.
 In that case, copying the DLLs from the UA SDK into the same directory as the
 unit tests (`...\unitTestApp\src\O.win...`) and your executable (IOC binary)
 seems to be the only reasonable workaround.
+(Consider setting `UASDK_DEPLOY_MODE = INSTALL` in that case.)
 
 ## Credits
 
