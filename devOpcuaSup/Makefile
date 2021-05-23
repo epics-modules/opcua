@@ -83,8 +83,9 @@ include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
 
+# Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(OPCUA)/UaSdk/RULES_OPCUA
+include $(OPCUA)/UaSdk/RULES_UASDK
 endif
 
 # Can't use EXPAND as generated headers must appear
