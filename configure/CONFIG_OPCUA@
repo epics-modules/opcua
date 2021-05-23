@@ -5,6 +5,8 @@ UASDK = @UASDK@
 #   SYSTEM = shared libs are in a system location
 #   PROVIDED = shared libs are in $(UASDK_DIR)
 #   INSTALL = shared libs are installed (copied) into this module
+#   EMBED = link SDK code statically into libopcua,
+#           SDK libraries are not required on target system
 UASDK_DEPLOY_MODE = @UASDK_DEPLOY_MODE@
 UASDK_DIR = @UASDK_DIR@
 # How the Unified Automation SDK libraries were built
