@@ -1,19 +1,32 @@
+# OPC UA Configuration for user application
+#==================================================
+# Unified Automation SDK libraries
+
+# include guard
+ifeq (,$(_CONFIG_OPCUA_INCLUDED))
+_CONFIG_OPCUA_INCLUDED := YES
+
+ifdef T_A
+
+# UA SDK settings expanded to be the same as in the support module
+
 # Path to the Unified Automation OPC UA C++ SDK
 UASDK = @UASDK@
 
 # How the Unified Automation SDK shared libraries are deployed
 #   SYSTEM = shared libs are in a system location
-#   PROVIDED = shared libs are in $(UASDK_DIR)
+#   PROVIDED = shared libs are in $(UASDK_SHRLIB_DIR)
 #   INSTALL = shared libs are installed (copied) into this module
 #   EMBED = link SDK code statically into libopcua,
 #           SDK libraries are not required on target system
 UASDK_DEPLOY_MODE = @UASDK_DEPLOY_MODE@
-UASDK_DIR = @UASDK_DIR@
+UASDK_LIB_DIR = @UASDK_LIB_DIR@
+UASDK_SHRLIB_DIR = @UASDK_SHRLIB_DIR@
 # How the Unified Automation SDK libraries were built
 UASDK_USE_CRYPTO = @UASDK_USE_CRYPTO@
 UASDK_USE_XMLPARSER = @UASDK_USE_XMLPARSER@
 
-# UASDK settings that have to be done after the overrides
+# UASDK settings that have to be done after the .local overrides
 UASDK_MODULES = uaclient uapki uabase uastack
 
 ifeq ($(UASDK_USE_XMLPARSER),YES)
@@ -25,11 +38,21 @@ OPCUA_SYS_LIBS_Linux += crypto
 endif
 
 ifneq ($(UASDK_DEPLOY_MODE),EMBED)
+# Debug builds need the d-marker to be set
 # Depending on SDK version, C++ modules may have a 'cpp' suffix
-UASDK_LIBS = $(notdir $(wildcard $(foreach module, $(UASDK_MODULES), \
-    $(UASDK)/include/$(module) $(UASDK)/include/$(module)cpp)))
+ifeq ($(HOST_OPT),NO)
+D_MARKER = d
+endif
+_UASDK_MODS = $(notdir $(foreach module, $(UASDK_MODULES), \
+$(firstword $(wildcard $(UASDK)/include/$(module)cpp \
+$(UASDK)/include/$(module)))))
+UASDK_LIBS = $(addsuffix $(D_MARKER), $(_UASDK_MODS))
 endif
 
 ifeq ($(UASDK_DEPLOY_MODE),PROVIDED)
-$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
+$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_LIB_DIR)))
 endif
+
+endif # T_A
+
+endif # _CONFIG_OPCUA_INCLUDED

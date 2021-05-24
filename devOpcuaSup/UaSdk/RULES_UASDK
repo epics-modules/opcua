@@ -7,30 +7,12 @@
 # Author: Ralph Lange <ralph.lange@gmx.de>
 #
 # based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
-# and example code from the Unified Automation C++ Based OPC UA Client SDK
+# and code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
 
 #==================================================
 # Unified Automation SDK libraries
 
-# repeated as in CONFIG_OPCUA because in this case we do *not* want
-# these definitions for users but they are still neeeded internally
-ifeq ($(UASDK_DEPLOY_MODE),EMBED)
-UASDK_LIBS = $(notdir $(wildcard $(foreach module, $(UASDK_MODULES), \
-    $(UASDK)/include/$(module) $(UASDK)/include/$(module)cpp)))
-endif
-
-# Debug builds need the d-marker to be set
-# Depending on SDK version, C++ modules may have a 'cpp' suffix
-ifeq ($(HOST_OPT),NO)
-D_MARKER = d
-endif
-UASDK_MODS = $(notdir $(foreach module, $(UASDK_MODULES), \
-$(firstword $(wildcard $(UASDK)/include/$(module)cpp \
-$(UASDK)/include/$(module)))))
-UASDK_LIBS = $(addsuffix $(D_MARKER), $(UASDK_MODS))
-
-USR_INCLUDES += -I$(UASDK)/include
-USR_INCLUDES += $(foreach lib, $(UASDK_MODS),-I$(UASDK)/include/$(lib))
+USR_INCLUDES += $(foreach lib, $(_UASDK_MODS),-I$(UASDK)/include/$(lib))
 # SDK libraries are not built with correct RUNPATH - rely on executable
 USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
 
@@ -40,46 +22,39 @@ endif
 
 ifeq ($(UASDK_DEPLOY_MODE),PROVIDED)
 USR_LIBS += $(UASDK_LIBS)
-$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
+$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_LIB_DIR)))
 endif
 
-# Embed the SDK libraries in libopcua.so
+# EMBED the SDK libraries in libopcua.so
 ifeq ($(UASDK_DEPLOY_MODE),EMBED)
-ifeq ($(LIBRARY_IOC),opcua)
-USR_LDFLAGS += -L$(UASDK_DIR)
-SHRLIB_LDLIBS = $(STATIC_LDFLAGS_YES) \
-    $(addprefix -l, $(UASDK_LIBS)) \
-    $(STATIC_LDLIBS_YES) \
-    $(addprefix -l, $($*_LDLIBS) $(LIB_LIBS) $(filter-out $(UASDK_LIBS),$(USR_LIBS)) \
-    $($*_SYS_LIBS) $(LIB_SYS_LIBS) $(USR_SYS_LIBS)) \
-    $(LDLIBS)
-else
-USR_LIBS += $(UASDK_LIBS)
-$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
-endif
-endif
 
+# Repeated as in CONFIG_OPCUA because in the EMBED case we do *not*
+# want these definitions for users but they are still needed here
+
+# Debug builds need the d-marker to be set
+# Depending on SDK version, C++ modules may have a 'cpp' suffix
+ifeq ($(HOST_OPT),NO)
+D_MARKER = d
+endif
+_UASDK_MODS = $(notdir $(foreach module, $(UASDK_MODULES), \
+$(firstword $(wildcard $(UASDK)/include/$(module)cpp \
+$(UASDK)/include/$(module)))))
+UASDK_LIBS = $(addsuffix $(D_MARKER), $(_UASDK_MODS))
+endif # EMBED
+
+# INSTALL the SDK shared libraries in the Device Support module
 ifeq ($(UASDK_DEPLOY_MODE),INSTALL)
-$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
-USR_LIBS += $(UASDK_LIBS)
 
-# Installing the SDK libraries in the Device Support module
-EXTLIB_INSTALLS += $(addprefix $(INSTALL_LIB)/, \
+USR_LIBS += $(UASDK_LIBS)
+$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_LIB_DIR)))
+
+EXTLIB_INSTALLS += $(addprefix $(INSTALL_SHRLIB)/, \
     $(notdir $(wildcard $(foreach lib, $(UASDK_LIBS), \
-    $(UASDK_DIR)/$(LIB_PREFIX)$(lib)$(LIB_SUFFIX) ))))
-    ifeq ($(SHARED_LIBRARIES),YES)
-EXTLIB_INSTALLS += $(addprefix $(INSTALL_LIB)/, \
-    $(notdir $(wildcard $(foreach lib, $(UASDK_LIBS), \
-    $(UASDK_DIR)/$(SHRLIB_PREFIX)$(lib)$(SHRLIB_SUFFIX) ))))
-    endif
+    $(UASDK_SHRLIB_DIR)/$(SHRLIB_PREFIX)$(lib)$(SHRLIB_SUFFIX_BASE) ))))
 
 build: $(EXTLIB_INSTALLS)
 
-$(INSTALL_LIB)/$(LIB_PREFIX)%$(LIB_SUFFIX) : $(UASDK_DIR)/$(LIB_PREFIX)%$(LIB_SUFFIX)
-	$(ECHO) "Installing library $@ from Unified Automation SDK"
-	$(INSTALL) -d -m 444 $< $(@D)
-
-$(INSTALL_LIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX) : $(UASDK_DIR)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX)
-	$(ECHO) "Installing shared library $@ from Unified Automation SDK"
+$(INSTALL_SHRLIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE) : $(UASDK_SHRLIB_DIR)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE)
+	@$(ECHO) "Installing shared library $@ from Unified Automation SDK"
 	$(INSTALL) -d -m 555 $< $(@D)
-endif
+endif # INSTALL

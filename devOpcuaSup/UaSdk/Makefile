@@ -31,4 +31,4 @@ opcua_SRCS += DataElementUaSdk.cpp
 
 DBD_INSTALLS += opcua.dbd
 
-CFG += CONFIG_OPCUA
+CFG += RULES_OPCUA
