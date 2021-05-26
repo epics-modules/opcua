@@ -647,7 +647,7 @@ SessionUaSdk::showSecurity ()
                 status = discovery.getEndpoints(serviceSettings, serverURL, securityInfo, endpointDescriptions);
                 if (status.isBad()) {
                     std::cerr << "Session " << name << ": (showSecurity) UaDiscovery::getEndpoints failed"
-                              << " with status" << status.toString()
+                              << " with status" << status.toString().toUtf8()
                               << std::endl;
                     return;
                 }
@@ -1230,7 +1230,7 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) for read service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << result.toString() << std::endl;
+                      << ") failed with status " << result.toString().toUtf8() << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
@@ -1283,7 +1283,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) for write service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << result.toString() << std::endl;
+                      << ") failed with status " << result.toString().toUtf8() << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
