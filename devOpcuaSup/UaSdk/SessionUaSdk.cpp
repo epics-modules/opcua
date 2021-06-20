@@ -458,11 +458,6 @@ SessionUaSdk::processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch)
         i++;
     }
 
-    Guard G(opslock);
-    status = puasession->beginWrite(serviceSettings, // Use default settings
-                                    nodesToWrite,    // Array of nodes/data to write
-                                    id);             // Transaction id
-
     if (isConnected()) {
         Guard G(opslock);
         status = puasession->beginWrite(serviceSettings, // Use default settings
