@@ -1089,7 +1089,7 @@ private:
     bool mapped;                             /**< child name to index mapping done */
     UpdateQueue<UpdateUaSdk> incomingQueue;  /**< queue of incoming values */
     UaVariant incomingData;                  /**< cache of latest incoming value */
-    epicsMutex outgoingLock;                 /**< data lock for outgoing value */
+    epicsMutex &outgoingLock;                /**< data lock for outgoing value */
     UaVariant outgoingData;                  /**< cache of latest outgoing value */
     bool isdirty;                            /**< outgoing value has been (or needs to be) updated */
 };

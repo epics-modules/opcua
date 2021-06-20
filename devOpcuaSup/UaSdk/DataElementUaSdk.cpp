@@ -50,6 +50,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
+    , outgoingLock(pitem->dataTreeWriteLock)
     , isdirty(false)
 {}
 
@@ -59,6 +60,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(0ul)
+    , outgoingLock(pitem->dataTreeWriteLock)
     , isdirty(false)
 {}
 
