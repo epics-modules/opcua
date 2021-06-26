@@ -11,6 +11,12 @@ menu(menuBini) {
         choice(menuBiniWRITE, "write")
 }
 
+# Menu for 'woc' parameter/field
+menu(menuWoc) {
+        choice(menuWocMANUAL, "manual")
+        choice(menuWocIMMEDIATE, "immediate")
+}
+
 recordtype(opcuaItem) {
     include "dbCommon.dbd"
     field(VAL,DBF_ULONG) {
@@ -70,5 +76,12 @@ recordtype(opcuaItem) {
     field(STATTEXT,DBF_STRING) {
         prompt("OPC UA status string")
         size(41)
+    }
+    field(WOC,DBF_MENU) {
+        prompt("Write-on-change mode")
+        promptgroup("30 - Action")
+        interest(1)
+        menu(menuWoc)
+        special(SPC_MOD)
     }
 }

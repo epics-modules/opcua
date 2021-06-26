@@ -128,6 +128,8 @@ special (DBADDR *paddr, int after)
             *preason = ProcessReason::writeRequest;
         } else if (fieldIndex == opcuaItemRecordREAD) {
             *preason = ProcessReason::readRequest;
+        } else if (fieldIndex == opcuaItemRecordWOC) {
+            //TODO: write if dirty and switching to auto
         }
     }
 
