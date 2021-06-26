@@ -80,6 +80,14 @@ ItemUaSdk::rebuildNodeId ()
 }
 
 void
+ItemUaSdk::requestWriteIfDirty()
+{
+    Guard G(dataTreeWriteLock);
+    if (dataTreeDirty)
+        recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+}
+
+void
 ItemUaSdk::show (int level) const
 {
     std::cout << "item"

@@ -71,6 +71,12 @@ public:
     virtual void requestWrite() override { session->requestWrite(*this); }
 
     /**
+     * @brief Schedule a write request if item data is "dirty".
+     * See DevOpcua::Item::requestWriteIfDirty
+     */
+    virtual void requestWriteIfDirty() override;
+
+    /**
      * @brief Print configuration and status. See DevOpcua::Item::show
      */
     virtual void show(int level) const override;

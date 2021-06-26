@@ -66,6 +66,11 @@ public:
     virtual void requestWrite() = 0;
 
     /**
+     * @brief Schedule a write request if item data is "dirty".
+     */
+    virtual void requestWriteIfDirty() = 0;
+
+    /**
      * @brief Get the cached status of the last item operation.
      *
      * @param[out] code  OPC UA status code
