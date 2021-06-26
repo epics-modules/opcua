@@ -828,26 +828,26 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_String:
     { // Scope of Guard G
         Guard G(outgoingLock);
-        isdirty = true;
         outgoingData.setString(static_cast<UaString>(value));
+        markAsDirty();
         break;
     }
     case OpcUaType_Boolean:
     { // Scope of Guard G
         Guard G(outgoingLock);
-        isdirty = true;
         if (strchr("YyTt1", *value))
             outgoingData.setBoolean(true);
         else
             outgoingData.setBoolean(false);
+        markAsDirty();
         break;
     }
     case OpcUaType_Byte:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<OpcUa_Byte>(ul)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setByte(static_cast<OpcUa_Byte>(ul));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -857,8 +857,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         l = strtol(value, nullptr, 0);
         if (isWithinRange<OpcUa_SByte>(l)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setSByte(static_cast<OpcUa_SByte>(l));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -868,8 +868,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<OpcUa_UInt16>(ul)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setUInt16(static_cast<OpcUa_UInt16>(ul));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -879,8 +879,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         l = strtol(value, nullptr, 0);
         if (isWithinRange<OpcUa_Int16>(l)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setInt16(static_cast<OpcUa_Int16>(l));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -890,8 +890,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<OpcUa_UInt32>(ul)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setUInt32(static_cast<OpcUa_UInt32>(ul));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -901,8 +901,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         l = strtol(value, nullptr, 0);
         if (isWithinRange<OpcUa_Int32>(l)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setInt32(static_cast<OpcUa_Int32>(l));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -912,8 +912,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<OpcUa_UInt64>(ul)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setUInt64(static_cast<OpcUa_UInt64>(ul));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -923,8 +923,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         l = strtol(value, nullptr, 0);
         if (isWithinRange<OpcUa_Int64>(l)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setInt64(static_cast<OpcUa_Int64>(l));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -934,8 +934,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         d = strtod(value, nullptr);
         if (isWithinRange<OpcUa_Float>(d)) {
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setFloat(static_cast<OpcUa_Float>(d));
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -945,8 +945,8 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     {
         d = strtod(value, nullptr);
         Guard G(outgoingLock);
-        isdirty = true;
         outgoingData.setDouble(static_cast<OpcUa_Double>(d));
+        markAsDirty();
         break;
     }
     default:
@@ -1012,8 +1012,8 @@ DataElementUaSdk::writeArray (const char **value, const epicsUInt32 len,
         }
         { // Scope of Guard G
             Guard G(outgoingLock);
-            isdirty = true;
             UaVariant_set(outgoingData, arr);
+            markAsDirty();
         }
 
         dbgWriteArray(num, epicsTypeString(**value));
@@ -1048,8 +1048,8 @@ DataElementUaSdk::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epicsUI
         UaByteArray arr(reinterpret_cast<const char *>(value), static_cast<OpcUa_Int32>(num));
         { // Scope of Guard G
             Guard G(outgoingLock);
-            isdirty = true;
             UaVariant_set(outgoingData, arr);
+            markAsDirty();
         }
 
         dbgWriteArray(num, epicsTypeString(*value));

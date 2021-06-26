@@ -672,6 +672,12 @@ private:
                                   std::shared_ptr<DataElementUaSdk> pelem);
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
+    void
+    markAsDirty()
+    {
+        isdirty = true;
+        pitem->markAsDirty();
+    }
 
     // Get the time stamp from the incoming object
     const epicsTime &getIncomingTimeStamp() const {
@@ -904,18 +910,18 @@ private:
         case OpcUaType_Boolean:
         { // Scope of Guard G
             Guard G(outgoingLock);
-            isdirty = true;
             if (value == 0)
                 outgoingData.setBoolean(false);
             else
                 outgoingData.setBoolean(true);
+            markAsDirty();
             break;
         }
         case OpcUaType_Byte:
             if (isWithinRange<OpcUa_Byte>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setByte(static_cast<OpcUa_Byte>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -924,8 +930,8 @@ private:
         case OpcUaType_SByte:
             if (isWithinRange<OpcUa_SByte>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setSByte(static_cast<OpcUa_SByte>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -934,8 +940,8 @@ private:
         case OpcUaType_UInt16:
             if (isWithinRange<OpcUa_UInt16>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setUInt16(static_cast<OpcUa_UInt16>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -944,8 +950,8 @@ private:
         case OpcUaType_Int16:
             if (isWithinRange<OpcUa_Int16>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setInt16(static_cast<OpcUa_Int16>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -954,8 +960,8 @@ private:
         case OpcUaType_UInt32:
             if (isWithinRange<OpcUa_UInt32>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setUInt32(static_cast<OpcUa_UInt32>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -964,8 +970,8 @@ private:
         case OpcUaType_Int32:
             if (isWithinRange<OpcUa_Int32>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setInt32(static_cast<OpcUa_Int32>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -974,8 +980,8 @@ private:
         case OpcUaType_UInt64:
             if (isWithinRange<OpcUa_UInt64>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setUInt64(static_cast<OpcUa_UInt64>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -984,8 +990,8 @@ private:
         case OpcUaType_Int64:
             if (isWithinRange<OpcUa_Int64>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setInt64(static_cast<OpcUa_Int64>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -994,8 +1000,8 @@ private:
         case OpcUaType_Float:
             if (isWithinRange<OpcUa_Float>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setFloat(static_cast<OpcUa_Float>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1004,8 +1010,8 @@ private:
         case OpcUaType_Double:
             if (isWithinRange<OpcUa_Double>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 outgoingData.setDouble(static_cast<OpcUa_Double>(value));
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1014,8 +1020,8 @@ private:
         case OpcUaType_String:
         { // Scope of Guard G
             Guard G(outgoingLock);
-            isdirty = true;
             outgoingData.setString(static_cast<UaString>(std::to_string(value).c_str()));
+            markAsDirty();
             break;
         }
         default:
@@ -1065,8 +1071,8 @@ private:
             CT arr(static_cast<OpcUa_Int32>(num), val);
             { // Scope of Guard G
                 Guard G(outgoingLock);
-                isdirty = true;
                 UaVariant_set(outgoingData, arr);
+                markAsDirty();
             }
 
             dbgWriteArray(num, epicsTypeString(*value));
