@@ -290,14 +290,15 @@ TEST_F(RQBBatcherTest, sizeUnlimited_90RequestsInOneBatch) {
 
     b0.startWorker();
     dump.finished.wait();
-    epicsThread::sleep(0.05); // to let the batcher drop the shared_ptr references
+    b0.pushRequest(std::make_shared<TestCargo>(TAG_FINISHED), menuPriorityLOW);
+    dump.finished.wait();
 
     EXPECT_TRUE(b0.empty(menuPriorityLOW)) << "Queue[LOW] not empty";
     EXPECT_TRUE(b0.empty(menuPriorityMEDIUM)) << "Queue[MEDIUM] not empty";
     EXPECT_TRUE(b0.empty(menuPriorityHIGH)) << "Queue[HIGH] not empty";
 
     EXPECT_EQ(allSentCargo.size(), 90u) << "Not all cargo sent";
-    EXPECT_EQ(dump.noOfBatches, 1u) << "Cargo not processed in single batch";
+    EXPECT_EQ(dump.noOfBatches, 2u) << "Cargo not processed in single (+1) batch";
     EXPECT_EQ(dump.batchSizes[0], 91u) << "Batch[0] did not contain all cargo";
 }
 
@@ -314,14 +315,15 @@ TEST_F(RQBBatcherTest, size1k_900RequestsInOneBatch) {
 
     b1000.startWorker();
     dump.finished.wait();
-    epicsThread::sleep(0.05); // to let the batcher drop the shared_ptr references
+    b1000.pushRequest(std::make_shared<TestCargo>(TAG_FINISHED), menuPriorityLOW);
+    dump.finished.wait();
 
     EXPECT_TRUE(b1000.empty(menuPriorityLOW)) << "Queue[LOW] not empty";
     EXPECT_TRUE(b1000.empty(menuPriorityMEDIUM)) << "Queue[MEDIUM] not empty";
     EXPECT_TRUE(b1000.empty(menuPriorityHIGH)) << "Queue[HIGH] not empty";
 
     EXPECT_EQ(allSentCargo.size(), 900u) << "Not all cargo sent";
-    EXPECT_EQ(dump.noOfBatches, 1u) << "Cargo not processed in single batch";
+    EXPECT_EQ(dump.noOfBatches, 2u) << "Cargo not processed in single (+1) batch";
     EXPECT_EQ(dump.batchSizes[0], 901u) << "Batch[0] did not contain all cargo";
 }
 
