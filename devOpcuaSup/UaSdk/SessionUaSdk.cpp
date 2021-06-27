@@ -1100,7 +1100,8 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::ConnectionErrorApiReconnect:
         // "The server sent a shut-down event and the client API tries a reconnect."
     case UaClient::ServerShutdown:
-        markConnectionLoss();
+        if (serverConnectionStatus == UaClient::Connected)
+            markConnectionLoss();
         if (autoConnect)
             autoConnector.start();
         break;
