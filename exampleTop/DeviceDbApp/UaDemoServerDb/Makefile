@@ -24,6 +24,8 @@ DB += Demo.Static.ArraysE7.db
 DB += Demo.Static.Scalar.db
 DB += Demo.Static.ScalarE7.db
 
+DB += Demo.WorkOrder.db
+
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add
 # <anyname>_template = <templatename>

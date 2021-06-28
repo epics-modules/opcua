@@ -46,6 +46,7 @@ ItemUaSdk::ItemUaSdk(const linkInfo &info)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
     , dataTree(this)
+    , dataTreeDirty(false)
     , lastStatus(OpcUa_BadServerNotConnected)
     , lastReason(ProcessReason::connectionLoss)
     , connState(ConnectionStatus::down)
@@ -79,6 +80,14 @@ ItemUaSdk::rebuildNodeId ()
 }
 
 void
+ItemUaSdk::requestWriteIfDirty()
+{
+    Guard G(dataTreeWriteLock);
+    if (dataTreeDirty)
+        recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+}
+
+void
 ItemUaSdk::show (int level) const
 {
     std::cout << "item"
@@ -94,6 +103,7 @@ ItemUaSdk::show (int level) const
     std::cout << " record=" << recConnector->getRecordName()
               << " state=" << connectionStatusString(connState)
               << " status=" << UaStatus(lastStatus).toString().toUtf8()
+              << " dataDirty=" << (dataTreeDirty ? "y" : "n")
               << " context=" << linkinfo.subscription
               << "@" << session->getName()
               << " sampling=" << revisedSamplingInterval
@@ -123,23 +133,15 @@ int ItemUaSdk::debug() const
     return recConnector->debug();
 }
 
-//FIXME: in case of itemRecord there might be no rootElement
-const UaVariant &
-ItemUaSdk::getOutgoingData() const
-{
-    if (auto pd = dataTree.root().lock()) {
-        return pd->getOutgoingData();
-    } else {
-        throw std::runtime_error(SB() << "stale pointer to root data element");
-    }
-}
-
 void
-ItemUaSdk::clearOutgoingData()
+ItemUaSdk::copyAndClearOutgoingData(_OpcUa_WriteValue &wvalue)
 {
+    Guard G(dataTreeWriteLock);
     if (auto pd = dataTree.root().lock()) {
+        pd->getOutgoingData().copyTo(&wvalue.Value.Value);
         pd->clearOutgoingData();
     }
+    dataTreeDirty = false;
 }
 
 epicsTime
@@ -204,6 +206,19 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 
     if (linkinfo.isItemRecord)
         recConnector->requestRecordProcessing(reason);
+}
+
+void
+ItemUaSdk::markAsDirty()
+{
+    if (recConnector->plinkinfo->isItemRecord) {
+        Guard G(dataTreeWriteLock);
+        if (!dataTreeDirty) {
+            dataTreeDirty = true;
+            if (recConnector->woc() == menuWocIMMEDIATE)
+                recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+        }
+    }
 }
 
 void

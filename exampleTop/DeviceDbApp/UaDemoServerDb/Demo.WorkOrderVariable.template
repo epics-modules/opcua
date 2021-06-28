@@ -1,0 +1,55 @@
+# Database connecting to the UaServerCpp example server
+# that is part of all Unified Automation bundles
+
+# WorkOrder part of the Demo server (user defined structures)
+
+# Records connecting to an instance of WorkOrder Variable
+
+# Macros:
+# P         = Record name prefix
+# R         = Record name prefix of the structure
+# SESS      = Session name
+# SUBS      = Subscription name
+# WO_NODEID = Complete node name of the OPC UA variable
+
+# R/W version (bidirectional output records)
+
+record(opcuaItem, "$(P)$(R)item") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=$(WO_NODEID)")
+    field(TSE,  "-2")
+}
+
+record(stringout, "$(P)$(R)assetid") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(P)$(R)item element=AssetID")
+    field(TSE,  "-2")
+}
+
+record(stringout, "$(P)$(R)starttime") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(P)$(R)item element=StartTime")
+    field(TSE,  "-2")
+}
+
+
+# R/O version (input records)
+
+record(opcuaItem, "$(P)$(R)itemRBK") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=$(WO_NODEID)")
+    field(TSE,  "-2")
+}
+
+record(stringin, "$(P)$(R)assetidRBK") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(P)$(R)itemRBK element=AssetID")
+    field(TSE,  "-2")
+}
+
+record(stringin, "$(P)$(R)starttimeRBK") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(P)$(R)itemRBK element=StartTime")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}

@@ -430,8 +430,7 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
 {
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
-    item.getOutgoingData().copyTo(&cargo->wvalue.Value.Value);
-    item.clearOutgoingData();
+    item.copyAndClearOutgoingData(cargo->wvalue);
     writer.pushRequest(cargo, item.recConnector->getRecordPriority());
 }
 

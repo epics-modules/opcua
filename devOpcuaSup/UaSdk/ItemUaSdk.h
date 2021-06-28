@@ -17,6 +17,7 @@
 #include <memory>
 
 #include <statuscode.h>
+#include <opcua_types.h>
 #include <opcua_builtintypes.h>
 #include <uastructuredefinition.h>
 
@@ -68,6 +69,12 @@ public:
      * @brief Request beginWrite service. See DevOpcua::Item::requestWrite
      */
     virtual void requestWrite() override { session->requestWrite(*this); }
+
+    /**
+     * @brief Schedule a write request if item data is "dirty".
+     * See DevOpcua::Item::requestWriteIfDirty
+     */
+    virtual void requestWriteIfDirty() override;
 
     /**
      * @brief Print configuration and status. See DevOpcua::Item::show
@@ -149,24 +156,14 @@ public:
     { return session->structureDefinition(dataTypeId); }
 
     /**
-     * @brief Get the outgoing data value.
+     * @brief Copy out then discard the outgoing data value.
      *
      * Called from the OPC UA client worker thread when data is being
      * assembled in OPC UA session for sending.
-     */
-    const UaVariant &getOutgoingData() const;
-
-    /**
-     * @brief Clear (discard) the current outgoing data.
      *
-     * Called by the low level connection (OPC UA session)
-     * after it is done accessing the data in the context of sending.
-     *
-     * In case an implementation uses a queue, this should remove the
-     * oldest element from the queue, allowing access to the next element
-     * with the next send.
+     * @param[out] wvalue reference to WriteValue (target of copy)
      */
-    void clearOutgoingData();
+    void copyAndClearOutgoingData(_OpcUa_WriteValue &wvalue);
 
     /**
      * @brief Push an incoming data value down the root element.
@@ -188,6 +185,11 @@ public:
      * @param reason  reason for this value update
      */
     void setIncomingEvent(ProcessReason reason);
+
+    /**
+     * @brief Mark the item as dirty and set up itemRecord processing.
+     */
+    void markAsDirty();
 
     /**
      * @brief Setter for the revised sampling interval.
@@ -225,6 +227,8 @@ private:
     OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
     OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
     ElementTree<DataElementUaSdk, ItemUaSdk> dataTree; /**< data element tree */
+    epicsMutex dataTreeWriteLock;           /**< lock for dirty flag */
+    bool dataTreeDirty;                    /**< true if any element has been modified */
     UaStatusCode lastStatus;               /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
     ConnectionStatus connState;            /**< Connection state of the item */
