@@ -1,5 +1,6 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
-<a target="_blank" href="https://travis-ci.org/ralphlange/opcua">![Travis status][badge.travis]</a>
+<a target="_blank" href="https://travis-ci.com/ralphlange/opcua">![Travis status][badge.travis]</a>
+<a target="_blank" href="https://github.com/ralphlange/opcua/actions/workflows/ci-build.yml">![GitHub Actions status][badge.gha]</a>
 <a target="_blank" href="https://www.codacy.com/app/ralphlange/opcua">![Codacy grade][badge.codacy]</a>
 
 # opcua - EPICS Device Support for OPC UA
@@ -106,8 +107,9 @@ in file LICENSE that is included with this distribution.
 
 <!-- Links -->
 [badge.version]: https://img.shields.io/github/v/release/ralphlange/opcua?sort=semver
-[badge.travis]: https://travis-ci.org/ralphlange/opcua.svg?branch=master
+[badge.travis]: https://travis-ci.com/ralphlange/opcua.svg?branch=master
 [badge.codacy]: https://api.codacy.com/project/badge/Grade/65b1d28ca5e34a7d853d168f50beaafc
+[badge.gha]: https://github.com/ralphlange/opcua/actions/workflows/ci-build.yml/badge.svg
 
 [unified.sdk]: https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html
 
