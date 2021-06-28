@@ -37,27 +37,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-18.04
-            cmp: gcc
-            configuration: default
-            base: "7.0"
-            uasdk: "1.5.6"
-            name: "7.0 Ub-18 SDK-1.5.6"
-
-          - os: ubuntu-18.04
-            cmp: gcc
-            configuration: default
-            base: "R3.15.5"
-            uasdk: "1.5.6"
-            name: "3.15.5 Ub-18 SDK-1.5.6"
-
-          - os: ubuntu-18.04
-            cmp: gcc
-            configuration: default
-            base: "3.15"
-            uasdk: "1.5.6"
-            name: "3.15 Ub-18 SDK-1.5.6"
-
           - os: ubuntu-20.04
             cmp: gcc
             configuration: default
