@@ -51,27 +51,3 @@ jobs:
 
   - env: BASE=R3.15.5 UASDK=1.5.6
     dist: trusty
-
-  - env: BASE=7.0 UASDK=1.6.3
-    compiler: gcc-6
-    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
-
-  - env: BASE=3.15 UASDK=1.6.3
-    compiler: gcc-6
-    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
-
-  - env: BASE=R3.15.5 UASDK=1.6.3
-    compiler: gcc-6
-    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
-
-  - env: BASE=7.0 UASDK=1.7.2
-    compiler: gcc-6
-    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
-
-  - env: BASE=3.15 UASDK=1.7.2
-    compiler: gcc-6
-    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
-
-  - env: BASE=R3.15.5 UASDK=1.7.2
-    compiler: gcc-6
-    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
