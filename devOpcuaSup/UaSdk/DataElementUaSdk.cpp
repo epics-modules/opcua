@@ -172,8 +172,13 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
                 }
 
             } else
-                errlogPrintf("Cannot get a structure definition for %s - check access to type dictionary\n",
-                             extensionObject.dataTypeId().toString().toUtf8());
+                errlogPrintf(
+                    "Cannot get a structure definition for item %s element %s (dataTypeId %s "
+                    "encodingTypeId %s) - check access to type dictionary\n",
+                    pitem->nodeid->toString().toUtf8(),
+                    name.c_str(),
+                    extensionObject.dataTypeId().toString().toUtf8(),
+                    extensionObject.encodingTypeId().toString().toUtf8());
         }
     }
 }
