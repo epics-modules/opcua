@@ -48,6 +48,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
                                     RecordConnector *pconnector)
     : DataElement(pconnector, name)
     , pitem(item)
+    , timesrc(-1)
     , mapped(false)
     , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
     , outgoingLock(pitem->dataTreeWriteLock)
@@ -58,6 +59,7 @@ DataElementUaSdk::DataElementUaSdk (const std::string &name,
                                     ItemUaSdk *item)
     : DataElement(name)
     , pitem(item)
+    , timesrc(-1)
     , mapped(false)
     , incomingQueue(0ul)
     , outgoingLock(pitem->dataTreeWriteLock)
@@ -107,7 +109,9 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
 // Getting the timestamp and status information from the Item assumes that only one thread
 // is pushing data into the Item's DataElement structure at any time.
 void
-DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
+DataElementUaSdk::setIncomingData(const UaVariant &value,
+                                  ProcessReason reason,
+                                  const std::string *timefrom)
 {
     // Make a copy of this element and cache it
     incomingData = value;
@@ -151,6 +155,28 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
                     if (!mapped) {
                         if (debug() >= 5)
                             std::cout << " ** creating index-to-element map for child elements" << std::endl;
+                        if (timefrom) {
+                            for (int i = 0; i < definition.childrenCount(); i++) {
+                                if (*timefrom == definition.child(i).name().toUtf8()) {
+                                    timesrc = i;
+                                    pitem->tsData = epicsTimeFromUaVariant(genericValue.value(i));
+                                }
+                            }
+                            OpcUa_BuiltInType t = genericValue.value(timesrc).type();
+                            if (timesrc == -1) {
+                                errlogPrintf(
+                                    "%s: timestamp element %s not found - using source timestamp\n",
+                                    pitem->recConnector->getRecordName(),
+                                    timefrom->c_str());
+                            } else if (t != OpcUaType_DateTime) {
+                                errlogPrintf("%s: timestamp element %s has invalid type %s - using "
+                                             "source timestamp\n",
+                                             pitem->recConnector->getRecordName(),
+                                             timefrom->c_str(),
+                                             variantTypeString(t));
+                                timesrc = -1;
+                            }
+                        }
                         for (auto &it : elements) {
                             auto pelem = it.lock();
                             for (int i = 0; i < definition.childrenCount(); i++) {
@@ -166,6 +192,12 @@ DataElementUaSdk::setIncomingData (const UaVariant &value, ProcessReason reason)
                                       << "structure of " << definition.childrenCount() << " elements" << std::endl;
                         mapped = true;
                     } else {
+                        if (timefrom) {
+                            if (timesrc >= 0)
+                                pitem->tsData = epicsTimeFromUaVariant(genericValue.value(timesrc));
+                            else
+                                pitem->tsData = pitem->tsSource;
+                        }
                         for (auto &it : elementMap) {
                             auto pelem = it.second.lock();
                             pelem->setIncomingData(genericValue.value(it.first), reason);
@@ -204,6 +236,7 @@ DataElementUaSdk::setIncomingEvent (ProcessReason reason)
         }
         if (reason == ProcessReason::connectionLoss) {
             elementMap.clear();
+            timesrc = -1;
             mapped = false;
         }
     }

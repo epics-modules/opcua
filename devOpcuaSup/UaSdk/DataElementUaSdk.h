@@ -233,8 +233,11 @@ public:
      *
      * @param value  new value for this data element
      * @param reason  reason for this value update
+     * @param timefrom  name of element to read item timestamp from
      */
-    void setIncomingData(const UaVariant &value, ProcessReason reason);
+    void setIncomingData(const UaVariant &value,
+                         ProcessReason reason,
+                         const std::string *timefrom = nullptr);
 
     /**
      * @brief Push an incoming event into the DataElement.
@@ -679,6 +682,18 @@ private:
         pitem->markAsDirty();
     }
 
+    // Convert the time stamp from a data element
+    epicsTime
+    epicsTimeFromUaVariant(const UaVariant &data) const
+    {
+        UaDateTime dt;
+        UaStatus s = data.toDateTime(dt);
+        if (s.isGood()) {
+            return ItemUaSdk::uaToEpicsTime(dt, 0);
+        }
+        return pitem->tsSource;
+    }
+
     // Get the time stamp from the incoming object
     const epicsTime &getIncomingTimeStamp() const {
         ProcessReason reason = pitem->getReason();
@@ -1088,6 +1103,7 @@ private:
     std::shared_ptr<DataElementUaSdk> parent;               /**< parent */
 
     std::unordered_map<int, std::weak_ptr<DataElementUaSdk>> elementMap;
+    int timesrc;
 
     bool mapped;                             /**< child name to index mapping done */
     UpdateQueue<UpdateUaSdk> incomingQueue;  /**< queue of incoming values */

@@ -175,8 +175,12 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
 
     setLastStatus(value.StatusCode);
 
-    if (auto pd = dataTree.root().lock())
-        pd->setIncomingData(value.Value, reason);
+    if (auto pd = dataTree.root().lock()) {
+        const std::string *timefrom = nullptr;
+        if (linkinfo.timestamp == LinkOptionTimestamp::data && linkinfo.timestampElement.length())
+            timefrom = &linkinfo.timestampElement;
+        pd->setIncomingData(value.Value, reason, timefrom);
+    }
 
     if (linkinfo.isItemRecord) {
         if (state() == ConnectionStatus::initialRead
