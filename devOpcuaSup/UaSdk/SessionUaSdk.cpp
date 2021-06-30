@@ -1087,10 +1087,16 @@ void SessionUaSdk::connectionStatusChanged (
     UaClient::ServerStatus   serverStatus)
 {
     OpcUa_ReferenceParameter(clientConnectionId);
-    errlogPrintf("OPC UA session %s: connection status changed from %s to %s\n",
-                 name.c_str(),
-                 serverStatusString(serverConnectionStatus),
-                 serverStatusString(serverStatus));
+    // Don't print Disconnected <-> ConnectionErrorApiReconnect unless in debug mode
+    if (!(((serverConnectionStatus == UaClient::ConnectionErrorApiReconnect
+            && serverStatus == UaClient::Disconnected)
+           || (serverConnectionStatus == UaClient::Disconnected
+               && serverStatus == UaClient::ConnectionErrorApiReconnect))
+          && debug == 0))
+        errlogPrintf("OPC UA session %s: connection status changed from %s to %s\n",
+                     name.c_str(),
+                     serverStatusString(serverConnectionStatus),
+                     serverStatusString(serverStatus));
 
     switch (serverStatus) {
 
