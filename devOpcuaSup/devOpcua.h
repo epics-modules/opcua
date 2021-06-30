@@ -46,6 +46,22 @@ linkOptionBiniString (const LinkOptionBini choice)
 }
 
 /**
+ * @brief Enum for the choices of the timestamp link option.
+ */
+enum LinkOptionTimestamp { server, source, data };
+
+inline const char *
+linkOptionTimestampString (const LinkOptionTimestamp choice)
+{
+    switch(choice) {
+    case server: return "server";
+    case source: return "source";
+    case data:   return "data";
+    }
+    return "Illegal Value";
+}
+
+/**
  * @brief Report that PINI is set for a record and clear it.
  *
  * @param prec  pointer to record
@@ -88,7 +104,8 @@ typedef struct linkInfo {
 
     std::string element;
     std::list<std::string> elementPath;
-    bool useServerTimestamp = true;
+    LinkOptionTimestamp timestamp = LinkOptionTimestamp::server;
+    std::string timestampElement;
     LinkOptionBini bini = LinkOptionBini::read;
 
     bool isOutput;

@@ -684,12 +684,15 @@ private:
         ProcessReason reason = pitem->getReason();
         if ((reason == ProcessReason::incomingData || reason == ProcessReason::readComplete)
                 && isLeaf())
-            if (pconnector->plinkinfo->useServerTimestamp)
+            switch (pconnector->plinkinfo->timestamp) {
+            case LinkOptionTimestamp::server:
                 return pitem->tsServer;
-            else
+            case LinkOptionTimestamp::source:
                 return pitem->tsSource;
-        else
-            return pitem->tsClient;
+            case LinkOptionTimestamp::data:
+                return pitem->tsData;
+            }
+        return pitem->tsClient;
     }
 
     // Get the read status from the incoming object

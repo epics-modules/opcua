@@ -88,8 +88,10 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
         std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")="
                   << pconnector->getRecordName()
                   << " type=" << variantTypeString(incomingData.type())
-                  << " timestamp=" << (pconnector->plinkinfo->useServerTimestamp ? "server" : "source")
-                  << " bini=" << linkOptionBiniString(pconnector->plinkinfo->bini)
+                  << " timestamp=" << linkOptionTimestampString(pconnector->plinkinfo->timestamp);
+        if (pconnector->plinkinfo->timestamp == LinkOptionTimestamp::data)
+            std::cout << "@" << pitem->linkinfo.timestampElement;
+        std::cout << " bini=" << linkOptionBiniString(pconnector->plinkinfo->bini)
                   << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
     } else {
         std::cout << "node=" << name << " children=" << elements.size()
@@ -315,8 +317,10 @@ DataElementUaSdk::dbgReadScalar (const UpdateUaSdk *upd,
 
         std::cout << pconnector->getRecordName() << ": ";
         if (reason == ProcessReason::incomingData || reason == ProcessReason::readComplete) {
-            std::cout << "(" << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device")
-                      << " time " << time_buf << ") read " << processReasonString(reason) << " ("
+            std::cout << "(" << linkOptionTimestampString(pconnector->plinkinfo->timestamp);
+            if (pconnector->plinkinfo->timestamp == LinkOptionTimestamp::data)
+                std::cout << "(@" << pconnector->plinkinfo->timestampElement << ")";
+            std::cout << " time " << time_buf << ") read " << processReasonString(reason) << " ("
                       << UaStatus(upd->getStatus()).toString().toUtf8() << ") ";
             UaVariant &data = upd->getData();
             if (data.type() == OpcUaType_String)
@@ -455,8 +459,10 @@ DataElementUaSdk::dbgReadArray (const UpdateUaSdk *upd,
 
         std::cout << pconnector->getRecordName() << ": ";
         if (reason == ProcessReason::incomingData || reason == ProcessReason::readComplete) {
-            std::cout << "(" << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device")
-                      << " time " << time_buf << ") read " << processReasonString(reason) << " ("
+            std::cout << "(" << linkOptionTimestampString(pconnector->plinkinfo->timestamp);
+            if (pconnector->plinkinfo->timestamp == LinkOptionTimestamp::data)
+                std::cout << "@" << pconnector->plinkinfo->timestampElement;
+            std::cout << " time " << time_buf << ") read " << processReasonString(reason) << " ("
                       << UaStatus(upd->getStatus()).toString().toUtf8() << ") ";
             UaVariant &data = upd->getData();
             std::cout << " array of " << variantTypeString(data.type())

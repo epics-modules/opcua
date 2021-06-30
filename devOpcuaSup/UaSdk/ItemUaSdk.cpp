@@ -20,6 +20,7 @@
 
 #include <osiSock.h> // needed before callback.h to get Windows definition of CALLBACK in
 
+#include "devOpcua.h"
 #include "RecordConnector.h"
 #include "opcuaItemRecord.h"
 #include "ItemUaSdk.h"
@@ -104,21 +105,19 @@ ItemUaSdk::show (int level) const
               << " state=" << connectionStatusString(connState)
               << " status=" << UaStatus(lastStatus).toString().toUtf8()
               << " dataDirty=" << (dataTreeDirty ? "y" : "n")
-              << " context=" << linkinfo.subscription
-              << "@" << session->getName()
-              << " sampling=" << revisedSamplingInterval
-              << "(" << linkinfo.samplingInterval << ")"
-              << " qsize=" << revisedQueueSize
-              << "(" << linkinfo.queueSize << ")"
+              << " context=" << linkinfo.subscription << "@" << session->getName()
+              << " sampling=" << revisedSamplingInterval << "(" << linkinfo.samplingInterval << ")"
+              << " qsize=" << revisedQueueSize << "(" << linkinfo.queueSize << ")"
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
-              << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
-              << " bini=" << linkOptionBiniString(linkinfo.bini)
+              << " timestamp=" << linkOptionTimestampString(linkinfo.timestamp);
+    if (linkinfo.timestamp == LinkOptionTimestamp::data)
+        std::cout << "@" << linkinfo.timestampElement;
+    std::cout << " bini=" << linkOptionBiniString(linkinfo.bini)
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
-              << " registered=" << (registered ? nodeid->toString().toUtf8() : "-" )
-              << "(" << (linkinfo.registerNode ? "y" : "n") << ")"
-              << std::endl;
+              << " registered=" << (registered ? nodeid->toString().toUtf8() : "-") << "("
+              << (linkinfo.registerNode ? "y" : "n") << ")" << std::endl;
 
     if (level >= 1) {
         if (auto re = dataTree.root().lock()) {
@@ -231,10 +230,17 @@ ItemUaSdk::getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len, epics
     }
 
     if (ts && recConnector) {
-        if (recConnector->plinkinfo->useServerTimestamp)
+        switch (recConnector->plinkinfo->timestamp) {
+        case LinkOptionTimestamp::server:
             *ts = tsServer;
-        else
+            break;
+        case LinkOptionTimestamp::source:
             *ts = tsSource;
+            break;
+        case LinkOptionTimestamp::data:
+            *ts = tsData;
+            break;
+        }
     }
 }
 
