@@ -62,6 +62,14 @@ public:
     virtual void show(int level) const = 0;
 
     /**
+     * @brief Set an option for the subscription.
+     *
+     * @param name   option name
+     * @param value  value
+     */
+    virtual void setOption(const std::string &name, const std::string &value) = 0;
+
+    /**
      * @brief Print configuration and status of all subscriptions on stdout.
      *
      * The verbosity level controls the amount of information:

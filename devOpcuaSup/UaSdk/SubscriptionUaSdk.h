@@ -58,6 +58,11 @@ public:
                       const int debug = 0);
 
     /**
+     * @brief Set an option for the subscription. See DevOpcua::Subscription::setOption
+     */
+    virtual void setOption(const std::string &name, const std::string &value) override;
+
+    /**
      * @brief Print configuration and status. See DevOpcua::Subscription::show
      */
     virtual void show(int level) const override;

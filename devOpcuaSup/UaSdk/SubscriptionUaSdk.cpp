@@ -54,6 +54,20 @@ SubscriptionUaSdk::SubscriptionUaSdk (const std::string &name, SessionUaSdk *ses
     psessionuasdk->subscriptions[name] = this;
 }
 
+void SubscriptionUaSdk::setOption(const std::string &name, const std::string &value)
+{
+    if (debug || name == "debug")
+        std::cerr << "Subscription " << this->name << ": setting option " << name << " to " << value
+                  << std::endl;
+
+    if (name == "debug") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        debug = ul;
+    } else {
+        errlogPrintf("unknown option '%s' - ignored\n", name.c_str());
+    }
+}
+
 void
 SubscriptionUaSdk::show (int level) const
 {
