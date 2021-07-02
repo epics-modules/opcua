@@ -71,14 +71,12 @@ isWritable(const std::string &dir)
 
 Session *
 Session::createSession(const std::string &name,
-                       const std::string &url,
-                       const int debuglevel,
-                       const bool autoconnect)
+                       const std::string &url)
 {
     epicsThreadOnce(&opcuaUaSdk_once, &opcuaUaSdk_init, nullptr);
     if (RegistryKeyNamespace::global.contains(name))
         return nullptr;
-    return new SessionUaSdk(name, url, autoconnect, debuglevel);
+    return new SessionUaSdk(name, url);
 }
 
 Session *

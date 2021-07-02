@@ -167,9 +167,7 @@ public:
      * @return  pointer to the new session, nullptr if not created
      */
     static Session *createSession(const std::string &name,
-                                  const std::string &url,
-                                  const int debuglevel,
-                                  const bool autoconnect);
+                                  const std::string &url);
 
     /**
      * @brief Find a session by name (implementation specific).
@@ -229,11 +227,11 @@ public:
     int debug;  /**< debug verbosity level */
 
 protected:
-    Session(const std::string &name, const int debug, const bool autoConnect)
-        : debug(debug)
+    Session(const std::string &name)
+        : debug(0)
         , name(name)
         , autoConnector(*this, opcua_ConnectTimeout, queue)
-        , autoConnect(autoConnect)
+        , autoConnect(true)
     {
         char host[HOST_NAME_MAX] = {0};
         int status = gethostname(host, sizeof(host));
