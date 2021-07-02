@@ -913,7 +913,9 @@ SessionUaSdk::show (const int level) const
               << " url="         << serverURL.toUtf8()
               << " status="      << serverStatusString(serverConnectionStatus)
               << " sec-mode="    << securityModeString(securityInfo.messageSecurityMode)
+              << "(" << reqSecurityModeString(reqSecurityMode) << ")"
               << " sec-policy="  << securityPolicyString(securityInfo.sSecurityPolicy.toUtf8())
+              << "(" << securityPolicyString(reqSecurityPolicyURI.toUtf8()) << ")"
               << " debug="       << debug
               << " batch=";
     if (isConnected())
