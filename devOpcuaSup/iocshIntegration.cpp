@@ -437,9 +437,10 @@ static
 
     if (ok) {
         try {
-            Session *s = Session::find(args[0].sval);
-            if (s)
-                s->connect(true);
+            std::set<Session *> sessions = Session::glob(args[0].sval);
+            if (sessions.size())
+                for (auto &s : sessions)
+                    s->connect(true);
         } catch (std::exception &e) {
             std::cerr << "ERROR : " << e.what() << std::endl;
         }
@@ -476,9 +477,10 @@ static
 
     if (ok) {
         try {
-            Session *s = Session::find(args[0].sval);
-            if (s)
-                s->disconnect();
+            std::set<Session *> sessions = Session::glob(args[0].sval);
+            if (sessions.size())
+                for (auto &s : sessions)
+                    s->disconnect();
         } catch (std::exception &e) {
             std::cerr << "ERROR : " << e.what() << std::endl;
         }
