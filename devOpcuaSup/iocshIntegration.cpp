@@ -179,8 +179,8 @@ opcuaSessionCallFunc(const iocshArgBuf *args)
     }
 }
 
-static const iocshArg opcuaSubscriptionArg0 = {"subscription name", iocshArgString};
-static const iocshArg opcuaSubscriptionArg1 = {"session name", iocshArgString};
+static const iocshArg opcuaSubscriptionArg0 = {"name", iocshArgString};
+static const iocshArg opcuaSubscriptionArg1 = {"session", iocshArgString};
 static const iocshArg opcuaSubscriptionArg2 = {"publishing interval [ms]", iocshArgDouble};
 static const iocshArg opcuaSubscriptionArg3 = {"[options]", iocshArgString};
 
@@ -189,7 +189,23 @@ static const iocshArg *const opcuaSubscriptionArg[4] = {&opcuaSubscriptionArg0,
                                                         &opcuaSubscriptionArg2,
                                                         &opcuaSubscriptionArg3};
 
-static const iocshFuncDef opcuaSubscriptionFuncDef = {"opcuaSubscription", 4, opcuaSubscriptionArg};
+const char opcuaSubscriptionUsage[]
+    = "Configures a new OPC UA subscription, assigning it a name and creating it under an existing "
+      "session.\nMust be called before iocInit.\n\n"
+      "name                 subscription name (no spaces)\n"
+      "session              name of the existing OPC UA session for the new subscription\n"
+      "publishing interval  publishing interval for the new subscription (in ms)\n"
+      "[options]            colon separated list of options in 'key=value' format\n"
+      "                     (see 'help opcuaOptions' for a list of valid options)\n";
+
+static const iocshFuncDef opcuaSubscriptionFuncDef = {"opcuaSubscription",
+                                                      4,
+                                                      opcuaSubscriptionArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                      ,
+                                                      opcuaSubscriptionUsage
+#endif
+};
 
 static
     void opcuaSubscriptionCallFunc (const iocshArgBuf *args)
@@ -343,7 +359,19 @@ static const iocshArg opcuaShowArg1 = {"verbosity", iocshArgInt};
 
 static const iocshArg *const opcuaShowArg[2] = {&opcuaShowArg0, &opcuaShowArg1};
 
-static const iocshFuncDef opcuaShowFuncDef = {"opcuaShow", 2, opcuaShowArg};
+const char opcuaShowUsage[]
+    = "Prints information about sessions, subscriptions, items and their related data elements.\n\n"
+      "pattern    glob pattern (supports * and ?) for session, subscription, record names\n"
+      "verbosity  amount of printed information (default 0 = sparse)\n";
+
+static const iocshFuncDef opcuaShowFuncDef = {"opcuaShow",
+                                              2,
+                                              opcuaShowArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                              ,
+                                              opcuaShowUsage
+#endif
+};
 
 static void
 opcuaShowCallFunc(const iocshArgBuf *args)
@@ -379,11 +407,23 @@ opcuaShowCallFunc(const iocshArgBuf *args)
     }
 }
 
-static const iocshArg opcuaConnectArg0 = {"session name", iocshArgString};
+static const iocshArg opcuaConnectArg0 = {"session", iocshArgString};
 
 static const iocshArg *const opcuaConnectArg[1] = {&opcuaConnectArg0};
 
-static const iocshFuncDef opcuaConnectFuncDef = {"opcuaConnect", 1, opcuaConnectArg};
+const char opcuaConnectUsage[]
+    = "Attempts to connect sessions to the configured OPC UA server.\n"
+      "For sessions with configured autoconnect option, the autoconnector is started.\n\n"
+      "session  glob pattern (supports * and ?) for session names\n";
+
+static const iocshFuncDef opcuaConnectFuncDef = {"opcuaConnect",
+                                                 1,
+                                                 opcuaConnectArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                 ,
+                                                 opcuaConnectUsage
+#endif
+};
 
 static
     void opcuaConnectCallFunc (const iocshArgBuf *args)
@@ -391,7 +431,7 @@ static
     bool ok = true;
 
     if (args[0].sval == nullptr) {
-        errlogPrintf("ERROR : missing argument #1 (session name)\n");
+        errlogPrintf("ERROR : missing argument #1 (session name pattern)\n");
         ok = false;
     }
 
@@ -410,7 +450,19 @@ static const iocshArg opcuaDisconnectArg0 = {"session name", iocshArgString};
 
 static const iocshArg *const opcuaDisconnectArg[1] = {&opcuaDisconnectArg0};
 
-static const iocshFuncDef opcuaDisconnectFuncDef = {"opcuaDisconnect", 1, opcuaDisconnectArg};
+const char opcuaDisconnectUsage[]
+    = "Gracefully disconnects sessions from the configured server.\n"
+      "For sessions with configured autoconnect option, the autoconnector is stopped.\n\n"
+      "session  glob pattern (supports * and ?) for session names\n";
+
+static const iocshFuncDef opcuaDisconnectFuncDef = {"opcuaDisconnect",
+                                                    1,
+                                                    opcuaDisconnectArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                    ,
+                                                    opcuaDisconnectUsage
+#endif
+};
 
 static
     void opcuaDisconnectCallFunc (const iocshArgBuf *args)
@@ -433,14 +485,30 @@ static
     }
 }
 
-static const iocshArg opcuaMapNamespaceArg0 = {"session name", iocshArgString};
+static const iocshArg opcuaMapNamespaceArg0 = {"session", iocshArgString};
 static const iocshArg opcuaMapNamespaceArg1 = {"namespace index", iocshArgInt};
 static const iocshArg opcuaMapNamespaceArg2 = {"namespace URI", iocshArgString};
 
 static const iocshArg *const opcuaMapNamespaceArg[3] = {&opcuaMapNamespaceArg0, &opcuaMapNamespaceArg1,
                                                         &opcuaMapNamespaceArg2};
 
-static const iocshFuncDef opcuaMapNamespaceFuncDef = {"opcuaMapNamespace", 3, opcuaMapNamespaceArg};
+const char opcuaMapNamespaceUsage[]
+    = "Adds a namespace mapping to the mapping table of the specified session.\n"
+      "The specified numerical namespace index (used in the loaded databases) will be mapped to "
+      "the\nspecified namespace URI (on the server).\nThis allows to automatically adapt to servers "
+      "that use volatile namespace indices.\n\n"
+      "session          existing session name\n"
+      "namespace index  numerical namespace as used in the database files\n"
+      "namespace URI    full URI identification of that namespace\n";
+
+static const iocshFuncDef opcuaMapNamespaceFuncDef = {"opcuaMapNamespace",
+                                                      3,
+                                                      opcuaMapNamespaceArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                      ,
+                                                      opcuaMapNamespaceUsage
+#endif
+};
 
 static
 void opcuaMapNamespaceCallFunc (const iocshArgBuf *args)
@@ -484,7 +552,18 @@ static const iocshArg opcuaShowSecurityArg0 = {"session name [\"\"=client]", ioc
 
 static const iocshArg *const opcuaShowSecurityArg[1] = {&opcuaShowSecurityArg0};
 
-static const iocshFuncDef opcuaShowSecurityFuncDef = {"opcuaShowSecurity", 1, opcuaShowSecurityArg};
+const char opcuaShowSecurityUsage[]
+    = "Prints information about the security setup of a sepcific session or the IOC client.\n\n"
+      "session name  name of the session to report on (empty string for client report)\n";
+
+static const iocshFuncDef opcuaShowSecurityFuncDef = {"opcuaShowSecurity",
+                                                      1,
+                                                      opcuaShowSecurityArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                      ,
+                                                      opcuaShowSecurityUsage
+#endif
+};
 
 static
 void opcuaShowSecurityCallFunc (const iocshArgBuf *args)
@@ -508,7 +587,17 @@ static const iocshArg opcuaClientCertificateArg1 = {"private key file", iocshArg
 
 static const iocshArg *const opcuaClientCertificateArg[2] = {&opcuaClientCertificateArg0, &opcuaClientCertificateArg1};
 
-static const iocshFuncDef opcuaClientCertificateFuncDef = {"opcuaClientCertificate", 2, opcuaClientCertificateArg};
+const char opcuaClientCertificateUsage[]
+    = "Sets up the OPC UA client certificates to use for the IOC client.\n\n"
+      "certificate file  path to the file containing the certificate (public key)\n"
+      "private key file  path to the file containing the private key\n";
+
+static const iocshFuncDef opcuaClientCertificateFuncDef = {"opcuaClientCertificate", 2, opcuaClientCertificateArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                           ,
+                                                           opcuaClientCertificateUsage
+#endif
+};
 
 static
     void opcuaClientCertificateCallFunc (const iocshArgBuf *args)
@@ -542,7 +631,26 @@ static const iocshArg opcuaSetupPKIArg3 = {"issuer revocation lists location", i
 static const iocshArg *const opcuaSetupPKIArg[4] = {&opcuaSetupPKIArg0, &opcuaSetupPKIArg1,
                                                     &opcuaSetupPKIArg2, &opcuaSetupPKIArg3};
 
-static const iocshFuncDef opcuaSetupPKIFuncDef = {"opcuaSetupPKI", 4, opcuaSetupPKIArg};
+const char opcuaSetupPKIUsage[]
+    = "Sets up the PKI file store of the IOC client, where certificates and revocation lists are "
+      "stored.\n"
+      "The first form (single parameter) expects a standard directory structure under the "
+      "specified location.\n"
+      "The second form (four parameters) explicitly defines the specific locations.\n\n"
+      "PKI / server certs location       path to the PKI structure / to the location of "
+      "trusted server certs\n"
+      "server revocation lists location  path to the location of server revocation lists\n"
+      "issuer certs location             path to the location of issuer certificates\n"
+      "issuer revocation lists location  path to the location of issuer revocation lists\n";
+
+static const iocshFuncDef opcuaSetupPKIFuncDef = {"opcuaSetupPKI",
+                                                  4,
+                                                  opcuaSetupPKIArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                  ,
+                                                  opcuaSetupPKIUsage
+#endif
+};
 
 static
     void opcuaSetupPKICallFunc (const iocshArgBuf *args)
@@ -582,7 +690,18 @@ static const iocshArg opcuaSaveRejectedArg0 = {"location for saving rejected cer
 
 static const iocshArg *const opcuaSaveRejectedArg[1] = {&opcuaSaveRejectedArg0};
 
-static const iocshFuncDef opcuaSaveRejectedFuncDef = {"opcuaSaveRejected", 1, opcuaSaveRejectedArg};
+const char opcuaSaveRejectedUsage[]
+    = "Sets the location where the client will save rejected certificates.\n\n"
+      "rejected certs location  where to save rejected certificates\n";
+
+static const iocshFuncDef opcuaSaveRejectedFuncDef = {"opcuaSaveRejected",
+                                                      1,
+                                                      opcuaSaveRejectedArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                      ,
+                                                      opcuaSaveRejectedUsage
+#endif
+};
 
 static
     void opcuaSaveRejectedCallFunc (const iocshArgBuf *args)
