@@ -106,6 +106,8 @@ public:
      */
     static std::set<Subscription *> glob(const std::string &pattern);
 
+    static const char optionUsage[]; /**< option info for the specific implementation */
+
     const std::string name; /**< subscription name */
     int debug;              /**< debug verbosity level */
 

@@ -56,4 +56,9 @@ Subscription::showAll (const int level)
     SubscriptionUaSdk::showAll(level);
 }
 
+const char Subscription::optionUsage[]
+    = "Valid subscription options are:\n"
+      "debug              debug level [default 0 = no debug]\n"
+      "";
+
 } // namespace DevOpcua

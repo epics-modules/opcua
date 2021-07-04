@@ -188,11 +188,6 @@ public:
     static std::set<Session *> glob(const std::string &pattern);
 
     /**
-     * @brief Print help text for available options.
-     */
-    static void showOptionHelp();
-
-    /**
      * @brief Set client certificate (public key, private key) file paths.
      *
      * @param pubPath  full path to certificate (public key)
@@ -223,6 +218,8 @@ public:
      * @param location  location for saving rejected certs (empty = use default)
      */
     static void saveRejected(const std::string &location = "");
+
+    static const char optionUsage[]; /**< option info for the specific implementation */
 
     int debug;  /**< debug verbosity level */
 

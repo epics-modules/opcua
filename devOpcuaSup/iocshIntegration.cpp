@@ -169,6 +169,8 @@ static const iocshArg opcuaSetOptionArg0 = {"session name", iocshArgString};
 static const iocshArg opcuaSetOptionArg1 = {"option name", iocshArgString};
 static const iocshArg opcuaSetOptionArg2 = {"option value", iocshArgString};
 
+static const std::string opcuaOptionsUsage = std::string(Session::optionUsage) + Subscription::optionUsage;
+
 static const iocshArg *const opcuaSetOptionArg[3] = {&opcuaSetOptionArg0, &opcuaSetOptionArg1,
                                                      &opcuaSetOptionArg2};
 
@@ -217,7 +219,7 @@ void opcuaSetOptionCallFunc (const iocshArgBuf *args)
 
         if (ok) {
             if (help)
-                Session::showOptionHelp();
+                std::cout << opcuaOptionsUsage.c_str() << std::endl;
             else
                 s->setOption(args[1].sval, args[2].sval);
         }
