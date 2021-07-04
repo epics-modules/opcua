@@ -514,20 +514,17 @@ void opcuaDebugSessionCallFunc (const iocshArgBuf *args)
     }
 }
 
-static const iocshArg opcuaCreateSubscriptionArg0 = {"subscription name", iocshArgString};
-static const iocshArg opcuaCreateSubscriptionArg1 = {"session name", iocshArgString};
-static const iocshArg opcuaCreateSubscriptionArg2 = {"publishing interval (ms)", iocshArgDouble};
-static const iocshArg opcuaCreateSubscriptionArg3 = {"priority [0]", iocshArgInt};
-static const iocshArg opcuaCreateSubscriptionArg4 = {"debug level [0]", iocshArgInt};
+static const iocshArg opcuaSubscriptionArg0 = {"subscription name", iocshArgString};
+static const iocshArg opcuaSubscriptionArg1 = {"session name", iocshArgString};
+static const iocshArg opcuaSubscriptionArg2 = {"publishing interval [ms]", iocshArgDouble};
 
-static const iocshArg *const opcuaCreateSubscriptionArg[5] = {&opcuaCreateSubscriptionArg0, &opcuaCreateSubscriptionArg1,
-                                                              &opcuaCreateSubscriptionArg2, &opcuaCreateSubscriptionArg3,
-                                                              &opcuaCreateSubscriptionArg4};
+static const iocshArg *const opcuaSubscriptionArg[3] = {&opcuaSubscriptionArg0, &opcuaSubscriptionArg1,
+                                                              &opcuaSubscriptionArg2};
 
-static const iocshFuncDef opcuaCreateSubscriptionFuncDef = {"opcuaCreateSubscription", 5, opcuaCreateSubscriptionArg};
+static const iocshFuncDef opcuaSubscriptionFuncDef = {"opcuaSubscription", 3, opcuaSubscriptionArg};
 
 static
-void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
+void opcuaSubscriptionCallFunc (const iocshArgBuf *args)
 {
     try {
         bool ok = true;
@@ -587,9 +584,9 @@ void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
 
         if (ok) {
             Subscription::createSubscription(args[0].sval, args[1].sval,
-                    publishingInterval, priority, debuglevel);
+                    publishingInterval);
             if (debuglevel)
-                errlogPrintf("opcuaCreateSubscription: successfully configured subscription '%s'\n", args[0].sval);
+                errlogPrintf("opcuaSubscription: successfully configured subscription '%s'\n", args[0].sval);
         } else {
             errlogPrintf("ERROR - no subscription created\n");
         }
@@ -853,10 +850,101 @@ static
     }
 }
 
+static const iocshArg opcuaCreateSubscriptionArg0 = {"subscription name", iocshArgString};
+static const iocshArg opcuaCreateSubscriptionArg1 = {"session name", iocshArgString};
+static const iocshArg opcuaCreateSubscriptionArg2 = {"publishing interval (ms)", iocshArgDouble};
+static const iocshArg opcuaCreateSubscriptionArg3 = {"priority [0]", iocshArgInt};
+static const iocshArg opcuaCreateSubscriptionArg4 = {"debug level [0]", iocshArgInt};
+
+static const iocshArg *const opcuaCreateSubscriptionArg[5] = {&opcuaCreateSubscriptionArg0, &opcuaCreateSubscriptionArg1,
+                                                              &opcuaCreateSubscriptionArg2, &opcuaCreateSubscriptionArg3,
+                                                              &opcuaCreateSubscriptionArg4};
+
+static const iocshFuncDef opcuaCreateSubscriptionFuncDef = {"opcuaCreateSubscription", 5, opcuaCreateSubscriptionArg};
+
+static
+    void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
+{
+    try {
+        bool ok = true;
+        int debuglevel = 0;
+        epicsUInt8 priority = 0;
+        double publishingInterval = 0.;
+
+        if (args[0].sval == nullptr) {
+            errlogPrintf("missing argument #1 (subscription name)\n");
+            ok = false;
+        } else if (strchr(args[0].sval, ' ')) {
+            errlogPrintf("invalid argument #1 (subscription name) '%s'\n",
+                         args[0].sval);
+            ok = false;
+        } else if (Subscription::find(args[0].sval)) {
+            errlogPrintf("subscription name %s already in use\n",
+                         args[0].sval);
+            ok = false;
+        }
+
+        if (args[1].sval == nullptr) {
+            errlogPrintf("missing argument #2 (session name)\n");
+            ok = false;
+        } else if (strchr(args[1].sval, ' ')) {
+            errlogPrintf("invalid argument #2 (session name) '%s'\n",
+                         args[1].sval);
+            ok = false;
+        } else if (!Session::find(args[1].sval)) {
+            errlogPrintf("session %s does not exist\n",
+                         args[1].sval);
+            ok = false;
+        }
+
+        if (args[2].dval < 0) {
+            errlogPrintf("invalid argument #3 (publishing interval) '%f'\n",
+                         args[2].dval);
+            ok = false;
+        } else if (args[2].dval == 0) {
+            publishingInterval = opcua_DefaultPublishInterval;
+        } else {
+            publishingInterval = args[2].dval;
+        }
+
+        if (args[4].ival < 0) {
+            errlogPrintf("out-of-range argument #5 (debug level) '%d' - ignored\n", args[4].ival);
+        } else {
+            debuglevel = args[4].ival;
+        }
+
+        if (ok) {
+            Subscription *s = Subscription::createSubscription(args[0].sval,
+                                                               args[1].sval,
+                                                               publishingInterval);
+            if (s && debuglevel) {
+                errlogPrintf("opcuaCreateSubscription: successfully configured subscription '%s'\n",
+                             args[0].sval);
+                s->setOption("debug", std::to_string(debuglevel));
+            }
+        } else {
+            errlogPrintf("ERROR - no subscription created\n");
+        }
+
+        if (args[3].ival < 0 || args[3].ival > 255) {
+            errlogPrintf("out-of-range argument #4 (priority) '%d' - ignored\n",
+                         args[3].ival);
+        } else {
+            if (ok && args[3].ival)
+                s->setOption("priority", std::to_string(args[3].ival));
+        }
+
+    }
+    catch(std::exception& e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static
 void opcuaIocshRegister ()
 {
     iocshRegister(&opcuaSessionFuncDef, opcuaSessionCallFunc);
+    iocshRegister(&opcuaSubscriptionFuncDef, opcuaSubscriptionCallFunc);
     iocshRegister(&opcuaOptionsFuncDef, opcuaOptionsCallFunc);
     iocshRegister(&opcuaMapNamespaceFuncDef, opcuaMapNamespaceCallFunc);
 

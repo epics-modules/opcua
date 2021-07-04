@@ -28,14 +28,12 @@ Subscription::~Subscription() {}
 Subscription *
 Subscription::createSubscription(const std::string &name,
                                  const std::string &session,
-                                 const double publishingInterval,
-                                 const epicsUInt8 priority,
-                                 const int debug)
+                                 const double publishingInterval)
 {
     SessionUaSdk *s = SessionUaSdk::find(session);
     if (RegistryKeyNamespace::global.contains(name) || !s)
         return nullptr;
-    return new SubscriptionUaSdk(name, s, publishingInterval, priority, debug);
+    return new SubscriptionUaSdk(name, s, publishingInterval);
 }
 
 Subscription *
@@ -59,6 +57,7 @@ Subscription::showAll (const int level)
 const char Subscription::optionUsage[]
     = "Valid subscription options are:\n"
       "debug              debug level [default 0 = no debug]\n"
+      "priority           priority level [default 0(lowest) .. 255]\n"
       "";
 
 } // namespace DevOpcua

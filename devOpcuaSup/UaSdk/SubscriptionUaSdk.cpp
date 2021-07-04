@@ -36,9 +36,8 @@ using namespace UaClientSdk;
 Registry<SubscriptionUaSdk> SubscriptionUaSdk::subscriptions;
 
 SubscriptionUaSdk::SubscriptionUaSdk (const std::string &name, SessionUaSdk *session,
-                                      const double publishingInterval, const epicsUInt8 priority,
-                                      const int debug)
-    : Subscription(name, debug)
+                                      const double publishingInterval)
+    : Subscription(name)
     , puasubscription(nullptr)
     , psessionuasdk(session)
     //TODO: add runtime support for subscription enable/disable
@@ -48,7 +47,6 @@ SubscriptionUaSdk::SubscriptionUaSdk (const std::string &name, SessionUaSdk *ses
     double deftimeout = subscriptionSettings.publishingInterval * subscriptionSettings.lifetimeCount;
     subscriptionSettings.publishingInterval = requestedSettings.publishingInterval = publishingInterval;
     subscriptionSettings.lifetimeCount = requestedSettings.lifetimeCount = static_cast<OpcUa_UInt32>(deftimeout / publishingInterval);
-    subscriptionSettings.priority = requestedSettings.priority = priority;
 
     subscriptions.insert({name, this});
     psessionuasdk->subscriptions[name] = this;
@@ -63,6 +61,12 @@ void SubscriptionUaSdk::setOption(const std::string &name, const std::string &va
     if (name == "debug") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         debug = ul;
+    } else if (name == "priority") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        if (ul > 255ul)
+            errlogPrintf("option '%s' value out of range - ignored\n", name.c_str());
+        else
+            subscriptionSettings.priority = requestedSettings.priority = ul;
     } else {
         errlogPrintf("unknown option '%s' - ignored\n", name.c_str());
     }
