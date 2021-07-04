@@ -517,22 +517,25 @@ void opcuaDebugSessionCallFunc (const iocshArgBuf *args)
 static const iocshArg opcuaSubscriptionArg0 = {"subscription name", iocshArgString};
 static const iocshArg opcuaSubscriptionArg1 = {"session name", iocshArgString};
 static const iocshArg opcuaSubscriptionArg2 = {"publishing interval [ms]", iocshArgDouble};
+static const iocshArg opcuaSubscriptionArg3 = {"[options]", iocshArgString};
 
-static const iocshArg *const opcuaSubscriptionArg[3] = {&opcuaSubscriptionArg0, &opcuaSubscriptionArg1,
-                                                              &opcuaSubscriptionArg2};
+static const iocshArg *const opcuaSubscriptionArg[4] = {&opcuaSubscriptionArg0,
+                                                        &opcuaSubscriptionArg1,
+                                                        &opcuaSubscriptionArg2,
+                                                        &opcuaSubscriptionArg3};
 
-static const iocshFuncDef opcuaSubscriptionFuncDef = {"opcuaSubscription", 3, opcuaSubscriptionArg};
+static const iocshFuncDef opcuaSubscriptionFuncDef = {"opcuaSubscription", 4, opcuaSubscriptionArg};
 
 static
 void opcuaSubscriptionCallFunc (const iocshArgBuf *args)
 {
     try {
         bool ok = true;
-        int debuglevel = 0;
-        epicsUInt8 priority = 0;
         double publishingInterval = 0.;
+        int debug = 0;
+        Subscription *s = nullptr;
 
-        if (args[0].sval == nullptr) {
+        if (!args[0].sval) {
             errlogPrintf("missing argument #1 (subscription name)\n");
             ok = false;
         } else if (strchr(args[0].sval, ' ')) {
@@ -545,12 +548,8 @@ void opcuaSubscriptionCallFunc (const iocshArgBuf *args)
             ok = false;
         }
 
-        if (args[1].sval == nullptr) {
+        if (!args[1].sval) {
             errlogPrintf("missing argument #2 (session name)\n");
-            ok = false;
-        } else if (strchr(args[1].sval, ' ')) {
-            errlogPrintf("invalid argument #2 (session name) '%s'\n",
-                         args[1].sval);
             ok = false;
         } else if (!Session::find(args[1].sval)) {
             errlogPrintf("session %s does not exist\n",
@@ -559,36 +558,43 @@ void opcuaSubscriptionCallFunc (const iocshArgBuf *args)
         }
 
         if (args[2].dval < 0) {
-            errlogPrintf("invalid argument #3 (publishing interval) '%f'\n",
+            errlogPrintf("invalid argument #3 (publishing interval) '%f' - ignored\n",
                          args[2].dval);
-            ok = false;
+            publishingInterval = opcua_DefaultPublishInterval;
         } else if (args[2].dval == 0) {
             publishingInterval = opcua_DefaultPublishInterval;
         } else {
             publishingInterval = args[2].dval;
         }
 
-        if (args[3].ival < 0 || args[3].ival > 255) {
-            errlogPrintf("invalid argument #4 (priority) '%d'\n",
-                         args[3].ival);
-        } else {
-            priority = static_cast<epicsUInt8>(args[3].ival);
-        }
-
-        if (args[4].ival < 0) {
-            errlogPrintf("invalid argument #5 (debug level) '%d'\n",
-                         args[4].ival);
-        } else {
-            debuglevel = args[4].ival;
+        std::list<std::pair<std::string, std::string>> setopts;
+        if (args[3].sval) {
+            auto options = splitString(args[3].sval, ':');
+            for (auto &opt : options) {
+                auto keyval = splitString(opt, '=');
+                if (keyval.size() != 2) {
+                    errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
+                                 opt.c_str());
+                } else {
+                    if (keyval.front() == "debug")
+                        debug = std::strtol(keyval.back().c_str(), nullptr, 0);
+                    setopts.emplace_back(keyval.front(), keyval.back());
+                }
+            }
         }
 
         if (ok) {
-            Subscription::createSubscription(args[0].sval, args[1].sval,
-                    publishingInterval);
-            if (debuglevel)
-                errlogPrintf("opcuaSubscription: successfully configured subscription '%s'\n", args[0].sval);
+            s = Subscription::createSubscription(args[0].sval, args[1].sval, publishingInterval);
+            if (s && debug)
+                errlogPrintf("opcuaSubscription: successfully created subscription '%s'\n", args[0].sval);
         } else {
             errlogPrintf("ERROR - no subscription created\n");
+            ok = false;
+        }
+
+        if (ok && s) {
+            for (auto &keyval : setopts)
+                s->setOption(keyval.first, keyval.second);
         }
     }
     catch(std::exception& e) {
@@ -865,11 +871,15 @@ static const iocshFuncDef opcuaCreateSubscriptionFuncDef = {"opcuaCreateSubscrip
 static
     void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
 {
+    std::cerr << "DEPRECATION WARNING: opcuaCreateSubscription is obsolete; use the improved "
+                 "opcuaSubscription command instead (that supports a generic option string)."
+              << std::endl;
+
     try {
         bool ok = true;
         int debuglevel = 0;
-        epicsUInt8 priority = 0;
         double publishingInterval = 0.;
+        Subscription *s = nullptr;
 
         if (args[0].sval == nullptr) {
             errlogPrintf("missing argument #1 (subscription name)\n");
@@ -946,28 +956,26 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaSessionFuncDef, opcuaSessionCallFunc);
     iocshRegister(&opcuaSubscriptionFuncDef, opcuaSubscriptionCallFunc);
     iocshRegister(&opcuaOptionsFuncDef, opcuaOptionsCallFunc);
-    iocshRegister(&opcuaMapNamespaceFuncDef, opcuaMapNamespaceCallFunc);
+    iocshRegister(&opcuaShowFuncDef, opcuaShowCallFunc);
 
+    iocshRegister(&opcuaMapNamespaceFuncDef, opcuaMapNamespaceCallFunc);
     iocshRegister(&opcuaConnectFuncDef, opcuaConnectCallFunc);
     iocshRegister(&opcuaDisconnectFuncDef, opcuaDisconnectCallFunc);
-    iocshRegister(&opcuaShowSessionFuncDef, opcuaShowSessionCallFunc);
+
     iocshRegister(&opcuaShowSecurityFuncDef, opcuaShowSecurityCallFunc);
     iocshRegister(&opcuaClientCertificateFuncDef, opcuaClientCertificateCallFunc);
     iocshRegister(&opcuaSetupPKIFuncDef, opcuaSetupPKICallFunc);
     iocshRegister(&opcuaSaveRejectedFuncDef, opcuaSaveRejectedCallFunc);
-    iocshRegister(&opcuaDebugSessionFuncDef, opcuaDebugSessionCallFunc);
-
-    iocshRegister(&opcuaCreateSubscriptionFuncDef, opcuaCreateSubscriptionCallFunc);
-    iocshRegister(&opcuaShowSubscriptionFuncDef, opcuaShowSubscriptionCallFunc);
-    iocshRegister(&opcuaDebugSubscriptionFuncDef, opcuaDebugSubscriptionCallFunc);
-
-    iocshRegister(&opcuaShowDataFuncDef, opcuaShowDataCallFunc);
-    iocshRegister(&opcuaShowFuncDef, opcuaShowCallFunc);
 
     // Deprecated (to be removed at v1.0)
     iocshRegister(&opcuaCreateSessionFuncDef, opcuaCreateSessionCallFunc);
+    iocshRegister(&opcuaCreateSubscriptionFuncDef, opcuaCreateSubscriptionCallFunc);
     iocshRegister(&opcuaSetOptionFuncDef, opcuaSetOptionCallFunc);
-
+    iocshRegister(&opcuaShowSessionFuncDef, opcuaShowSessionCallFunc);
+    iocshRegister(&opcuaDebugSessionFuncDef, opcuaDebugSessionCallFunc);
+    iocshRegister(&opcuaShowSubscriptionFuncDef, opcuaShowSubscriptionCallFunc);
+    iocshRegister(&opcuaDebugSubscriptionFuncDef, opcuaDebugSubscriptionCallFunc);
+    iocshRegister(&opcuaShowDataFuncDef, opcuaShowDataCallFunc);
 }
 
 extern "C" {
