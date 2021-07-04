@@ -179,63 +179,71 @@ opcuaSessionCallFunc(const iocshArgBuf *args)
     }
 }
 
-static const iocshArg opcuaSetOptionArg0 = {"session name", iocshArgString};
-static const iocshArg opcuaSetOptionArg1 = {"option name", iocshArgString};
-static const iocshArg opcuaSetOptionArg2 = {"option value", iocshArgString};
+static const iocshArg opcuaOptionsArg0 = {"pattern", iocshArgString};
+static const iocshArg opcuaOptionsArg1 = {"[options]", iocshArgString};
+
+static const iocshArg *const opcuaOptionsArg[2] = {&opcuaOptionsArg0, &opcuaOptionsArg1};
 
 static const std::string opcuaOptionsUsage = std::string(Session::optionUsage) + Subscription::optionUsage;
 
-static const iocshArg *const opcuaSetOptionArg[3] = {&opcuaSetOptionArg0, &opcuaSetOptionArg1,
-                                                     &opcuaSetOptionArg2};
+static const iocshFuncDef opcuaOptionsFuncDef = {"opcuaOptions",
+                                                2,
+                                                opcuaOptionsArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                ,
+                                                opcuaOptionsUsage.c_str()
+#endif
+};
 
-static const iocshFuncDef opcuaSetOptionFuncDef = {"opcuaSetOption", 3, opcuaSetOptionArg};
-
-static
-void opcuaSetOptionCallFunc (const iocshArgBuf *args)
+static void
+opcuaOptionsCallFunc(const iocshArgBuf *args)
 {
     try {
-        bool ok = true;
-        bool help = false;
-        Session *s = nullptr;
-
-        if (args[0].sval == nullptr) {
-            errlogPrintf("missing argument #1 (session name)\n");
-            ok = false;
+        if (args[0].sval == NULL || args[0].sval[0] == '\0') {
+            errlogPrintf("missing argument #1 (pattern for name)\n");
         } else if (strcmp(args[0].sval, "help") == 0) {
-            help = true;
+            std::cout << opcuaOptionsUsage.c_str() << std::endl;
         } else {
-            s = Session::find(args[0].sval);
-            if (!s) {
-                errlogPrintf("'%s' - no such session\n", args[0].sval);
-                ok = false;
-            }
-        }
-
-        if (!help) {
-            if (args[1].sval == nullptr) {
-                errlogPrintf("missing argument #2 (option name)\n");
-                ok = false;
-            } else if (strchr(args[1].sval, ' ')) {
-                errlogPrintf("invalid argument #2 (option name) '%s'\n",
-                             args[1].sval);
-                ok = false;
-            }
-
-            if (args[2].sval == nullptr) {
-                if (args[1].sval && strcmp(args[1].sval, "help") == 0) {
-                    help = true;
-                } else {
-                    errlogPrintf("missing argument #3 (value)\n");
-                    ok = false;
+            if (!args[1].sval) {
+                errlogPrintf("missing argument #2 (options)\n");
+            } else {
+                bool foundSomething = false;
+                std::set<Session *> sessions = Session::glob(args[0].sval);
+                if (sessions.size()) {
+                    foundSomething = true;
+                    auto options = splitString(args[1].sval, ':');
+                    for (auto &opt : options) {
+                        auto keyval = splitString(opt, '=');
+                        if (keyval.size() != 2) {
+                            errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
+                                         opt.c_str());
+                        } else {
+                            for (auto &s : sessions)
+                                s->setOption(keyval.front(), keyval.back());
+                        }
+                    }
                 }
+                if (!foundSomething) {
+                    std::set<Subscription *> subscriptions = Subscription::glob(args[0].sval);
+                    if (subscriptions.size()) {
+                        foundSomething = true;
+                        auto options = splitString(args[1].sval, ':');
+                        for (auto &opt : options) {
+                            auto keyval = splitString(opt, '=');
+                            if (keyval.size() != 2) {
+                                errlogPrintf(
+                                    "option '%s' must follow 'key=value' format - ignored\n",
+                                    opt.c_str());
+                            } else {
+                                for (auto &s : subscriptions)
+                                    s->setOption(keyval.front(), keyval.back());
+                            }
+                        }
+                    }
+                }
+                if (!foundSomething)
+                    errlogPrintf("No matches for pattern '%s'\n", args[0].sval);
             }
-        }
-
-        if (ok) {
-            if (help)
-                std::cout << opcuaOptionsUsage.c_str() << std::endl;
-            else
-                s->setOption(args[1].sval, args[2].sval);
         }
     } catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
@@ -784,11 +792,72 @@ opcuaCreateSessionCallFunc(const iocshArgBuf *args)
     }
 }
 
+static const iocshArg opcuaSetOptionArg0 = {"session name", iocshArgString};
+static const iocshArg opcuaSetOptionArg1 = {"option name", iocshArgString};
+static const iocshArg opcuaSetOptionArg2 = {"option value", iocshArgString};
+
+static const iocshArg *const opcuaSetOptionArg[3] = {&opcuaSetOptionArg0, &opcuaSetOptionArg1,
+                                                     &opcuaSetOptionArg2};
+
+static const iocshFuncDef opcuaSetOptionFuncDef = {"opcuaSetOption", 3, opcuaSetOptionArg};
+
+static
+    void opcuaSetOptionCallFunc (const iocshArgBuf *args)
+{
+    try {
+        bool ok = true;
+        bool help = false;
+        Session *s = nullptr;
+
+        if (args[0].sval == nullptr) {
+            errlogPrintf("missing argument #1 (session name)\n");
+            ok = false;
+        } else if (strcmp(args[0].sval, "help") == 0) {
+            help = true;
+        } else {
+            s = Session::find(args[0].sval);
+            if (!s) {
+                errlogPrintf("'%s' - no such session\n", args[0].sval);
+                ok = false;
+            }
+        }
+
+        if (!help) {
+            if (args[1].sval == nullptr) {
+                errlogPrintf("missing argument #2 (option name)\n");
+                ok = false;
+            } else if (strchr(args[1].sval, ' ')) {
+                errlogPrintf("invalid argument #2 (option name) '%s'\n",
+                             args[1].sval);
+                ok = false;
+            }
+
+            if (args[2].sval == nullptr) {
+                if (args[1].sval && strcmp(args[1].sval, "help") == 0) {
+                    help = true;
+                } else {
+                    errlogPrintf("missing argument #3 (value)\n");
+                    ok = false;
+                }
+            }
+        }
+
+        if (ok) {
+            if (help)
+                std::cout << opcuaOptionsUsage.c_str() << std::endl;
+            else
+                s->setOption(args[1].sval, args[2].sval);
+        }
+    } catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static
 void opcuaIocshRegister ()
 {
     iocshRegister(&opcuaSessionFuncDef, opcuaSessionCallFunc);
-    iocshRegister(&opcuaSetOptionFuncDef, opcuaSetOptionCallFunc);
+    iocshRegister(&opcuaOptionsFuncDef, opcuaOptionsCallFunc);
     iocshRegister(&opcuaMapNamespaceFuncDef, opcuaMapNamespaceCallFunc);
 
     iocshRegister(&opcuaConnectFuncDef, opcuaConnectCallFunc);
@@ -809,6 +878,8 @@ void opcuaIocshRegister ()
 
     // Deprecated (to be removed at v1.0)
     iocshRegister(&opcuaCreateSessionFuncDef, opcuaCreateSessionCallFunc);
+    iocshRegister(&opcuaSetOptionFuncDef, opcuaSetOptionCallFunc);
+
 }
 
 extern "C" {
