@@ -95,69 +95,83 @@ replaceEnvVars(const char *path)
     return result;
 }
 
-static const iocshArg opcuaCreateSessionArg0 = {"session name", iocshArgString};
-static const iocshArg opcuaCreateSessionArg1 = {"server URL", iocshArgString};
-static const iocshArg opcuaCreateSessionArg2 = {"debug level [0]", iocshArgInt};
-static const iocshArg opcuaCreateSessionArg3 = {"autoconnect [true]", iocshArgString};
+static const iocshArg opcuaSessionArg0 = {"name", iocshArgString};
+static const iocshArg opcuaSessionArg1 = {"URL", iocshArgString};
+static const iocshArg opcuaSessionArg2 = {"[options]", iocshArgString};
 
-static const iocshArg *const opcuaCreateSessionArg[4] = {&opcuaCreateSessionArg0, &opcuaCreateSessionArg1,
-                                                         &opcuaCreateSessionArg2, &opcuaCreateSessionArg3};
+static const iocshArg *const opcuaSessionArg[3] = {&opcuaSessionArg0,
+                                                   &opcuaSessionArg1,
+                                                   &opcuaSessionArg2};
 
-static const iocshFuncDef opcuaCreateSessionFuncDef = {"opcuaCreateSession", 4, opcuaCreateSessionArg};
+const char opcuaSessionUsage[]
+    = "Configures a new OPC UA session, assigning it a name and the URL "
+      "of the OPC UA server.\nMust be called before iocInit.\n\n"
+      "name       session name (no spaces)\n"
+      "URL        URL of the OPC UA server (e.g. opc.tcp://192.168.1.23:4840)\n"
+      "[options]  colon separated list of options in 'key=value' format\n"
+      "           (see 'help opcuaOptions' for a list of valid options)\n";
 
-static
-void opcuaCreateSessionCallFunc (const iocshArgBuf *args)
+static const iocshFuncDef opcuaSessionFuncDef = {"opcuaSession",
+                                                 3,
+                                                 opcuaSessionArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                 ,
+                                                 opcuaSessionUsage
+#endif
+};
+
+static void
+opcuaSessionCallFunc(const iocshArgBuf *args)
 {
     try {
         bool ok = true;
-        bool autoconnect = true;
-        int debuglevel = 0;
+        Session *s = nullptr;
+        int debug = 0;
 
-        if (args[0].sval == nullptr) {
+        if (!args[0].sval) {
             errlogPrintf("missing argument #1 (session name)\n");
             ok = false;
         } else if (strchr(args[0].sval, ' ')) {
-            errlogPrintf("invalid argument #1 (session name) '%s'\n",
-                         args[0].sval);
+            errlogPrintf("invalid argument #1 (session name) '%s'\n", args[0].sval);
             ok = false;
         } else if (RegistryKeyNamespace::global.contains(args[0].sval)) {
-            errlogPrintf("session name %s already in use\n",
-                         args[0].sval);
+            errlogPrintf("session name %s already in use\n", args[0].sval);
             ok = false;
         }
 
-        if (args[1].sval == nullptr) {
+        if (!args[1].sval) {
             errlogPrintf("missing argument #2 (server URL)\n");
             ok = false;
         }
 
-        if (args[2].ival < 0) {
-            errlogPrintf("invalid argument #3 (debug level) '%d'\n",
-                         args[2].ival);
-        } else {
-            debuglevel = args[2].ival;
-        }
-
-        if (args[3].sval != nullptr) {
-            try {
-                autoconnect = getYesNo(args[3].sval[0]);
-            } catch (...) {
-                errlogPrintf("invalid argument #4 (autoconnect) '%s'\n",
-                             args[3].sval);
+        std::list<std::pair<std::string, std::string>> setopts;
+        if (args[2].sval) {
+            auto options = splitString(args[2].sval, ':');
+            for (auto &opt : options) {
+                auto keyval = splitString(opt, '=');
+                if (keyval.size() != 2) {
+                    errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
+                                 opt.c_str());
+                } else {
+                    if (keyval.front() == "debug")
+                        debug = std::strtol(keyval.back().c_str(), nullptr, 0);
+                    setopts.emplace_back(keyval.front(), keyval.back());
+                }
             }
         }
 
         if (ok) {
-            Session *s = Session::createSession(args[0].sval, args[1].sval);
-            if (debuglevel) {
-                s->setOption("debug", std::to_string(debuglevel));
-                errlogPrintf("opcuaCreateSession: successfully created session '%s'\n",
-                             args[0].sval);
-            }
-            if (!autoconnect)
-                s->setOption("autoconnect", "n");
+            s = Session::createSession(args[0].sval, args[1].sval);
+            if (s && debug)
+                errlogPrintf("opcuaSession: successfully created session '%s'\n", args[0].sval);
         } else {
             errlogPrintf("ERROR - no session created\n");
+            ok = false;
+        }
+
+        if (ok && s) {
+            for (auto &keyval : setopts)
+                s->setOption(keyval.first, keyval.second);
         }
     }
     catch(std::exception& e) {
@@ -696,10 +710,84 @@ opcuaShowCallFunc(const iocshArgBuf *args)
     }
 }
 
+// Deprecated functions (to be removed with v1.0)
+// ----------------------------------------------
+
+static const iocshArg opcuaCreateSessionArg0 = {"session name", iocshArgString};
+static const iocshArg opcuaCreateSessionArg1 = {"server URL", iocshArgString};
+static const iocshArg opcuaCreateSessionArg2 = {"debug level [0]", iocshArgInt};
+static const iocshArg opcuaCreateSessionArg3 = {"autoconnect [true]", iocshArgString};
+
+static const iocshArg *const opcuaCreateSessionArg[4] = {&opcuaCreateSessionArg0,
+                                                         &opcuaCreateSessionArg1,
+                                                         &opcuaCreateSessionArg2,
+                                                         &opcuaCreateSessionArg3};
+
+static const iocshFuncDef opcuaCreateSessionFuncDef = {"opcuaCreateSession",
+                                                       4,
+                                                       opcuaCreateSessionArg};
+
+static void
+opcuaCreateSessionCallFunc(const iocshArgBuf *args)
+{
+    std::cerr
+        << "DEPRECATION WARNING: opcuaCreateSession is obsolete; use the improved opcuaSession "
+           "command instead (that supports a generic option string)."
+        << std::endl;
+
+    try {
+        bool ok = true;
+        int debuglevel = 0;
+        Session *s = nullptr;
+
+        if (args[0].sval == nullptr) {
+            errlogPrintf("missing argument #1 (session name)\n");
+            ok = false;
+        } else if (strchr(args[0].sval, ' ')) {
+            errlogPrintf("invalid argument #1 (session name) '%s'\n", args[0].sval);
+            ok = false;
+        } else if (RegistryKeyNamespace::global.contains(args[0].sval)) {
+            errlogPrintf("session name %s already in use\n", args[0].sval);
+            ok = false;
+        }
+
+        if (args[1].sval == nullptr) {
+            errlogPrintf("missing argument #2 (server URL)\n");
+            ok = false;
+        }
+
+        if (args[2].ival < 0) {
+            errlogPrintf("invalid argument #3 (debug level) '%d' - ignored\n", args[2].ival);
+        } else {
+            debuglevel = args[2].ival;
+        }
+
+        if (ok) {
+            s = Session::createSession(args[0].sval, args[1].sval);
+            if (debuglevel) {
+                errlogPrintf("opcuaCreateSession: successfully created session '%s'\n",
+                             args[0].sval);
+                if (s)
+                    s->setOption("debug", std::to_string(debuglevel));
+            }
+        } else {
+            errlogPrintf("ERROR - no session created\n");
+        }
+
+        if (args[3].sval != nullptr) {
+            if (s)
+                s->setOption("autoconnect", args[3].sval);
+        }
+
+    } catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
 static
 void opcuaIocshRegister ()
 {
-    iocshRegister(&opcuaCreateSessionFuncDef, opcuaCreateSessionCallFunc);
+    iocshRegister(&opcuaSessionFuncDef, opcuaSessionCallFunc);
     iocshRegister(&opcuaSetOptionFuncDef, opcuaSetOptionCallFunc);
     iocshRegister(&opcuaMapNamespaceFuncDef, opcuaMapNamespaceCallFunc);
 
@@ -718,6 +806,9 @@ void opcuaIocshRegister ()
 
     iocshRegister(&opcuaShowDataFuncDef, opcuaShowDataCallFunc);
     iocshRegister(&opcuaShowFuncDef, opcuaShowCallFunc);
+
+    // Deprecated (to be removed at v1.0)
+    iocshRegister(&opcuaCreateSessionFuncDef, opcuaCreateSessionCallFunc);
 }
 
 extern "C" {
