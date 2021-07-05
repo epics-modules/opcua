@@ -922,9 +922,7 @@ static
         }
 
         if (ok) {
-            Subscription *s = Subscription::createSubscription(args[0].sval,
-                                                               args[1].sval,
-                                                               publishingInterval);
+            s = Subscription::createSubscription(args[0].sval, args[1].sval, publishingInterval);
             if (s && debuglevel) {
                 errlogPrintf("opcuaCreateSubscription: successfully configured subscription '%s'\n",
                              args[0].sval);
@@ -938,7 +936,7 @@ static
             errlogPrintf("out-of-range argument #4 (priority) '%d' - ignored\n",
                          args[3].ival);
         } else {
-            if (ok && args[3].ival)
+            if (s)
                 s->setOption("priority", std::to_string(args[3].ival));
         }
 
