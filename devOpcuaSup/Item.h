@@ -76,6 +76,7 @@ public:
      * @param[out] code  OPC UA status code
      * @param[out] text  OPC UA status text (will be null terminated)
      * @param[in]  len  Length of text buffer
+     * @param[out] ts  EPICS timestamp
      */
     virtual void getStatus(epicsUInt32 *code,
                            char *text = nullptr,

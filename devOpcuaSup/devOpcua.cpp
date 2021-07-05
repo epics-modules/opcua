@@ -1195,7 +1195,7 @@ opcua_action_item(REC *prec)
                 break;
             }
         }
-        pcon->getStatus(&prec->statcode, prec->stattext, MAX_STRING_SIZE + 1);
+        pcon->getStatus(&prec->statcode, prec->stattext, MAX_STRING_SIZE + 1, &prec->time);
         traceItemActionPrint(pdbc, pcon, ret, action, prec->statcode, prec->stattext);
     }
     CATCH()

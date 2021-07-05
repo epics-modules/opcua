@@ -89,7 +89,11 @@ public:
     ConnectionStatus state() const { return pitem->state(); }
     void setState(ConnectionStatus state) { pitem->setState(state); }
 
-    void getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len) { pitem->getStatus(code, text, len); }
+    void
+    getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len, epicsTimeStamp *ts = nullptr)
+    {
+        pitem->getStatus(code, text, len, ts);
+    }
 
     void setDataElement(std::shared_ptr<DataElement> data) { pdataelement = data; }
     void clearDataElement() { pdataelement = nullptr; }

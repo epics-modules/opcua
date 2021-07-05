@@ -162,6 +162,7 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
     } else {
         tsSource = tsClient;
         tsServer = tsClient;
+        tsData = tsClient;
     }
     setReason(reason);
     if (getLastStatus() == OpcUa_BadServerNotConnected && value.StatusCode == OpcUa_BadNodeIdUnknown)
@@ -199,10 +200,12 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
     setReason(reason);
-    if (reason == ProcessReason::connectionLoss) {
+    if (!(reason == ProcessReason::incomingData || reason == ProcessReason::readComplete)) {
         tsSource = tsClient;
         tsServer = tsClient;
-        setLastStatus(OpcUa_BadServerNotConnected);
+        tsData = tsClient;
+        if (reason == ProcessReason::connectionLoss)
+            setLastStatus(OpcUa_BadServerNotConnected);
     }
 
     if (auto pd = dataTree.root().lock()) {
