@@ -167,9 +167,7 @@ public:
      * @return  pointer to the new session, nullptr if not created
      */
     static Session *createSession(const std::string &name,
-                                  const std::string &url,
-                                  const int debuglevel,
-                                  const bool autoconnect);
+                                  const std::string &url);
 
     /**
      * @brief Find a session by name (implementation specific).
@@ -188,11 +186,6 @@ public:
      * @return  set of pointers to matching sessions
      */
     static std::set<Session *> glob(const std::string &pattern);
-
-    /**
-     * @brief Print help text for available options.
-     */
-    static void showOptionHelp();
 
     /**
      * @brief Set client certificate (public key, private key) file paths.
@@ -226,14 +219,16 @@ public:
      */
     static void saveRejected(const std::string &location = "");
 
+    static const char optionUsage[]; /**< option info for the specific implementation */
+
     int debug;  /**< debug verbosity level */
 
 protected:
-    Session(const std::string &name, const int debug, const bool autoConnect)
-        : debug(debug)
+    Session(const std::string &name)
+        : debug(0)
         , name(name)
         , autoConnector(*this, opcua_ConnectTimeout, queue)
-        , autoConnect(autoConnect)
+        , autoConnect(true)
     {
         char host[HOST_NAME_MAX] = {0};
         int status = gethostname(host, sizeof(host));

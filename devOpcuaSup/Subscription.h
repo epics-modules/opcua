@@ -41,16 +41,12 @@ public:
      * @param name  subscription name
      * @param session  session that the subscription should be linked to
      * @param publishingInterval  initial publishing interval
-     * @param priority  priority (default 0=lowest)
-     * @param debug  initial debug verbosity (default 0=no debug)
      *
      * @return  pointer to the new subscription, nullptr if not created
      */
     static Subscription *createSubscription(const std::string &name,
                                             const std::string &session,
-                                            const double publishingInterval,
-                                            const epicsUInt8 priority = 0,
-                                            const int debug = 0);
+                                            const double publishingInterval);
     /**
      * @brief Print configuration and status on stdout.
      *
@@ -60,6 +56,14 @@ public:
      * @param level  verbosity level
      */
     virtual void show(int level) const = 0;
+
+    /**
+     * @brief Set an option for the subscription.
+     *
+     * @param name   option name
+     * @param value  value
+     */
+    virtual void setOption(const std::string &name, const std::string &value) = 0;
 
     /**
      * @brief Print configuration and status of all subscriptions on stdout.
@@ -98,6 +102,8 @@ public:
      */
     static std::set<Subscription *> glob(const std::string &pattern);
 
+    static const char optionUsage[]; /**< option info for the specific implementation */
+
     const std::string name; /**< subscription name */
     int debug;              /**< debug verbosity level */
 
@@ -107,9 +113,9 @@ protected:
      *
      * @param debug  initial debug level
      */
-    Subscription(const std::string &name, const int debug)
+    Subscription(const std::string &name)
         : name(name)
-        , debug(debug) {}
+        , debug(0) {}
 };
 
 } // namespace DevOpcua
