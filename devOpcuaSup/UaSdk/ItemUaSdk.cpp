@@ -188,6 +188,8 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
                 && recConnector->bini() == LinkOptionBini::write) {
             setState(ConnectionStatus::initialWrite);
             recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+        } else {
+            recConnector->requestRecordProcessing(reason);
         }
     }
 }

@@ -1150,52 +1150,55 @@ opcua_write_array (REC *prec)
 
 template<typename REC>
 long
-opcua_action_item (REC *prec)
+opcua_action_item(REC *prec)
 {
     long ret = 0;
-    TRY {
+    TRY
+    {
         Guard G(pcon->lock);
         ItemAction action = none;
 
-        switch (pcon->reason) {
-        case ProcessReason::readFailure:
-            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-            ret = 1;
-            break;
-        case ProcessReason::writeFailure:
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
-            break;
-        case ProcessReason::connectionLoss:
+        if (pcon->reason == ProcessReason::connectionLoss) {
             (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             ret = 1;
-            break;
-        case ProcessReason::readRequest:
-            prec->pact = true;
-            action = read;
-            pcon->requestOpcuaRead();
-            break;
-        case ProcessReason::writeRequest:
-            prec->pact = true;
-            action= write;
-            pcon->requestOpcuaWrite();
-            break;
-        case ProcessReason::none:
-            prec->pact = true;
-            if (prec->defactn == menuDefActionREAD) {
+        } else if (!(pcon->state() == ConnectionStatus::down)) {
+            switch (pcon->reason) {
+            case ProcessReason::readFailure:
+                (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                ret = 1;
+                break;
+            case ProcessReason::writeFailure:
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+                break;
+            case ProcessReason::readRequest:
+                prec->pact = true;
                 action = read;
                 pcon->requestOpcuaRead();
-            } else {
-                action= write;
+                break;
+            case ProcessReason::writeRequest:
+                prec->pact = true;
+                action = write;
                 pcon->requestOpcuaWrite();
+                break;
+            case ProcessReason::none:
+                prec->pact = true;
+                if (prec->defactn == menuDefActionREAD) {
+                    action = read;
+                    pcon->requestOpcuaRead();
+                } else {
+                    action = write;
+                    pcon->requestOpcuaWrite();
+                }
+                break;
+            default:
+                break;
             }
-            break;
-        default:
-            break;
         }
-        pcon->getStatus(&prec->statcode, prec->stattext, MAX_STRING_SIZE+1);
+        pcon->getStatus(&prec->statcode, prec->stattext, MAX_STRING_SIZE + 1);
         traceItemActionPrint(pdbc, pcon, ret, action, prec->statcode, prec->stattext);
-    } CATCH()
+    }
+    CATCH()
     return ret;
 }
 
