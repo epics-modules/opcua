@@ -75,7 +75,7 @@ splitString(const std::string &str, const char delim)
 std::unique_ptr<linkInfo>
 parseLink (dbCommon *prec, const DBEntry &ent)
 {
-    const char *s;
+    std::string s;
     std::unique_ptr<linkInfo> pinfo (new linkInfo);
     DBLINK *link = ent.getDevLink();
     int debug = prec->tpro;
@@ -101,7 +101,7 @@ parseLink (dbCommon *prec, const DBEntry &ent)
                   << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
                      "use link parameters instead."
                   << std::endl;
-        if (epicsParseDouble(s, &pinfo->samplingInterval, nullptr))
+        if (epicsParseDouble(s.c_str(), &pinfo->samplingInterval, nullptr))
             throw std::runtime_error(SB() << "error converting '" << s << "' to Double");
     }
 
@@ -115,7 +115,7 @@ parseLink (dbCommon *prec, const DBEntry &ent)
                   << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
                      "use link parameters instead."
                   << std::endl;
-        if (epicsParseUInt32(s, &pinfo->queueSize, 0, nullptr))
+        if (epicsParseUInt32(s.c_str(), &pinfo->queueSize, 0, nullptr))
             throw std::runtime_error(SB() << "error converting '" << s << "' to UInt32");
     }
 
@@ -129,9 +129,9 @@ parseLink (dbCommon *prec, const DBEntry &ent)
                   << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
                      "use link parameters instead."
                   << std::endl;
-        if (strcmp(s, "new") == 0)
+        if (s == "new")
             pinfo->discardOldest = false;
-        else if (strcmp(s, "old") == 0)
+        else if (s == "old")
             pinfo->discardOldest = true;
         else
             throw std::runtime_error(SB() << "illegal value '" << s << "'");
@@ -141,19 +141,27 @@ parseLink (dbCommon *prec, const DBEntry &ent)
     if (debug > 19 && s[0] != '\0')
         std::cerr << prec->name << " info 'opcua:TIMESTAMP'='" << s << "'" << std::endl;
     if (s[0] == '\0')
-        pinfo->useServerTimestamp = !!opcua_DefaultUseServerTime;
+        if (opcua_DefaultUseServerTime)
+            pinfo->timestamp = LinkOptionTimestamp::server;
+        else
+            pinfo->timestamp = LinkOptionTimestamp::source;
     else {
         std::cerr << prec->name
                   << " DEPRECATION WARNING: setting parameters through info items is deprecated; "
                      "use link parameters instead."
                   << std::endl;
-        if (strcmp(s, "server") == 0)
-            pinfo->useServerTimestamp = true;
-        else if (strcmp(s, "source") == 0)
-            pinfo->useServerTimestamp = false;
-        else
+        if (s == linkOptionTimestampString(LinkOptionTimestamp::server))
+            pinfo->timestamp = LinkOptionTimestamp::server;
+        else if (s == linkOptionTimestampString(LinkOptionTimestamp::source))
+            pinfo->timestamp = LinkOptionTimestamp::source;
+        else if (!pinfo->isItemRecord && s == linkOptionTimestampString(LinkOptionTimestamp::data))
+            pinfo->timestamp = LinkOptionTimestamp::data;
+        else if (pinfo->isItemRecord && s[0] == '@') {
+            pinfo->timestamp = LinkOptionTimestamp::data;
+            pinfo->timestampElement = s.substr(1);
+        } else
             throw std::runtime_error(SB() << "illegal value '" << s << "'");
-    }
+        }
 
     s = ent.info("opcua:READBACK", "");
     if (debug > 19 && s[0] != '\0')
@@ -285,11 +293,16 @@ parseLink (dbCommon *prec, const DBEntry &ent)
 
         // Item/node or Record/data element related options
         } else if (optname == "timestamp") {
-            if (optval == "server")
-                pinfo->useServerTimestamp = true;
-            else if (optval == "source")
-                pinfo->useServerTimestamp = false;
-            else
+            if (optval == linkOptionTimestampString(LinkOptionTimestamp::server))
+                pinfo->timestamp = LinkOptionTimestamp::server;
+            else if (optval == linkOptionTimestampString(LinkOptionTimestamp::source))
+                pinfo->timestamp = LinkOptionTimestamp::source;
+            else if (!pinfo->isItemRecord && optval == linkOptionTimestampString(LinkOptionTimestamp::data))
+                pinfo->timestamp = LinkOptionTimestamp::data;
+            else if (pinfo->isItemRecord && optval[0] == '@') {
+                pinfo->timestamp = LinkOptionTimestamp::data;
+                pinfo->timestampElement = optval.substr(1);
+            } else
                 throw std::runtime_error(SB() << "illegal value '" << optval << "'");
         } else if (optname == "monitor" || optname == "readback") {
             if (optval.length() > 0) {
@@ -342,8 +355,10 @@ parseLink (dbCommon *prec, const DBEntry &ent)
         } else {
             std::cout << " element=" << pinfo->element;
         }
-        std::cout << " timestamp=" << (pinfo->useServerTimestamp ? "server" : "source")
-                  << " output=" << (pinfo->isOutput ? "y" : "n")
+        std::cout << " timestamp=" << linkOptionTimestampString(pinfo->timestamp);
+        if (pinfo->timestamp == LinkOptionTimestamp::data)
+            std::cout << "(@" << pinfo->timestampElement << ")";
+        std::cout << " output=" << (pinfo->isOutput ? "y" : "n")
                   << " monitor=" << (pinfo->monitor ? "y" : "n")
                   << " bini=" << linkOptionBiniString(pinfo->bini)
                   << std::endl;
