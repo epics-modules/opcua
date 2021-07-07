@@ -11,7 +11,9 @@
 #include <gtest/gtest.h>
 
 #include <epicsTypes.h>
+#include <epicsThread.h>
 
+#include "Session.h"
 #include "SessionUaSdk.h"
 
 namespace {
@@ -19,6 +21,7 @@ namespace {
 using namespace DevOpcua;
 
 TEST(NamespaceMapTest, NoMapping) {
+    epicsThreadOnce(&Session::onceId, &Session::initOnce, nullptr);
     SessionUaSdk *sess = new SessionUaSdk("test", "url");
 
     for (unsigned int i = 0; i <= USHRT_MAX; i++) {
