@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd" xmlns:s1="http://ess.eu/OpcUa/Types.xsd" xmlns:ua="http://unifiedautomation.com/Configuration/NodeSet.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <NamespaceUris>
+        <Uri>http://ess.eu/OpcUa</Uri>
+    </NamespaceUris>
+    <Aliases>
+        <Alias Alias="Boolean">i=1</Alias>
+        <Alias Alias="SByte">i=2</Alias>
+        <Alias Alias="Byte">i=3</Alias>
+        <Alias Alias="Int16">i=4</Alias>
+        <Alias Alias="UInt16">i=5</Alias>
+        <Alias Alias="Int32">i=6</Alias>
+        <Alias Alias="UInt32">i=7</Alias>
+        <Alias Alias="Int64">i=8</Alias>
+        <Alias Alias="UInt64">i=9</Alias>
+        <Alias Alias="Float">i=10</Alias>
+        <Alias Alias="Double">i=11</Alias>
+        <Alias Alias="String">i=12</Alias>
+        <Alias Alias="Organizes">i=35</Alias>
+        <Alias Alias="HasTypeDefinition">i=40</Alias>
+        <Alias Alias="HasComponent">i=47</Alias>
+    </Aliases>
+    <Extensions>
+        <Extension>
+            <ua:ModelInfo Tool="UaModeler" Hash="SVwTedOTHHXFHws0S2tgsQ==" Version="1.6.5"/>
+        </Extension>
+    </Extensions>
+    <UAObject NodeId="ns=1;s=Sim" BrowseName="1:Simulation">
+        <DisplayName>Simulation</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=61</Reference>
+            <Reference ReferenceType="Organizes" IsForward="false">i=85</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestRamp</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestVarDouble</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestVarFloat</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestVarInt32</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestVarInt64</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestVarIUInt16</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestVarString</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestVarUInt32</Reference>
+            <Reference ReferenceType="HasComponent">ns=1;s=Sim.TestVarUInt64</Reference>
+        </References>
+    </UAObject>
+    <UAVariable DataType="Double" NodeId="ns=1;s=Sim.TestRamp" BrowseName="1:TestRamp" AccessLevel="3">
+        <DisplayName>TestRamp</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:Double>0</uax:Double>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="Boolean" NodeId="ns=1;s=Sim.TestVarBool" BrowseName="1:TestVarBool" AccessLevel="3">
+        <DisplayName>TestVarBool</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:Boolean>true</uax:Boolean>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="Byte" NodeId="ns=1;s=Sim.TestVarByte" BrowseName="1:TestVarByte" AccessLevel="3">
+        <DisplayName>TestVarByte</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:Byte>255</uax:Byte>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="Int16" NodeId="ns=1;s=Sim.TestVarInt16" BrowseName="1:TestVarInt16" AccessLevel="3">
+        <DisplayName>TestVarInt16</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:Int16>-32768</uax:Int16>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="UInt16" NodeId="ns=1;s=Sim.TestVarUInt16" BrowseName="1:TestVarUInt16" AccessLevel="3">
+        <DisplayName>TestVarUInt16</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:UInt16>65535</uax:UInt16>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="SByte" NodeId="ns=1;s=Sim.TestVarSByte" BrowseName="1:TestVarSByte" AccessLevel="3">
+        <DisplayName>TestVarSByte</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:SByte>-128</uax:SByte>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="Double" NodeId="ns=1;s=Sim.TestVarDouble" BrowseName="1:TestVarDouble" AccessLevel="3">
+        <DisplayName>TestVarDouble</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:Double>0.002</uax:Double>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="Float" NodeId="ns=1;s=Sim.TestVarFloat" BrowseName="1:TestVarFloat" AccessLevel="3">
+        <DisplayName>TestVarFloat</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:Float>-0.0625</uax:Float>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="Int32" NodeId="ns=1;s=Sim.TestVarInt32" BrowseName="1:TestVarInt32" AccessLevel="3">
+        <DisplayName>TestVarInt32</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:Int32>-2147483648</uax:Int32>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="Int64" NodeId="ns=1;s=Sim.TestVarInt64" BrowseName="1:TestVarInt64" AccessLevel="3">
+        <DisplayName>TestVarInt64</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:Int64>-1294967296</uax:Int64>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="String" NodeId="ns=1;s=Sim.TestVarString" BrowseName="1:TestVarString" AccessLevel="3">
+        <DisplayName>TestVarString</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:String>TestString01</uax:String>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="UInt32" NodeId="ns=1;s=Sim.TestVarUInt32" BrowseName="1:TestVarUInt32" AccessLevel="3">
+        <DisplayName>TestVarUInt32</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:UInt32>4294967295</uax:UInt32>
+        </Value>
+    </UAVariable>
+    <UAVariable DataType="UInt64" NodeId="ns=1;s=Sim.TestVarUInt64" BrowseName="1:TestVarUInt64" AccessLevel="3">
+        <DisplayName>TestVarUInt64</DisplayName>
+        <References>
+            <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+            <Reference ReferenceType="HasComponent" IsForward="false">ns=1;s=Sim</Reference>
+        </References>
+        <Value>
+            <uax:UInt64>18446744073709551615</uax:UInt64>
+        </Value>
+    </UAVariable>
+</UANodeSet>
