@@ -215,7 +215,8 @@ RecordConnector::glob(const std::string &pattern)
         status = dbFirstRecord(&entry);
         while (!status) {
             if (!(dbFindField(&entry, "RTYP") || strcmp(dbGetString(&entry), "opcuaItem"))
-                || !(dbFindField(&entry, "DTYP") || strcmp(dbGetString(&entry), "OPCUA"))) {
+                || !(dbFindField(&entry, "DTYP") || dbGetString(&entry) == nullptr
+                     || strcmp(dbGetString(&entry), "OPCUA"))) {
                 char *pname = dbGetRecordName(&entry);
                 RecordConnector *rc = static_cast<RecordConnector *>(
                     static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
