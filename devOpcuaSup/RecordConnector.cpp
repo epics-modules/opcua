@@ -136,7 +136,6 @@ void processWriteRequestCallback (CALLBACK *pcallback)
 
 RecordConnector::RecordConnector (dbCommon *prec)
     : pitem(nullptr)
-    , isIoIntrScanned(false)
     , reason(ProcessReason::none)
     , prec(prec)
 {
@@ -165,26 +164,20 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
     if (debug() > 5)
         std::cout << "Registering record " << getRecordName() << " for processing"
                   << " (" << processReasonString(reason) << ")" << std::endl;
-    if (isIoIntrScanned &&
-            (reason == ProcessReason::incomingData || reason == ProcessReason::connectionLoss)) {
-        this->reason = reason;
-        scanIoRequest(ioscanpvt);
-    } else {
-        CALLBACK *callback = nullptr;
-        switch (reason) {
-        case ProcessReason::none :
-        case ProcessReason::incomingData : callback = &incomingDataCallback; break;
-        case ProcessReason::writeComplete : callback = &writeCompleteCallback; break;
-        case ProcessReason::readComplete : callback = &readCompleteCallback; break;
-        case ProcessReason::connectionLoss : callback = &connectionLossCallback; break;
-        case ProcessReason::readFailure : callback = &readFailureCallback; break;
-        case ProcessReason::writeFailure : callback = &writeFailureCallback; break;
-        case ProcessReason::readRequest : callback = &readRequestCallback; break;
-        case ProcessReason::writeRequest : callback = &writeRequestCallback; break;
-        }
-        callbackSetPriority(prec->prio, callback);
-        callbackRequest(callback);
+    CALLBACK *callback = nullptr;
+    switch (reason) {
+    case ProcessReason::none :
+    case ProcessReason::incomingData : callback = &incomingDataCallback; break;
+    case ProcessReason::writeComplete : callback = &writeCompleteCallback; break;
+    case ProcessReason::readComplete : callback = &readCompleteCallback; break;
+    case ProcessReason::connectionLoss : callback = &connectionLossCallback; break;
+    case ProcessReason::readFailure : callback = &readFailureCallback; break;
+    case ProcessReason::writeFailure : callback = &writeFailureCallback; break;
+    case ProcessReason::readRequest : callback = &readRequestCallback; break;
+    case ProcessReason::writeRequest : callback = &writeRequestCallback; break;
     }
+    callbackSetPriority(prec->prio, callback);
+    callbackRequest(callback);
 }
 
 RecordConnector *

@@ -163,7 +163,6 @@ opcua_get_ioint (int cmd, dbCommon *prec, IOSCANPVT *ppvt)
 {
     if (!prec->dpvt) return 0;
     RecordConnector *pcon = static_cast<RecordConnector *>(prec->dpvt);
-    pcon->isIoIntrScanned = (cmd ? false : true);
     *ppvt = pcon->ioscanpvt;
     return 0;
 }
