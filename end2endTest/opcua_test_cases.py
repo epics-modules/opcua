@@ -52,7 +52,7 @@ class opcuaTestHarness:
         # Test server
         self.testServer = "test/server/opcuaTestServer"
         self.isServerRunning = False
-        self.serverURI = "opc.tcp://localhost.localdomain:4840"
+        self.serverURI = "opc.tcp://127.0.0.1:4840"
         self.serverFakeTime = "2019-05-02 09:22:52"
 
         # Message catalog
