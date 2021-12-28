@@ -264,9 +264,9 @@ class TestConnectionTests:
             ioc.exit()
             assert not ioc.is_running()
 
-            # Grab ioc output
+            # Grab ioc error output
             ioc.check_output()
-            output = ioc.outs
+            output = ioc.errs
 
             # Parse for OPC-UA connection message
             assert (
@@ -304,7 +304,7 @@ class TestConnectionTests:
 
         # Grab ioc output
         ioc.check_output()
-        output = ioc.outs
+        output = ioc.errs
         print(output)
 
         # Parse for OPC-UA connection message
@@ -341,7 +341,7 @@ class TestConnectionTests:
 
         # Grab ioc output
         ioc.check_output()
-        output = ioc.outs
+        output = ioc.errs
         print(output)
 
         i = 1
@@ -769,11 +769,11 @@ class TestNegativeTests:
         assert not ioc.is_running()
 
         ioc.check_output()
-        output = ioc.outs
+        output = ioc.errs
         print(output)
 
         assert output.find(test_inst.noConnectMsg) >= 0, (
-            "%d: Failed to find no connection message\n%s" % output
+            "Failed to find no connection message\n%s" % output
         )
 
     def test_bad_var_name(self, test_inst):
@@ -798,7 +798,7 @@ class TestNegativeTests:
         assert not ioc.is_running()
 
         ioc.check_output()
-        output = ioc.outs
+        output = ioc.errs
         print(output)
 
         assert output.find(test_inst.badNodeIdMsg) >= 0, (
@@ -827,7 +827,7 @@ class TestNegativeTests:
         assert not ioc.is_running()
 
         ioc.check_output()
-        output = ioc.outs
+        output = ioc.errs
         print(output)
 
         regx = "VarNotBoolean : incoming data (.*) out-of-bounds"
