@@ -85,7 +85,7 @@ class opcuaTestHarness:
         # Message catalog
         self.connectMsg = (
             "OPC UA session OPC1: connection status changed"
-            + " from Connected to Disconnected"
+            + " from Disconnected to Connected"
         )
         self.reconnectMsg = (
             "OPC UA session OPC1: connection status changed"
@@ -271,7 +271,7 @@ class TestConnectionTests:
             # Parse for OPC-UA connection message
             assert (
                 output.find(test_inst.connectMsg) >= 0
-            ), "%d: Failed to find disconnect message\n%s" % (i, output)
+            ), "%d: Failed to find connect message\n%s" % (i, output)
 
             print(output)
 
