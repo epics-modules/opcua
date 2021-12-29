@@ -333,39 +333,41 @@ class TestConnectionTests:
 
         ioc = test_inst.IOC
 
-        # We don't want the server running
-        test_inst.stop_server()
+        nRuns = 5
 
-        # Start the IOC
-        ioc.start()
-        assert ioc.is_running()
+        for i in range(0, nRuns):
+            # We don't want the server running
+            test_inst.stop_server()
 
-        sleep(test_inst.sleepTime)
+            # Start the IOC
+            ioc.start()
+            assert ioc.is_running()
 
-        test_inst.start_server()
+            sleep(test_inst.sleepTime)
 
-        sleep(test_inst.sleepTime)
+            test_inst.start_server()
 
-        ioc.exit()
-        assert not ioc.is_running()
+            sleep(test_inst.sleepTime)
 
-        # Grab ioc output
-        ioc.check_output()
-        output = ioc.errs
-        print(output)
+            ioc.exit()
+            assert not ioc.is_running()
 
-        i = 1
-        # Parse for OPC-UA connection message
-# As of opcua 0.9, the IOC doesn't report failed connection on startup
-#        assert (
-#            output.find(test_inst.noConnectMsg) >= 0
-#        ), "%d: Failed to find no connection message\n%s" % (i, output)
-        assert (
-            output.find(test_inst.reconnectMsg) >= 0
-        ), "%d: Failed to find reconnect message in output\n%s" % (i, output)
-        assert (
-            output.find(test_inst.reconnectMsg1) >= 0
-        ), "%d: Failed to find reconnect message 1 in output\n%s" % (i, output)
+            # Grab ioc output
+            ioc.check_output()
+            output = ioc.errs
+            print(output)
+
+            # Parse for OPC-UA connection message
+    # As of opcua 0.9, the IOC doesn't report failed connection on startup
+    #        assert (
+    #            output.find(test_inst.noConnectMsg) >= 0
+    #        ), "%d: Failed to find no connection message\n%s" % (i, output)
+            assert (
+                output.find(test_inst.reconnectMsg) >= 0
+            ), "%d: Failed to find reconnect message in output\n%s" % (i, output)
+            assert (
+                output.find(test_inst.reconnectMsg1) >= 0
+            ), "%d: Failed to find reconnect message 1 in output\n%s" % (i, output)
 
     def test_shutdown_on_ioc_reboot(self, test_inst):
         """
