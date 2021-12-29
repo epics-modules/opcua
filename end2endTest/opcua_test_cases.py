@@ -346,9 +346,10 @@ class TestConnectionTests:
 
         i = 1
         # Parse for OPC-UA connection message
-        assert (
-            output.find(test_inst.noConnectMsg) >= 0
-        ), "%d: Failed to find no connection message\n%s" % (i, output)
+# As of opcua 0.9, the IOC doesn't report failed connection on startup
+#        assert (
+#            output.find(test_inst.noConnectMsg) >= 0
+#        ), "%d: Failed to find no connection message\n%s" % (i, output)
         assert (
             output.find(test_inst.reconnectMsg) >= 0
         ), "%d: Failed to find reconnect message in output\n%s" % (i, output)
