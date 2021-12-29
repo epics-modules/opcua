@@ -95,6 +95,10 @@ class opcuaTestHarness:
             "OPC UA session OPC1: connection status changed"
             + " from NewSessionCreated to Connected"
         )
+        self.disconnectMsg = (
+            "OPC UA session OPC1: connection status changed"
+            + " from Connected to ConnectionErrorApiReconnect"
+        )
         self.noConnectMsg = (
             "OPC UA session OPC1: connection status changed"
             + " from Disconnected to ConnectionErrorApiReconnect"
@@ -275,7 +279,7 @@ class TestConnectionTests:
 
             print(output)
 
-    def test_connect_reconnect(self, test_inst):
+    def test_connect_dis_reconnect(self, test_inst):
         """
         Start the server, start the IOC. Stop the server, check
         for appropriate messaging. Start the server, check that
@@ -288,6 +292,8 @@ class TestConnectionTests:
         for i in range(0, nRuns):
             ioc.start()
             assert ioc.is_running()
+
+            sleep(test_inst.sleepTime)
 
             test_inst.stop_server()
             assert ioc.is_running()
@@ -302,18 +308,22 @@ class TestConnectionTests:
             ioc.exit()
             assert not ioc.is_running()
 
-        # Grab ioc output
-        ioc.check_output()
-        output = ioc.errs
-        print(output)
+            # Grab ioc output
+            ioc.check_output()
+            output = ioc.errs
+            print(output)
 
-        # Parse for OPC-UA connection message
-        assert (
-            output.find(test_inst.reconnectMsg) >= 0
-        ), "%d: Failed to find reconnect message\n%s" % (i, output)
-        assert (
-            output.find(test_inst.reconnectMsg1) >= 0
-        ), "%d: Failed to find reconnect message 1\n%s" % (i, output)
+            # Check for OPC UA dis/connection messages
+            assert (
+                output.find(test_inst.disconnectMsg) >= 0
+            ), "%d: Failed to find disconnect message\n%s" % (i, output)
+            connect1Pos = output.find(test_inst.connectMsg)
+            assert (
+                connect1Pos >= 0
+            ), "%d: Failed to find 1st connect message\n%s" % (i, output)
+            assert (
+                output.find(test_inst.connectMsg, connect1Pos + 1) >= 0
+            ), "%d: Failed to find 2nd connect message\n%s" % (i, output)
 
     def test_no_connection(self, test_inst):
         """
