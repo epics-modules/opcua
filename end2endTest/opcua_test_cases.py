@@ -376,62 +376,61 @@ class TestConnectionTests:
         that the subscriptions and sessions are cleanly
         disconnected.
         """
-        # Close connection to server, and open new connection
-        # with stdout PIPE
-        test_inst.stop_server()
-        test_inst.start_server(withPIPE=True)
 
         ioc = test_inst.IOC
-        # Start the IOC
-        ioc.start()
-        assert ioc.is_running()
-        # Wait a second to allow it to get up and running
-        sleep(1)
-        # Stop the IOC
-        ioc.exit()
-        assert not ioc.is_running()
-        # Wait for it to close down
-        sleep(1)
 
-        # Shutdown the server to allow us to get the stdout messages
-        test_inst.stop_server()
+        nRuns = 5
 
-        # Read all lines from the stdout buffer
-        log = ""
-        for line in iter(test_inst.serverProc.stdout.readline, b""):
-            log = log + line.decode("utf-8")
+        for i in range(0, nRuns):
 
-        print(log)
+            # Start server with stdout PIPE (to fetch output)
+            test_inst.stop_server()
+            test_inst.start_server(withPIPE=True)
 
-        # Check the Session was activated
-        assert log.find("ActivateSession: Session activated") >= 0, (
-            "Failed to find ActivateSession message: %s" % log
-        )
-        # Check Subscription was created
-        assert log.find("Subscription 1 | Created the Subscription") >= 0, (
-            "Failed to find Subscription message: %s" % log
-        )
+            ioc.start()
+            assert ioc.is_running()
 
-        # Find the position in the log where the terminate signal
-        # is received
-        termPos = log.find("received ctrl-c")
+            ioc.exit()
+            assert not ioc.is_running()
 
-        # Check that the session and subscription close messages
-        # occur before the terminate signal is received.
-        # This means they were closed when the IOC was shutdown
-        closePos = log.find("Closing the Session")
-        deletePos = log.find("Subscription 1 | Subscription deleted")
-        assert 0 <= closePos <= termPos, (
-            "Session closed by terminate, not by IOC shutdown: %s" % log
-        )
-        assert 0 <= deletePos <= termPos, (
-            "Subscription closed by terminate, not by IOC shutdown: %s" % log
-        )
+            # Shutdown the server to allow getting the stdout messages
+            test_inst.stop_server()
 
-        # Grab ioc output
-        ioc.check_output()
-        output = ioc.outs
-        print(output)
+            # Read server's stdout buffer
+            log = ""
+            for line in iter(test_inst.serverProc.stdout.readline, b""):
+                log = log + line.decode("utf-8")
+            print(log)
+
+            # Check the Session was activated
+            assert log.find("ActivateSession: Session activated") >= 0, (
+                "%d: Failed to find ActivateSession message: %s" % (i, log)
+            )
+            # Check Subscription was created
+            assert log.find("Subscription 1 | Created the Subscription") >= 0, (
+                "%d: Failed to find Subscription message: %s" % (i, log)
+            )
+
+            # Find the position in the log where the terminate signal
+            # is received
+            termPos = log.find("received ctrl-c")
+
+            # Check that the session and subscription close messages
+            # occur before the terminate signal is received.
+            # This means they were closed when the IOC was shutdown
+            closePos = log.find("Closing the Session")
+            deletePos = log.find("Subscription 1 | Subscription deleted")
+            assert 0 <= closePos <= termPos, (
+                "%d: Session closed by terminate, not by IOC shutdown: %s" % (i, log)
+            )
+            assert 0 <= deletePos <= termPos, (
+                "%d: Subscription closed by terminate, not by IOC shutdown: %s" % (i, log)
+            )
+
+            # Grab ioc output
+            ioc.check_output()
+            output = ioc.outs
+            print(output)
 
 
 class TestVariableTests:
