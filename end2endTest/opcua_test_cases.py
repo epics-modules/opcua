@@ -34,6 +34,7 @@ class opcuaTestHarness:
             # Set path to opcua.iocsh snippet
             environ["opcua_DIR"] = "cmds"
 
+            environ["EPICS_DB_INCLUDE_PATH"] = f"db:{self.IOC_TOP}/db"
             environ["LD_LIBRARY_PATH"] = self.EPICS_BASE + "/lib/" + self.EPICS_HOST_ARCH
             self.cmd = "cmds/test_pv.cmd"
             self.neg_cmd = "cmds/test_pv_neg.cmd"
@@ -60,6 +61,7 @@ class opcuaTestHarness:
                 f"opcua,{self.MOD_VERSION}",
             ]
 
+            environ["EPICS_DB_INCLUDE_PATH"] = "test/db"
             self.cmd = "test/cmds/test_pv.cmd"
             self.neg_cmd = "test/cmds/test_pv_neg.cmd"
             self.testServer = "test/server/opcuaTestServer"

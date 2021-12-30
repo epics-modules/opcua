@@ -10,7 +10,7 @@ epicsEnvSet("SUBSCRIPT", "SUB1")
 # Load OPCUA module startup script
 iocshLoad("$(opcua_DIR)/opcua.iocsh", "P=OPC:,SESS=$(SESSION),SUBS=$(SUBSCRIPT),INET=$(OPCSERVER),PORT=$(OPCPORT)")
 
-dbLoadRecords("test/db/test_pv.db", "OPCSUB=$(SUBSCRIPT), NS=$(OPCNAMESPACE)")
+dbLoadRecords("test_pv.db", "OPCSUB=$(SUBSCRIPT), NS=$(OPCNAMESPACE)")
 
 iocInit()
 
