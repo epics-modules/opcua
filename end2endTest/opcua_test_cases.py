@@ -17,26 +17,52 @@ class opcuaTestHarness:
         # Get values from the environment
         self.EPICS_BASE = environ.get("EPICS_BASE")
         self.REQUIRE_VERSION = environ.get("E3_REQUIRE_VERSION")
-        self.MOD_VERSION = environ.get("E3_MODULE_VERSION")
-        if self.MOD_VERSION is None:
-            self.MOD_VERSION = "0.8.0"
-        self.TEMP_CELL_PATH = environ.get("TEMP_CELL_PATH")
-        if self.TEMP_CELL_PATH is None:
-            self.TEMP_CELL_PATH = "cellMods"
 
-        # run-iocsh parameters
-        self.IOCSH_PATH = (
-            f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh.bash"
-        )
+        if self.REQUIRE_VERSION is None:
+            # Run as part of the opcua Device Support
+            # cwd is end2endTest, i.e. *this* directory
+            self.EPICS_HOST_ARCH = environ.get("EPICS_HOST_ARCH")
+            self.IOC_TOP = environ.get("IOC_TOP")
+            if self.IOC_TOP is None:
+                self.IOC_TOP = os.getcwd() + f"/../exampleTop"
+                environ["IOC_TOP"] = self.IOC_TOP
+            # run-iocsh parameters
+            self.IOCSH_PATH = (
+                f"{self.IOC_TOP}/bin/{self.EPICS_HOST_ARCH}/opcuaIoc"
+            )
+            self.TestArgs = []
+            # Set path to opcua.iocsh snippet
+            environ["opcua_DIR"] = "cmds"
 
-        self.TestArgs = [
-            "-l",
-            self.TEMP_CELL_PATH,
-            "-r",
-            f"opcua,{self.MOD_VERSION}",
-        ]
+            environ["LD_LIBRARY_PATH"] = self.EPICS_BASE + "/lib/" + self.EPICS_HOST_ARCH
+            self.cmd = "cmds/test_pv.cmd"
+            self.neg_cmd = "cmds/test_pv_neg.cmd"
+            self.testServer = "server/opcuaTestServer"
 
-        self.cmd = "test/cmds/test_pv.cmd"
+        else:
+            # Run under E3
+            self.MOD_VERSION = environ.get("E3_MODULE_VERSION")
+            if self.MOD_VERSION is None:
+                self.MOD_VERSION = "0.8.0"
+            self.TEMP_CELL_PATH = environ.get("TEMP_CELL_PATH")
+            if self.TEMP_CELL_PATH is None:
+                self.TEMP_CELL_PATH = "cellMods"
+
+            # run-iocsh parameters
+            self.IOCSH_PATH = (
+                f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh.bash"
+            )
+
+            self.TestArgs = [
+                "-l",
+                self.TEMP_CELL_PATH,
+                "-r",
+                f"opcua,{self.MOD_VERSION}",
+            ]
+
+            self.cmd = "test/cmds/test_pv.cmd"
+            self.neg_cmd = "test/cmds/test_pv_neg.cmd"
+            self.testServer = "test/server/opcuaTestServer"
 
         # Default IOC
         self.IOC = self.get_ioc()
@@ -50,7 +76,6 @@ class opcuaTestHarness:
         self.sleepTime = 3
 
         # Test server
-        self.testServer = "test/server/opcuaTestServer"
         self.isServerRunning = False
         self.serverURI = "opc.tcp://127.0.0.1:4840"
         self.serverFakeTime = "2019-05-02 09:22:52"
@@ -82,10 +107,12 @@ class opcuaTestHarness:
             "1.2.0-29-g875d33a9",
         ]
 
-    def get_ioc(self):
+    def get_ioc(self, cmd=None):
+        if cmd is None:
+            cmd = self.cmd
         return IOC(
             *self.TestArgs,
-            self.cmd,
+            cmd,
             ioc_executable=self.IOCSH_PATH,
         )
 
@@ -755,8 +782,7 @@ class TestNegativeTests:
         """
 
         # Use startup script for negative tests
-        test_inst.cmd = "test/cmds/test_pv_neg.cmd"
-        ioc = test_inst.get_ioc()
+        ioc = test_inst.get_ioc(cmd=test_inst.neg_cmd)
 
         # Start the IOC
         ioc.start()
@@ -785,8 +811,7 @@ class TestNegativeTests:
         import re
 
         # Use startup script for negative tests
-        test_inst.cmd = "test/cmds/test_pv_neg.cmd"
-        ioc = test_inst.get_ioc()
+        ioc = test_inst.get_ioc(cmd=test_inst.neg_cmd)
 
         # Start the IOC
         ioc.start()
