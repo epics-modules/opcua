@@ -750,36 +750,6 @@ class TestPerformanceTests:
 
 
 class TestNegativeTests:
-    def test_no_server(self, test_inst):
-        """
-        Start an OPC-UA IOC with no server running.
-        Check the module reports this correctly.
-        """
-
-        ioc = test_inst.IOC
-
-        # Stop the running server
-        test_inst.stop_server()
-
-        # Start the IOC
-        ioc.start()
-        assert ioc.is_running()
-
-        # Wait some time
-        sleep(1)
-
-        # Stop IOC, and check output
-        ioc.exit()
-        assert not ioc.is_running()
-
-        ioc.check_output()
-        output = ioc.errs
-        print(output)
-
-        assert output.find(test_inst.noConnectMsg) >= 0, (
-            "Failed to find no connection message\n%s" % output
-        )
-
     def test_bad_var_name(self, test_inst):
         """
         Specify an incorrect variable name in a db record.
