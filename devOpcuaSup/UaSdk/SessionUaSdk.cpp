@@ -1357,7 +1357,7 @@ void
 SessionUaSdk::initHook (initHookState state)
 {
     switch (state) {
-    case initHookAfterDatabaseRunning:
+    case initHookAfterIocRunning:
     {
         errlogPrintf("OPC UA: Autoconnecting sessions\n");
         for (auto &it : sessions) {
@@ -1379,7 +1379,11 @@ SessionUaSdk::atExit (void *junk)
     (void)junk;
     errlogPrintf("OPC UA: Disconnecting sessions\n");
     for (auto &it : sessions) {
-        it.second->disconnect();
+        SessionUaSdk *session = it.second;
+        // See #130 and reverted commit ab7184ef
+        // Make sure low-level session is valid before running disconnect()
+        if (session->puasession && session->isConnected())
+            session->disconnect();
     }
 }
 
