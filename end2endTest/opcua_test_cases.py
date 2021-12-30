@@ -249,18 +249,17 @@ def test_inst_TZ():
 
 
 class TestConnectionTests:
+    nRuns = 5
 
-    # Positive Test Cases
-    def test_connect_disconnect(self, test_inst):
+    def test_start_server_then_ioc(self, test_inst):
         """
-        Connect and disconnect to the OPC-UA test server, and
-        check that there are no errors
+        Start the server and an IOC.
+        Check that the IOC connects.
         """
 
         ioc = test_inst.IOC
-        nRuns = 5
 
-        for i in range(0, nRuns):
+        for i in range(0, self.nRuns):
             # Start IOC, and check it is running
             ioc.start()
             assert ioc.is_running()
@@ -279,17 +278,15 @@ class TestConnectionTests:
 
             print(output)
 
-    def test_connect_dis_reconnect(self, test_inst):
+    def test_stop_and_restart_server(self, test_inst):
         """
-        Start the server, start the IOC. Stop the server, check
-        for appropriate messaging. Start the server, check that
-        the IOC reconnects.
+        Start the server and an IOC.
+        Stop the server, check for appropriate messaging.
+        Start the server, check that the IOC reconnects.
         """
         ioc = test_inst.IOC
 
-        nRuns = 5
-
-        for i in range(0, nRuns):
+        for i in range(0, self.nRuns):
             ioc.start()
             assert ioc.is_running()
 
@@ -325,17 +322,15 @@ class TestConnectionTests:
                 output.find(test_inst.connectMsg, connect1Pos + 1) >= 0
             ), "%d: Failed to find 2nd connect message\n%s" % (i, output)
 
-    def test_no_connection(self, test_inst):
+    def test_start_ioc_then_server(self, test_inst):
         """
-        Start an IOC with no server running. Check the module
-        reports this.
+        Start an IOC with no server running.
+        Start the server, check that the IOC connects.
         """
 
         ioc = test_inst.IOC
 
-        nRuns = 5
-
-        for i in range(0, nRuns):
+        for i in range(0, self.nRuns):
             # We don't want the server running
             test_inst.stop_server()
 
@@ -369,19 +364,16 @@ class TestConnectionTests:
                 output.find(test_inst.reconnectMsg1) >= 0
             ), "%d: Failed to find reconnect message 1 in output\n%s" % (i, output)
 
-    def test_shutdown_on_ioc_reboot(self, test_inst):
+    def test_disconnect_on_ioc_exit(self, test_inst):
         """
-        Start the server. Start an IOC and ensure connection
-        is made to the server. Shutdown the IOC and endure
-        that the subscriptions and sessions are cleanly
-        disconnected.
+        Start the server and an IOC. Ensure successful connection.
+        Exit the IOC and ensure that session and subscription
+        are properly disconnected.
         """
 
         ioc = test_inst.IOC
 
-        nRuns = 5
-
-        for i in range(0, nRuns):
+        for i in range(0, self.nRuns):
 
             # Start server with stdout PIPE (to fetch output)
             test_inst.stop_server()
