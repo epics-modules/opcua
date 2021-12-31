@@ -685,7 +685,7 @@ class TestPerformanceTests:
 
             assert maxt < 17
             assert mint > 1
-            assert avgt < 8
+            assert avgt < 12
             assert totr < 1000
 
     def test_read_performance(self, test_inst):
