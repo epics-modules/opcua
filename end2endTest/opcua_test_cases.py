@@ -21,7 +21,7 @@ class opcuaTestHarness:
         # Run CA on localhost
         environ["EPICS_CA_ADDR_LIST"] = "127.0.0.1"
         environ["EPICS_CA_SUTO_SDDR_LIST"] = "NO"
-        
+
         if self.REQUIRE_VERSION is None:
             # Run as part of the opcua Device Support
             # cwd is end2endTest, i.e. *this* directory
@@ -647,7 +647,7 @@ class TestPerformanceTests:
             writeperrun = 5000
 
             # Run test 10 times
-            for j in range(1, testruns):
+            for j in range(testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_THREAD)
@@ -672,16 +672,16 @@ class TestPerformanceTests:
                     mint = dt
                 tott += dt
                 totr += dr
-                print("Time: ", dt)
-                print("Memory: ", dr)
-                print("Memory: ", r0.ru_maxrss)
-                print("Memory: ", r1.ru_maxrss)
+                print("Time: ", "{:.3f} s".format(dt))
+                print("Memory incr: ", dr)
+                print("     before: ", r0.ru_maxrss)
+                print("      after: ", r1.ru_maxrss)
             avgt = tott / testruns
 
-            print("Max time: ", maxt)
-            print("Min time: ", mint)
-            print("Average time: ", avgt)
-            print("Total memory: ", totr)
+            print("Max time: ", "{:.3f} s".format(maxt))
+            print("Min time: ", "{:.3f} s".format(mint))
+            print("Average time: ", "{:.3f} s".format(avgt))
+            print("Total memory increase: ", totr)
 
             assert maxt < 17
             assert mint > 1
@@ -711,7 +711,7 @@ class TestPerformanceTests:
             writeperrun = 5000
 
             # Run test 10 times
-            for j in range(1, testruns):
+            for j in range(testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_SELF)
@@ -736,16 +736,16 @@ class TestPerformanceTests:
                     mint = dt
                 tott += dt
                 totr += dr
-                print("Time: ", dt)
-                print("Memory: ", dr)
-                print("Memory: ", r0.ru_maxrss)
-                print("Memory: ", r1.ru_maxrss)
+                print("Time: ", "{:.3f} s".format(dt))
+                print("Memory incr: ", dr)
+                print("     before: ", r0.ru_maxrss)
+                print("      after: ", r1.ru_maxrss)
             avgt = tott / testruns
 
-            print("Max time: ", maxt)
-            print("Min time: ", mint)
-            print("Average time: ", avgt)
-            print("Total memory: ", totr)
+            print("Max time: ", "{:.3f} s".format(maxt))
+            print("Min time: ", "{:.3f} s".format(mint))
+            print("Average time: ", "{:.3f} s".format(avgt))
+            print("Total memory increase: ", totr)
 
             assert maxt < 10
             assert mint > 0.01
