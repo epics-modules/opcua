@@ -1,3 +1,6 @@
+# Run CAS on localhost
+epicsEnvSet("EPICS_CAS_INTF_ADDR_LIST", "127.0.0.1")
+
 # OPC simulation server
 epicsEnvSet("OPCSERVER", "127.0.0.1")
 epicsEnvSet("OPCPORT", "4840")

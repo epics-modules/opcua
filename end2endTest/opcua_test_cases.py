@@ -18,6 +18,10 @@ class opcuaTestHarness:
         self.EPICS_BASE = environ.get("EPICS_BASE")
         self.REQUIRE_VERSION = environ.get("E3_REQUIRE_VERSION")
 
+        # Run CA on localhost
+        environ["EPICS_CA_ADDR_LIST"] = "127.0.0.1"
+        environ["EPICS_CA_SUTO_SDDR_LIST"] = "NO"
+        
         if self.REQUIRE_VERSION is None:
             # Run as part of the opcua Device Support
             # cwd is end2endTest, i.e. *this* directory
