@@ -1,0 +1,8 @@
+# Register all support components
+dbLoadDatabase "${IOC_TOP}/dbd/opcuaIoc.dbd"
+opcuaIoc_registerRecordDeviceDriver pdbbase
+
+opcuaSession $(SESS) opc.tcp://$(INET):$(PORT) sec-mode=None
+opcuaSubscription $(SUBS) $(SESS) 100
+
+dbLoadRecords("opcuaServerInfo.template", "P=OPC:Server,R=,SESS=$(SESSION)")
