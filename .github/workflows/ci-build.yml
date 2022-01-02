@@ -21,6 +21,7 @@ env:
   MODULES: "gtest"
   GTEST: "v1.0.1"
   BASE_HOOK: ".ci-local/base.patch"
+  BASE_RECURSIVE: NO
   encrypted_178ee45b7f75_pass: ${{ secrets.encrypted_178ee45b7f75_pass }}
 
 jobs:
