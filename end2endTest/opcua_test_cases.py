@@ -24,11 +24,12 @@ class opcuaTestHarness:
 
         if self.REQUIRE_VERSION is None:
             # Run as part of the opcua Device Support
-            # cwd is end2endTest, i.e. *this* directory
+            # tests are in 'end2endTest'
+            self.TESTSUBDIR = "end2endTest"
             self.EPICS_HOST_ARCH = environ.get("EPICS_HOST_ARCH")
             self.IOC_TOP = environ.get("IOC_TOP")
             if self.IOC_TOP is None:
-                self.IOC_TOP = os.getcwd() + f"/../exampleTop"
+                self.IOC_TOP = os.getcwd() + "/exampleTop"
                 environ["IOC_TOP"] = self.IOC_TOP
             # run-iocsh parameters
             self.IOCSH_PATH = (
@@ -36,16 +37,15 @@ class opcuaTestHarness:
             )
             self.TestArgs = []
             # Set path to opcua.iocsh snippet
-            environ["opcua_DIR"] = "cmds"
+            environ["opcua_DIR"] = f"{self.TESTSUBDIR}/cmds"
 
-            environ["EPICS_DB_INCLUDE_PATH"] = f"db:{self.IOC_TOP}/db"
+            environ["EPICS_DB_INCLUDE_PATH"] = f"{self.TESTSUBDIR}/db:{self.IOC_TOP}/db"
             environ["LD_LIBRARY_PATH"] = self.EPICS_BASE + "/lib/" + self.EPICS_HOST_ARCH
-            self.cmd = "cmds/test_pv.cmd"
-            self.neg_cmd = "cmds/test_pv_neg.cmd"
-            self.testServer = "server/opcuaTestServer"
 
         else:
             # Run under E3
+            # tests are in 'test'
+            self.TESTSUBDIR = "test"
             self.MOD_VERSION = environ.get("E3_MODULE_VERSION")
             if self.MOD_VERSION is None:
                 self.MOD_VERSION = "0.8.0"
@@ -65,10 +65,11 @@ class opcuaTestHarness:
                 f"opcua,{self.MOD_VERSION}",
             ]
 
-            environ["EPICS_DB_INCLUDE_PATH"] = "test/db"
-            self.cmd = "test/cmds/test_pv.cmd"
-            self.neg_cmd = "test/cmds/test_pv_neg.cmd"
-            self.testServer = "test/server/opcuaTestServer"
+            environ["EPICS_DB_INCLUDE_PATH"] = f"{self.TESTSUBDIR}/db"
+
+        self.cmd = f"{self.TESTSUBDIR}/cmds/test_pv.cmd"
+        self.neg_cmd = f"{self.TESTSUBDIR}/cmds/test_pv_neg.cmd"
+        self.testServer = f"{self.TESTSUBDIR}/server/opcuaTestServer"
 
         # Default IOC
         self.IOC = self.get_ioc()
