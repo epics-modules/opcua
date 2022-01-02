@@ -20,7 +20,7 @@ class opcuaTestHarness:
 
         # Run CA on localhost
         environ["EPICS_CA_ADDR_LIST"] = "127.0.0.1"
-        environ["EPICS_CA_SUTO_SDDR_LIST"] = "NO"
+        environ["EPICS_CA_AUTO_ADDR_LIST"] = "NO"
 
         if self.REQUIRE_VERSION is None:
             # Run as part of the opcua Device Support
