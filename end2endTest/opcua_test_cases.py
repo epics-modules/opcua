@@ -598,6 +598,7 @@ class TestVariableTests:
             # Compare
             assert res == writeVal
 
+    @pytest.mark.xfail
     def test_timestamps(self, test_inst_TZ):
         """
         Start the test server in a shell session with
