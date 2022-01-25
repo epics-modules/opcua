@@ -109,7 +109,8 @@ class opcuaTestHarness:
             self.is_server_running()
             retryCount = retryCount + 1
             sleep(1)
-
+        
+        sleep(1)
         assert retryCount < 5, "Unable to start server"
 
     def start_server_with_faketime(self):
@@ -126,7 +127,8 @@ class opcuaTestHarness:
             self.is_server_running()
             retryCount = retryCount + 1
             sleep(1)
-
+        
+        sleep(1)
         assert retryCount < 5, "Unable to start server"
 
     def stop_server_group(self):
@@ -408,6 +410,7 @@ class TestVariableTests:
         ]
         i = 0
         with ioc:
+            sleep(1)
             for pvName in serverVars:
                 pv = PV(pvName)
                 res = pv.get(timeout=test_inst.getTimeout)
@@ -426,6 +429,7 @@ class TestVariableTests:
             test_inst.cmd,
             ioc_executable=test_inst.IOCSH_PATH,
         ):
+            sleep(1)
             # PV name
             pvName = "TstRamp"
             pv = PV(pvName)
@@ -494,6 +498,7 @@ class TestVariableTests:
         ioc = test_inst.IOC
 
         with ioc:
+            sleep(1)
             pv = PV(pvName)
             res = pv.get(timeout=test_inst.getTimeout)
             # Check UInt64 with correct scientific notation
@@ -529,6 +534,7 @@ class TestVariableTests:
         ioc = test_inst.IOC
 
         with ioc:
+            sleep(1)
             # Output PV name is the same as the input PV
             # name, with the addition of the "Out" suffix
             pvOutName = pvName + "Out"
@@ -577,6 +583,7 @@ class TestVariableTests:
         # Get PV timestamp:
 
         with ioc:
+            sleep(1)
             pvName = PV("TstRamp", form="time")
             pvName.get(timeout=test_inst_TZ.getTimeout)
             epicsTs = pvName.timestamp
@@ -597,6 +604,7 @@ class TestPerformanceTests:
         ioc = test_inst.IOC
 
         with ioc:
+            sleep(1)
             # Get PV
             pvWrite = PV("VarCheckInt16Out")
 
@@ -661,6 +669,7 @@ class TestPerformanceTests:
         ioc = test_inst.IOC
 
         with ioc:
+            sleep(1)
             # Get PV
             pvRead = PV("VarCheckInt16")
 
