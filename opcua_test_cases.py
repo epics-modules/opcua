@@ -584,9 +584,9 @@ class TestVariableTests:
 
         with ioc:
             sleep(1)
-            pvName = PV("TstRamp", form="time")
-            pvName.get_with_metadata(timeout=10, use_monitor=False)
-            epicsTs = pvName.timestamp
+            pvName = PV("TstRamp")
+            timevars = pvName.get_timevars()
+            epicsTs = timevars["timestamp"]
 
         form = "%Y-%m-%d %H:%M:%S"
         pyTs = datetime.strptime(test_inst_TZ.serverFakeTime, form).timestamp()
