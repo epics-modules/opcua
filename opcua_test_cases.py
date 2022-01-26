@@ -585,7 +585,7 @@ class TestVariableTests:
         with ioc:
             sleep(1)
             pvName = PV("TstRamp", form="time")
-            pvName.get(timeout=test_inst_TZ.getTimeout)
+            pvName.get_with_metadata(timeout=10, use_monitor=False)
             epicsTs = pvName.timestamp
 
         form = "%Y-%m-%d %H:%M:%S"
