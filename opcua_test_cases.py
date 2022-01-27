@@ -1,4 +1,4 @@
-from epics import PV
+from epics import PV, ca
 from time import sleep
 from run_iocsh import IOC
 from os import environ
@@ -175,6 +175,9 @@ def test_inst():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+    #Initialize channel access
+    ca.initialize_libca()
+
     # Create handle to Test Harness
     test_inst = opcuaTestHarness()
     # Poll to see if the server is running
@@ -186,10 +189,15 @@ def test_inst():
     test_inst.start_server()
     # Drop to test
     yield test_inst
+
     # Shutdown server by sending terminate signal
     test_inst.stop_server()
     # Check server is stopped
     assert not test_inst.isServerRunning
+
+    #Shut down channel access
+    ca.flush_io()
+    ca.clear_cache()
 
 
 # test fixture for use with timezone server
@@ -200,6 +208,9 @@ def test_inst_TZ():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+    #Initialize channel access
+    ca.initialize_libca()
+
     # Create handle to Test Harness
     test_inst_TZ = opcuaTestHarness()
     # Poll to see if the server is running
@@ -211,10 +222,16 @@ def test_inst_TZ():
     test_inst_TZ.start_server_with_faketime()
     # Drop to test
     yield test_inst_TZ
+
     # Shutdown server by sending terminate signal
     test_inst_TZ.stop_server_group()
     # Check server is stopped
     assert not test_inst_TZ.isServerRunning
+
+    #Shut down channel access
+    ca.flush_io()
+    ca.clear_cache()
+
 
 
 class TestConnectionTests:
@@ -658,7 +675,7 @@ class TestPerformanceTests:
             assert maxt < 17
             assert mint > 1
             assert avgt < 8
-            assert totr < 1000
+            assert totr < 3000
 
     def test_read_performance(self, test_inst):
         """
