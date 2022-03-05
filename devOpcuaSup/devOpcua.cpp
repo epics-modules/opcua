@@ -392,9 +392,11 @@ opcua_read_int32_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            if (pcon->pitem->state() == ConnectionStatus::up) {
+            if (pcon->state() == ConnectionStatus::up) {
                 prec->pact = true;
                 pcon->requestOpcuaRead();
+            } else {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             }
         } else {
             epicsInt32 *value = useReadValue(pcon) ? &prec->val : nullptr;
@@ -418,7 +420,9 @@ opcua_write_int32_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWritePrint(pdbc, pcon, prec->val);
                 pcon->writeScalar(prec->val);
                 if (pcon->plinkinfo->linkedToItem &&
@@ -451,9 +455,11 @@ opcua_read_int64_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            if (pcon->pitem->state() == ConnectionStatus::up) {
+            if (pcon->state() == ConnectionStatus::up) {
                 prec->pact = true;
                 pcon->requestOpcuaRead();
+            } else {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             }
         } else {
             epicsInt64 *value = useReadValue(pcon) ? &prec->val : nullptr;
@@ -477,7 +483,9 @@ opcua_write_int64_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWritePrint(pdbc, pcon, prec->val);
                 pcon->writeScalar(prec->val);
                 if (pcon->plinkinfo->linkedToItem &&
@@ -512,9 +520,11 @@ opcua_read_uint32_rval (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            if (pcon->pitem->state() == ConnectionStatus::up) {
+            if (pcon->state() == ConnectionStatus::up) {
                 prec->pact = true;
                 pcon->requestOpcuaRead();
+            } else {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             }
         } else {
             epicsUInt32 *value = useReadValue(pcon) ? &prec->rval : nullptr;
@@ -538,7 +548,9 @@ opcua_write_uint32_rval (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                 pcon->writeScalar(prec->rval);
                 if (pcon->plinkinfo->linkedToItem &&
@@ -572,9 +584,11 @@ opcua_read_analog (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            if (pcon->pitem->state() == ConnectionStatus::up) {
+            if (pcon->state() == ConnectionStatus::up) {
                 prec->pact = true;
                 pcon->requestOpcuaRead();
+            } else {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             }
         } else {
             bool setValFromValue = useReadValue(pcon);
@@ -621,7 +635,9 @@ opcua_write_analog (REC *prec)
 
         //TODO: ignore incoming data when output rate limit active
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 if (prec->linr == menuConvertNO_CONVERSION) {
                     traceWritePrint(pdbc, pcon, prec->val);
                     ret = pcon->writeScalar(prec->val);
@@ -695,7 +711,9 @@ opcua_write_enum (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                 pcon->writeScalar(prec->rval);
                 if (pcon->plinkinfo->linkedToItem &&
@@ -748,7 +766,9 @@ opcua_write_bo (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                 pcon->writeScalar(prec->rval);
                 if (pcon->plinkinfo->linkedToItem &&
@@ -786,7 +806,9 @@ opcua_write_mbbod (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWritePrint(pdbc, pcon, prec->rval, "RVAL");
                 pcon->writeScalar(prec->rval);
                 if (pcon->plinkinfo->linkedToItem &&
@@ -836,9 +858,11 @@ opcua_read_string_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            if (pcon->pitem->state() == ConnectionStatus::up) {
+            if (pcon->state() == ConnectionStatus::up) {
                 prec->pact = true;
                 pcon->requestOpcuaRead();
+            } else {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             }
         } else {
             char *value = useReadValue(pcon) ? prec->val : nullptr;
@@ -863,7 +887,9 @@ opcua_write_string_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWritePrint(pdbc, pcon, prec->val);
                 ret = pcon->writeScalar(prec->val, MAX_STRING_SIZE);
                 if (pcon->plinkinfo->linkedToItem &&
@@ -898,9 +924,11 @@ opcua_read_lstring_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            if (pcon->pitem->state() == ConnectionStatus::up) {
+            if (pcon->state() == ConnectionStatus::up) {
                 prec->pact = true;
                 pcon->requestOpcuaRead();
+            } else {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             }
         } else {
             char *value = useReadValue(pcon) ? prec->val : nullptr;
@@ -926,7 +954,9 @@ opcua_write_lstring_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWritePrint(pdbc, pcon, prec->val);
                 ret = pcon->writeScalar(prec->val, prec->sizv);
                 if (pcon->plinkinfo->linkedToItem &&
@@ -963,9 +993,11 @@ opcua_read_array (REC *prec)
         epicsUInt32 nord = prec->nord;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            if (pcon->pitem->state() == ConnectionStatus::up) {
+            if (pcon->state() == ConnectionStatus::up) {
                 prec->pact = true;
                 pcon->requestOpcuaRead();
+            } else {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             }
         } else {
             void *bptr = useReadValue(pcon) ? prec->bptr : nullptr;
@@ -1043,7 +1075,9 @@ opcua_write_array (REC *prec)
         epicsUInt32 nord = prec->nord;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::writeRequest) {
-            if (!(pcon->state() == ConnectionStatus::down || pcon->state() == ConnectionStatus::initialRead)) {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWriteArrayPrint(pdbc, pcon, prec->nord);
                 switch (prec->ftvl) {
                 case menuFtypeSTRING:
@@ -1173,38 +1207,42 @@ opcua_action_item(REC *prec)
         if (pcon->reason == ProcessReason::connectionLoss) {
             (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
             ret = 1;
-        } else if (!(pcon->state() == ConnectionStatus::down)) {
-            switch (pcon->reason) {
-            case ProcessReason::readFailure:
-                (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-                ret = 1;
-                break;
-            case ProcessReason::writeFailure:
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
-                break;
-            case ProcessReason::readRequest:
-                prec->pact = true;
-                action = read;
-                pcon->requestOpcuaRead();
-                break;
-            case ProcessReason::writeRequest:
-                prec->pact = true;
-                action = write;
-                pcon->requestOpcuaWrite();
-                break;
-            case ProcessReason::none:
-                prec->pact = true;
-                if (prec->defactn == menuDefActionREAD) {
+        } else {
+            if (pcon->state() == ConnectionStatus::down) {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            } else {
+                switch (pcon->reason) {
+                case ProcessReason::readFailure:
+                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                    ret = 1;
+                    break;
+                case ProcessReason::writeFailure:
+                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                    ret = 1;
+                    break;
+                case ProcessReason::readRequest:
+                    prec->pact = true;
                     action = read;
                     pcon->requestOpcuaRead();
-                } else {
+                    break;
+                case ProcessReason::writeRequest:
+                    prec->pact = true;
                     action = write;
                     pcon->requestOpcuaWrite();
+                    break;
+                case ProcessReason::none:
+                    prec->pact = true;
+                    if (prec->defactn == menuDefActionREAD) {
+                        action = read;
+                        pcon->requestOpcuaRead();
+                    } else {
+                        action = write;
+                        pcon->requestOpcuaWrite();
+                    }
+                    break;
+                default:
+                    break;
                 }
-                break;
-            default:
-                break;
             }
         }
         pcon->getStatus(&prec->statcode, prec->stattext, MAX_STRING_SIZE + 1, &prec->time);
