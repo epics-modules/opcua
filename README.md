@@ -87,6 +87,13 @@ features.
 The [Cheat Sheet][cheatsheet.pdf] explains the configuration in the startup
 script and the database links.
 
+## Binaries
+
+Please look at the "Assets" sections of specific releases on the
+[release page](https://github.com/epics-modules/opcua/releases) for binaries.
+These are fully functional and contain the Unified Automation Client SDK. They
+can be used without limitations and without any fees.
+
 ## Feedback / Reporting issues
 
 Please use the GitHub project's
