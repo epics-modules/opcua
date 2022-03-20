@@ -824,9 +824,10 @@ SessionUaSdk::setupSecurity ()
                                   << " (level " << +securityLevel << ")" << std::endl;
                 }
             } else {
-                errlogPrintf("OPC UA session %s: (setupSecurity) found no endpoint that matches "
-                             "the security requirements",
-                             name.c_str());
+                if (debug)
+                    std::cout << "Session " << name.c_str()
+                              << ": (setupSecurity) found no endpoint that matches"
+                              << " the security requirements" << std::endl;
                 return ConnectResult::noMatchingEndpoint;
             }
             return ConnectResult::ok;
