@@ -719,7 +719,7 @@ SessionUaSdk::setupSecurity ()
         securityInfo.sSecurityPolicy = OpcUa_SecurityPolicy_None;
         securityLevel = 0;
         securityInfo.serverCertificate.clear();
-        securityInfo.setAnonymousUserIdentity();
+        setupIdentity();
 
         if (debug)
             std::cout << "Session " << name.c_str()
