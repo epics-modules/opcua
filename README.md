@@ -97,7 +97,7 @@ can be used without limitations and without any fees.
 ## Feedback / Reporting issues
 
 Please use the GitHub project's
-[issue tracker](https://github.com/ralphlange/opcua/issues).
+[issue tracker](https://github.com/epics-modules/opcua/issues).
 
 ## Credits
 
@@ -121,5 +121,5 @@ in file LICENSE that is included with this distribution.
 [unified.sdk]: https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html
 
 [uasdk.dir]: https://github.com/epics-modules/opcua/tree/master/devOpcuaSup/UaSdk
-[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
-[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
+[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
+[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
