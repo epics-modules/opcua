@@ -1,14 +1,15 @@
-from epics import PV, ca
-from time import sleep
-from run_iocsh import IOC
-from os import environ
-from datetime import datetime
 import os
-import pytest
-import subprocess
 import resource
-import time
 import signal
+import subprocess
+import time
+from datetime import datetime
+from os import environ
+from time import sleep
+
+import pytest
+from epics import PV, ca
+from run_iocsh import IOC
 
 
 class opcuaTestHarness:
@@ -25,9 +26,7 @@ class opcuaTestHarness:
             self.TEMP_CELL_PATH = "cellMods"
 
         # run-iocsh parameters
-        self.IOCSH_PATH = (
-            f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh"
-        )
+        self.IOCSH_PATH = f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh"
 
         self.TestArgs = [
             "-l",
@@ -109,7 +108,7 @@ class opcuaTestHarness:
             self.is_server_running()
             retryCount = retryCount + 1
             sleep(1)
-        
+
         sleep(1)
         assert retryCount < 5, "Unable to start server"
 
@@ -127,7 +126,7 @@ class opcuaTestHarness:
             self.is_server_running()
             retryCount = retryCount + 1
             sleep(1)
-        
+
         sleep(1)
         assert retryCount < 5, "Unable to start server"
 
@@ -175,7 +174,7 @@ def test_inst():
     yield the harness handle to the test,
     close the server on test end / failure
     """
-    #Initialize channel access
+    # Initialize channel access
     ca.initialize_libca()
 
     # Create handle to Test Harness
@@ -195,7 +194,7 @@ def test_inst():
     # Check server is stopped
     assert not test_inst.isServerRunning
 
-    #Shut down channel access
+    # Shut down channel access
     ca.flush_io()
     ca.clear_cache()
 
@@ -208,7 +207,7 @@ def test_inst_TZ():
     yield the harness handle to the test,
     close the server on test end / failure
     """
-    #Initialize channel access
+    # Initialize channel access
     ca.initialize_libca()
 
     # Create handle to Test Harness
@@ -228,10 +227,9 @@ def test_inst_TZ():
     # Check server is stopped
     assert not test_inst_TZ.isServerRunning
 
-    #Shut down channel access
+    # Shut down channel access
     ca.flush_io()
     ca.clear_cache()
-
 
 
 class TestConnectionTests:
