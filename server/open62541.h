@@ -589,35 +589,35 @@ void UA_sleep_ms(unsigned long ms);
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/deps/ms_stdint.h" ***********************************/
 
 // ISO C9x  compliant stdint.h for Microsoft Visual Studio
-// Based on ISO/IEC 9899:TC2 Committee draft (May 6, 2005) WG14/N1124
-//
+// Based on ISO/IEC 9899:TC2 Committee draft (May 6, 2005) WG14/N1124 
+// 
 //  Copyright (c) 2006-2013 Alexander Chemeris
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-//
+// 
 //   1. Redistributions of source code must retain the above copyright notice,
 //      this list of conditions and the following disclaimer.
-//
+// 
 //   2. Redistributions in binary form must reproduce the above copyright
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
-//
+// 
 //   3. Neither the name of the product nor the names of its contributors may
 //      be used to endorse or promote products derived from this software
 //      without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
 // WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
 // EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
 // SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
 // PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 // WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// 
 ///////////////////////////////////////////////////////////////////////////////
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1600 // [
@@ -12750,7 +12750,7 @@ UA_atomic_subSize(volatile size_t *addr, size_t decrease) {
 #define UA_NS0ID_READERGROUPDATATYPE_ENCODING_DEFAULTJSON 21201 /* Object */
 #define UA_NS0ID_PUBSUBCONFIGURATIONDATATYPE_ENCODING_DEFAULTJSON 21202 /* Object */
 #define UA_NS0ID_DATAGRAMWRITERGROUPTRANSPORTDATATYPE_ENCODING_DEFAULTJSON 21203 /* Object */
-#endif /* UA_NODEIDS_NS0_H_ */
+#endif /* UA_NODEIDS_NS0_H_ */ 
 
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/include/open62541/common.h" ***********************************/
 
@@ -13569,7 +13569,7 @@ UA_LOCALIZEDTEXT_ALLOC(const char *locale, const char *text) {
     lt.text = UA_STRING_ALLOC(text); return lt;
 }
 
-/*
+/* 
  * Check if the StatusCode is bad.
  * @return Returns UA_TRUE if StatusCode is bad, else UA_FALSE. */
 UA_EXPORT UA_Boolean
@@ -23726,7 +23726,7 @@ _UA_END_DECLS
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
  *
  *    Copyright 2018 (c) Julius Pfrommer
  */
@@ -23974,7 +23974,7 @@ name##_ZIP_ITER(struct name *head, name##_cb cb, void *data) {          \
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
  *
  *    Copyright 2020 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  */
@@ -25248,7 +25248,7 @@ void UA_EXPORT
 UA_ServerConfig_clean(UA_ServerConfig *config);
 
 /* Set a custom hostname in server configuration */
-UA_DEPRECATED static UA_INLINE void
+UA_DEPRECATED static UA_INLINE void 
 UA_ServerConfig_setCustomHostname(UA_ServerConfig *config,
                                   const UA_String customHostname) {
     UA_String_clear(&config->customHostname);
@@ -26489,7 +26489,7 @@ UA_Server_setConditionTwoStateVariableCallback(UA_Server *server, const UA_NodeI
                                                UA_TwoStateVariableCallbackType callbackType);
 
 /* Delete a condition from the address space and the internal lists.
- *
+ * 
  * @param server The server object
  * @param condition The NodeId of the node representation of the Condition Instance
  * @param conditionSource The NodeId of the node representation of the Condition Source
@@ -26749,7 +26749,7 @@ _UA_BEGIN_DECLS
  * **UA_ENABLE_PUBSUB_INFORMATIONMODEL**
  *  Enable the information model representation of the PubSub configuration. For more details take a look at the following section `PubSub Information Model Representation`. Disabled by default.
  * **UA_ENABLE_PUBSUB_MONITORING**
- *  Enable the experimental PubSub monitoring. This feature provides a basic framework to implement monitoring/timeout checks for PubSub components.
+ *  Enable the experimental PubSub monitoring. This feature provides a basic framework to implement monitoring/timeout checks for PubSub components. 
  *  Initially the MessageReceiveTimeout check of a DataSetReader is provided. It uses the internal server callback implementation.
  *  The monitoring backend can be changed by the application to satisfy realtime requirements.
  *  Disabled by default.
@@ -26834,15 +26834,15 @@ typedef enum {
 
 /* PubSub monitoring interface */
 typedef struct {
-    UA_StatusCode (*createMonitoring)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
+    UA_StatusCode (*createMonitoring)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
                                       UA_PubSubMonitoringType eMonitoringType, void *data, UA_ServerCallback callback);
-    UA_StatusCode (*startMonitoring)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
+    UA_StatusCode (*startMonitoring)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
                                      UA_PubSubMonitoringType eMonitoringType, void *data);
-    UA_StatusCode (*stopMonitoring)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
+    UA_StatusCode (*stopMonitoring)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
                                     UA_PubSubMonitoringType eMonitoringType, void *data);
-    UA_StatusCode (*updateMonitoringInterval)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
+    UA_StatusCode (*updateMonitoringInterval)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
                                               UA_PubSubMonitoringType eMonitoringType, void *data);
-    UA_StatusCode (*deleteMonitoring)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
+    UA_StatusCode (*deleteMonitoring)(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
                                       UA_PubSubMonitoringType eMonitoringType, void *data);
 } UA_PubSubMonitoringInterface;
 
@@ -26852,7 +26852,7 @@ typedef struct {
 struct UA_PubSubConfiguration {
 
     /* Callback for PubSub component state changes:
-    If provided this callback informs the application about PubSub component state changes.
+    If provided this callback informs the application about PubSub component state changes. 
     E.g. state change from operational to error in case of a DataSetReader MessageReceiveTimeout.
     The status code provides additional information. */
     void (*pubsubStateChangeCallback)(UA_NodeId *Id,
@@ -29992,7 +29992,7 @@ UA_ServerConfig_setDefault(UA_ServerConfig *config) {
  * It initializes reasonable defaults for many things, but does not
  * add any network layer, security policies and endpoints.
  * Use the various UA_ServerConfig_addXxx functions to add them.
- *
+ * 
  * @param conf The configuration to manipulate
  */
 UA_EXPORT UA_StatusCode
@@ -30036,14 +30036,14 @@ UA_ServerConfig_addNetworkLayerWS(UA_ServerConfig *conf, UA_UInt16 portNumber,
  * @param certificate The optional server certificate.
  */
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyNone(UA_ServerConfig *config,
+UA_ServerConfig_addSecurityPolicyNone(UA_ServerConfig *config, 
                                       const UA_ByteString *certificate);
 
 #ifdef UA_ENABLE_ENCRYPTION
 
 /* Adds the security policy ``SecurityPolicy#Basic128Rsa15`` to the server. A
  * server certificate may be supplied but is optional.
- *
+ * 
  * Certificate verification should be configured before calling this
  * function. See PKI plugin.
  *
@@ -30052,7 +30052,7 @@ UA_ServerConfig_addSecurityPolicyNone(UA_ServerConfig *config,
  * @param privateKey The private key that corresponds to the certificate.
  */
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyBasic128Rsa15(UA_ServerConfig *config,
+UA_ServerConfig_addSecurityPolicyBasic128Rsa15(UA_ServerConfig *config, 
                                                const UA_ByteString *certificate,
                                                const UA_ByteString *privateKey);
 
@@ -30061,13 +30061,13 @@ UA_ServerConfig_addSecurityPolicyBasic128Rsa15(UA_ServerConfig *config,
  *
  * Certificate verification should be configured before calling this
  * function. See PKI plugin.
- *
+ * 
  * @param config The configuration to manipulate
  * @param certificate The server certificate.
  * @param privateKey The private key that corresponds to the certificate.
  */
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyBasic256(UA_ServerConfig *config,
+UA_ServerConfig_addSecurityPolicyBasic256(UA_ServerConfig *config, 
                                           const UA_ByteString *certificate,
                                           const UA_ByteString *privateKey);
 
@@ -30082,7 +30082,7 @@ UA_ServerConfig_addSecurityPolicyBasic256(UA_ServerConfig *config,
  * @param privateKey The private key that corresponds to the certificate.
  */
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyBasic256Sha256(UA_ServerConfig *config,
+UA_ServerConfig_addSecurityPolicyBasic256Sha256(UA_ServerConfig *config, 
                                                 const UA_ByteString *certificate,
                                                 const UA_ByteString *privateKey);
 
@@ -30106,7 +30106,7 @@ UA_ServerConfig_addSecurityPolicyAes128Sha256RsaOaep(UA_ServerConfig *config,
  *
  * Certificate verification should be configured before calling this
  * function. See PKI plugin.
- *
+ * 
  * @param config The configuration to manipulate
  * @param certificate The server certificate.
  * @param privateKey The private key that corresponds to the certificate.
@@ -30130,7 +30130,7 @@ UA_ServerConfig_addAllSecurityPolicies(UA_ServerConfig *config,
  * @param securityMode The security mode for which to add the endpoint.
  */
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addEndpoint(UA_ServerConfig *config, const UA_String securityPolicyUri,
+UA_ServerConfig_addEndpoint(UA_ServerConfig *config, const UA_String securityPolicyUri, 
                             UA_MessageSecurityMode securityMode);
 
 /* Adds endpoints for all configured security policies in each mode.
@@ -30267,7 +30267,7 @@ _UA_END_DECLS
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/include/open62541/network_tcp.h" ***********************************/
 
 /* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
- * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
+ * See http://creativecommons.org/publicdomain/zero/1.0/ for more information. 
  *
  *    Copyright 2016 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2020 (c) HMS Industrial Networks AB (Author: Jonas Green)

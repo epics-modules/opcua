@@ -2,7 +2,7 @@ Simulation server - open62541
 ======
 This directory contains the sources for compiling an OPC UA server based on open62541 [1].
 
-The server configuration currently consists a number of variables. The variables are defined in the XML file source file
+The server configuration currently consists a number of variables. The variables are defined in the XML file source file 
 [\(opcuaTestServer.NodeSet2.xml\)](test/server/xml/opcuaTestServer.NodeSet2.xml) and compiled into the C-source file [\(opcuaTestNodeSet.c\)](test/server/opcuaTestNodeSet.c).
 
 The amalgamated source files for the server (open62541.c/.h) are provided in this directory. See [2]
