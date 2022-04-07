@@ -26,7 +26,7 @@ class opcuaTestHarness:
 
         # run-iocsh parameters
         self.IOCSH_PATH = (
-            f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh.bash"
+            f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh"
         )
 
         self.TestArgs = [
