@@ -21,7 +21,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_0_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim")
 );
 }
@@ -55,7 +55,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_1_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarInt64")
 );
 }
@@ -89,7 +89,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_2_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarInt16")
 );
 }
@@ -123,7 +123,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_3_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarUInt16")
 );
 }
@@ -157,7 +157,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_4_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarString")
 );
 }
@@ -191,7 +191,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_5_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarByte")
 );
 }
@@ -225,7 +225,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_6_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarDouble")
 );
 }
@@ -259,7 +259,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_7_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarUInt64")
 );
 }
@@ -293,7 +293,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_8_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestRamp")
 );
 }
@@ -327,7 +327,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_9_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarBool")
 );
 }
@@ -361,7 +361,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_10_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarFloat")
 );
 }
@@ -395,7 +395,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_11_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarUInt32")
 );
 }
@@ -429,7 +429,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_12_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarSByte")
 );
 }
@@ -463,7 +463,7 @@ return retVal;
 }
 
 static UA_StatusCode function_opcuaTestNodeSet_13_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_STRING(ns[1], "Sim.TestVarInt32")
 );
 }

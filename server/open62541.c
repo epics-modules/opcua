@@ -65,7 +65,7 @@
 
 
 /*
- * This file defines five types of data structures: singly-linked lists, 
+ * This file defines five types of data structures: singly-linked lists,
  * lists, simple queues, tail queues, and circular queues.
  *
  *
@@ -124,7 +124,7 @@
 struct name {								\
     struct type *slh_first;	/* first element */			\
 }
- 
+
 #define	SLIST_HEAD_INITIALIZER(head)					\
     { NULL }
 
@@ -132,7 +132,7 @@ struct name {								\
 struct {								\
     struct type *sle_next;	/* next element */			\
 }
- 
+
 /*
  * Singly-linked List access methods.
  */
@@ -424,7 +424,7 @@ struct {								\
             XSIMPLEQ_XOR(head, &(elm)->field.sqx_next);		\
 } while (0)
 
-            
+
 /*
  * Tail queue definitions.
  */
@@ -443,8 +443,8 @@ struct {								\
     struct type **tqe_prev;	/* address of previous next element */	\
 }
 
-/* 
- * tail queue access methods 
+/*
+ * tail queue access methods
  */
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
 #define	TAILQ_END(head)			NULL
@@ -564,7 +564,7 @@ struct {								\
 }
 
 /*
- * Circular queue access methods 
+ * Circular queue access methods
  */
 #define	CIRCLEQ_FIRST(head)		((head)->cqh_first)
 #define	CIRCLEQ_LAST(head)		((head)->cqh_last)
@@ -776,7 +776,7 @@ _UA_END_DECLS
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2014, 2017 (c) Florian Palm
@@ -1017,7 +1017,7 @@ typedef UA_StatusCode (*UA_exchangeEncodeBuffer)(void *handle, UA_Byte **bufPos,
           Is ignored if NULL.
  * @param exchangeHandle Custom data passed into the exchangeCallback.
  * @return Returns a statuscode whether encoding succeeded. */
-UA_StatusCode 
+UA_StatusCode
 UA_encodeBinary(const void *src, const UA_DataType *type,
                 UA_Byte **bufPos, const UA_Byte **bufEnd,
                 UA_exchangeEncodeBuffer exchangeCallback,
@@ -4315,7 +4315,7 @@ UA_SymmetricAlgorithmSecurityHeader_decodeBinary(const UA_ByteString *src, size_
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2016-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2016-2017 (c) Stefan Profanter, fortiss GmbH
@@ -4347,7 +4347,7 @@ _UA_END_DECLS
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2020 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Florian Palm
@@ -4722,7 +4722,7 @@ _UA_END_DECLS
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2017, 2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
@@ -4824,7 +4824,7 @@ _UA_END_DECLS
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2019 (c) HMS Industrial Networks AB (Author: Jonas Green)
@@ -5538,18 +5538,18 @@ typedef struct {
     union {
         UA_DataSetPayloadHeader dataSetPayloadHeader;
     } payloadHeader;
-    
+
     UA_DateTime timestamp;
     UA_UInt16 picoseconds;
     UA_UInt16 promotedFieldsSize;
     UA_Variant* promotedFields; /* BaseDataType */
-    
+
     UA_NetworkMessageSecurityHeader securityHeader;
 
     union {
         UA_DataSetPayload dataSetPayload;
     } payload;
-    
+
     UA_ByteString securityFooter;
     UA_ByteString signature;
 } UA_NetworkMessage;
@@ -6144,7 +6144,7 @@ typedef struct {
     /* Operations for the workers. The queues are all FIFO: Put in at the tail,
      * take out at the head.*/
     UA_LOCK_TYPE(queueLock)
-    UA_AsyncOperationQueue newQueue;        /* New operations for the workers */    
+    UA_AsyncOperationQueue newQueue;        /* New operations for the workers */
     UA_AsyncOperationQueue dispatchedQueue; /* Operations taken by a worker. When a result is
                                              * returned, we search for the op here to see if it
                                              * is still "alive" (not timed out). */
@@ -6457,7 +6457,7 @@ UA_StatusCode
 referenceTypeIndices(UA_Server *server, const UA_NodeId *refType,
                      UA_ReferenceTypeSet *indices, UA_Boolean includeSubtypes);
 
-/* Returns the recursive type and interface hierarchy of the node */ 
+/* Returns the recursive type and interface hierarchy of the node */
 UA_StatusCode
 getParentTypeAndInterfaceHierarchy(UA_Server *server, const UA_NodeId *typeNode,
                                    UA_NodeId **typeHierarchy, size_t *typeHierarchySize);
@@ -6791,7 +6791,7 @@ _UA_END_DECLS
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2014-2017 (c) Florian Palm
@@ -7298,7 +7298,7 @@ _UA_END_DECLS
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2015-2016 (c) Sten Grüner
  *    Copyright 2015-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
@@ -7478,25 +7478,25 @@ _UA_END_DECLS
 
 /* UA_PubSubManager_loadPubSubConfigFromByteString() */
 /**
- * @brief       Decodes the information from the ByteString. If the decoded content is a PubSubConfiguration in a UABinaryFileDataType-object               
+ * @brief       Decodes the information from the ByteString. If the decoded content is a PubSubConfiguration in a UABinaryFileDataType-object
  *              it will overwrite the current PubSub configuration from the server.
- * 
+ *
  * @param       server      [bi]    Pointer to Server object that shall be configured
  * @param       buffer      [in]    Relative path and name of the file that contains the PubSub configuration
- * 
+ *
  * @return      UA_STATUSCODE_GOOD on success
  */
-UA_StatusCode 
+UA_StatusCode
 UA_PubSubManager_loadPubSubConfigFromByteString
 (
-    /*[bi]*/    UA_Server *server, 
+    /*[bi]*/    UA_Server *server,
     /*[in]*/    const UA_ByteString buffer
 );
 
 /* UA_PubSubManager_getEncodedPubSubConfiguration() */
 /**
  * @brief       Saves the current PubSub configuration of a server in a byteString.
- * 
+ *
  * @param       server  [in]    Pointer to server object, that contains the PubSubConfiguration
  * @param       buffer  [out]    Pointer to a byteString object
  *
@@ -7505,7 +7505,7 @@ UA_PubSubManager_loadPubSubConfigFromByteString
 UA_StatusCode
 UA_PubSubManager_getEncodedPubSubConfiguration
 (
-    /*[bi]*/    UA_Server *server, 
+    /*[bi]*/    UA_Server *server,
     /*[out]*/   UA_ByteString *buffer
 );
 
@@ -7567,7 +7567,7 @@ _UA_END_DECLS
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2020 (c) Fraunhofer IOSB (Author: Andreas Ebner)
  *    Copyright 2014-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
@@ -8599,7 +8599,7 @@ UA_StatusCode_isBad(const UA_StatusCode code) {
         return UA_TRUE;
     }
     return UA_FALSE;
-} 
+}
 
 /********************/
 /* Structured Types */
@@ -9040,7 +9040,7 @@ UA_NumericRange_parse(UA_NumericRange *range, const UA_String str) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2020 (c) Fraunhofer IOSB (Author: Andreas Ebner)
  *    Copyright 2020 (c) Grigory Friedman
@@ -10275,7 +10275,7 @@ ENCODE_BINARY(DiagnosticInfo) {
     encodingMask |= (u8)(src->hasAdditionalInfo << 4u);
     encodingMask |= (u8)(src->hasInnerStatusCode << 5u);
     encodingMask |= (u8)(src->hasInnerDiagnosticInfo << 6u);
-    
+
     /* Encode the numeric content */
     status ret = ENCODE_DIRECT(&encodingMask, Byte);
     if(src->hasSymbolicId)
@@ -11101,7 +11101,7 @@ UA_calcSizeBinary(const void *p, const UA_DataType *type) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2020 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  */
@@ -19813,7 +19813,7 @@ const char * UA_StatusCode_name(UA_StatusCode code) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014, 2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2014 (c) Florian Palm
@@ -20019,7 +20019,7 @@ UA_ByteString_fromBase64(UA_ByteString *bs,
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2017, 2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
@@ -20987,7 +20987,7 @@ assembleProcessMessage(UA_SecureChannel *channel, void *application,
     UA_StatusCode res = UA_ByteString_allocBuffer(&payload, messageSize);
     if(res != UA_STATUSCODE_GOOD)
         return res;
-    
+
     /* Assemble the full message */
     size_t offset = 0;
     while(true) {
@@ -21000,7 +21000,7 @@ assembleProcessMessage(UA_SecureChannel *channel, void *application,
         if(ct == UA_CHUNKTYPE_FINAL)
             break;
     }
-    
+
     /* Process the assembled message */
     UA_StatusCode retval = callback(application, channel, messageType, requestId, &payload);
     UA_ByteString_clear(&payload);
@@ -21218,7 +21218,7 @@ UA_SecureChannel_receive(UA_SecureChannel *channel, void *application,
     UA_Connection *connection = channel->connection;
     if(!connection)
         return UA_STATUSCODE_BADINTERNALERROR;
-    
+
     /* Listen for messages to arrive */
     UA_ByteString buffer = UA_BYTESTRING_NULL;
     UA_StatusCode retval = connection->recv(connection, &buffer, timeout);
@@ -21521,7 +21521,7 @@ signAndEncryptAsym(UA_SecureChannel *channel, size_t preSignLength,
         return UA_STATUSCODE_GOOD;
 
     const UA_SecurityPolicy *sp = channel->securityPolicy;
-    
+
     /* Sign message */
     const UA_ByteString dataToSign = {preSignLength, buf->data};
     size_t sigsize = sp->asymmetricModule.cryptoModule.signatureAlgorithm.
@@ -21614,7 +21614,7 @@ encryptChunkSym(UA_MessageContext *const messageContext, size_t totalLength) {
     const UA_SecureChannel *channel = messageContext->channel;
     if(channel->securityMode != UA_MESSAGESECURITYMODE_SIGNANDENCRYPT)
         return UA_STATUSCODE_GOOD;
-        
+
     UA_ByteString dataToEncrypt;
     dataToEncrypt.data = messageContext->messageBuffer.data + UA_SECUREMH_AND_SYMALGH_LENGTH;
     dataToEncrypt.length = totalLength - UA_SECUREMH_AND_SYMALGH_LENGTH;
@@ -21887,7 +21887,7 @@ UA_SecurityPolicy_getRemoteAsymEncryptionBufferLengthOverhead(const UA_SecurityP
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2018 (c) Thomas Stalder, Blue Time Concept SA
@@ -22009,7 +22009,7 @@ UA_Session_detachSubscription(UA_Server *server, UA_Session *session,
 
     /* Reduce the number of outstanding retransmissions */
     session->totalRetransmissionQueueSize -= sub->retransmissionQueueSize;
-    
+
     /* Send remaining publish responses if the last subscription was removed */
     if(!TAILQ_EMPTY(&session->subscriptions))
         return;
@@ -22785,7 +22785,7 @@ void UA_Node_deleteReferences(UA_Node *node) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2014-2017 (c) Florian Palm
@@ -23051,7 +23051,7 @@ UA_Server_cleanup(UA_Server *server, void *_) {
 static UA_Server *
 UA_Server_init(UA_Server *server) {
     UA_StatusCode res = UA_STATUSCODE_GOOD;
-    
+
     if(!server->config.nodestore.getNode) {
         UA_LOG_FATAL(&server->config.logger, UA_LOGCATEGORY_SERVER,
                      "No Nodestore configured in the server");
@@ -23128,7 +23128,7 @@ UA_Server_init(UA_Server *server) {
 
 #ifdef UA_ENABLE_PUBSUB_MONITORING
     /* setup default PubSub monitoring callbacks */
-    if (UA_PubSubManager_setDefaultMonitoringCallbacks(&(server->config.pubsubConfiguration->monitoringInterface)) != 
+    if (UA_PubSubManager_setDefaultMonitoringCallbacks(&(server->config.pubsubConfiguration->monitoringInterface)) !=
         UA_STATUSCODE_GOOD) {
         goto cleanup;
     }
@@ -24690,7 +24690,7 @@ UA_Server_initNS0(UA_Server *server) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2019 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2019 (c) HMS Industrial Networks AB (Author: Jonas Green)
@@ -25634,7 +25634,7 @@ UA_Server_removeConnection(UA_Server *server, UA_Connection *connection) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2016-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2016 (c) Lorenz Haas
@@ -25981,7 +25981,7 @@ const UA_ViewAttributes UA_ViewAttributes_default = {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
@@ -26378,7 +26378,7 @@ UA_AsyncManager_createAsyncOp(UA_AsyncManager *am, UA_Server *server,
     UA_StatusCode result = UA_CallMethodRequest_copy(opRequest, &ao->request);
     if(result != UA_STATUSCODE_GOOD) {
         UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER,
-                     "UA_Server_SetAsyncMethodResult: UA_CallMethodRequest_copy failed.");                
+                     "UA_Server_SetAsyncMethodResult: UA_CallMethodRequest_copy failed.");
         UA_free(ao);
         return result;
     }
@@ -26735,7 +26735,7 @@ UA_NetworkMessage_encodeBinary(const UA_NetworkMessage* src, UA_Byte **bufPos,
             return rv;
 
         // ExtendedFlags2
-        if(UA_NetworkMessage_ExtendedFlags2Enabled(src)) { 
+        if(UA_NetworkMessage_ExtendedFlags2Enabled(src)) {
             v = (UA_Byte)src->networkMessageType;
             // shift left 2 bit
             v = (UA_Byte) (v << NM_SHIFT_LEN);
@@ -26779,7 +26779,7 @@ UA_NetworkMessage_encodeBinary(const UA_NetworkMessage* src, UA_Byte **bufPos,
             rv = UA_STATUSCODE_BADINTERNALERROR;
             break;
         }
-    
+
         if(rv != UA_STATUSCODE_GOOD)
             return rv;
     }
@@ -26817,7 +26817,7 @@ UA_NetworkMessage_encodeBinary(const UA_NetworkMessage* src, UA_Byte **bufPos,
                 return rv;
         }
 
-        if(src->groupHeader.groupVersionEnabled) { 
+        if(src->groupHeader.groupVersionEnabled) {
             rv = UA_UInt32_encodeBinary(&(src->groupHeader.groupVersion), bufPos, bufEnd);
             if(rv != UA_STATUSCODE_GOOD)
                 return rv;
@@ -26840,12 +26840,12 @@ UA_NetworkMessage_encodeBinary(const UA_NetworkMessage* src, UA_Byte **bufPos,
     if(src->payloadHeaderEnabled) {
         if(src->networkMessageType != UA_NETWORKMESSAGE_DATASET)
             return UA_STATUSCODE_BADNOTIMPLEMENTED;
-            
+
         rv = UA_Byte_encodeBinary(&(src->payloadHeader.dataSetPayloadHeader.count), bufPos, bufEnd);
 
         if(src->payloadHeader.dataSetPayloadHeader.dataSetWriterIds == NULL)
             return UA_STATUSCODE_BADENCODINGERROR;
-            
+
         for(UA_Byte i = 0; i < src->payloadHeader.dataSetPayloadHeader.count; i++) {
             rv = UA_UInt16_encodeBinary(&(src->payloadHeader.dataSetPayloadHeader.dataSetWriterIds[i]),
                                         bufPos, bufEnd);
@@ -26922,7 +26922,7 @@ UA_NetworkMessage_encodeBinary(const UA_NetworkMessage* src, UA_Byte **bufPos,
     // Payload
     if(src->networkMessageType != UA_NETWORKMESSAGE_DATASET)
         return UA_STATUSCODE_BADNOTIMPLEMENTED;
-        
+
     UA_Byte count = 1;
 
     if(src->payloadHeaderEnabled) {
@@ -26983,7 +26983,7 @@ UA_NetworkMessage_decodeBinaryInternal(const UA_ByteString *src, size_t *offset,
         return rv;
 
     dst->version = v & NM_VERSION_MASK;
-    
+
     if((v & NM_PUBLISHER_ID_ENABLED_MASK) != 0)
         dst->publisherIdEnabled = true;
 
@@ -26992,7 +26992,7 @@ UA_NetworkMessage_decodeBinaryInternal(const UA_ByteString *src, size_t *offset,
 
     if((v & NM_PAYLOAD_HEADER_ENABLED_MASK) != 0)
         dst->payloadHeaderEnabled = true;
-    
+
     if((v & NM_EXTENDEDFLAGS1_ENABLED_MASK) != 0) {
         v = 0;
         rv = UA_Byte_decodeBinary(src, offset, &v);
@@ -27068,7 +27068,7 @@ UA_NetworkMessage_decodeBinaryInternal(const UA_ByteString *src, size_t *offset,
     }
 
     // GroupHeader
-    if(dst->groupHeaderEnabled) { 
+    if(dst->groupHeaderEnabled) {
         v = 0;
         rv = UA_Byte_decodeBinary(src, offset, &v);
         if(rv != UA_STATUSCODE_GOOD)
@@ -27145,7 +27145,7 @@ UA_NetworkMessage_decodeBinaryInternal(const UA_ByteString *src, size_t *offset,
             return rv;
     }
 
-    // PromotedFields 
+    // PromotedFields
     if(dst->promotedFieldsEnabled) {
         // Size
         UA_UInt16 promotedFieldsSize = 0;
@@ -27155,7 +27155,7 @@ UA_NetworkMessage_decodeBinaryInternal(const UA_ByteString *src, size_t *offset,
 
         // promotedFieldsSize: here size in Byte, not the number of objects!
         if(promotedFieldsSize > 0) {
-            // store offset, later compared with promotedFieldsSize 
+            // store offset, later compared with promotedFieldsSize
             size_t offsetEnd = (*offset) + promotedFieldsSize;
 
             unsigned int counter = 0;
@@ -27496,7 +27496,7 @@ UA_NetworkMessage_clear(UA_NetworkMessage* p) {
                                 p->payloadHeader.dataSetPayloadHeader.count, &UA_TYPES[UA_TYPES_UINT16]);
             }
 
-            if(p->payload.dataSetPayload.sizes != NULL) { 
+            if(p->payload.dataSetPayload.sizes != NULL) {
                 UA_Array_delete(p->payload.dataSetPayload.sizes,
                                 p->payloadHeader.dataSetPayloadHeader.count, &UA_TYPES[UA_TYPES_UINT16]);
             }
@@ -27506,7 +27506,7 @@ UA_NetworkMessage_clear(UA_NetworkMessage* p) {
             UA_Byte count = 1;
             if(p->payloadHeaderEnabled)
                 count = p->payloadHeader.dataSetPayloadHeader.count;
-            
+
             for(size_t i = 0; i < count; i++)
                 UA_DataSetMessage_clear(&(p->payload.dataSetPayload.dataSetMessages[i]));
 
@@ -27536,10 +27536,10 @@ UA_Boolean
 UA_NetworkMessage_ExtendedFlags1Enabled(const UA_NetworkMessage* src) {
     UA_Boolean retval = false;
 
-    if((src->publisherIdType != UA_PUBLISHERDATATYPE_BYTE) 
-        || src->dataSetClassIdEnabled 
-        || src->securityEnabled 
-        || src->timestampEnabled 
+    if((src->publisherIdType != UA_PUBLISHERDATATYPE_BYTE)
+        || src->dataSetClassIdEnabled
+        || src->securityEnabled
+        || src->timestampEnabled
         || src->picosecondsEnabled
         || UA_NetworkMessage_ExtendedFlags2Enabled(src))
     {
@@ -27569,7 +27569,7 @@ UA_StatusCode
 UA_DataSetMessageHeader_encodeBinary(const UA_DataSetMessageHeader* src, UA_Byte **bufPos,
                                      const UA_Byte *bufEnd) {
     UA_Byte v;
-    // DataSetFlags1 
+    // DataSetFlags1
     v = (UA_Byte)src->fieldEncoding;
     // shift left 1 bit
     v = (UA_Byte)(v << DS_MH_SHIFT_LEN);
@@ -27595,7 +27595,7 @@ UA_DataSetMessageHeader_encodeBinary(const UA_DataSetMessageHeader* src, UA_Byte
     UA_StatusCode rv = UA_Byte_encodeBinary(&v, bufPos, bufEnd);
     if(rv != UA_STATUSCODE_GOOD)
         return rv;
-    
+
     // DataSetFlags2
     if(UA_DataSetMessageHeader_DataSetFlags2Enabled(src)) {
         v = (UA_Byte)src->dataSetMessageType;
@@ -27612,7 +27612,7 @@ UA_DataSetMessageHeader_encodeBinary(const UA_DataSetMessageHeader* src, UA_Byte
     }
 
     // DataSetMessageSequenceNr
-    if(src->dataSetMessageSequenceNrEnabled) { 
+    if(src->dataSetMessageSequenceNrEnabled) {
         rv = UA_UInt16_encodeBinary(&src->dataSetMessageSequenceNr, bufPos, bufEnd);
         if(rv != UA_STATUSCODE_GOOD)
             return rv;
@@ -27668,7 +27668,7 @@ UA_DataSetMessageHeader_decodeBinary(const UA_ByteString *src, size_t *offset,
     UA_Byte v2 = v & DS_MESSAGEHEADER_FIELD_ENCODING_MASK;
     v2 = (UA_Byte)(v2 >> DS_MH_SHIFT_LEN);
     dst->fieldEncoding = (UA_FieldEncoding)v2;
-    
+
     if((v & DS_MESSAGEHEADER_DS_MSG_VALID) != 0)
         dst->dataSetMessageValid = true;
 
@@ -27689,7 +27689,7 @@ UA_DataSetMessageHeader_decodeBinary(const UA_ByteString *src, size_t *offset,
         rv = UA_Byte_decodeBinary(src, offset, &v);
         if(rv != UA_STATUSCODE_GOOD)
             return rv;
-        
+
         dst->dataSetMessageType = (UA_DataSetMessageType)(v & DS_MESSAGEHEADER_DS_MESSAGE_TYPE_MASK);
 
         if((v & DS_MESSAGEHEADER_TIMESTAMP_ENABLED_MASK) != 0)
@@ -27822,7 +27822,7 @@ UA_DataSetMessage_encodeBinary(const UA_DataSetMessage* src, UA_Byte **bufPos,
                 rv = UA_UInt16_encodeBinary(&(src->data.deltaFrameData.deltaFrameFields[i].fieldIndex), bufPos, bufEnd);
                 if(rv != UA_STATUSCODE_GOOD)
                     return rv;
-                
+
                 rv = UA_Variant_encodeBinary(&(src->data.deltaFrameData.deltaFrameFields[i].fieldValue.value), bufPos, bufEnd);
                 if(rv != UA_STATUSCODE_GOOD)
                     return rv;
@@ -27896,7 +27896,7 @@ UA_DataSetMessage_decodeBinary(const UA_ByteString *src, size_t *offset, UA_Data
                     rv = UA_UInt16_decodeBinary(src, offset, &dst->data.deltaFrameData.deltaFrameFields[i].fieldIndex);
                     if(rv != UA_STATUSCODE_GOOD)
                         return rv;
-                    
+
                     UA_DataValue_init(&dst->data.deltaFrameData.deltaFrameFields[i].fieldValue);
                     rv = UA_Variant_decodeBinary(src, offset, &dst->data.deltaFrameData.deltaFrameFields[i].fieldValue.value);
                     if(rv != UA_STATUSCODE_GOOD)
@@ -27913,7 +27913,7 @@ UA_DataSetMessage_decodeBinary(const UA_ByteString *src, size_t *offset, UA_Data
                     rv = UA_UInt16_decodeBinary(src, offset, &dst->data.deltaFrameData.deltaFrameFields[i].fieldIndex);
                     if(rv != UA_STATUSCODE_GOOD)
                         return rv;
-                    
+
                     rv = UA_DataValue_decodeBinary(src, offset, &(dst->data.deltaFrameData.deltaFrameFields[i].fieldValue));
                     if(rv != UA_STATUSCODE_GOOD)
                         return rv;
@@ -28423,7 +28423,7 @@ UA_Server_freezeWriterGroupConfiguration(UA_Server *server, const UA_NodeId writ
         const UA_Byte *bufEnd = &wg->bufferedMessage.buffer.data[wg->bufferedMessage.buffer.length];
         UA_Byte *bufPos = wg->bufferedMessage.buffer.data;
         UA_NetworkMessage_encodeBinary(&networkMessage, &bufPos, bufEnd);
-        
+
         UA_free(networkMessage.payload.dataSetPayload.sizes);
         /* Clean up DSM */
         for(size_t i = 0; i < dsmCount; i++){
@@ -29257,7 +29257,7 @@ UA_WriterGroup_setPubSubState(UA_Server *server, UA_PubSubState state, UA_Writer
                     UA_PubSubManager_removeRepeatedPubSubCallback(server, writerGroup->publishCallbackId);
                     LIST_FOREACH(dataSetWriter, &writerGroup->writers, listEntry){
                         UA_DataSetWriter_setPubSubState(server, UA_PUBSUBSTATE_ERROR, dataSetWriter);
-                    }      
+                    }
                     break;
                 case UA_PUBSUBSTATE_ERROR:
                     return UA_STATUSCODE_GOOD;
@@ -31205,7 +31205,7 @@ void UA_ReaderGroup_subscribeCallback(UA_Server *server, UA_ReaderGroup *readerG
                 UA_NetworkMessage_clear(&currentNetworkMessage);
             } while((buffer.length) > currentPosition);
         }
-    } 
+    }
     UA_ByteString_clear(&buffer);
 }
 
@@ -31278,7 +31278,7 @@ UA_Server_addDataSetReader(UA_Server *server, UA_NodeId readerGroupIdentifier,
 
 #ifdef UA_ENABLE_PUBSUB_MONITORING
     /* create message receive timeout timer */
-    UA_StatusCode retVal = server->config.pubsubConfiguration->monitoringInterface.createMonitoring(server, newDataSetReader->identifier, 
+    UA_StatusCode retVal = server->config.pubsubConfiguration->monitoringInterface.createMonitoring(server, newDataSetReader->identifier,
         UA_PUBSUB_COMPONENT_DATASETREADER, UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT, newDataSetReader, UA_DataSetReader_handleMessageReceiveTimeout);
     if (retVal != UA_STATUSCODE_GOOD) {
         UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER,
@@ -31323,7 +31323,7 @@ UA_Server_removeDataSetReader(UA_Server *server, UA_NodeId readerIdentifier) {
     /* stop and remove message receive timeout timer */
     retVal = UA_STATUSCODE_GOOD;
     if (dataSetReader->msgRcvTimeoutTimerRunning == UA_TRUE) {
-        retVal = server->config.pubsubConfiguration->monitoringInterface.stopMonitoring(server, dataSetReader->identifier, 
+        retVal = server->config.pubsubConfiguration->monitoringInterface.stopMonitoring(server, dataSetReader->identifier,
             UA_PUBSUB_COMPONENT_DATASETREADER, UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT, dataSetReader);
         if (retVal != UA_STATUSCODE_GOOD) {
             UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER,
@@ -31331,7 +31331,7 @@ UA_Server_removeDataSetReader(UA_Server *server, UA_NodeId readerIdentifier) {
                     "'%.*s' failed.", (int) dataSetReader->config.name.length, dataSetReader->config.name.data);
         }
     }
-    retVal |= server->config.pubsubConfiguration->monitoringInterface.deleteMonitoring(server, dataSetReader->identifier, 
+    retVal |= server->config.pubsubConfiguration->monitoringInterface.deleteMonitoring(server, dataSetReader->identifier,
         UA_PUBSUB_COMPONENT_DATASETREADER, UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT, dataSetReader);
     if (retVal != UA_STATUSCODE_GOOD) {
         UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER,
@@ -31407,7 +31407,7 @@ UA_Server_DataSetReader_updateConfig(UA_Server *server, UA_NodeId dataSetReaderI
     if (currentDataSetReader->config.messageReceiveTimeout != config->messageReceiveTimeout) {
         /* update message receive timeout timer interval */
         currentDataSetReader->config.messageReceiveTimeout = config->messageReceiveTimeout;
-        retVal = server->config.pubsubConfiguration->monitoringInterface.updateMonitoringInterval(server, currentDataSetReader->identifier, 
+        retVal = server->config.pubsubConfiguration->monitoringInterface.updateMonitoringInterval(server, currentDataSetReader->identifier,
             UA_PUBSUB_COMPONENT_DATASETREADER, UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT, currentDataSetReader);
         if (retVal != UA_STATUSCODE_GOOD) {
             UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER,
@@ -31518,7 +31518,7 @@ UA_DataSetReader_setPubSubState(UA_Server *server, UA_PubSubState state, UA_Data
 #ifdef UA_ENABLE_PUBSUB_MONITORING
                     /* stop MessageReceiveTimeout timer */
                     if (dataSetReader->msgRcvTimeoutTimerRunning == UA_TRUE) {
-                        ret = server->config.pubsubConfiguration->monitoringInterface.stopMonitoring(server, dataSetReader->identifier, 
+                        ret = server->config.pubsubConfiguration->monitoringInterface.stopMonitoring(server, dataSetReader->identifier,
                             UA_PUBSUB_COMPONENT_DATASETREADER, UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT, dataSetReader);
                         if (ret == UA_STATUSCODE_GOOD) {
                             dataSetReader->msgRcvTimeoutTimerRunning = UA_FALSE;
@@ -31835,7 +31835,7 @@ UA_Server_DataSetReader_process(UA_Server *server, UA_DataSetReader *dataSetRead
         }
     }
 
-    UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER, "DataSetReader '%.*s': received a network message", 
+    UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER, "DataSetReader '%.*s': received a network message",
         (int) dataSetReader->config.name.length, dataSetReader->config.name.data);
 #ifdef UA_ENABLE_PUBSUB_MONITORING
     /* if previous reader state was error (because we haven't received messages and ran into timeout) we should set the state back to operational */
@@ -31847,7 +31847,7 @@ UA_Server_DataSetReader_process(UA_Server *server, UA_DataSetReader *dataSetRead
     }
     if (dataSetReader->msgRcvTimeoutTimerRunning == UA_TRUE) {
         /* stop message receive timeout timer */
-        if (server->config.pubsubConfiguration->monitoringInterface.stopMonitoring(server, dataSetReader->identifier, 
+        if (server->config.pubsubConfiguration->monitoringInterface.stopMonitoring(server, dataSetReader->identifier,
             UA_PUBSUB_COMPONENT_DATASETREADER, UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT, dataSetReader) == UA_STATUSCODE_GOOD) {
             dataSetReader->msgRcvTimeoutTimerRunning = UA_FALSE;
         } else {
@@ -31857,7 +31857,7 @@ UA_Server_DataSetReader_process(UA_Server *server, UA_DataSetReader *dataSetRead
         }
     }
     /* start message receive timeout timer */
-    if (server->config.pubsubConfiguration->monitoringInterface.startMonitoring(server, dataSetReader->identifier, 
+    if (server->config.pubsubConfiguration->monitoringInterface.startMonitoring(server, dataSetReader->identifier,
             UA_PUBSUB_COMPONENT_DATASETREADER, UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT, dataSetReader) == UA_STATUSCODE_GOOD) {
         UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER, "Info: DataSetReader '%.*s': start receive timeout timer",
             (int) dataSetReader->config.name.length, dataSetReader->config.name.data);
@@ -31886,9 +31886,9 @@ UA_DataSetReader_handleMessageReceiveTimeout(UA_Server *server, void *dataSetRea
         return;
     }
     UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER, "UA_DataSetReader_handleMessageReceiveTimeout(): "
-        "MessageReceiveTimeout occurred at DataSetReader '%.*s': MessageReceiveTimeout = %f Timer Id = %u ", 
+        "MessageReceiveTimeout occurred at DataSetReader '%.*s': MessageReceiveTimeout = %f Timer Id = %u ",
             (int) dsReader->config.name.length, dsReader->config.name.data, dsReader->config.messageReceiveTimeout, (UA_UInt32) dsReader->msgRcvTimeoutTimerId);
-    
+
     UA_ServerConfig *pConfig = UA_Server_getConfig(server);
     if (pConfig->pubsubConfiguration->pubsubStateChangeCallback != 0) {
         pConfig->pubsubConfiguration->pubsubStateChangeCallback(&dsReader->identifier, UA_PUBSUBSTATE_ERROR, UA_STATUSCODE_BADTIMEOUT);
@@ -32302,9 +32302,9 @@ UA_PubSubManager_removeRepeatedPubSubCallback(UA_Server *server, UA_UInt64 callb
 #ifdef UA_ENABLE_PUBSUB_MONITORING
 
 static UA_StatusCode
-UA_PubSubComponent_createMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
+UA_PubSubComponent_createMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
                                     UA_PubSubMonitoringType eMonitoringType, void *data, UA_ServerCallback callback) {
-    
+
     if ((!server) || (!data)) {
         UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER, "Error UA_PubSubComponent_createMonitoring(): "
             "null pointer param");
@@ -32322,7 +32322,7 @@ UA_PubSubComponent_createMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubCo
                     break;
                 default:
                     UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER, "UA_PubSubComponent_createMonitoring(): DataSetReader '%.*s' "
-                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data, 
+                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data,
                         eMonitoringType);
                     ret = UA_STATUSCODE_BADNOTSUPPORTED;
                     break;
@@ -32339,7 +32339,7 @@ UA_PubSubComponent_createMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubCo
 }
 
 static UA_StatusCode
-UA_PubSubComponent_startMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
+UA_PubSubComponent_startMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
                                    UA_PubSubMonitoringType eMonitoringType, void *data) {
 
     if ((!server) || (!data)) {
@@ -32354,26 +32354,26 @@ UA_PubSubComponent_startMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubCom
             UA_DataSetReader *reader = (UA_DataSetReader*) data;
             switch (eMonitoringType) {
                 case UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT: {
-                    /* use a timed callback, because one notification is enough, 
+                    /* use a timed callback, because one notification is enough,
                     we assume that MessageReceiveTimeout configuration is in [ms], we do not handle or check fractions */
                     UA_UInt64 interval = (UA_UInt64)(reader->config.messageReceiveTimeout * UA_DATETIME_MSEC);
-                    ret = UA_Timer_addTimedCallback(&server->timer, (UA_ApplicationCallback) reader->msgRcvTimeoutTimerCallback, 
+                    ret = UA_Timer_addTimedCallback(&server->timer, (UA_ApplicationCallback) reader->msgRcvTimeoutTimerCallback,
                         server, reader, UA_DateTime_nowMonotonic() + (UA_DateTime) interval, &(reader->msgRcvTimeoutTimerId));
                     if (ret == UA_STATUSCODE_GOOD) {
                         UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER,
                             "UA_PubSubComponent_startMonitoring(): DataSetReader '%.*s'- MessageReceiveTimeout: MessageReceiveTimeout = '%f' "
-                            "Timer Id = '%u'", (UA_Int32) reader->config.name.length, reader->config.name.data, 
+                            "Timer Id = '%u'", (UA_Int32) reader->config.name.length, reader->config.name.data,
                                 reader->config.messageReceiveTimeout, (UA_UInt32) reader->msgRcvTimeoutTimerId);
                     } else {
                         UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER,
-                            "Error UA_PubSubComponent_startMonitoring(): DataSetReader '%.*s' - MessageReceiveTimeout: start timer failed", 
+                            "Error UA_PubSubComponent_startMonitoring(): DataSetReader '%.*s' - MessageReceiveTimeout: start timer failed",
                                 (UA_Int32) reader->config.name.length, reader->config.name.data);
                     }
                     break;
                 }
                 default:
                     UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER, "UA_PubSubComponent_startMonitoring(): DataSetReader '%.*s' "
-                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data, 
+                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data,
                             eMonitoringType);
                     ret = UA_STATUSCODE_BADNOTSUPPORTED;
                     break;
@@ -32390,7 +32390,7 @@ UA_PubSubComponent_startMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubCom
 }
 
 static UA_StatusCode
-UA_PubSubComponent_stopMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
+UA_PubSubComponent_stopMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
                                   UA_PubSubMonitoringType eMonitoringType, void *data) {
 
     if ((!server) || (!data)) {
@@ -32408,13 +32408,13 @@ UA_PubSubComponent_stopMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComp
                     UA_Timer_removeCallback(&server->timer, reader->msgRcvTimeoutTimerId);
                     UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER,
                         "UA_PubSubComponent_stopMonitoring(): DataSetReader '%.*s' - MessageReceiveTimeout: MessageReceiveTimeout = '%f' "
-                            "Timer Id = '%u'", (UA_Int32) reader->config.name.length, reader->config.name.data, 
+                            "Timer Id = '%u'", (UA_Int32) reader->config.name.length, reader->config.name.data,
                                 reader->config.messageReceiveTimeout, (UA_UInt32) reader->msgRcvTimeoutTimerId);
                     break;
                 }
                 default:
                     UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER, "UA_PubSubComponent_stopMonitoring(): DataSetReader '%.*s' "
-                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data, 
+                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data,
                         eMonitoringType);
                     ret = UA_STATUSCODE_BADNOTSUPPORTED;
                     break;
@@ -32431,7 +32431,7 @@ UA_PubSubComponent_stopMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComp
 }
 
 static UA_StatusCode
-UA_PubSubComponent_updateMonitoringInterval(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
+UA_PubSubComponent_updateMonitoringInterval(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
                                             UA_PubSubMonitoringType eMonitoringType, void *data)
 {
     if ((!server) || (!data)) {
@@ -32445,23 +32445,23 @@ UA_PubSubComponent_updateMonitoringInterval(UA_Server *server, UA_NodeId Id, UA_
             UA_DataSetReader *reader = (UA_DataSetReader*) data;
             switch (eMonitoringType) {
                 case UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT: {
-                    ret = UA_Timer_changeRepeatedCallbackInterval(&server->timer, reader->msgRcvTimeoutTimerId, 
+                    ret = UA_Timer_changeRepeatedCallbackInterval(&server->timer, reader->msgRcvTimeoutTimerId,
                         reader->config.messageReceiveTimeout);
                     if (ret == UA_STATUSCODE_GOOD) {
                         UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER,
                             "UA_PubSubComponent_updateMonitoringInterval(): DataSetReader '%.*s' - MessageReceiveTimeout: new MessageReceiveTimeout = '%f' "
-                            "Timer Id = '%u'", (UA_Int32) reader->config.name.length, reader->config.name.data, 
+                            "Timer Id = '%u'", (UA_Int32) reader->config.name.length, reader->config.name.data,
                                 reader->config.messageReceiveTimeout, (UA_UInt32) reader->msgRcvTimeoutTimerId);
                     } else {
                         UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER,
-                            "Error UA_PubSubComponent_updateMonitoringInterval(): DataSetReader '%.*s': update timer interval failed", 
+                            "Error UA_PubSubComponent_updateMonitoringInterval(): DataSetReader '%.*s': update timer interval failed",
                                 (UA_Int32) reader->config.name.length, reader->config.name.data);
                     }
                     break;
                 }
                 default:
                     UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER, "UA_PubSubComponent_createMonitoring(): DataSetReader '%.*s' "
-                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data, 
+                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data,
                         eMonitoringType);
                     ret = UA_STATUSCODE_BADNOTSUPPORTED;
                     break;
@@ -32478,7 +32478,7 @@ UA_PubSubComponent_updateMonitoringInterval(UA_Server *server, UA_NodeId Id, UA_
 }
 
 static UA_StatusCode
-UA_PubSubComponent_deleteMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType, 
+UA_PubSubComponent_deleteMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubComponentEnumType eComponentType,
                                     UA_PubSubMonitoringType eMonitoringType, void *data) {
 
     if ((!server) || (!data)) {
@@ -32493,12 +32493,12 @@ UA_PubSubComponent_deleteMonitoring(UA_Server *server, UA_NodeId Id, UA_PubSubCo
             switch (eMonitoringType) {
                 case UA_PUBSUB_MONITORING_MESSAGE_RECEIVE_TIMEOUT:
                     UA_LOG_DEBUG(&server->config.logger, UA_LOGCATEGORY_SERVER,
-                        "UA_PubSubComponent_deleteMonitoring(): DataSetReader '%.*s' - MessageReceiveTimeout: Timer Id = '%u'", 
+                        "UA_PubSubComponent_deleteMonitoring(): DataSetReader '%.*s' - MessageReceiveTimeout: Timer Id = '%u'",
                         (UA_Int32) reader->config.name.length, reader->config.name.data, (UA_UInt32) reader->msgRcvTimeoutTimerId);
                     break;
                 default:
                     UA_LOG_ERROR(&server->config.logger, UA_LOGCATEGORY_SERVER, "UA_PubSubComponent_deleteMonitoring(): DataSetReader '%.*s' "
-                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data, 
+                        "DataSetReader does not support timeout type '%i'", (UA_Int32) reader->config.name.length, reader->config.name.data,
                         eMonitoringType);
                     ret = UA_STATUSCODE_BADNOTSUPPORTED;
                     break;
@@ -33728,7 +33728,7 @@ publishedDataItemsTypeDestructor(UA_Server *server,
 /**
  * @brief   callback function that will be executed when the method "PubSub configurator (replace config)" is called.
  */
-#ifdef UA_ENABLE_PUBSUB_INFORMATIONMODEL_METHODS 
+#ifdef UA_ENABLE_PUBSUB_INFORMATIONMODEL_METHODS
 #ifdef UA_ENABLE_PUBSUB_FILE_CONFIG
 static UA_StatusCode
 UA_loadPubSubConfigMethodCallback(UA_Server *server,
@@ -33752,16 +33752,16 @@ UA_loadPubSubConfigMethodCallback(UA_Server *server,
 
 /* UA_addLoadPubSubConfigMethod() */
 /**
- * @brief       Adds method node to server. This method is used to load binary files for PubSub 
+ * @brief       Adds method node to server. This method is used to load binary files for PubSub
  *              configuration and delete / replace old PubSub configurations.
- * 
+ *
  * @param       server      [bi]    UA_Server object that shall contain the method.
- * 
+ *
  * @return      UA_STATUSCODE_GOOD on success
  */
 #ifdef UA_ENABLE_PUBSUB_INFORMATIONMODEL_METHODS
 #ifdef UA_ENABLE_PUBSUB_FILE_CONFIG
-static UA_StatusCode 
+static UA_StatusCode
 UA_addLoadPubSubConfigMethod(UA_Server *server) {
     UA_Argument inputArgument;
     UA_Argument_init(&inputArgument);
@@ -33801,7 +33801,7 @@ UA_deletePubSubConfigMethodCallback(UA_Server *server,
                                     size_t inputSize, const UA_Variant *input,
                                     size_t outputSize, UA_Variant *output) {
     UA_PubSubManager_delete(server, &(server->pubSubManager));
-    
+
     return UA_STATUSCODE_GOOD;
 }
 #endif
@@ -33811,14 +33811,14 @@ UA_deletePubSubConfigMethodCallback(UA_Server *server,
 /* UA_addDeletePubSubConfigMethod() */
 /**
  * @brief       Adds method node to server. This method is used to delete the current PubSub configuration.
- * 
+ *
  * @param       server      [bi]    UA_Server object that shall contain the method.
- * 
+ *
  * @return      UA_STATUSCODE_GOOD on success
  */
 #ifdef UA_ENABLE_PUBSUB_INFORMATIONMODEL_METHODS
 #ifdef UA_ENABLE_PUBSUB_FILE_CONFIG
-static UA_StatusCode 
+static UA_StatusCode
 UA_addDeletePubSubConfigMethod(UA_Server *server) {
     UA_MethodAttributes configAttr = UA_MethodAttributes_default;
     configAttr.description = UA_LOCALIZEDTEXT("en-US","Delete current PubSub configuration");
@@ -33922,7 +33922,7 @@ UA_Server_initPubSubNS0(UA_Server *server) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2019 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2014-2017 (c) Florian Palm
@@ -34060,7 +34060,7 @@ isNodeInTree_singleRef(UA_Server *server, const UA_NodeId *leafNode,
     UA_ReferenceTypeSet reftypes = UA_REFTYPESET(relevantRefTypeIndex);
     return isNodeInTree(server, leafNode, nodeToFind, &reftypes);
 }
- 
+
 static enum ZIP_CMP
 cmpTarget(const void *a, const void *b) {
     const RefEntry *aa = (const RefEntry*)a;
@@ -34403,7 +34403,7 @@ addReferenceDescription(UA_Server *server, RefResult *rr, const UA_NodeReference
         UA_ReferenceDescription_clear(descr);
         return retval;
     }
-    
+
     /* Fields that require the actual node */
     if(mask & UA_BROWSERESULTMASK_NODECLASS)
         descr->nodeClass = curr->head.nodeClass;
@@ -35368,7 +35368,7 @@ callWithMethodAndObject(UA_Server *server, UA_Session *session,
                 continue;
             if(!UA_ReferenceTypeSet_contains(&hasTypeDefinitionRefs, rk->referenceTypeIndex))
                 continue;
-            
+
             /* Verify that the HasTypeDefinition is equal to FunctionGroupType
              * (or sub-type) from the DI model */
             UA_ReferenceTarget *target, *target2;
@@ -35378,19 +35378,19 @@ callWithMethodAndObject(UA_Server *server, UA_Session *session,
                 if(!isNodeInTree_singleRef(server, &target->targetId.nodeId,
                                            &functionGroupNodeId, UA_REFERENCETYPEINDEX_HASSUBTYPE))
                     continue;
-                
+
                 /* Search for the called method with reference Organize (or
                  * sub-type) from the parent object */
                 for(size_t k = 0; k < object->head.referencesSize && !found; ++k) {
                     UA_NodeReferenceKind *rkInner = &object->head.references[k];
                     if(rkInner->isInverse)
                         continue;
-                    const UA_NodeId * refId = 
+                    const UA_NodeId * refId =
                         UA_NODESTORE_GETREFERENCETYPEID(server, rkInner->referenceTypeIndex);
                     if(!isNodeInTree_singleRef(server, refId, &organizedByNodeId,
                                                UA_REFERENCETYPEINDEX_HASSUBTYPE))
                         continue;
-                    
+
                     TAILQ_FOREACH(target2, &rkInner->queueHead, queuePointers) {
                         if(UA_NodeId_equal(&target2->targetId.nodeId, &request->methodId)) {
                             found = true;
@@ -36403,7 +36403,7 @@ Service_CloseSession(UA_Server *server, UA_SecureChannel *channel,
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2015-2016 (c) Sten Grüner
@@ -36914,7 +36914,7 @@ ReadWithNode(const UA_Node *node, UA_Server *server, UA_Session *session,
             UA_StructureDefinition def;
             retval = getStructureDefinition(type, &def);
             if(UA_STATUSCODE_GOOD!=retval)
-                break;            
+                break;
             retval = UA_Variant_setScalarCopy(&v->value, &def,
                                               &UA_TYPES[UA_TYPES_STRUCTUREDEFINITION]);
             UA_free(def.fields);
@@ -37237,7 +37237,7 @@ compatibleValueRankArrayDimensions(UA_Server *server, UA_Session *session,
         }
         return true;
     }
-    
+
     /* case >= 1, UA_VALUERANK_ONE_DIMENSION: the value is an array with the
        specified number of dimensions */
     if(arrayDimensionsSize != (size_t)valueRank) {
@@ -39053,7 +39053,7 @@ UA_Server_setRegisterServerCallback(UA_Server *server,
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2016-2017 (c) Florian Palm
@@ -39589,7 +39589,7 @@ void Service_TransferSubscriptions(UA_Server *server, UA_Session *session,
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2016-2017 (c) Florian Palm
@@ -39677,7 +39677,7 @@ Service_SetTriggering(UA_Server *server, UA_Session *session,
         response->responseHeader.serviceResult = UA_STATUSCODE_BADSUBSCRIPTIONIDINVALID;
         return;
     }
-    
+
     /* Get the MonitoredItem */
     UA_MonitoredItem *mon = UA_Subscription_getMonitoredItem(sub, request->triggeringItemId);
     if(!mon) {
@@ -39795,7 +39795,7 @@ checkAdjustMonitoredItemParams(UA_Server *server, UA_Session *session,
             UA_NODESTORE_RELEASE(server, node);
         }
     }
-        
+
     /* Adjust to sampling interval to lie within the limits and check for NaN */
     UA_BOUNDEDVALUE_SETWBOUNDS(server->config.samplingIntervalLimits,
                                params->samplingInterval, params->samplingInterval);
@@ -40319,7 +40319,7 @@ UA_Server_deleteMonitoredItem(UA_Server *server, UA_UInt32 monitoredItemId) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2014-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2014, 2017 (c) Florian Palm
@@ -41573,7 +41573,7 @@ AddNode_addRefs(UA_Server *server, UA_Session *session, const UA_NodeId *nodeId,
             UA_ReferenceTypeSet refTypes = UA_ReferenceTypeSet_union(refTypes1, refTypes2);
             if(retval != UA_STATUSCODE_GOOD)
                 goto cleanup;
-            
+
             /* Abstract variable is allowed if parent is a children of a
              * base data variable. An abstract variable may be part of an
              * object type which again is below BaseObjectType */
@@ -41606,12 +41606,12 @@ AddNode_addRefs(UA_Server *server, UA_Session *session, const UA_NodeId *nodeId,
             const UA_NodeId objectTypes = UA_NODEID_NUMERIC(0, UA_NS0ID_BASEOBJECTTYPE);
             UA_Boolean isInBaseObjectType =
                 isNodeInTree(server, parentNodeId, &objectTypes, &refTypes);
-            
+
             const UA_NodeId eventTypes = UA_NODEID_NUMERIC(0, UA_NS0ID_BASEEVENTTYPE);
             UA_Boolean isInBaseEventType =
                 isNodeInTree_singleRef(server, &type->head.nodeId, &eventTypes,
                                        UA_REFERENCETYPEINDEX_HASSUBTYPE);
-            
+
             if(!isInBaseObjectType &&
                !(isInBaseEventType && UA_NodeId_isNull(parentNodeId))) {
                 logAddNode(&server->config.logger, session, nodeId,
@@ -41930,7 +41930,7 @@ recursiveCallConstructors(UA_Server *server, UA_Session *session,
                           const UA_NodeHead *head, const UA_Node *type) {
     if(head->constructed)
         return UA_STATUSCODE_GOOD;
-    
+
     /* Construct the children */
     UA_BrowseDescription bd;
     UA_BrowseDescription_init(&bd);
@@ -42126,7 +42126,7 @@ checkSetIsDynamicVariable(UA_Server *server, UA_Session *session,
     /* Set the variable to "dynamic" */
     UA_Server_editNode(server, session, nodeId,
                        (UA_EditNodeCallback)setVariableNodeDynamic, NULL);
-    
+
     return UA_STATUSCODE_GOOD;
 }
 
@@ -42546,7 +42546,7 @@ deleteNodeOperation(UA_Server *server, UA_Session *session, void *context,
                        &node->head, &refTree);
     deleteNodeTree(server, session, &hierarchRefsSet, &node->head,
                    item->deleteTargetReferences, &refTree);
-    
+
     UA_NODESTORE_RELEASE(server, node);
     RefTree_clear(&refTree);
 }
@@ -43280,7 +43280,7 @@ UA_Server_setNodeTypeLifecycle(UA_Server *server, UA_NodeId nodeId,
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
  *    Copyright 2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
@@ -43424,7 +43424,7 @@ stopMulticastDiscoveryServer(UA_Server *server) {
 # endif
 }
 
-/* All filter criteria must be fulfilled in the list entry. The comparison is case 
+/* All filter criteria must be fulfilled in the list entry. The comparison is case
  * insensitive.
  * @returns true if the entry matches the filter. False if the filter does not match.
  * */
@@ -43893,7 +43893,7 @@ iterateMulticastDiscoveryServer(UA_Server* server, UA_DateTime *nextRepeat,
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2015-2020 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2015-2016 (c) Sten Grüner
@@ -44728,7 +44728,7 @@ encryptUserIdentityToken(UA_Client *client, const UA_String *userTokenSecurityPo
                        "Could not instantiate the SecurityPolicy for the UserToken");
         return UA_STATUSCODE_BADINTERNALERROR;
     }
-    
+
     /* Compute the encrypted length (at least one byte padding) */
     size_t plainTextBlockSize = sp->asymmetricModule.cryptoModule.
         encryptionAlgorithm.getRemotePlainTextBlockSize(sp, channelContext);
@@ -45226,7 +45226,7 @@ responseGetEndpoints(UA_Client *client, void *userdata, UA_UInt32 requestId,
             const UA_DataType *tokenType = client->config.userIdentityToken.content.decoded.type;
 
             /* Usertokens also have a security policy... */
-            if(tokenPolicy->tokenType != UA_USERTOKENTYPE_ANONYMOUS && 
+            if(tokenPolicy->tokenType != UA_USERTOKENTYPE_ANONYMOUS &&
                tokenPolicy->securityPolicyUri.length > 0 &&
                !getSecurityPolicy(client, tokenPolicy->securityPolicyUri)) {
                 UA_LOG_INFO(&client->config.logger, UA_LOGCATEGORY_CLIENT,
@@ -45374,7 +45374,7 @@ responseSessionCallback(UA_Client *client, void *userdata,
             goto cleanup;
     }
 #endif
-    
+
     /* Copy nonce and AuthenticationToken */
     UA_ByteString_clear(&client->remoteNonce);
     UA_NodeId_clear(&client->authenticationToken);
@@ -45827,7 +45827,7 @@ UA_Client_disconnect(UA_Client *client) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Mark Giraud, Fraunhofer IOSB
@@ -46004,7 +46004,7 @@ UA_Client_findServersOnNetwork(UA_Client *client, const char *serverUrl,
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2015-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2015 (c) Oleksiy Vasylyev
@@ -46952,7 +46952,7 @@ UA_Cient_translateBrowsePathsToNodeIds_async(UA_Client *client, char **paths,
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2015-2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2015 (c) Oleksiy Vasylyev
@@ -47110,7 +47110,7 @@ UA_Client_Subscriptions_modify(UA_Client *client, const UA_ModifySubscriptionReq
         response.responseHeader.serviceResult = UA_STATUSCODE_BADSUBSCRIPTIONIDINVALID;
         return response;
     }
-    
+
     /* Call the service */
     __UA_Client_Service(client,
                         &request, &UA_TYPES[UA_TYPES_MODIFYSUBSCRIPTIONREQUEST],
@@ -47321,7 +47321,7 @@ UA_Client_Subscriptions_deleteSingle(UA_Client *client, UA_UInt32 subscriptionId
     UA_DeleteSubscriptionsRequest_init(&request);
     request.subscriptionIds = &subscriptionId;
     request.subscriptionIdsSize = 1;
-    
+
     UA_DeleteSubscriptionsResponse response =
         UA_Client_Subscriptions_delete(client, request);
 
@@ -47646,7 +47646,7 @@ UA_Client_MonitoredItems_createDataChange(UA_Client *client, UA_UInt32 subscript
     request.timestampsToReturn = timestampsToReturn;
     request.itemsToCreate = (UA_MonitoredItemCreateRequest*)(uintptr_t)&item;
     request.itemsToCreateSize = 1;
-    UA_CreateMonitoredItemsResponse response = 
+    UA_CreateMonitoredItemsResponse response =
        UA_Client_MonitoredItems_createDataChanges(client, request, &context,
                                                    &callback, &deleteCallback);
     UA_MonitoredItemCreateResult result;
@@ -47657,7 +47657,7 @@ UA_Client_MonitoredItems_createDataChange(UA_Client *client, UA_UInt32 subscript
     if(result.statusCode == UA_STATUSCODE_GOOD &&
        response.resultsSize != 1)
         result.statusCode = UA_STATUSCODE_BADINTERNALERROR;
-    
+
     if(result.statusCode == UA_STATUSCODE_GOOD)
        UA_MonitoredItemCreateResult_copy(&response.results[0] , &result);
     UA_CreateMonitoredItemsResponse_clear(&response);
@@ -47701,7 +47701,7 @@ UA_Client_MonitoredItems_createEvent(UA_Client *client, UA_UInt32 subscriptionId
     request.timestampsToReturn = timestampsToReturn;
     request.itemsToCreate = (UA_MonitoredItemCreateRequest*)(uintptr_t)&item;
     request.itemsToCreateSize = 1;
-    UA_CreateMonitoredItemsResponse response = 
+    UA_CreateMonitoredItemsResponse response =
        UA_Client_MonitoredItems_createEvents(client, request, &context,
                                              &callback, &deleteCallback);
     UA_StatusCode retval = response.responseHeader.serviceResult;
@@ -48131,12 +48131,12 @@ UA_Client_Subscriptions_processPublishResponse(UA_Client *client, UA_PublishRequ
                            "Not enough memory to store the acknowledgement for a publish "
                            "message on subscription %" PRIu32, sub->subscriptionId);
             break;
-        }   
+        }
         tmpAck->subAck.sequenceNumber = msg->sequenceNumber;
         tmpAck->subAck.subscriptionId = sub->subscriptionId;
         LIST_INSERT_HEAD(&client->pendingNotificationsAcks, tmpAck, listEntry);
         break;
-    } 
+    }
 }
 
 static void
@@ -48217,7 +48217,7 @@ UA_Client_Subscriptions_backgroundPublish(UA_Client *client) {
             UA_PublishRequest_delete(request);
             return;
         }
-    
+
         UA_UInt32 requestId;
         client->currentlyOutStandingPublishRequests++;
 
@@ -48547,7 +48547,7 @@ UA_unbase64(const unsigned char *src, size_t len, size_t *out_len) {
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2020 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  */
@@ -48831,33 +48831,33 @@ aa_prev(const struct aa_head *head, const void *elem) {
 
 /* Function prototypes: */
 
-static UA_StatusCode 
-UA_PubSubManager_createPubSubConnection(UA_Server *server, const UA_PubSubConnectionDataType *const connectionParameters, 
+static UA_StatusCode
+UA_PubSubManager_createPubSubConnection(UA_Server *server, const UA_PubSubConnectionDataType *const connectionParameters,
                           const UA_UInt32 pdsCount, const UA_NodeId *pdsIdent);
 
-static UA_StatusCode 
-UA_PubSubManager_createWriterGroup(UA_Server *server, const UA_WriterGroupDataType *const writerGroupParameters, 
-                     const UA_NodeId connectionIdent, const UA_UInt32 pdsCount, 
+static UA_StatusCode
+UA_PubSubManager_createWriterGroup(UA_Server *server, const UA_WriterGroupDataType *const writerGroupParameters,
+                     const UA_NodeId connectionIdent, const UA_UInt32 pdsCount,
                      const UA_NodeId *pdsIdent);
 
-static UA_StatusCode 
-UA_PubSubManager_createDataSetWriter(UA_Server *server, const UA_DataSetWriterDataType *const dataSetWriterParameters, 
+static UA_StatusCode
+UA_PubSubManager_createDataSetWriter(UA_Server *server, const UA_DataSetWriterDataType *const dataSetWriterParameters,
                        const UA_NodeId writerGroupIdent, const UA_UInt32 pdsCount, const UA_NodeId *pdsIdent);
 
 static UA_StatusCode
-UA_PubSubManager_createReaderGroup(UA_Server *server, const UA_ReaderGroupDataType *const readerGroupParameters, 
+UA_PubSubManager_createReaderGroup(UA_Server *server, const UA_ReaderGroupDataType *const readerGroupParameters,
                      const UA_NodeId connectionIdent);
 
 static UA_StatusCode
-UA_PubSubManager_createDataSetReader(UA_Server *server, const UA_DataSetReaderDataType *const dataSetReaderParameters, 
+UA_PubSubManager_createDataSetReader(UA_Server *server, const UA_DataSetReaderDataType *const dataSetReaderParameters,
                        const UA_NodeId readerGroupIdent);
 
-static UA_StatusCode 
-UA_PubSubManager_createPublishedDataSet(UA_Server *server, const UA_PublishedDataSetDataType *const publishedDataSetParameters, 
+static UA_StatusCode
+UA_PubSubManager_createPublishedDataSet(UA_Server *server, const UA_PublishedDataSetDataType *const publishedDataSetParameters,
                           UA_NodeId *publishedDataSetIdent);
 
-static UA_StatusCode 
-UA_PubSubManager_createDataSetFields(UA_Server *server, const UA_NodeId *const publishedDataSetIdent, 
+static UA_StatusCode
+UA_PubSubManager_createDataSetFields(UA_Server *server, const UA_NodeId *const publishedDataSetIdent,
                        const UA_PublishedDataSetDataType *const publishedDataSetParameters);
 
 static UA_StatusCode
@@ -48869,20 +48869,20 @@ UA_PubSubManager_generatePubSubConfigurationDataType(const UA_Server *server,
 /* UA_PubSubManager_extractPubSubConfigFromDecodedObject() */
 /**
  *  @brief      gets PubSub Configuration from an encoded ByteString
- * 
+ *
  *  @param      src         [in]    Decoded source object of type ExtensionObject
  *  @param      dst         [out]   Pointer on PubSub Configuration
- * 
+ *
  *  @return     UA_StatusCode
  */
-static UA_StatusCode 
+static UA_StatusCode
 UA_PubSubManager_extractPubSubConfigFromDecodedObject(const UA_ExtensionObject *const src, UA_PubSubConfigurationDataType **dst) {
     UA_StatusCode statusCode = UA_STATUSCODE_GOOD;
-    
+
     *dst = NULL;
     UA_UABinaryFileDataType *binFile;
-    if((src->encoding == UA_EXTENSIONOBJECT_DECODED) && 
-       UA_NodeId_equal(&src->content.decoded.type->typeId, 
+    if((src->encoding == UA_EXTENSIONOBJECT_DECODED) &&
+       UA_NodeId_equal(&src->content.decoded.type->typeId,
                        &UA_TYPES[UA_TYPES_UABINARYFILEDATATYPE].typeId)) {
         binFile = (UA_UABinaryFileDataType*)src->content.decoded.data;
     } else {
@@ -48892,7 +48892,7 @@ UA_PubSubManager_extractPubSubConfigFromDecodedObject(const UA_ExtensionObject *
     }
 
     if(binFile->body.arrayLength != 0 || binFile->body.arrayDimensionsSize != 0) {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                      "[UA_PubSubManager_extractPubSubConfigFromDecodedObject] Loading multiple configurations is not supported");
         statusCode = UA_STATUSCODE_BADNOTIMPLEMENTED;
         goto cleanup;
@@ -48901,7 +48901,7 @@ UA_PubSubManager_extractPubSubConfigFromDecodedObject(const UA_ExtensionObject *
     if(UA_NodeId_equal(&binFile->body.type->typeId, &UA_TYPES[UA_TYPES_PUBSUBCONFIGURATIONDATATYPE].typeId)) {
         *dst = (UA_PubSubConfigurationDataType*)binFile->body.data;
     } else {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                      "[UA_PubSubManager_extractPubSubConfigFromDecodedObject] Invalid datatype encoded in the binary file");
         statusCode = UA_STATUSCODE_BADTYPEMISMATCH;
         goto cleanup;
@@ -48915,21 +48915,21 @@ cleanup:
 /* UA_PubSubManager_updatePubSubConfig() */
 /**
  *  @brief      Configures a PubSub Server with given PubSubConfigurationDataType object
- * 
+ *
  *  @param      server                  [bi]    Server object
  *  @param      configurationParameters [in]    PubSub Configuration parameters
- * 
+ *
  *  @return     UA_StatusCode
  */
-static UA_StatusCode 
+static UA_StatusCode
 UA_PubSubManager_updatePubSubConfig(UA_Server* server, const UA_PubSubConfigurationDataType *const configurationParameters) {
     if(server == NULL || configurationParameters == NULL) {
         UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "[UA_PubSubManager_updatePubSubConfig] Invalid argument");
         return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
-    
+
     UA_PubSubManager_delete(server, &(server->pubSubManager));
-        
+
     /* Configuration of Published DataSets: */
     UA_UInt32 pdsCount = (UA_UInt32)configurationParameters->publishedDataSetsSize;
     UA_NodeId *publishedDataSetIdent = (UA_NodeId*)UA_calloc(pdsCount, sizeof(UA_NodeId));
@@ -48938,7 +48938,7 @@ UA_PubSubManager_updatePubSubConfig(UA_Server* server, const UA_PubSubConfigurat
     }
     UA_StatusCode statusCode = UA_STATUSCODE_GOOD;
     for(UA_UInt32 pdsIndex = 0; pdsIndex < pdsCount; pdsIndex++) {
-        statusCode = UA_PubSubManager_createPublishedDataSet(server, &configurationParameters->publishedDataSets[pdsIndex], 
+        statusCode = UA_PubSubManager_createPublishedDataSet(server, &configurationParameters->publishedDataSets[pdsIndex],
                                                &publishedDataSetIdent[pdsIndex]);
         if(statusCode != UA_STATUSCODE_GOOD) {
             UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "[UA_PubSubManager_updatePubSubConfig] PDS creation failed");
@@ -48949,17 +48949,17 @@ UA_PubSubManager_updatePubSubConfig(UA_Server* server, const UA_PubSubConfigurat
 
     /* Configuration of PubSub Connections: */
     if(configurationParameters->connectionsSize < 1) {
-        UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                        "[UA_PubSubManager_updatePubSubConfig] no connection in UA_PubSubConfigurationDataType");
         UA_free(publishedDataSetIdent);
         return UA_STATUSCODE_GOOD;
     }
 
-    for(UA_UInt32 conIndex = 0; 
-        conIndex < configurationParameters->connectionsSize && statusCode == UA_STATUSCODE_GOOD; 
-        conIndex++) 
+    for(UA_UInt32 conIndex = 0;
+        conIndex < configurationParameters->connectionsSize && statusCode == UA_STATUSCODE_GOOD;
+        conIndex++)
     {
-        statusCode = UA_PubSubManager_createPubSubConnection(server, &configurationParameters->connections[conIndex], 
+        statusCode = UA_PubSubManager_createPubSubConnection(server, &configurationParameters->connections[conIndex],
                                                pdsCount, publishedDataSetIdent);
     }
 
@@ -48970,10 +48970,10 @@ UA_PubSubManager_updatePubSubConfig(UA_Server* server, const UA_PubSubConfigurat
 /* UA_PubSubManager_setConnectionPublisherId() */
 /**
  * @brief       Function called by UA_PubSubManager_createPubSubConnection to set the PublisherId of a certain connection.
- * 
+ *
  * @param       src     [in]    PubSubConnection parameters
  * @param       dst     [out]   PubSubConfiguration
- * 
+ *
  * @return      UA_StatusCode
  */
 static UA_StatusCode
@@ -48981,13 +48981,13 @@ UA_PubSubManager_setConnectionPublisherId(const UA_PubSubConnectionDataType *src
     if(UA_NodeId_equal(&src->publisherId.type->typeId, &UA_TYPES[UA_TYPES_STRING].typeId)) {
         dst->publisherIdType = UA_PUBSUB_PUBLISHERID_STRING;
         dst->publisherId.string = *(UA_String*)src->publisherId.data;
-    } else if(UA_NodeId_equal(&src->publisherId.type->typeId, &UA_TYPES[UA_TYPES_BYTE].typeId) || 
-              UA_NodeId_equal(&src->publisherId.type->typeId, &UA_TYPES[UA_TYPES_UINT16].typeId) || 
+    } else if(UA_NodeId_equal(&src->publisherId.type->typeId, &UA_TYPES[UA_TYPES_BYTE].typeId) ||
+              UA_NodeId_equal(&src->publisherId.type->typeId, &UA_TYPES[UA_TYPES_UINT16].typeId) ||
               UA_NodeId_equal(&src->publisherId.type->typeId, &UA_TYPES[UA_TYPES_UINT32].typeId)) {
         dst->publisherIdType = UA_PUBSUB_PUBLISHERID_NUMERIC;
         dst->publisherId.numeric =  *(UA_UInt32*)src->publisherId.data;
     } else if(UA_NodeId_equal(&src->publisherId.type->typeId, &UA_TYPES[UA_TYPES_UINT64].typeId)) {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                     "[UA_PubSubManager_setConnectionPublisherId] PublisherId is UInt64 (not implemented); Recommended dataType for PublisherId: UInt32");
         return UA_STATUSCODE_BADNOTIMPLEMENTED;
     } else {
@@ -49001,47 +49001,47 @@ UA_PubSubManager_setConnectionPublisherId(const UA_PubSubConnectionDataType *src
 /**
  * @brief   Function called by UA_PubSubManager_createPubSubConnection to create all WriterGroups and ReaderGroups
  *          that belong to a certain connection.
- * 
+ *
  * @param   server                  [bi]
  * @param   connectionParameters    [in]
  * @param   connectionIdent         [in]
  * @param   pdsCount                [in]
  * @param   pdsIdent                [in]
- * 
+ *
  * @return  UA_STATUSCODE_GOOD on success
  */
 static UA_StatusCode
-UA_PubSubManager_createComponentsForConnection(UA_Server *server, const UA_PubSubConnectionDataType *const connectionParameters, 
-                                 UA_NodeId connectionIdent, 
+UA_PubSubManager_createComponentsForConnection(UA_Server *server, const UA_PubSubConnectionDataType *const connectionParameters,
+                                 UA_NodeId connectionIdent,
                                  const UA_UInt32 pdsCount, const UA_NodeId *pdsIdent) {
     UA_StatusCode retVal = UA_STATUSCODE_GOOD;
 
     /* WriterGroups configuration */
-    for(UA_UInt32 wGroupIndex=0; 
-        wGroupIndex < connectionParameters->writerGroupsSize; 
+    for(UA_UInt32 wGroupIndex=0;
+        wGroupIndex < connectionParameters->writerGroupsSize;
         wGroupIndex++)
     {
-        retVal = UA_PubSubManager_createWriterGroup(server, &connectionParameters->writerGroups[wGroupIndex], 
+        retVal = UA_PubSubManager_createWriterGroup(server, &connectionParameters->writerGroups[wGroupIndex],
                                       connectionIdent, pdsCount, pdsIdent);
         if(retVal == UA_STATUSCODE_GOOD) {
         } else {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                          "[UA_PubSubManager_createComponentsForConnection] Error occured during %d.WriterGroup Creation", wGroupIndex+1);
             return retVal;
         }
     }
 
     /* ReaderGroups configuration */
-    for(UA_UInt32 rGroupIndex=0; 
-        rGroupIndex < connectionParameters->readerGroupsSize; 
-        rGroupIndex++) 
+    for(UA_UInt32 rGroupIndex=0;
+        rGroupIndex < connectionParameters->readerGroupsSize;
+        rGroupIndex++)
     {
         retVal = UA_PubSubManager_createReaderGroup(server, &connectionParameters->readerGroups[rGroupIndex], connectionIdent);
         if(retVal == UA_STATUSCODE_GOOD) {
 
             retVal |= UA_PubSubConnection_regist(server, &connectionIdent);
         } else {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                         "[UA_PubSubManager_createComponentsForConnection] Error occured during %d.ReaderGroup Creation", rGroupIndex+1);
             return retVal;
         }
@@ -49051,10 +49051,10 @@ UA_PubSubManager_createComponentsForConnection(UA_Server *server, const UA_PubSu
 
 /**
  * @brief       Checks if transportLayer for the specified transportProfileUri exists.
- * 
+ *
  * @param       server                  [bi]    Server object that shall be configured
  * @param       transportProfileUri     [in]    String that specifies the transport protocol
- * 
+ *
  * @return      UA_STATUSCODE_GOOD on success
  */
 static UA_Boolean
@@ -49071,10 +49071,10 @@ UA_PubSubManager_transportLayerExists(UA_Server *server, UA_String transportProf
 
 /**
  *  @brief      Creates transportlayer for specified transport protocol if this layer doesn't exist yet.
- * 
+ *
  *  @param      server                  [bi]    Server object that shall be configured
  *  @param      transportProfileUri     [in]    String that specifies the transport protocol
- * 
+ *
  *  @return     UA_STATUSCODE_GOOD on success
  */
 static UA_StatusCode
@@ -49124,16 +49124,16 @@ UA_PubSubManager_createTransportLayer(UA_Server *server, const UA_String transpo
 /* UA_PubSubManager_createPubSubConnection() */
 /**
  *  @brief      Creates PubSubConnection configuration from PubSubConnectionDataType object
- * 
+ *
  *  @param      server      [bi]    Server object that shall be configured
  *  @param      connectionParameters  [in]    PubSub connection configuration
  *  @param      pdsCount    [in]    Number of published DataSets
  *  @param      pdsIdent    [in]    Array of NodeIds of the published DataSets
- * 
+ *
  *  @return     UA_StatusCode
  */
-static UA_StatusCode 
-UA_PubSubManager_createPubSubConnection(UA_Server *server, const UA_PubSubConnectionDataType *const connectionParameters, 
+static UA_StatusCode
+UA_PubSubManager_createPubSubConnection(UA_Server *server, const UA_PubSubConnectionDataType *const connectionParameters,
                           const UA_UInt32 pdsCount, const UA_NodeId *pdsIdent) {
     UA_PubSubConnectionConfig config;
     memset(&config, 0, sizeof(UA_PubSubConnectionConfig));
@@ -49153,21 +49153,21 @@ UA_PubSubManager_createPubSubConnection(UA_Server *server, const UA_PubSubConnec
     }
 
     if(connectionParameters->address.encoding == UA_EXTENSIONOBJECT_DECODED) {
-        UA_Variant_setScalar(&(config.address), 
-                             connectionParameters->address.content.decoded.data, 
+        UA_Variant_setScalar(&(config.address),
+                             connectionParameters->address.content.decoded.data,
                              connectionParameters->address.content.decoded.type);
     } else {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                     "[UA_PubSubManager_createPubSubConnection] Reading connection address failed");
         return UA_STATUSCODE_BADINTERNALERROR;
     }
 
     if(connectionParameters->transportSettings.encoding == UA_EXTENSIONOBJECT_DECODED) {
-        UA_Variant_setScalar(&(config.connectionTransportSettings), 
-                             connectionParameters->transportSettings.content.decoded.data, 
+        UA_Variant_setScalar(&(config.connectionTransportSettings),
+                             connectionParameters->transportSettings.content.decoded.data,
                              connectionParameters->transportSettings.content.decoded.type);
-    } else { 
-        UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+    } else {
+        UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                        "[UA_PubSubManager_createPubSubConnection] TransportSettings can not be read");
     }
 
@@ -49184,7 +49184,7 @@ UA_PubSubManager_createPubSubConnection(UA_Server *server, const UA_PubSubConnec
         /* Configuration of all Components that belong to this connection: */
         statusCode = UA_PubSubManager_createComponentsForConnection(server, connectionParameters, connectionIdent, pdsCount, pdsIdent);
     } else {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                      "[UA_PubSubManager_createPubSubConnection] Connection creation failed");
     }
 
@@ -49194,32 +49194,32 @@ UA_PubSubManager_createPubSubConnection(UA_Server *server, const UA_PubSubConnec
 /* UA_PubSubManager_setWriterGroupEncodingType() */
 /**
  * @brief   Function called by UA_PubSubManager_createWriterGroup to configure the messageSettings of a writerGroup.
- * 
+ *
  * @param   writerGroupParameters   [in]
  * @param   config                  [bi]
- * 
+ *
  * @return  UA_STATUSCODE_GOOD on success
  */
-static UA_StatusCode 
-UA_PubSubManager_setWriterGroupEncodingType(const UA_WriterGroupDataType *writerGroupParameters, 
+static UA_StatusCode
+UA_PubSubManager_setWriterGroupEncodingType(const UA_WriterGroupDataType *writerGroupParameters,
                               UA_WriterGroupConfig *config) {
     UA_StatusCode retVal = UA_STATUSCODE_GOOD;
     if(writerGroupParameters->messageSettings.encoding == UA_EXTENSIONOBJECT_DECODED) {
-        if(UA_NodeId_equal(&writerGroupParameters->messageSettings.content.decoded.type->typeId, 
+        if(UA_NodeId_equal(&writerGroupParameters->messageSettings.content.decoded.type->typeId,
                            &UA_TYPES[UA_TYPES_UADPWRITERGROUPMESSAGEDATATYPE].typeId)) {
             config->encodingMimeType = UA_PUBSUB_ENCODING_UADP;
-        } else if(writerGroupParameters->messageSettings.content.decoded.type->typeId.identifier.numeric == 
+        } else if(writerGroupParameters->messageSettings.content.decoded.type->typeId.identifier.numeric ==
                   UA_NS0ID_JSONWRITERGROUPMESSAGEDATATYPE) {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                         "[UA_PubSubManager_setWriterGroupEncodingType] encoding type: JSON (not implemented!)");
             retVal = UA_STATUSCODE_BADNOTIMPLEMENTED;
         } else {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                         "[UA_PubSubManager_setWriterGroupEncodingType] invalid message encoding type");
             retVal = UA_STATUSCODE_BADINVALIDARGUMENT;
         }
     } else {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                     "[UA_PubSubManager_setWriterGroupEncodingType] getting message type information failed");
         retVal = UA_STATUSCODE_BADINVALIDARGUMENT;
     }
@@ -49229,22 +49229,22 @@ UA_PubSubManager_setWriterGroupEncodingType(const UA_WriterGroupDataType *writer
 /* UA_PubSubManager_createWriterGroup() */
 /**
  *  @brief      Creates WriterGroup configuration from WriterGroup object
- * 
+ *
  *  @param      server                  [bi]    Server object that shall be configured
  *  @param      writerGroupParameters   [in]    WriterGroup configuration
  *  @param      connectionIdent         [in]    NodeId of the PubSub connection, the WriterGroup belongs to
  *  @param      pdsCount                [in]    Number of published DataSets
  *  @param      pdsIdent                [in]    Array of NodeIds of the published DataSets
- * 
+ *
  *  @return     UA_StatusCode
  */
-static UA_StatusCode 
-UA_PubSubManager_createWriterGroup(UA_Server *server, const UA_WriterGroupDataType *const writerGroupParameters, 
+static UA_StatusCode
+UA_PubSubManager_createWriterGroup(UA_Server *server, const UA_WriterGroupDataType *const writerGroupParameters,
                      const UA_NodeId connectionIdent,
                      const UA_UInt32 pdsCount, const UA_NodeId *pdsIdent) {
     UA_StatusCode statusCode = UA_STATUSCODE_GOOD;
     UA_WriterGroupConfig config;
-    
+
     memset(&config, 0, sizeof(UA_WriterGroupConfig));
 
     config.name = writerGroupParameters->name;
@@ -49274,21 +49274,21 @@ UA_PubSubManager_createWriterGroup(UA_Server *server, const UA_WriterGroupDataTy
     UA_NodeId writerGroupIdent;
     statusCode = UA_Server_addWriterGroup(server, connectionIdent, &config, &writerGroupIdent);
     UA_Server_setWriterGroupOperational(server, writerGroupIdent);
-    if(statusCode == UA_STATUSCODE_GOOD) {    
+    if(statusCode == UA_STATUSCODE_GOOD) {
         /* Configuration of all DataSetWriters that belong to this WriterGroup */
-        for(UA_UInt32 dsWriterIndex=0; 
-            dsWriterIndex < writerGroupParameters->dataSetWritersSize && statusCode == UA_STATUSCODE_GOOD; 
+        for(UA_UInt32 dsWriterIndex=0;
+            dsWriterIndex < writerGroupParameters->dataSetWritersSize && statusCode == UA_STATUSCODE_GOOD;
             dsWriterIndex++)
         {
             statusCode = UA_PubSubManager_createDataSetWriter(server, &writerGroupParameters->dataSetWriters[dsWriterIndex],
                                                      writerGroupIdent, pdsCount, pdsIdent);
             if(statusCode != UA_STATUSCODE_GOOD) {
-                UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+                UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                             "[UA_PubSubManager_createWriterGroup] DataSetWriter Creation failed.");
             }
         }
     } else {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                      "[UA_PubSubManager_createWriterGroup] Adding WriterGroup to server failed: 0x%x", statusCode);
     }
 
@@ -49298,19 +49298,19 @@ UA_PubSubManager_createWriterGroup(UA_Server *server, const UA_WriterGroupDataTy
 /* UA_PubSubManager_addDataSetWriterWithPdsReference() */
 /**
  * @brief   Function called by UA_PubSubManager_createDataSetWriter. It searches for a PublishedDataSet that is referenced by
- *          the DataSetWriter. If a related PDS is found, the DSWriter will be added to the server, 
+ *          the DataSetWriter. If a related PDS is found, the DSWriter will be added to the server,
  *          otherwise, no DSWriter will be added.
- * 
+ *
  * @param   server              [bi]    UA_Server object that shall be configured
  * @param   writerGroupIdent    [in]    NodeId of writerGroup, the DataSetWriter belongs to
  * @param   dsWriterConfig      [in]    WriterGroup configuration
  * @param   pdsCount            [in]    Number of published DataSets
  * @param   pdsIdent            [in]    Array of NodeIds of the published DataSets
- * 
+ *
  * @return  UA_STATUSCODE_GOOD on success
  */
 static UA_StatusCode
-UA_PubSubManager_addDataSetWriterWithPdsReference(UA_Server *server, const UA_NodeId writerGroupIdent, 
+UA_PubSubManager_addDataSetWriterWithPdsReference(UA_Server *server, const UA_NodeId writerGroupIdent,
                                     const UA_DataSetWriterConfig *dsWriterConfig,
                                     const UA_UInt32 pdsCount, const UA_NodeId *pdsIdent) {
     UA_NodeId dataSetWriterIdent;
@@ -49318,22 +49318,22 @@ UA_PubSubManager_addDataSetWriterWithPdsReference(UA_Server *server, const UA_No
     UA_StatusCode retVal = UA_STATUSCODE_GOOD;
     UA_Boolean pdsFound = UA_FALSE;
 
-    for(UA_UInt32 pdsIndex = 0; 
-        pdsIndex < pdsCount && retVal == UA_STATUSCODE_GOOD; 
-        pdsIndex++) 
+    for(UA_UInt32 pdsIndex = 0;
+        pdsIndex < pdsCount && retVal == UA_STATUSCODE_GOOD;
+        pdsIndex++)
     {
         retVal = UA_Server_getPublishedDataSetConfig(server, pdsIdent[pdsIndex], &pdsConfig);
         /* members of pdsConfig must be deleted manually */
         if(retVal == UA_STATUSCODE_GOOD) {
             if(dsWriterConfig->dataSetName.length == pdsConfig.name.length &&
-               0 == strncmp((const char *)dsWriterConfig->dataSetName.data, (const char *)pdsConfig.name.data, 
-                             dsWriterConfig->dataSetName.length)) 
+               0 == strncmp((const char *)dsWriterConfig->dataSetName.data, (const char *)pdsConfig.name.data,
+                             dsWriterConfig->dataSetName.length))
             {
                 /* DSWriter will only be created, if a matching PDS is found: */
-                retVal = UA_Server_addDataSetWriter(server, writerGroupIdent, pdsIdent[pdsIndex], 
+                retVal = UA_Server_addDataSetWriter(server, writerGroupIdent, pdsIdent[pdsIndex],
                                                     dsWriterConfig, &dataSetWriterIdent);
                 if(retVal != UA_STATUSCODE_GOOD) {
-                    UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+                    UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                                  "[UA_PubSubManager_addDataSetWriterWithPdsReference] Adding DataSetWriter failed");
                 } else {
                     pdsFound = UA_TRUE;
@@ -49344,13 +49344,13 @@ UA_PubSubManager_addDataSetWriterWithPdsReference(UA_Server *server, const UA_No
             if(pdsFound)
                 break; /* break loop if corresponding publishedDataSet was found */
         } else {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                         "[UA_PubSubManager_addDataSetWriterWithPdsReference] Getting pdsConfig from NodeId failed.");
         }
     }
 
     if(!pdsFound) {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                      "[UA_PubSubManager_addDataSetWriterWithPdsReference] No matching DataSet found; no DataSetWriter created");
     }
 
@@ -49360,17 +49360,17 @@ UA_PubSubManager_addDataSetWriterWithPdsReference(UA_Server *server, const UA_No
 /* UA_PubSubManager_createDataSetWriter() */
 /**
  *  @brief      Creates DataSetWriter configuration from DataSetWriter object
- * 
+ *
  *  @param      server                  [bi]    UA_Server object that shall be configured
  *  @param      dataSetWriterParameters [in]    DataSetWriter Configuration
  *  @param      writerGroupIdent        [in]    NodeId of writerGroup, the DataSetWriter belongs to
  *  @param      pdsCount                [in]    Number of published DataSets
  *  @param      pdsIdent                [in]    Array of NodeIds of the published DataSets
- * 
+ *
  *  @return     UA_StatusCode
  */
-static UA_StatusCode 
-UA_PubSubManager_createDataSetWriter(UA_Server *server, const UA_DataSetWriterDataType *const dataSetWriterParameters, 
+static UA_StatusCode
+UA_PubSubManager_createDataSetWriter(UA_Server *server, const UA_DataSetWriterDataType *const dataSetWriterParameters,
                        const UA_NodeId writerGroupIdent, const UA_UInt32 pdsCount, const UA_NodeId *pdsIdent) {
     UA_DataSetWriterConfig config;
     memset(&config, 0, sizeof(UA_DataSetWriterConfig));
@@ -49386,30 +49386,30 @@ UA_PubSubManager_createDataSetWriter(UA_Server *server, const UA_DataSetWriterDa
         config.dataSetWriterProperties = dataSetWriterParameters->dataSetWriterProperties;
     }
 
-    UA_StatusCode statusCode = UA_PubSubManager_addDataSetWriterWithPdsReference(server, writerGroupIdent, 
+    UA_StatusCode statusCode = UA_PubSubManager_addDataSetWriterWithPdsReference(server, writerGroupIdent,
                                                                    &config, pdsCount, pdsIdent);
     if(statusCode != UA_STATUSCODE_GOOD) {
         UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "[UA_PubSubManager_createDataSetWriter] Referencing related PDS failed");
     }
-    
+
     return statusCode;
 }
 
 /* UA_PubSubManager_createReaderGroup() */
 /**
  * @brief       Creates ReaderGroup configuration from ReaderGroup object
- * 
+ *
  * @param       server                  [bi]    UA_Server object that shall be configured
  * @param       readerGroupParameters   [in]    ReaderGroup configuration
  * @param       connectionIdent         [in]    NodeId of the PubSub connection, the ReaderGroup belongs to
- * 
+ *
  * @return      UA_StatusCode
  */
 static UA_StatusCode
-UA_PubSubManager_createReaderGroup(UA_Server *server, const UA_ReaderGroupDataType *const readerGroupParameters, 
-                     const UA_NodeId connectionIdent) {    
+UA_PubSubManager_createReaderGroup(UA_Server *server, const UA_ReaderGroupDataType *const readerGroupParameters,
+                     const UA_NodeId connectionIdent) {
     UA_ReaderGroupConfig config;
-    
+
     memset(&config, 0, sizeof(UA_ReaderGroupConfig));
 
     config.name                                 = readerGroupParameters->name;
@@ -49420,21 +49420,21 @@ UA_PubSubManager_createReaderGroup(UA_Server *server, const UA_ReaderGroupDataTy
     UA_StatusCode statusCode = UA_Server_addReaderGroup(server, connectionIdent, &config, &readerGroupIdent);
     if(statusCode == UA_STATUSCODE_GOOD) {
         UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "[UA_PubSubManager_createReaderGroup] ReaderGroup successfully added.");
-        for(UA_UInt32 dsReaderIndex=0; 
-            dsReaderIndex < readerGroupParameters->dataSetReadersSize && statusCode == UA_STATUSCODE_GOOD; 
+        for(UA_UInt32 dsReaderIndex=0;
+            dsReaderIndex < readerGroupParameters->dataSetReadersSize && statusCode == UA_STATUSCODE_GOOD;
             dsReaderIndex++)
         {
             statusCode = UA_PubSubManager_createDataSetReader(server, &readerGroupParameters->dataSetReaders[dsReaderIndex], readerGroupIdent);
             if(statusCode != UA_STATUSCODE_GOOD) {
-                UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+                UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                              "[UA_PubSubManager_createReaderGroup] Creating DataSetReader failed");
             }
         }
     } else {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                     "[UA_PubSubManager_createReaderGroup] Adding ReaderGroup to server failed: 0x%x", statusCode);
     }
-    
+
     if(statusCode == UA_STATUSCODE_GOOD)
         UA_Server_setReaderGroupOperational(server, readerGroupIdent);
 
@@ -49445,33 +49445,33 @@ UA_PubSubManager_createReaderGroup(UA_Server *server, const UA_ReaderGroupDataTy
 /* UA_PubSubManager_addSubscribedDataSet() */
 /**
  * @brief   Creates TargetVariables or SubscribedDataSetMirror for a given DataSetReader
- * 
+ *
  * @param   server                  [bi]    UA_Server object that shall be configured
  * @param   dsReaderIdent           [in]    NodeId of the DataSetReader the SubscribedDataSet belongs to
- * @param   dataSetReaderParameters [in]    Configuration Parameters of the DataSetReader 
- * 
+ * @param   dataSetReaderParameters [in]    Configuration Parameters of the DataSetReader
+ *
  * @return  UA_STATUSCODE_GOOD on success
  */
 static UA_StatusCode
-UA_PubSubManager_addSubscribedDataSet(UA_Server *server, const UA_NodeId dsReaderIdent, 
+UA_PubSubManager_addSubscribedDataSet(UA_Server *server, const UA_NodeId dsReaderIdent,
                         const UA_ExtensionObject *const subscribedDataSet) {
     UA_StatusCode retVal = UA_STATUSCODE_GOOD;
 
-    if(UA_NodeId_equal(&subscribedDataSet->content.decoded.type->typeId, 
+    if(UA_NodeId_equal(&subscribedDataSet->content.decoded.type->typeId,
                         &UA_TYPES[UA_TYPES_TARGETVARIABLESDATATYPE].typeId)) {
-        UA_TargetVariablesDataType *tmpTargetVars = 
+        UA_TargetVariablesDataType *tmpTargetVars =
             (UA_TargetVariablesDataType*)subscribedDataSet->content.decoded.data;
-        UA_FieldTargetVariable *targetVars = 
+        UA_FieldTargetVariable *targetVars =
                         (UA_FieldTargetVariable *)UA_calloc(tmpTargetVars->targetVariablesSize, sizeof(UA_FieldTargetVariable));
         memset(targetVars, 0, sizeof(UA_FieldTargetVariable));
-        
+
         for(size_t index = 0; index < tmpTargetVars->targetVariablesSize; index++) {
             UA_FieldTargetDataType_copy(&tmpTargetVars->targetVariables[index] ,&targetVars[index].targetVariable);
         }
 
         retVal = UA_Server_DataSetReader_createTargetVariables(server, dsReaderIdent, tmpTargetVars->targetVariablesSize, targetVars);
         if(retVal != UA_STATUSCODE_GOOD) {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                         "[UA_PubSubManager_addSubscribedDataSet] create TargetVariables failed");
         }
 
@@ -49481,14 +49481,14 @@ UA_PubSubManager_addSubscribedDataSet(UA_Server *server, const UA_NodeId dsReade
 
         UA_free(targetVars);
         return retVal;
-    } 
-    
+    }
+
     if(UA_NodeId_equal(&subscribedDataSet->content.decoded.type->typeId,
                         &UA_TYPES[UA_TYPES_SUBSCRIBEDDATASETMIRRORDATATYPE].typeId)) {
-        
+
         UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "[UA_PubSubManager_addSubscribedDataSet] DataSetMirror is currently not supported");
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    } 
+    }
 
     UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "[UA_PubSubManager_addSubscribedDataSet] Invalid Type of SubscribedDataSet");
     return UA_STATUSCODE_BADINTERNALERROR;
@@ -49497,7 +49497,7 @@ UA_PubSubManager_addSubscribedDataSet(UA_Server *server, const UA_NodeId dsReade
 /* UA_PubSubManager_createDataSetReader() */
 /**
  * @brief       Creates DataSetReader configuration from DataSetReader object
- * 
+ *
  * @param       server                  [bi]    UA_Server object that shall be configured
  * @param       dataSetReaderParameters [in]    DataSetReader configuration
  * @param       writerGroupIdent        [in]    NodeId of readerGroupParameters, the DataSetReader belongs to
@@ -49505,7 +49505,7 @@ UA_PubSubManager_addSubscribedDataSet(UA_Server *server, const UA_NodeId dsReade
  * @return      UA_STATUSCODE_GOOD on success
  */
 static UA_StatusCode
-UA_PubSubManager_createDataSetReader(UA_Server *server, const UA_DataSetReaderDataType *const dataSetReaderParameters, 
+UA_PubSubManager_createDataSetReader(UA_Server *server, const UA_DataSetReaderDataType *const dataSetReaderParameters,
                        const UA_NodeId readerGroupIdent) {
     UA_DataSetReaderConfig config;
     memset(&config, 0, sizeof(UA_DataSetReaderConfig));
@@ -49524,7 +49524,7 @@ UA_PubSubManager_createDataSetReader(UA_Server *server, const UA_DataSetReaderDa
     if(statusCode == UA_STATUSCODE_GOOD) {
         statusCode = UA_PubSubManager_addSubscribedDataSet(server, dsReaderIdent, &dataSetReaderParameters->subscribedDataSet);
         if(statusCode != UA_STATUSCODE_GOOD) {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                         "[UA_PubSubManager_createDataSetReader] create subscribedDataSet failed");
         }
     }
@@ -49535,32 +49535,32 @@ UA_PubSubManager_createDataSetReader(UA_Server *server, const UA_DataSetReaderDa
 /* UA_PubSubManager_setPublishedDataSetType() */
 /**
  * @brief   Determines whether PublishedDataSet is of type PublishedItems or PublishedEvents.
- *          (PublishedEvents are currently not supported!) 
- * 
+ *          (PublishedEvents are currently not supported!)
+ *
  * @param   publishedDataSetParameters  [in]    PublishedDataSet parameters
  * @param   config                      [bi]    PublishedDataSet configuration object
- * 
+ *
  * @return  UA_STATUSCODE_GOOD on success
  */
 static UA_StatusCode
-UA_PubSubManager_setPublishedDataSetType(const UA_PublishedDataSetDataType *const publishedDataSetParameters, 
+UA_PubSubManager_setPublishedDataSetType(const UA_PublishedDataSetDataType *const publishedDataSetParameters,
                            UA_PublishedDataSetConfig *config) {
     if(publishedDataSetParameters->dataSetSource.encoding != UA_EXTENSIONOBJECT_DECODED) {
         return UA_STATUSCODE_BADINTERNALERROR;
     }
 
     UA_StatusCode retVal = UA_STATUSCODE_GOOD;
-    if(UA_NodeId_equal(&publishedDataSetParameters->dataSetSource.content.decoded.type->typeId, 
-                       &UA_TYPES[UA_TYPES_PUBLISHEDDATAITEMSDATATYPE].typeId)) { 
+    if(UA_NodeId_equal(&publishedDataSetParameters->dataSetSource.content.decoded.type->typeId,
+                       &UA_TYPES[UA_TYPES_PUBLISHEDDATAITEMSDATATYPE].typeId)) {
         config->publishedDataSetType = UA_PUBSUB_DATASET_PUBLISHEDITEMS;
     } else if(UA_NodeId_equal(&publishedDataSetParameters->dataSetSource.content.decoded.type->typeId,
                               &UA_TYPES[UA_TYPES_PUBLISHEDEVENTSDATATYPE].typeId)) {
         /* config.publishedDataSetType = UA_PUBSUB_DATASET_PUBLISHEDEVENTS; */
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                      "[UA_PubSubManager_setPublishedDataSetType] Published events not supported.");
         retVal = UA_STATUSCODE_BADNOTIMPLEMENTED;
     } else {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                      "[UA_PubSubManager_setPublishedDataSetType] Invalid DataSetSourceDataType.");
         retVal = UA_STATUSCODE_BADINTERNALERROR;
     }
@@ -49571,15 +49571,15 @@ UA_PubSubManager_setPublishedDataSetType(const UA_PublishedDataSetDataType *cons
 /* UA_PubSubManager_createPublishedDataSet() */
 /**
  *  @brief      Creates PublishedDataSetConfig object from PublishedDataSet object
- * 
+ *
  *  @param      server                      [bi]    UA_Server object that shall be configured
  *  @param      publishedDataSetParameters  [in]    publishedDataSet configuration
  *  @param      publishedDataSetIdent       [out]   NodeId of the publishedDataSet
- * 
+ *
  *  @return     UA_STATUSCODE_GOOD on success
  */
-static UA_StatusCode 
-UA_PubSubManager_createPublishedDataSet(UA_Server *server, const UA_PublishedDataSetDataType *const publishedDataSetParameters, 
+static UA_StatusCode
+UA_PubSubManager_createPublishedDataSet(UA_Server *server, const UA_PublishedDataSetDataType *const publishedDataSetParameters,
                           UA_NodeId *publishedDataSetIdent) {
     UA_PublishedDataSetConfig config;
     memset(&config, 0, sizeof(UA_PublishedDataSetConfig));
@@ -49592,7 +49592,7 @@ UA_PubSubManager_createPublishedDataSet(UA_Server *server, const UA_PublishedDat
 
     statusCode = UA_Server_addPublishedDataSet(server, &config, publishedDataSetIdent).addResult;
     if(statusCode != UA_STATUSCODE_GOOD) {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                      "[UA_PubSubManager_createPublishedDataSet] Adding PublishedDataSet failed.");
         return statusCode;
     }
@@ -49600,7 +49600,7 @@ UA_PubSubManager_createPublishedDataSet(UA_Server *server, const UA_PublishedDat
     /* DataSetField configuration for this publishedDataSet: */
     statusCode = UA_PubSubManager_createDataSetFields(server, publishedDataSetIdent, publishedDataSetParameters);
     if(statusCode != UA_STATUSCODE_GOOD) {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                     "[UA_PubSubManager_createPublishedDataSet] Creating DataSetFieldConfig failed.");
     }
 
@@ -49611,17 +49611,17 @@ UA_PubSubManager_createPublishedDataSet(UA_Server *server, const UA_PublishedDat
 /**
  * @brief   Adds DataSetField Variables bound to a certain PublishedDataSet.
  *          This method does NOT check, whether the PublishedDataSet actually contains Variables instead of Events!
- * 
+ *
  * @param   server                      [bi]    UA_Server object that shall be configured
  * @param   publishedDataSetIdent       [in]    NodeId of the publishedDataSet, the DataSetField belongs to
  * @param   publishedDataSetParameters  [in]    publishedDataSet configuration
- * 
+ *
  * @return  UA_STATUSCODE_GOOD on success
  */
 static UA_StatusCode
 UA_PubSubManager_addDataSetFieldVariables(UA_Server *server, const UA_NodeId *publishedDataSetIdent,
                             const UA_PublishedDataSetDataType *const publishedDataSetParameters) {
-    UA_PublishedDataItemsDataType *publishedDataItems = 
+    UA_PublishedDataItemsDataType *publishedDataItems =
         (UA_PublishedDataItemsDataType *)publishedDataSetParameters->dataSetSource.content.decoded.data;
     if(publishedDataItems->publishedDataSize != publishedDataSetParameters->dataSetMetaData.fieldsSize){
         return UA_STATUSCODE_BADINTERNALERROR;
@@ -49644,10 +49644,10 @@ UA_PubSubManager_addDataSetFieldVariables(UA_Server *server, const UA_NodeId *pu
         UA_NodeId fieldIdent;
         statusCode = UA_Server_addDataSetField(server, *publishedDataSetIdent, &fieldConfig, &fieldIdent).result;
         if(statusCode != UA_STATUSCODE_GOOD) {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                         "[UA_PubSubManager_addDataSetFieldVariables] Adding DataSetField Variable failed.");
         }
-    }   
+    }
 
     return UA_STATUSCODE_GOOD;
 }
@@ -49656,37 +49656,37 @@ UA_PubSubManager_addDataSetFieldVariables(UA_Server *server, const UA_NodeId *pu
 /**
  *  @brief      Checks if PublishedDataSet contains event or variable fields and calls the corresponding method
  *              to add these fields to the server.
- * 
+ *
  *  @param      server                      [bi]    UA_Server object that shall be configured
  *  @param      publishedDataSetIdent       [in]    NodeId of the publishedDataSet, the DataSetFields belongs to
  *  @param      publishedDataSetParameters  [in]    publishedDataSet configuration
- * 
+ *
  *  @return     UA_STATUSCODE_GOOD on success
  */
-static UA_StatusCode 
-UA_PubSubManager_createDataSetFields(UA_Server *server, const UA_NodeId *const publishedDataSetIdent, 
+static UA_StatusCode
+UA_PubSubManager_createDataSetFields(UA_Server *server, const UA_NodeId *const publishedDataSetIdent,
                        const UA_PublishedDataSetDataType *const publishedDataSetParameters) {
     UA_StatusCode statusCode = UA_STATUSCODE_GOOD;
-    
+
     if(publishedDataSetParameters->dataSetSource.encoding != UA_EXTENSIONOBJECT_DECODED) {
         statusCode = UA_STATUSCODE_BADINTERNALERROR;
         goto cleanup;
     }
 
-    if(UA_NodeId_equal(&publishedDataSetParameters->dataSetSource.content.decoded.type->typeId, 
-                        &UA_TYPES[UA_TYPES_PUBLISHEDDATAITEMSDATATYPE].typeId)) { 
+    if(UA_NodeId_equal(&publishedDataSetParameters->dataSetSource.content.decoded.type->typeId,
+                        &UA_TYPES[UA_TYPES_PUBLISHEDDATAITEMSDATATYPE].typeId)) {
         statusCode = UA_PubSubManager_addDataSetFieldVariables(server, publishedDataSetIdent, publishedDataSetParameters);
         goto cleanup;
-    } 
+    }
 
-    if(publishedDataSetParameters->dataSetSource.content.decoded.type->typeId.identifier.numeric == 
+    if(publishedDataSetParameters->dataSetSource.content.decoded.type->typeId.identifier.numeric ==
         UA_NS0ID_PUBLISHEDEVENTSDATATYPE) {
         /* This is a placeholder; TODO: Implement Routine for adding Event DataSetFields */
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                         "[UA_PubSubManager_createDataSetFields] Published events not supported.");
         statusCode = UA_STATUSCODE_BADNOTIMPLEMENTED;
         goto cleanup;
-    } 
+    }
 
     UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "[UA_PubSubManager_createDataSetFields] Invalid DataSetSourceDataType.");
     statusCode = UA_STATUSCODE_BADINTERNALERROR;
@@ -49699,13 +49699,13 @@ cleanup:
 /**
  * @brief       Decodes the information from the ByteString. If the decoded content is a PubSubConfiguration object
  *              it will overwrite the current PubSub configuration from the server.
- * 
+ *
  * @param       server      [bi]    Pointer to Server object that shall be configured
  * @param       buffer      [in]    Relative path and name of the file that contains the PubSub configuration
- * 
+ *
  * @return      UA_STATUSCODE_GOOD on success
  */
-UA_StatusCode 
+UA_StatusCode
 UA_PubSubManager_loadPubSubConfigFromByteString(UA_Server *server, const UA_ByteString buffer) {
     UA_StatusCode statusCode;
     UA_ExtensionObject decodedFile;
@@ -49717,18 +49717,18 @@ UA_PubSubManager_loadPubSubConfigFromByteString(UA_Server *server, const UA_Byte
             UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "[UA_decodeBinFile] decoding UA_Binary failed");
             goto cleanup;
     }
-        
+
     UA_PubSubConfigurationDataType *pubSubConfig;
     statusCode = UA_PubSubManager_extractPubSubConfigFromDecodedObject(&decodedFile, &pubSubConfig);
     if(statusCode != UA_STATUSCODE_GOOD) {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                     "[UA_PubSubManager_loadPubSubConfigFromByteString] Extracting PubSub Configuration failed");
         goto cleanup;
     }
 
     statusCode = UA_PubSubManager_updatePubSubConfig(server, pubSubConfig);
     if(statusCode != UA_STATUSCODE_GOOD) {
-        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+        UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                     "[UA_PubSubManager_loadPubSubConfigFromByteString] Loading PubSub configuration into server failed");
         goto cleanup;
     }
@@ -49753,9 +49753,9 @@ UA_PubSubManager_encodePubSubConfiguration(UA_PubSubConfigurationDataType *confi
     UA_UABinaryFileDataType binFile;
     memset(&binFile, 0, sizeof(UA_UABinaryFileDataType));
     /*Perhaps, additional initializations of binFile are necessary here.*/
-    
+
     UA_Variant_setScalar(&binFile.body, configurationParameters, &UA_TYPES[UA_TYPES_PUBSUBCONFIGURATIONDATATYPE]);
-    
+
     UA_ExtensionObject container;
     memset(&container, 0, sizeof(UA_ExtensionObject));
     container.encoding = UA_EXTENSIONOBJECT_DECODED;
@@ -49795,11 +49795,11 @@ UA_PubSubManager_generatePublishedDataSetDataType(UA_PublishedDataSetDataType *d
     }
 
     memset(dst, 0, sizeof(UA_PublishedDataSetDataType));
-    
+
     UA_PublishedDataItemsDataType *tmp = UA_PublishedDataItemsDataType_new();
     UA_String_copy(&src->config.name, &dst->name);
     dst->dataSetMetaData.fieldsSize = src->fieldSize;
-    
+
     size_t index = 0;
     tmp->publishedDataSize = src->fieldSize;
     tmp->publishedData = (UA_PublishedVariableDataType*)UA_Array_new(tmp->publishedDataSize, &UA_TYPES[UA_TYPES_PUBLISHEDVARIABLEDATATYPE]);
@@ -49823,7 +49823,7 @@ UA_PubSubManager_generatePublishedDataSetDataType(UA_PublishedDataSetDataType *d
         dst->dataSetMetaData.fields[index].fieldFlags = dsf->config.field.variable.promotedField;
         index++;
     }
-    
+
     dst->dataSetSource.encoding = UA_EXTENSIONOBJECT_DECODED;
     dst->dataSetSource.content.decoded.data = tmp;
     dst->dataSetSource.content.decoded.type = &UA_TYPES[UA_TYPES_PUBLISHEDDATAITEMSDATATYPE];
@@ -49881,7 +49881,7 @@ UA_PubSubManager_generateWriterGroupDataType(UA_WriterGroupDataType *dst,
     dst->keepAliveTime = src->config.keepAliveTime;
     dst->priority = src->config.priority;
     dst->securityMode = src->config.securityMode;
-    
+
 
     UA_ExtensionObject_copy(&src->config.transportSettings, &dst->transportSettings);
     UA_ExtensionObject_copy(&src->config.messageSettings, &dst->messageSettings);
@@ -49946,8 +49946,8 @@ UA_PubSubManager_generateDataSetReaderDataType(UA_DataSetReaderDataType *dst,
         UA_FieldTargetDataType_copy(&src->config.subscribedDataSet.subscribedDataSetTarget.targetVariables[index].targetVariable, &tmpTarget->targetVariables[index]);
     }
 
-    retVal = UA_copy(tmpTarget, 
-                    dst->subscribedDataSet.content.decoded.data, 
+    retVal = UA_copy(tmpTarget,
+                    dst->subscribedDataSet.content.decoded.data,
                     &UA_TYPES[UA_TYPES_TARGETVARIABLESDATATYPE]);
 
     if(retVal != UA_STATUSCODE_GOOD)
@@ -50004,7 +50004,7 @@ UA_PubSubManager_generatePubSubConnectionDataType(UA_PubSubConnectionDataType *d
     UA_StatusCode retVal = UA_STATUSCODE_GOOD;
     size_t index;
     memset(dst, 0, sizeof(UA_PubSubConnectionDataType));
-    
+
     UA_String_copy(&src->config->name, &dst->name);
     UA_String_copy(&src->config->transportProfileUri, &dst->transportProfileUri);
     dst->enabled = src->config->enabled;
@@ -50020,7 +50020,7 @@ UA_PubSubManager_generatePubSubConnectionDataType(UA_PubSubConnectionDataType *d
         UA_Variant_setScalarCopy(&dst->publisherId, &src->config->publisherId.string, &UA_TYPES[UA_TYPES_STRING]);
     }
 
-    /* Possibly, array size and dimensions of src->config->address and src->config->connectionTransportSettings 
+    /* Possibly, array size and dimensions of src->config->address and src->config->connectionTransportSettings
        should be checked beforehand. */
     dst->address.encoding = UA_EXTENSIONOBJECT_DECODED;
     dst->address.content.decoded.type = src->config->address.type;
@@ -50032,8 +50032,8 @@ UA_PubSubManager_generatePubSubConnectionDataType(UA_PubSubConnectionDataType *d
 
         dst->transportSettings.encoding = UA_EXTENSIONOBJECT_DECODED;
         dst->transportSettings.content.decoded.type = src->config->connectionTransportSettings.type;
-        retVal = UA_Array_copy(src->config->connectionTransportSettings.data, 
-                                1, 
+        retVal = UA_Array_copy(src->config->connectionTransportSettings.data,
+                                1,
                                 &dst->transportSettings.content.decoded.data,
                                 src->config->connectionTransportSettings.type);
 
@@ -50041,7 +50041,7 @@ UA_PubSubManager_generatePubSubConnectionDataType(UA_PubSubConnectionDataType *d
             return retVal;
         }
     }
-    
+
     dst->writerGroups = (UA_WriterGroupDataType*)UA_calloc(src->writerGroupsSize, sizeof(UA_WriterGroupDataType));
     if(dst->writerGroups == NULL) {
         return UA_STATUSCODE_BADOUTOFMEMORY;
@@ -50082,10 +50082,10 @@ UA_PubSubManager_generatePubSubConnectionDataType(UA_PubSubConnectionDataType *d
 /* UA_PubSubManager_generatePubSubConfigurationDataType() */
 /**
  * @brief       Generates a PubSubConfigurationDataType object from the current server configuration.
- * 
+ *
  * @param       server                  [in]    server, that contains the PubSub configuration
  * @param       pubSubConfiguration     [out]   target object
- * 
+ *
  * @return      UA_STATUSCODE_GOOD on success
  */
 UA_StatusCode
@@ -50095,29 +50095,29 @@ UA_PubSubManager_generatePubSubConfigurationDataType(const UA_Server* server,
     UA_PubSubManager manager = server->pubSubManager;
     memset(pubSubConfiguration, 0, sizeof(UA_PubSubConfigurationDataType));
 
-    pubSubConfiguration->publishedDataSets = (UA_PublishedDataSetDataType*)UA_calloc(manager.publishedDataSetsSize, 
+    pubSubConfiguration->publishedDataSets = (UA_PublishedDataSetDataType*)UA_calloc(manager.publishedDataSetsSize,
                                                                                      sizeof(UA_PublishedDataSetDataType));
     if(pubSubConfiguration->publishedDataSets == NULL) {
         return UA_STATUSCODE_BADOUTOFMEMORY;
     }
 
     pubSubConfiguration->publishedDataSetsSize = manager.publishedDataSetsSize;
-    
+
     UA_PublishedDataSet *pds;
     UA_UInt32 pdsIndex = 0;
     TAILQ_FOREACH(pds, &manager.publishedDataSets, listEntry) {
         statusCode = UA_PubSubManager_generatePublishedDataSetDataType(&pubSubConfiguration->publishedDataSets[pdsIndex],
                                                          pds);
-        
+
         pdsIndex++;
         if(statusCode != UA_STATUSCODE_GOOD) {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                 "[UA_PubSubManager_generatePubSubConfigurationDataType] retrieving PublishedDataSet configuration failed");
             return statusCode;
         }
     }
 
-    pubSubConfiguration->connections = (UA_PubSubConnectionDataType*)UA_calloc(manager.connectionsSize, 
+    pubSubConfiguration->connections = (UA_PubSubConnectionDataType*)UA_calloc(manager.connectionsSize,
                                                                                sizeof(UA_PubSubConnectionDataType));
     if(pubSubConfiguration->connections == NULL) {
         return UA_STATUSCODE_BADOUTOFMEMORY;
@@ -50127,11 +50127,11 @@ UA_PubSubManager_generatePubSubConfigurationDataType(const UA_Server* server,
     UA_UInt32 connectionIndex = 0;
     UA_PubSubConnection *connection;
     TAILQ_FOREACH(connection, &manager.connections, listEntry) {
-        statusCode = UA_PubSubManager_generatePubSubConnectionDataType(&pubSubConfiguration->connections[connectionIndex], 
+        statusCode = UA_PubSubManager_generatePubSubConnectionDataType(&pubSubConfiguration->connections[connectionIndex],
                                                          connection);
-        connectionIndex++;                                                         
+        connectionIndex++;
         if(statusCode != UA_STATUSCODE_GOOD) {
-            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, 
+            UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
                 "[UA_PubSubManager_generatePubSubConfigurationDataType] retrieving PubSubConnection configuration failed");
             return statusCode;
         }
@@ -50143,7 +50143,7 @@ UA_PubSubManager_generatePubSubConfigurationDataType(const UA_Server* server,
 /* UA_PubSubManager_getEncodedPubSubConfiguration() */
 /**
  * @brief       Saves the current PubSub configuration of a server in a byteString.
- * 
+ *
  * @param       server  [in]    Pointer to server object, that contains the PubSubConfiguration
  * @param       buffer  [out]    Pointer to a byteString object
  *
@@ -50168,7 +50168,7 @@ UA_PubSubManager_getEncodedPubSubConfiguration(UA_Server *server, UA_ByteString 
     }
 
     UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Saving PubSub config was successful");
-    
+
 cleanup:
     UA_PubSubConfigurationDataType_clear(&config);
 
@@ -50202,7 +50202,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_0_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 17604LU)
 );
 }
@@ -50224,7 +50224,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_1_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 18LU)
 );
 }
@@ -50246,7 +50246,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_2_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 19LU)
 );
 }
@@ -50268,7 +50268,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_3_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 15LU)
 );
 }
@@ -50291,7 +50291,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_4_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 30LU)
 );
 }
@@ -50313,7 +50313,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_5_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 23LU)
 );
 }
@@ -50336,7 +50336,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_6_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 22LU)
 );
 }
@@ -50359,7 +50359,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_7_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 12756LU)
 );
 }
@@ -50381,7 +50381,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_8_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 338LU)
 );
 }
@@ -50403,7 +50403,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_9_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 862LU)
 );
 }
@@ -50425,7 +50425,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_10_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 884LU)
 );
 }
@@ -50447,7 +50447,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_11_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 887LU)
 );
 }
@@ -50469,7 +50469,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_12_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 7594LU)
 );
 }
@@ -50491,7 +50491,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_13_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 859LU)
 );
 }
@@ -50513,7 +50513,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_14_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 344LU)
 );
 }
@@ -50535,7 +50535,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_15_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 296LU)
 );
 }
@@ -50557,7 +50557,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_16_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 21LU)
 );
 }
@@ -50579,7 +50579,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_17_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 20LU)
 );
 }
@@ -50602,7 +50602,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_18_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 26LU)
 );
 }
@@ -50624,7 +50624,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_19_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 50LU)
 );
 }
@@ -50647,7 +50647,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_20_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 28LU)
 );
 }
@@ -50669,7 +50669,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_21_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 5LU)
 );
 }
@@ -50691,7 +50691,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_22_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 7LU)
 );
 }
@@ -50713,7 +50713,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_23_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 9LU)
 );
 }
@@ -50735,7 +50735,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_24_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 3LU)
 );
 }
@@ -50758,7 +50758,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_25_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 27LU)
 );
 }
@@ -50780,7 +50780,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_26_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2LU)
 );
 }
@@ -50802,7 +50802,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_27_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 8LU)
 );
 }
@@ -50824,7 +50824,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_28_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 6LU)
 );
 }
@@ -50846,7 +50846,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_29_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 4LU)
 );
 }
@@ -50868,7 +50868,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_30_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 10LU)
 );
 }
@@ -50890,7 +50890,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_31_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11LU)
 );
 }
@@ -50912,7 +50912,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_32_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 290LU)
 );
 }
@@ -50934,7 +50934,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_33_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 25LU)
 );
 }
@@ -50957,7 +50957,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_34_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 29LU)
 );
 }
@@ -50979,7 +50979,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_35_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 12077LU)
 );
 }
@@ -51015,7 +51015,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_36_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 12078LU)
 );
 }
@@ -51037,7 +51037,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_37_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 120LU)
 );
 }
@@ -51088,7 +51088,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_38_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 12169LU)
 );
 }
@@ -51110,7 +51110,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_39_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 851LU)
 );
 }
@@ -51149,7 +51149,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_40_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 7611LU)
 );
 }
@@ -51171,7 +51171,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_41_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 852LU)
 );
 }
@@ -51194,7 +51194,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_42_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 56LU)
 );
 }
@@ -51217,7 +51217,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_43_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 54LU)
 );
 }
@@ -51240,7 +51240,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_44_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 52LU)
 );
 }
@@ -51263,7 +51263,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_45_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 53LU)
 );
 }
@@ -51286,7 +51286,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_46_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 51LU)
 );
 }
@@ -51308,7 +51308,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_47_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 12LU)
 );
 }
@@ -51330,7 +51330,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_48_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 295LU)
 );
 }
@@ -51352,7 +51352,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_49_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 13LU)
 );
 }
@@ -51374,7 +51374,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_50_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 294LU)
 );
 }
@@ -51396,7 +51396,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_51_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 17LU)
 );
 }
@@ -51418,7 +51418,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_52_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 1LU)
 );
 }
@@ -51440,7 +51440,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_53_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 16LU)
 );
 }
@@ -51462,7 +51462,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_54_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 14LU)
 );
 }
@@ -51484,7 +51484,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_55_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2020LU)
 );
 }
@@ -51506,7 +51506,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_56_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 3062LU)
 );
 }
@@ -51528,7 +51528,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_57_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 3063LU)
 );
 }
@@ -51553,7 +51553,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_58_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2138LU)
 );
 }
@@ -51575,7 +51575,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_59_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2033LU)
 );
 }
@@ -51600,7 +51600,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_60_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 69LU)
 );
 }
@@ -51628,7 +51628,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_61_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 105LU)
 );
 }
@@ -51656,7 +51656,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_62_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 104LU)
 );
 }
@@ -51681,7 +51681,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_63_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 72LU)
 );
 }
@@ -51712,7 +51712,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_64_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 107LU)
 );
 }
@@ -51740,7 +51740,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_65_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 106LU)
 );
 }
@@ -51762,7 +51762,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_66_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 75LU)
 );
 }
@@ -51784,7 +51784,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_67_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 93LU)
 );
 }
@@ -51820,7 +51820,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_68_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 7617LU)
 );
 }
@@ -51854,7 +51854,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_69_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 7650LU)
 );
 }
@@ -51888,7 +51888,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_70_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 7656LU)
 );
 }
@@ -51910,7 +51910,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_71_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 92LU)
 );
 }
@@ -51932,7 +51932,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_72_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 76LU)
 );
 }
@@ -51955,7 +51955,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_73_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 15375LU)
 );
 }
@@ -51978,7 +51978,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_74_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 15376LU)
 );
 }
@@ -52002,7 +52002,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_75_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 8251LU)
 );
 }
@@ -52026,7 +52026,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_76_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 298LU)
 );
 }
@@ -52048,7 +52048,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_77_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 77LU)
 );
 }
@@ -52073,7 +52073,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_78_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 78LU)
 );
 }
@@ -52107,7 +52107,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_79_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 112LU)
 );
 }
@@ -52142,7 +52142,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_80_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 111LU)
 );
 }
@@ -52168,7 +52168,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_81_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 80LU)
 );
 }
@@ -52202,7 +52202,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_82_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 113LU)
 );
 }
@@ -52227,7 +52227,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_83_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2150LU)
 );
 }
@@ -52256,7 +52256,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_84_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2159LU)
 );
 }
@@ -52285,7 +52285,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_85_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2154LU)
 );
 }
@@ -52314,7 +52314,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_86_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2162LU)
 );
 }
@@ -52343,7 +52343,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_87_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2163LU)
 );
 }
@@ -52372,7 +52372,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_88_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2155LU)
 );
 }
@@ -52401,7 +52401,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_89_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2161LU)
 );
 }
@@ -52430,7 +52430,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_90_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2153LU)
 );
 }
@@ -52459,7 +52459,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_91_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2152LU)
 );
 }
@@ -52488,7 +52488,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_92_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2151LU)
 );
 }
@@ -52517,7 +52517,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_93_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2156LU)
 );
 }
@@ -52546,7 +52546,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_94_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2160LU)
 );
 }
@@ -52575,7 +52575,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_95_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2157LU)
 );
 }
@@ -52597,7 +52597,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_96_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2034LU)
 );
 }
@@ -52626,7 +52626,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_97_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2035LU)
 );
 }
@@ -52651,7 +52651,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_98_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 3051LU)
 );
 }
@@ -52679,7 +52679,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_99_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2365LU)
 );
 }
@@ -52711,7 +52711,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_100_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2367LU)
 );
 }
@@ -52743,7 +52743,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_101_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2366LU)
 );
 }
@@ -52767,7 +52767,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_102_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2368LU)
 );
 }
@@ -52796,7 +52796,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_103_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2371LU)
 );
 }
@@ -52825,7 +52825,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_104_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2370LU)
 );
 }
@@ -52854,7 +52854,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_105_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2369LU)
 );
 }
@@ -52880,7 +52880,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_106_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2372LU)
 );
 }
@@ -52904,7 +52904,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_107_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2373LU)
 );
 }
@@ -52933,7 +52933,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_108_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2375LU)
 );
 }
@@ -52962,7 +52962,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_109_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2374LU)
 );
 }
@@ -52986,7 +52986,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_110_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2376LU)
 );
 }
@@ -53018,7 +53018,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_111_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2377LU)
 );
 }
@@ -53042,7 +53042,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_112_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11238LU)
 );
 }
@@ -53071,7 +53071,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_113_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11461LU)
 );
 }
@@ -53103,7 +53103,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_114_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11241LU)
 );
 }
@@ -53125,7 +53125,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_115_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2004LU)
 );
 }
@@ -53148,7 +53148,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_116_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2253LU)
 );
 }
@@ -53176,7 +53176,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_117_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2994LU)
 );
 }
@@ -53205,7 +53205,7 @@ return UA_STATUSCODE_GOOD;
 
 static UA_StatusCode function_namespace0_generated_118_finish(UA_Server *server, UA_UInt16* ns) {
 #ifdef UA_ENABLE_METHODCALLS
-return UA_Server_addMethodNode_finish(server, 
+return UA_Server_addMethodNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11492LU)
 , NULL, 0, NULL, 0, NULL);
 #else
@@ -53263,7 +53263,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_119_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11494LU)
 );
 }
@@ -53302,7 +53302,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_120_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11493LU)
 );
 }
@@ -53330,7 +53330,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_121_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2256LU)
 );
 }
@@ -53358,7 +53358,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_122_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2260LU)
 );
 }
@@ -53386,7 +53386,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_123_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2266LU)
 );
 }
@@ -53414,7 +53414,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_124_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2265LU)
 );
 }
@@ -53442,7 +53442,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_125_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2264LU)
 );
 }
@@ -53470,7 +53470,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_126_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2263LU)
 );
 }
@@ -53498,7 +53498,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_127_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2262LU)
 );
 }
@@ -53526,7 +53526,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_128_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2261LU)
 );
 }
@@ -53554,7 +53554,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_129_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2993LU)
 );
 }
@@ -53582,7 +53582,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_130_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2259LU)
 );
 }
@@ -53610,7 +53610,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_131_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2258LU)
 );
 }
@@ -53638,7 +53638,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_132_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2257LU)
 );
 }
@@ -53666,7 +53666,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_133_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2992LU)
 );
 }
@@ -53688,7 +53688,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_134_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2274LU)
 );
 }
@@ -53716,7 +53716,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_135_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2275LU)
 );
 }
@@ -53744,7 +53744,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_136_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2287LU)
 );
 }
@@ -53772,7 +53772,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_137_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2286LU)
 );
 }
@@ -53800,7 +53800,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_138_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2285LU)
 );
 }
@@ -53828,7 +53828,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_139_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2284LU)
 );
 }
@@ -53856,7 +53856,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_140_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2282LU)
 );
 }
@@ -53884,7 +53884,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_141_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2281LU)
 );
 }
@@ -53912,7 +53912,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_142_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 3705LU)
 );
 }
@@ -53940,7 +53940,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_143_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2288LU)
 );
 }
@@ -53968,7 +53968,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_144_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2276LU)
 );
 }
@@ -53996,7 +53996,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_145_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2277LU)
 );
 }
@@ -54024,7 +54024,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_146_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2278LU)
 );
 }
@@ -54052,7 +54052,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_147_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2279LU)
 );
 }
@@ -54080,7 +54080,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_148_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2294LU)
 );
 }
@@ -54102,7 +54102,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_149_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2295LU)
 );
 }
@@ -54133,7 +54133,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_150_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2255LU)
 );
 }
@@ -54164,7 +54164,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_151_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2254LU)
 );
 }
@@ -54192,7 +54192,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_152_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2267LU)
 );
 }
@@ -54214,7 +54214,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_153_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2296LU)
 );
 }
@@ -54242,7 +54242,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_154_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 3709LU)
 );
 }
@@ -54265,7 +54265,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_155_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2011LU)
 );
 }
@@ -54287,7 +54287,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_156_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 17708LU)
 );
 }
@@ -54311,7 +54311,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_157_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 17602LU)
 );
 }
@@ -54333,7 +54333,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_158_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11564LU)
 );
 }
@@ -54362,7 +54362,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_159_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11567LU)
 );
 }
@@ -54391,7 +54391,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_160_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11565LU)
 );
 }
@@ -54420,7 +54420,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_161_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11569LU)
 );
 }
@@ -54449,7 +54449,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_162_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11571LU)
 );
 }
@@ -54478,7 +54478,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_163_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11570LU)
 );
 }
@@ -54507,7 +54507,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_164_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11573LU)
 );
 }
@@ -54536,7 +54536,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_165_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11572LU)
 );
 }
@@ -54565,7 +54565,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_166_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11574LU)
 );
 }
@@ -54587,7 +54587,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_167_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2013LU)
 );
 }
@@ -54610,7 +54610,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_168_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11551LU)
 );
 }
@@ -54632,7 +54632,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_169_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2268LU)
 );
 }
@@ -54663,7 +54663,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_170_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2269LU)
 );
 }
@@ -54685,7 +54685,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_171_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2997LU)
 );
 }
@@ -54707,7 +54707,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_172_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2996LU)
 );
 }
@@ -54729,7 +54729,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_173_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11704LU)
 );
 }
@@ -54757,7 +54757,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_174_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11707LU)
 );
 }
@@ -54785,7 +54785,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_175_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11705LU)
 );
 }
@@ -54813,7 +54813,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_176_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11714LU)
 );
 }
@@ -54841,7 +54841,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_177_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11711LU)
 );
 }
@@ -54869,7 +54869,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_178_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11710LU)
 );
 }
@@ -54897,7 +54897,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_179_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11713LU)
 );
 }
@@ -54925,7 +54925,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_180_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11712LU)
 );
 }
@@ -54953,7 +54953,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_181_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 11709LU)
 );
 }
@@ -54984,7 +54984,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_182_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 3704LU)
 );
 }
@@ -55012,7 +55012,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_183_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2272LU)
 );
 }
@@ -55043,7 +55043,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_184_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2271LU)
 );
 }
@@ -55071,7 +55071,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_185_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2736LU)
 );
 }
@@ -55099,7 +55099,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_186_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2737LU)
 );
 }
@@ -55127,7 +55127,7 @@ return retVal;
 }
 
 static UA_StatusCode function_namespace0_generated_187_finish(UA_Server *server, UA_UInt16* ns) {
-return UA_Server_addNode_finish(server, 
+return UA_Server_addNode_finish(server,
 UA_NODEID_NUMERIC(ns[0], 2735LU)
 );
 }
@@ -57099,7 +57099,7 @@ Subscription_unregisterPublishCallback(UA_Server *server, UA_Subscription *sub) 
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2017-2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
@@ -57603,7 +57603,7 @@ UA_MonitoredItem_ensureQueueSpace(UA_Server *server, UA_MonitoredItem *mon) {
     /* Nothing to do */
     if(mon->queueSize - mon->eventOverflows <= mon->parameters.queueSize)
         return;
-    
+
     /* Remove notifications until the required queue size is reached */
     UA_Subscription *sub = mon->subscription;
     UA_Boolean reporting = false;
@@ -57779,7 +57779,7 @@ UA_MonitoredItem_addLink(UA_Subscription *sub, UA_MonitoredItem *mon, UA_UInt32 
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *    Copyright 2017-2020 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
@@ -58163,20 +58163,20 @@ UA_StatusCode
 UA_Openssl_RSA_Oaep_Decrypt(UA_ByteString *data,
                             EVP_PKEY *privateKey);
 UA_StatusCode
-UA_Openssl_RSA_OAEP_Encrypt(UA_ByteString *data, /* The data that is encrypted. 
-                                                    The encrypted data will overwrite 
+UA_Openssl_RSA_OAEP_Encrypt(UA_ByteString *data, /* The data that is encrypted.
+                                                    The encrypted data will overwrite
                                                     the data that was supplied.  */
                              size_t paddingSize, X509 *publicX509);
 
-UA_StatusCode 
+UA_StatusCode
 UA_Openssl_Random_Key_PSHA256_Derive(const UA_ByteString *secret,
-                                     const UA_ByteString *seed, 
+                                     const UA_ByteString *seed,
                                      UA_ByteString *out);
 
-UA_StatusCode 
+UA_StatusCode
 UA_Openssl_RSA_Public_GetKeyLength(X509 *publicKeyX509, UA_Int32 *keyLen);
 
-UA_StatusCode 
+UA_StatusCode
 UA_Openssl_RSA_PKCS1_V15_SHA256_Sign(const UA_ByteString *data,
                                      EVP_PKEY *privateKey,
                                      UA_ByteString *outSignature);
@@ -58193,18 +58193,18 @@ UA_OpenSSL_HMAC_SHA256_Sign(const UA_ByteString *message,
 
 UA_StatusCode
 UA_OpenSSL_AES_256_CBC_Decrypt(const UA_ByteString *iv,
-                               const UA_ByteString *key, 
+                               const UA_ByteString *key,
                                UA_ByteString *data  /* [in/out]*/);
 
 UA_StatusCode
 UA_OpenSSL_AES_256_CBC_Encrypt(const UA_ByteString *iv,
-                               const UA_ByteString *key, 
+                               const UA_ByteString *key,
                                UA_ByteString *data  /* [in/out]*/);
 
-UA_StatusCode 
+UA_StatusCode
 UA_OpenSSL_X509_compare(const UA_ByteString *cert, const X509 *b);
 
-UA_StatusCode 
+UA_StatusCode
 UA_Openssl_RSA_Private_GetKeyLength(EVP_PKEY *privateKey,
                                     UA_Int32 *keyLen) ;
 
@@ -58213,13 +58213,13 @@ UA_OpenSSL_RSA_PKCS1_V15_SHA1_Verify(const UA_ByteString *msg,
                                       X509 *publicKeyX509,
                                       const UA_ByteString *signature);
 
-UA_StatusCode 
+UA_StatusCode
 UA_Openssl_RSA_PKCS1_V15_SHA1_Sign(const UA_ByteString *message,
                                    EVP_PKEY *privateKey,
                                    UA_ByteString *outSignature);
-UA_StatusCode 
+UA_StatusCode
 UA_Openssl_Random_Key_PSHA1_Derive(const UA_ByteString *secret,
-                                   const UA_ByteString *seed, 
+                                   const UA_ByteString *seed,
                                    UA_ByteString *out);
 UA_StatusCode
 UA_OpenSSL_HMAC_SHA1_Verify(const UA_ByteString *message,
@@ -58232,22 +58232,22 @@ UA_OpenSSL_HMAC_SHA1_Sign(const UA_ByteString *message,
                           UA_ByteString *signature);
 
 UA_StatusCode
-UA_Openssl_RSA_PKCS1_V15_Decrypt(UA_ByteString *data, 
+UA_Openssl_RSA_PKCS1_V15_Decrypt(UA_ByteString *data,
                                  EVP_PKEY *privateKey);
 
 UA_StatusCode
-UA_Openssl_RSA_PKCS1_V15_Encrypt(UA_ByteString *data, 
+UA_Openssl_RSA_PKCS1_V15_Encrypt(UA_ByteString *data,
                                  size_t paddingSize,
                                  X509 *publicX509);
 
 UA_StatusCode
 UA_OpenSSL_AES_128_CBC_Decrypt(const UA_ByteString *iv,
-                               const UA_ByteString *key, 
+                               const UA_ByteString *key,
                                UA_ByteString *data  /* [in/out]*/);
 
 UA_StatusCode
 UA_OpenSSL_AES_128_CBC_Encrypt(const UA_ByteString *iv,
-                               const UA_ByteString *key, 
+                               const UA_ByteString *key,
                                UA_ByteString *data  /* [in/out]*/);
 
 EVP_PKEY *
@@ -58791,7 +58791,7 @@ UA_OpenSSL_HMAC_SHA256_Verify (const UA_ByteString *     message,
     unsigned char buf[SHA256_DIGEST_LENGTH] = {0};
     UA_ByteString mac = {SHA256_DIGEST_LENGTH, buf};
 
-    if (HMAC (EVP_sha256(), key->data, (int) key->length, message->data, message->length, 
+    if (HMAC (EVP_sha256(), key->data, (int) key->length, message->data, message->length,
               mac.data, (unsigned int *) &mac.length) == NULL) {
         return UA_STATUSCODE_BADINTERNALERROR;
     }
@@ -59273,23 +59273,23 @@ typedef struct {
 } Policy_Context_Basic128Rsa15;
 
 typedef struct {
-    UA_ByteString             localSymSigningKey;  
-    UA_ByteString             localSymEncryptingKey; 
-    UA_ByteString             localSymIv; 
+    UA_ByteString             localSymSigningKey;
+    UA_ByteString             localSymEncryptingKey;
+    UA_ByteString             localSymIv;
     UA_ByteString             remoteSymSigningKey;
     UA_ByteString             remoteSymEncryptingKey;
     UA_ByteString             remoteSymIv;
 
     Policy_Context_Basic128Rsa15 * policyContext;
     UA_ByteString             remoteCertificate;
-    X509 *                    remoteCertificateX509;   
+    X509 *                    remoteCertificateX509;
 } Channel_Context_Basic128Rsa15;
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_Policy_Basic128Rsa15_New_Context (UA_SecurityPolicy * securityPolicy,
                                      const UA_ByteString localPrivateKey,
                                      const UA_Logger *   logger) {
-    Policy_Context_Basic128Rsa15 * context = (Policy_Context_Basic128Rsa15 *) 
+    Policy_Context_Basic128Rsa15 * context = (Policy_Context_Basic128Rsa15 *)
                                     UA_malloc (sizeof (Policy_Context_Basic128Rsa15));
     if (context == NULL) {
         return UA_STATUSCODE_BADOUTOFMEMORY;
@@ -59309,14 +59309,14 @@ UA_Policy_Basic128Rsa15_New_Context (UA_SecurityPolicy * securityPolicy,
     if (retval != UA_STATUSCODE_GOOD) {
         EVP_PKEY_free(context->localPrivateKey);
         UA_free (context);
-        return retval; 
+        return retval;
     }
 
     context->logger = logger;
     securityPolicy->policyContext = context;
 
     return UA_STATUSCODE_GOOD;
-}                                    
+}
 
 static void
 UA_Policy_Basic128Rsa15_Clear_Context (UA_SecurityPolicy *policy) {
@@ -59325,29 +59325,29 @@ UA_Policy_Basic128Rsa15_Clear_Context (UA_SecurityPolicy *policy) {
     }
     UA_ByteString_clear(&policy->localCertificate);
 
-    Policy_Context_Basic128Rsa15 * ctx = (Policy_Context_Basic128Rsa15 *) policy->policyContext;    
+    Policy_Context_Basic128Rsa15 * ctx = (Policy_Context_Basic128Rsa15 *) policy->policyContext;
     if (ctx == NULL) {
-        return; 
+        return;
     }
 
     /* delete all allocated members in the context */
 
     EVP_PKEY_free(ctx->localPrivateKey);
     UA_ByteString_clear(&ctx->localCertThumbprint);
-    UA_free (ctx);   
+    UA_free (ctx);
 
     return;
 }
 
 /* create the channel context */
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_ChannelModule_Basic128Rsa15_New_Context (const UA_SecurityPolicy * securityPolicy,
                                             const UA_ByteString *     remoteCertificate,
                                             void **                   channelContext) {
-    if (securityPolicy == NULL || remoteCertificate == NULL || 
+    if (securityPolicy == NULL || remoteCertificate == NULL ||
         channelContext == NULL) {
-        return UA_STATUSCODE_BADINTERNALERROR;                                  
+        return UA_STATUSCODE_BADINTERNALERROR;
         }
     Channel_Context_Basic128Rsa15 * context = (Channel_Context_Basic128Rsa15 *)
             UA_malloc (sizeof (Channel_Context_Basic128Rsa15));
@@ -59362,7 +59362,7 @@ UA_ChannelModule_Basic128Rsa15_New_Context (const UA_SecurityPolicy * securityPo
     UA_ByteString_init(&context->remoteSymEncryptingKey);
     UA_ByteString_init(&context->remoteSymIv);
 
-    UA_StatusCode retval = UA_copyCertificate (&context->remoteCertificate, 
+    UA_StatusCode retval = UA_copyCertificate (&context->remoteCertificate,
                                                remoteCertificate);
     if (retval != UA_STATUSCODE_GOOD) {
         UA_free (context);
@@ -59372,18 +59372,18 @@ UA_ChannelModule_Basic128Rsa15_New_Context (const UA_SecurityPolicy * securityPo
     /* decode to X509 */
     context->remoteCertificateX509 = UA_OpenSSL_LoadCertificate(&context->remoteCertificate);
     if (context->remoteCertificateX509 == NULL) {
-        UA_ByteString_clear (&context->remoteCertificate); 
+        UA_ByteString_clear (&context->remoteCertificate);
         UA_free (context);
         return UA_STATUSCODE_BADCERTIFICATECHAININCOMPLETE;
     }
 
-    context->policyContext = (Policy_Context_Basic128Rsa15 *) 
+    context->policyContext = (Policy_Context_Basic128Rsa15 *)
                              (securityPolicy->policyContext);
 
     *channelContext = context;
 
-    UA_LOG_INFO (securityPolicy->logger, 
-                 UA_LOGCATEGORY_SECURITYPOLICY, 
+    UA_LOG_INFO (securityPolicy->logger,
+                 UA_LOGCATEGORY_SECURITYPOLICY,
                  "The Basic128Rsa15 security policy channel with openssl is created.");
 
     return UA_STATUSCODE_GOOD;
@@ -59391,24 +59391,24 @@ UA_ChannelModule_Basic128Rsa15_New_Context (const UA_SecurityPolicy * securityPo
 
 /* delete the channel context */
 
-static void 
+static void
 UA_ChannelModule_Basic128Rsa15_Delete_Context (void * channelContext) {
     if (channelContext != NULL) {
         Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *)
                                               channelContext;
-        X509_free (cc->remoteCertificateX509);                                           
-        UA_ByteString_clear (&cc->remoteCertificate); 
+        X509_free (cc->remoteCertificateX509);
+        UA_ByteString_clear (&cc->remoteCertificate);
         UA_ByteString_clear (&cc->localSymSigningKey);
         UA_ByteString_clear (&cc->localSymEncryptingKey);
         UA_ByteString_clear (&cc->localSymIv);
         UA_ByteString_clear (&cc->remoteSymSigningKey);
         UA_ByteString_clear (&cc->remoteSymEncryptingKey);
         UA_ByteString_clear (&cc->remoteSymIv);
-        UA_LOG_INFO (cc->policyContext->logger, 
-                 UA_LOGCATEGORY_SECURITYPOLICY, 
-                 "The Basic128Rsa15 security policy channel with openssl is deleted.");   
+        UA_LOG_INFO (cc->policyContext->logger,
+                 UA_LOGCATEGORY_SECURITYPOLICY,
+                 "The Basic128Rsa15 security policy channel with openssl is deleted.");
 
-        UA_free (cc);                      
+        UA_free (cc);
     }
 }
 
@@ -59491,7 +59491,7 @@ UA_ChannelModule_Basic128Rsa15_compareCertificate (const void *          channel
         return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
 
-    const Channel_Context_Basic128Rsa15 * cc = 
+    const Channel_Context_Basic128Rsa15 * cc =
                      (const Channel_Context_Basic128Rsa15 *) channelContext;
     return UA_OpenSSL_X509_compare (certificate, cc->remoteCertificateX509);
 }
@@ -59512,12 +59512,12 @@ UA_Asy_Basic128Rsa15_compareCertificateThumbprint (const UA_SecurityPolicy * sec
 
 /* Generates a thumbprint for the specified certificate */
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_Asy_Basic128Rsa15_makeCertificateThumbprint (const UA_SecurityPolicy * securityPolicy,
                                   const UA_ByteString *     certificate,
                                   UA_ByteString *           thumbprint) {
-    return UA_Openssl_X509_GetCertificateThumbprint (certificate, 
-               thumbprint, false); 
+    return UA_Openssl_X509_GetCertificateThumbprint (certificate,
+               thumbprint, false);
 }
 
 static size_t
@@ -59530,36 +59530,36 @@ UA_AsySig_Basic128Rsa15_getRemoteSignatureSize (const UA_SecurityPolicy * securi
     const Channel_Context_Basic128Rsa15 * cc = (const Channel_Context_Basic128Rsa15 *) channelContext;
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Public_GetKeyLength (cc->remoteCertificateX509, &keyLen);
-    return (size_t) keyLen; 
+    return (size_t) keyLen;
 }
 
-static size_t 
+static size_t
 UA_AsySig_Basic128Rsa15_getLocalSignatureSize (const UA_SecurityPolicy * securityPolicy,
                                                const void *              channelContext) {
     if (securityPolicy == NULL || channelContext == NULL) {
         return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
 
-    Policy_Context_Basic128Rsa15 * pc = 
+    Policy_Context_Basic128Rsa15 * pc =
                (Policy_Context_Basic128Rsa15 *) securityPolicy->policyContext;
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Private_GetKeyLength (pc->localPrivateKey, &keyLen);
 
-    return (size_t) keyLen; 
+    return (size_t) keyLen;
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_AsySig_Basic128Rsa15_Verify (const UA_SecurityPolicy * securityPolicy,
-                                void *                    channelContext, 
+                                void *                    channelContext,
                                 const UA_ByteString *     message,
                                 const UA_ByteString *     signature) {
-    if (securityPolicy == NULL || message == NULL || signature == NULL || 
+    if (securityPolicy == NULL || message == NULL || signature == NULL ||
         channelContext == NULL) {
         return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
 
     Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;
-    UA_StatusCode retval = UA_OpenSSL_RSA_PKCS1_V15_SHA1_Verify (message, 
+    UA_StatusCode retval = UA_OpenSSL_RSA_PKCS1_V15_SHA1_Verify (message,
                             cc->remoteCertificateX509, signature);
 
     return retval;
@@ -59567,15 +59567,15 @@ UA_AsySig_Basic128Rsa15_Verify (const UA_SecurityPolicy * securityPolicy,
 
 static UA_StatusCode
 UA_AsySig_Basic128Rsa15_Sign (const UA_SecurityPolicy * securityPolicy,
-                              void *                    channelContext, 
+                              void *                    channelContext,
                               const UA_ByteString *     message,
                               UA_ByteString *           signature) {
     if (securityPolicy == NULL || channelContext == NULL ||
         message == NULL || signature == NULL) {
-        return UA_STATUSCODE_BADINVALIDARGUMENT; 
+        return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
 
-    Policy_Context_Basic128Rsa15 * pc = 
+    Policy_Context_Basic128Rsa15 * pc =
                (Policy_Context_Basic128Rsa15 *) securityPolicy->policyContext;
     return UA_Openssl_RSA_PKCS1_V15_SHA1_Sign (message, pc->localPrivateKey,
                                                signature);
@@ -59594,7 +59594,7 @@ UA_AsymEn_Basic128Rsa15_getRemotePlainTextBlockSize (const UA_SecurityPolicy * s
     return (size_t) keyLen - UA_SECURITYPOLICY_BASIC128RSA15_RSAPADDING_LEN;
 }
 
-static size_t 
+static size_t
 UA_AsymEn_Basic128Rsa15_getRemoteBlockSize (const UA_SecurityPolicy * securityPolicy,
                                             const void *              channelContext) {
     if (securityPolicy == NULL || channelContext == NULL) {
@@ -59619,21 +59619,21 @@ UA_AsymEn_Basic128Rsa15_getRemoteKeyLength (const UA_SecurityPolicy * securityPo
     return (size_t) keyLen * 8;
 }
 
-static size_t 
+static size_t
 UA_AsymEn_Basic128Rsa15_getLocalKeyLength (const UA_SecurityPolicy * securityPolicy,
                                            const void *              channelContext) {
     if (securityPolicy == NULL || channelContext == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
 
-    Policy_Context_Basic128Rsa15 * pc = 
+    Policy_Context_Basic128Rsa15 * pc =
                (Policy_Context_Basic128Rsa15 *) securityPolicy->policyContext;
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Private_GetKeyLength (pc->localPrivateKey, &keyLen);
 
-    return (size_t) keyLen * 8; 
+    return (size_t) keyLen * 8;
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_AsymEn_Basic128Rsa15_Decrypt (const UA_SecurityPolicy * securityPolicy,
                                  void *                    channelContext,
                                  UA_ByteString *           data) {
@@ -59642,9 +59642,9 @@ UA_AsymEn_Basic128Rsa15_Decrypt (const UA_SecurityPolicy * securityPolicy,
     }
 
     Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;
-    UA_StatusCode ret = UA_Openssl_RSA_PKCS1_V15_Decrypt (data, 
+    UA_StatusCode ret = UA_Openssl_RSA_PKCS1_V15_Decrypt (data,
                         cc->policyContext->localPrivateKey);
-    return ret;                        
+    return ret;
 }
 
 static UA_StatusCode
@@ -59653,10 +59653,10 @@ UA_AsymEn_Basic128Rsa15_Encrypt (const UA_SecurityPolicy * securityPolicy,
                             UA_ByteString *           data) {
     if (securityPolicy == NULL || channelContext == NULL ||
         data == NULL)
-        return UA_STATUSCODE_BADINVALIDARGUMENT; 
+        return UA_STATUSCODE_BADINVALIDARGUMENT;
 
-    Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;    
-    return UA_Openssl_RSA_PKCS1_V15_Encrypt (data, 
+    Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;
+    return UA_Openssl_RSA_PKCS1_V15_Encrypt (data,
                                              UA_SECURITYPOLICY_BASIC128RSA15_RSAPADDING_LEN,
                                              cc->remoteCertificateX509);
 }
@@ -59674,19 +59674,19 @@ UA_Sym_Basic128Rsa15_generateNonce (const UA_SecurityPolicy * sp,
 static UA_StatusCode
 UA_Sym_Basic128Rsa15_generateKey (const UA_SecurityPolicy * securityPolicy,
                                   const UA_ByteString *     secret,
-                                  const UA_ByteString *     seed, 
+                                  const UA_ByteString *     seed,
                                   UA_ByteString *           out) {
     return UA_Openssl_Random_Key_PSHA1_Derive (secret, seed, out);
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic128Rsa15_getLocalKeyLength (const UA_SecurityPolicy * securityPolicy,
                                      const void *              channelContext) {
     /* 16 bytes 128 bits */
-    return UA_SECURITYPOLICY_BASIC128RSA15_SYM_ENCRYPTION_KEY_LENGTH; 
+    return UA_SECURITYPOLICY_BASIC128RSA15_SYM_ENCRYPTION_KEY_LENGTH;
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic128Rsa15_getBlockSize (const UA_SecurityPolicy * securityPolicy,
                                      const void *              channelContext) {
     return UA_SECURITYPOLICY_BASIC128RSA15_SYM_ENCRYPTION_BLOCK_SIZE;
@@ -59695,13 +59695,13 @@ UA_SymEn_Basic128Rsa15_getBlockSize (const UA_SecurityPolicy * securityPolicy,
 static size_t
 UA_SymEn_Basic128Rsa15_getRemoteKeyLength (const UA_SecurityPolicy * securityPolicy,
                                            const void * channelContext) {
-    return UA_SECURITYPOLICY_BASIC128RSA15_SYM_ENCRYPTION_KEY_LENGTH; 
+    return UA_SECURITYPOLICY_BASIC128RSA15_SYM_ENCRYPTION_KEY_LENGTH;
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic128Rsa15_getPlainTextBlockSize (const UA_SecurityPolicy * securityPolicy,
                                          const void *              channelContext) {
-    return UA_SECURITYPOLICY_BASIC128RSA15_SYM_PLAIN_TEXT_BLOCK_SIZE;                                                        
+    return UA_SECURITYPOLICY_BASIC128RSA15_SYM_PLAIN_TEXT_BLOCK_SIZE;
 }
 
 static UA_StatusCode
@@ -59710,7 +59710,7 @@ UA_SymEn_Basic128Rsa15_Encrypt (const UA_SecurityPolicy * securityPolicy,
                                 UA_ByteString *           data) {
     if(securityPolicy == NULL || channelContext == NULL || data == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    
+
     Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;
     return UA_OpenSSL_AES_128_CBC_Encrypt (&cc->localSymIv, &cc->localSymEncryptingKey, data);
 }
@@ -59721,14 +59721,14 @@ UA_SymEn_Basic128Rsa15_Decrypt (const UA_SecurityPolicy * securityPolicy,
                                 UA_ByteString *           data) {
     if(securityPolicy == NULL || channelContext == NULL || data == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;    
+    Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;
     return UA_OpenSSL_AES_128_CBC_Decrypt (&cc->remoteSymIv, &cc->remoteSymEncryptingKey, data);
 }
 
-static size_t 
+static size_t
 UA_SymSig_Basic128Rsa15_getKeyLength (const UA_SecurityPolicy * securityPolicy,
                                       const void *              channelContext) {
-    return UA_SECURITYPOLICY_BASIC128RSA15_SYM_SIGNING_KEY_LENGTH; 
+    return UA_SECURITYPOLICY_BASIC128RSA15_SYM_SIGNING_KEY_LENGTH;
 }
 
 static size_t
@@ -59739,28 +59739,28 @@ UA_SymSig_Basic128Rsa15_getSignatureSize (const UA_SecurityPolicy * securityPoli
 
 static UA_StatusCode
 UA_SymSig_Basic128Rsa15_Verify (const UA_SecurityPolicy * securityPolicy,
-                                void *                    channelContext, 
+                                void *                    channelContext,
                                 const UA_ByteString *     message,
                                 const UA_ByteString *     signature) {
-    if (securityPolicy == NULL || channelContext == NULL || 
+    if (securityPolicy == NULL || channelContext == NULL ||
        message == NULL || signature == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    
+
     Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;
-    return UA_OpenSSL_HMAC_SHA1_Verify (message, 
-                                        &cc->remoteSymSigningKey, 
-                                        signature);   
+    return UA_OpenSSL_HMAC_SHA1_Verify (message,
+                                        &cc->remoteSymSigningKey,
+                                        signature);
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_SymSig_Basic128Rsa15_Sign (const UA_SecurityPolicy * securityPolicy,
-                              void *                    channelContext, 
+                              void *                    channelContext,
                               const UA_ByteString *     message,
                               UA_ByteString *           signature) {
-    if (securityPolicy == NULL || channelContext == NULL || 
+    if (securityPolicy == NULL || channelContext == NULL ||
        message == NULL || signature == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    
+
     Channel_Context_Basic128Rsa15 * cc = (Channel_Context_Basic128Rsa15 *) channelContext;
     return UA_OpenSSL_HMAC_SHA1_Sign (message, &cc->localSymSigningKey, signature);
 }
@@ -59770,15 +59770,15 @@ UA_SymSig_Basic128Rsa15_Sign (const UA_SecurityPolicy * securityPolicy,
 UA_StatusCode
 UA_SecurityPolicy_Basic128Rsa15 (UA_SecurityPolicy * policy,
                                  const UA_ByteString localCertificate,
-                                 const UA_ByteString localPrivateKey, 
+                                 const UA_ByteString localPrivateKey,
                                  const UA_Logger *   logger) {
 
     UA_SecurityPolicyAsymmetricModule * const asymmetricModule = &policy->asymmetricModule;
-    UA_SecurityPolicySymmetricModule * const  symmetricModule = &policy->symmetricModule;  
-    UA_SecurityPolicyChannelModule * const    channelModule = &policy->channelModule;  
-    UA_StatusCode                             retval; 
+    UA_SecurityPolicySymmetricModule * const  symmetricModule = &policy->symmetricModule;
+    UA_SecurityPolicyChannelModule * const    channelModule = &policy->channelModule;
+    UA_StatusCode                             retval;
 
-    UA_LOG_INFO (logger, UA_LOGCATEGORY_SECURITYPOLICY, 
+    UA_LOG_INFO (logger, UA_LOGCATEGORY_SECURITYPOLICY,
                  "The Basic128Rsa15 security policy with openssl is added.");
 
     UA_Openssl_Init ();
@@ -59797,7 +59797,7 @@ UA_SecurityPolicy_Basic128Rsa15 (UA_SecurityPolicy * policy,
     channelModule->setRemoteSymSigningKey = UA_ChannelModule_Basic128Rsa15_setRemoteSymSigningKey;
     channelModule->setRemoteSymEncryptingKey = UA_ChannelModule_Basic128Rsa15_setRemoteSymEncryptingKey;
     channelModule->setRemoteSymIv = UA_ChannelModule_Basic128Rsa15_setRemoteSymIv;
-    channelModule->compareCertificate = UA_ChannelModule_Basic128Rsa15_compareCertificate;    
+    channelModule->compareCertificate = UA_ChannelModule_Basic128Rsa15_compareCertificate;
 
     retval = UA_OpenSSL_LoadLocalCertificate(&localCertificate, &policy->localCertificate);
 
@@ -59811,14 +59811,14 @@ UA_SecurityPolicy_Basic128Rsa15 (UA_SecurityPolicy * policy,
 
     /* AsymmetricModule - signature algorithm */
 
-    UA_SecurityPolicySignatureAlgorithm * asySigAlgorithm = 
+    UA_SecurityPolicySignatureAlgorithm * asySigAlgorithm =
                     &asymmetricModule->cryptoModule.signatureAlgorithm;
     asySigAlgorithm->uri = UA_STRING("http://www.w3.org/2000/09/xmldsig#rsa-sha1\0");
     asySigAlgorithm->getRemoteSignatureSize = UA_AsySig_Basic128Rsa15_getRemoteSignatureSize;
     asySigAlgorithm->getLocalSignatureSize = UA_AsySig_Basic128Rsa15_getLocalSignatureSize;
     asySigAlgorithm->getLocalKeyLength = NULL;
     asySigAlgorithm->getRemoteKeyLength = NULL;
-    asySigAlgorithm->verify = UA_AsySig_Basic128Rsa15_Verify;    
+    asySigAlgorithm->verify = UA_AsySig_Basic128Rsa15_Verify;
     asySigAlgorithm->sign = UA_AsySig_Basic128Rsa15_Sign;
 
     /*  AsymmetricModule encryption algorithm */
@@ -59839,13 +59839,13 @@ UA_SecurityPolicy_Basic128Rsa15 (UA_SecurityPolicy * policy,
 
     symmetricModule->secureChannelNonceLength = 16;  /* 128 bits*/
     symmetricModule->generateNonce = UA_Sym_Basic128Rsa15_generateNonce;
-    symmetricModule->generateKey = UA_Sym_Basic128Rsa15_generateKey; 
+    symmetricModule->generateKey = UA_Sym_Basic128Rsa15_generateKey;
 
     /* Symmetric encryption Algorithm */
 
     UA_SecurityPolicyEncryptionAlgorithm * symEncryptionAlgorithm =
         &symmetricModule->cryptoModule.encryptionAlgorithm;
-    symEncryptionAlgorithm->uri = UA_STRING("http://www.w3.org/2001/04/xmlenc#aes128-cbc\0");   
+    symEncryptionAlgorithm->uri = UA_STRING("http://www.w3.org/2001/04/xmlenc#aes128-cbc\0");
     symEncryptionAlgorithm->getLocalKeyLength = UA_SymEn_Basic128Rsa15_getLocalKeyLength;
     symEncryptionAlgorithm->getLocalBlockSize = UA_SymEn_Basic128Rsa15_getBlockSize;
     symEncryptionAlgorithm->getRemoteKeyLength = UA_SymEn_Basic128Rsa15_getRemoteKeyLength;
@@ -59853,7 +59853,7 @@ UA_SecurityPolicy_Basic128Rsa15 (UA_SecurityPolicy * policy,
     symEncryptionAlgorithm->getLocalPlainTextBlockSize = UA_SymEn_Basic128Rsa15_getPlainTextBlockSize;
     symEncryptionAlgorithm->getRemotePlainTextBlockSize = UA_SymEn_Basic128Rsa15_getPlainTextBlockSize;
     symEncryptionAlgorithm->decrypt = UA_SymEn_Basic128Rsa15_Decrypt;
-    symEncryptionAlgorithm->encrypt = UA_SymEn_Basic128Rsa15_Encrypt;    
+    symEncryptionAlgorithm->encrypt = UA_SymEn_Basic128Rsa15_Encrypt;
 
     /* Symmetric signature Algorithm */
 
@@ -59875,9 +59875,9 @@ UA_SecurityPolicy_Basic128Rsa15 (UA_SecurityPolicy * policy,
         UA_ByteString_clear (&policy->localCertificate);
         return retval;
     }
-    policy->clear = UA_Policy_Basic128Rsa15_Clear_Context;    
+    policy->clear = UA_Policy_Basic128Rsa15_Clear_Context;
 
-    /* Use the same signature algorithm as the asymmetric component for 
+    /* Use the same signature algorithm as the asymmetric component for
        certificate signing (see standard) */
     policy->certificateSigningAlgorithm = policy->asymmetricModule.cryptoModule.signatureAlgorithm;
 
@@ -59917,28 +59917,28 @@ typedef struct {
 } Policy_Context_Basic256;
 
 typedef struct {
-    UA_ByteString             localSymSigningKey;  
-    UA_ByteString             localSymEncryptingKey; 
-    UA_ByteString             localSymIv; 
+    UA_ByteString             localSymSigningKey;
+    UA_ByteString             localSymEncryptingKey;
+    UA_ByteString             localSymIv;
     UA_ByteString             remoteSymSigningKey;
     UA_ByteString             remoteSymEncryptingKey;
     UA_ByteString             remoteSymIv;
 
     Policy_Context_Basic256 * policyContext;
     UA_ByteString             remoteCertificate;
-    X509 *                    remoteCertificateX509;   
+    X509 *                    remoteCertificateX509;
 } Channel_Context_Basic256;
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_Policy_Basic256_New_Context (UA_SecurityPolicy * securityPolicy,
                                 const UA_ByteString localPrivateKey,
                                 const UA_Logger *   logger) {
-    Policy_Context_Basic256 * context = (Policy_Context_Basic256 *) 
+    Policy_Context_Basic256 * context = (Policy_Context_Basic256 *)
                                     UA_malloc (sizeof (Policy_Context_Basic256));
     if (context == NULL) {
         return UA_STATUSCODE_BADOUTOFMEMORY;
     }
-    
+
     context->localPrivateKey = UA_OpenSSL_LoadPrivateKey(&localPrivateKey);
 
     if (!context->localPrivateKey) {
@@ -59953,14 +59953,14 @@ UA_Policy_Basic256_New_Context (UA_SecurityPolicy * securityPolicy,
     if (retval != UA_STATUSCODE_GOOD) {
         EVP_PKEY_free(context->localPrivateKey);
         UA_free (context);
-        return retval; 
+        return retval;
     }
 
     context->logger = logger;
     securityPolicy->policyContext = context;
 
     return UA_STATUSCODE_GOOD;
-}                                    
+}
 
 static void
 UA_Policy_Basic256_Clear_Context (UA_SecurityPolicy *policy) {
@@ -59969,29 +59969,29 @@ UA_Policy_Basic256_Clear_Context (UA_SecurityPolicy *policy) {
     }
     UA_ByteString_clear(&policy->localCertificate);
 
-    Policy_Context_Basic256 * ctx = (Policy_Context_Basic256 *) policy->policyContext;    
+    Policy_Context_Basic256 * ctx = (Policy_Context_Basic256 *) policy->policyContext;
     if (ctx == NULL) {
-        return; 
+        return;
     }
 
     /* delete all allocated members in the context */
 
     EVP_PKEY_free(ctx->localPrivateKey);
     UA_ByteString_clear(&ctx->localCertThumbprint);
-    UA_free (ctx);   
+    UA_free (ctx);
 
-    return;         
+    return;
 }
 
 /* create the channel context */
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_ChannelModule_Basic256_New_Context (const UA_SecurityPolicy * securityPolicy,
                                        const UA_ByteString *     remoteCertificate,
                                        void **                   channelContext) {
-    if (securityPolicy == NULL || remoteCertificate == NULL || 
+    if (securityPolicy == NULL || remoteCertificate == NULL ||
         channelContext == NULL) {
-        return UA_STATUSCODE_BADINTERNALERROR;                                  
+        return UA_STATUSCODE_BADINTERNALERROR;
         }
     Channel_Context_Basic256 * context = (Channel_Context_Basic256 *)
             UA_malloc (sizeof (Channel_Context_Basic256));
@@ -60006,7 +60006,7 @@ UA_ChannelModule_Basic256_New_Context (const UA_SecurityPolicy * securityPolicy,
     UA_ByteString_init(&context->remoteSymEncryptingKey);
     UA_ByteString_init(&context->remoteSymIv);
 
-    UA_StatusCode retval = UA_copyCertificate (&context->remoteCertificate, 
+    UA_StatusCode retval = UA_copyCertificate (&context->remoteCertificate,
                                                remoteCertificate);
     if (retval != UA_STATUSCODE_GOOD) {
         UA_free (context);
@@ -60016,18 +60016,18 @@ UA_ChannelModule_Basic256_New_Context (const UA_SecurityPolicy * securityPolicy,
     /* decode to X509 */
     context->remoteCertificateX509 = UA_OpenSSL_LoadCertificate(&context->remoteCertificate);
     if (context->remoteCertificateX509 == NULL) {
-        UA_ByteString_clear (&context->remoteCertificate); 
+        UA_ByteString_clear (&context->remoteCertificate);
         UA_free (context);
         return UA_STATUSCODE_BADCERTIFICATECHAININCOMPLETE;
     }
 
-    context->policyContext = (Policy_Context_Basic256 *) 
+    context->policyContext = (Policy_Context_Basic256 *)
                              (securityPolicy->policyContext);
 
     *channelContext = context;
 
-    UA_LOG_INFO (securityPolicy->logger, 
-                 UA_LOGCATEGORY_SECURITYPOLICY, 
+    UA_LOG_INFO (securityPolicy->logger,
+                 UA_LOGCATEGORY_SECURITYPOLICY,
                  "The basic256 security policy channel with openssl is created.");
 
     return UA_STATUSCODE_GOOD;
@@ -60035,29 +60035,29 @@ UA_ChannelModule_Basic256_New_Context (const UA_SecurityPolicy * securityPolicy,
 
 /* delete the channel context */
 
-static void 
+static void
 UA_ChannelModule_Basic256_Delete_Context (void * channelContext) {
     if (channelContext != NULL) {
         Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *)
                                            channelContext;
-        X509_free (cc->remoteCertificateX509);                                           
-        UA_ByteString_clear (&cc->remoteCertificate); 
+        X509_free (cc->remoteCertificateX509);
+        UA_ByteString_clear (&cc->remoteCertificate);
         UA_ByteString_clear (&cc->localSymSigningKey);
         UA_ByteString_clear (&cc->localSymEncryptingKey);
         UA_ByteString_clear (&cc->localSymIv);
         UA_ByteString_clear (&cc->remoteSymSigningKey);
         UA_ByteString_clear (&cc->remoteSymEncryptingKey);
         UA_ByteString_clear (&cc->remoteSymIv);
-        UA_LOG_INFO (cc->policyContext->logger, 
-                 UA_LOGCATEGORY_SECURITYPOLICY, 
-                 "The basic256 security policy channel with openssl is deleted.");   
+        UA_LOG_INFO (cc->policyContext->logger,
+                 UA_LOGCATEGORY_SECURITYPOLICY,
+                 "The basic256 security policy channel with openssl is deleted.");
 
-        UA_free (cc);                      
+        UA_free (cc);
     }
 }
 
-/* Compares the supplied certificate with the certificate 
- * in the endpoint context 
+/* Compares the supplied certificate with the certificate
+ * in the endpoint context
  */
 
 static UA_StatusCode
@@ -60076,12 +60076,12 @@ UA_Asy_Basic256_compareCertificateThumbprint (const UA_SecurityPolicy * security
 
 /* Generates a thumbprint for the specified certificate */
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_Asy_Basic256_makeCertificateThumbprint (const UA_SecurityPolicy * securityPolicy,
                                   const UA_ByteString *     certificate,
                                   UA_ByteString *           thumbprint) {
-    return UA_Openssl_X509_GetCertificateThumbprint (certificate, 
-               thumbprint, false); 
+    return UA_Openssl_X509_GetCertificateThumbprint (certificate,
+               thumbprint, false);
 }
 
 static UA_StatusCode
@@ -60163,7 +60163,7 @@ UA_ChannelModule_Basic256_compareCertificate (const void *          channelConte
         return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
 
-    const Channel_Context_Basic256 * cc = 
+    const Channel_Context_Basic256 * cc =
                      (const Channel_Context_Basic256 *) channelContext;
     return UA_OpenSSL_X509_compare (certificate, cc->remoteCertificateX509);
 }
@@ -60178,36 +60178,36 @@ UA_AsySig_Basic256_getRemoteSignatureSize (const UA_SecurityPolicy * securityPol
     const Channel_Context_Basic256 * cc = (const Channel_Context_Basic256 *) channelContext;
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Public_GetKeyLength (cc->remoteCertificateX509, &keyLen);
-    return (size_t) keyLen; 
+    return (size_t) keyLen;
 }
 
-static size_t 
+static size_t
 UA_AsySig_Basic256_getLocalSignatureSize (const UA_SecurityPolicy * securityPolicy,
                                           const void *              channelContext) {
     if (securityPolicy == NULL || channelContext == NULL) {
         return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
 
-    Policy_Context_Basic256 * pc = 
+    Policy_Context_Basic256 * pc =
                (Policy_Context_Basic256 *) securityPolicy->policyContext;
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Private_GetKeyLength (pc->localPrivateKey, &keyLen);
 
-    return (size_t) keyLen; 
+    return (size_t) keyLen;
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_AsySig_Basic256_Verify (const UA_SecurityPolicy * securityPolicy,
-                           void *                    channelContext, 
+                           void *                    channelContext,
                            const UA_ByteString *     message,
                            const UA_ByteString *     signature) {
-    if (securityPolicy == NULL || message == NULL || signature == NULL || 
+    if (securityPolicy == NULL || message == NULL || signature == NULL ||
         channelContext == NULL) {
         return UA_STATUSCODE_BADINVALIDARGUMENT;
         }
 
     Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;
-    UA_StatusCode retval = UA_OpenSSL_RSA_PKCS1_V15_SHA1_Verify (message, 
+    UA_StatusCode retval = UA_OpenSSL_RSA_PKCS1_V15_SHA1_Verify (message,
                             cc->remoteCertificateX509, signature);
 
     return retval;
@@ -60215,15 +60215,15 @@ UA_AsySig_Basic256_Verify (const UA_SecurityPolicy * securityPolicy,
 
 static UA_StatusCode
 UA_AsySig_Basic256_Sign (const UA_SecurityPolicy * securityPolicy,
-                         void *                    channelContext, 
+                         void *                    channelContext,
                          const UA_ByteString *     message,
                          UA_ByteString *           signature) {
     if (securityPolicy == NULL || channelContext == NULL ||
         message == NULL || signature == NULL) {
-        return UA_STATUSCODE_BADINVALIDARGUMENT; 
+        return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
 
-    Policy_Context_Basic256 * pc = 
+    Policy_Context_Basic256 * pc =
                (Policy_Context_Basic256 *) securityPolicy->policyContext;
     return UA_Openssl_RSA_PKCS1_V15_SHA1_Sign (message, pc->localPrivateKey,
                                                signature);
@@ -60242,7 +60242,7 @@ UA_AsymEn_Basic256_getRemotePlainTextBlockSize (const UA_SecurityPolicy * securi
     return (size_t) keyLen - UA_SECURITYPOLICY_BASIC256SHA1_RSAPADDING_LEN;
 }
 
-static size_t 
+static size_t
 UA_AsymEn_Basic256_getRemoteBlockSize (const UA_SecurityPolicy * securityPolicy,
                                        const void *              channelContext) {
     if (securityPolicy == NULL || channelContext == NULL) {
@@ -60267,21 +60267,21 @@ UA_AsymEn_Basic256_getRemoteKeyLength (const UA_SecurityPolicy * securityPolicy,
     return (size_t) keyLen * 8;
 }
 
-static size_t 
+static size_t
 UA_AsymEn_Basic256_getLocalKeyLength (const UA_SecurityPolicy * securityPolicy,
                                       const void *              channelContext) {
     if (securityPolicy == NULL || channelContext == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
 
-    Policy_Context_Basic256 * pc = 
+    Policy_Context_Basic256 * pc =
                (Policy_Context_Basic256 *) securityPolicy->policyContext;
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Private_GetKeyLength (pc->localPrivateKey, &keyLen);
 
-    return (size_t) keyLen * 8; 
+    return (size_t) keyLen * 8;
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_AsymEn_Basic256_Decrypt (const UA_SecurityPolicy * securityPolicy,
                             void *                    channelContext,
                             UA_ByteString *           data) {
@@ -60290,9 +60290,9 @@ UA_AsymEn_Basic256_Decrypt (const UA_SecurityPolicy * securityPolicy,
     }
 
     Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;
-    UA_StatusCode ret = UA_Openssl_RSA_Oaep_Decrypt (data, 
+    UA_StatusCode ret = UA_Openssl_RSA_Oaep_Decrypt (data,
                         cc->policyContext->localPrivateKey);
-    return ret;                        
+    return ret;
 }
 
 static UA_StatusCode
@@ -60301,10 +60301,10 @@ UA_AsymEn_Basic256_Encrypt (const UA_SecurityPolicy * securityPolicy,
                             UA_ByteString *           data) {
     if (securityPolicy == NULL || channelContext == NULL ||
         data == NULL) {
-        return UA_STATUSCODE_BADINVALIDARGUMENT; 
+        return UA_STATUSCODE_BADINVALIDARGUMENT;
     }
 
-    Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;    
+    Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;
     return UA_Openssl_RSA_OAEP_Encrypt (data, UA_SECURITYPOLICY_BASIC256SHA1_RSAPADDING_LEN,
                                         cc->remoteCertificateX509);
 }
@@ -60322,19 +60322,19 @@ UA_Sym_Basic256_generateNonce (const UA_SecurityPolicy * sp,
 static UA_StatusCode
 UA_Sym_Basic256_generateKey (const UA_SecurityPolicy * securityPolicy,
                              const UA_ByteString *     secret,
-                             const UA_ByteString *     seed, 
+                             const UA_ByteString *     seed,
                              UA_ByteString *           out) {
     return UA_Openssl_Random_Key_PSHA1_Derive (secret, seed, out);
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic256_getLocalKeyLength (const UA_SecurityPolicy * securityPolicy,
                                      const void *              channelContext) {
     /* 32 bytes 256 bits */
-    return UA_SECURITYPOLICY_BASIC256_SYM_ENCRYPTION_KEY_LENGTH; 
+    return UA_SECURITYPOLICY_BASIC256_SYM_ENCRYPTION_KEY_LENGTH;
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic256_getBlockSize (const UA_SecurityPolicy * securityPolicy,
                                 const void *              channelContext) {
     return UA_SECURITYPOLICY_BASIC256_SYM_ENCRYPTION_BLOCK_SIZE;
@@ -60344,13 +60344,13 @@ static size_t
 UA_SymEn_Basic256_getRemoteKeyLength (const UA_SecurityPolicy * securityPolicy,
                                       const void * channelContext) {
     /* 32 bytes 256 bits */
-    return UA_SECURITYPOLICY_BASIC256_SYM_ENCRYPTION_KEY_LENGTH; 
+    return UA_SECURITYPOLICY_BASIC256_SYM_ENCRYPTION_KEY_LENGTH;
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic256_getPlainTextBlockSize (const UA_SecurityPolicy * securityPolicy,
                                          const void *              channelContext) {
-    return UA_SECURITYPOLICY_BASIC256_SYM_PLAIN_TEXT_BLOCK_SIZE;                                                        
+    return UA_SECURITYPOLICY_BASIC256_SYM_PLAIN_TEXT_BLOCK_SIZE;
 }
 
 static UA_StatusCode
@@ -60359,7 +60359,7 @@ UA_SymEn_Basic256_Encrypt (const UA_SecurityPolicy * securityPolicy,
                            UA_ByteString *           data) {
     if(securityPolicy == NULL || channelContext == NULL || data == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    
+
     Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;
     return UA_OpenSSL_AES_256_CBC_Encrypt (&cc->localSymIv, &cc->localSymEncryptingKey, data);
 }
@@ -60370,14 +60370,14 @@ UA_SymEn_Basic256_Decrypt (const UA_SecurityPolicy * securityPolicy,
                            UA_ByteString *           data) {
     if(securityPolicy == NULL || channelContext == NULL || data == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;    
+    Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;
     return UA_OpenSSL_AES_256_CBC_Decrypt (&cc->remoteSymIv, &cc->remoteSymEncryptingKey, data);
 }
 
-static size_t 
+static size_t
 UA_SymSig_Basic256_getKeyLength (const UA_SecurityPolicy * securityPolicy,
                                  const void *              channelContext) {
-    return UA_SECURITYPOLICY_BASIC256_SYM_SIGNING_KEY_LENGTH; 
+    return UA_SECURITYPOLICY_BASIC256_SYM_SIGNING_KEY_LENGTH;
 }
 
 static size_t
@@ -60388,28 +60388,28 @@ UA_SymSig_Basic256_getSignatureSize (const UA_SecurityPolicy * securityPolicy,
 
 static UA_StatusCode
 UA_SymSig_Basic256_Verify (const UA_SecurityPolicy * securityPolicy,
-                           void *                    channelContext, 
+                           void *                    channelContext,
                            const UA_ByteString *     message,
                            const UA_ByteString *     signature) {
-    if (securityPolicy == NULL || channelContext == NULL || 
+    if (securityPolicy == NULL || channelContext == NULL ||
        message == NULL || signature == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    
+
     Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;
-    return UA_OpenSSL_HMAC_SHA1_Verify (message, 
-                                        &cc->remoteSymSigningKey, 
-                                        signature);   
+    return UA_OpenSSL_HMAC_SHA1_Verify (message,
+                                        &cc->remoteSymSigningKey,
+                                        signature);
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_SymSig_Basic256_Sign (const UA_SecurityPolicy * securityPolicy,
-                         void *                    channelContext, 
+                         void *                    channelContext,
                          const UA_ByteString *     message,
                          UA_ByteString *           signature) {
-    if (securityPolicy == NULL || channelContext == NULL || 
+    if (securityPolicy == NULL || channelContext == NULL ||
        message == NULL || signature == NULL)
         return UA_STATUSCODE_BADINVALIDARGUMENT;
-    
+
     Channel_Context_Basic256 * cc = (Channel_Context_Basic256 *) channelContext;
     return UA_OpenSSL_HMAC_SHA1_Sign (message, &cc->localSymSigningKey, signature);
 }
@@ -60419,14 +60419,14 @@ UA_SymSig_Basic256_Sign (const UA_SecurityPolicy * securityPolicy,
 UA_StatusCode
 UA_SecurityPolicy_Basic256 (UA_SecurityPolicy * policy,
                             const UA_ByteString localCertificate,
-                            const UA_ByteString localPrivateKey, 
+                            const UA_ByteString localPrivateKey,
                             const UA_Logger *   logger) {
     UA_SecurityPolicyAsymmetricModule * const asymmetricModule = &policy->asymmetricModule;
-    UA_SecurityPolicySymmetricModule * const  symmetricModule = &policy->symmetricModule; 
-    UA_SecurityPolicyChannelModule * const    channelModule = &policy->channelModule;  
-    UA_StatusCode                             retval; 
+    UA_SecurityPolicySymmetricModule * const  symmetricModule = &policy->symmetricModule;
+    UA_SecurityPolicyChannelModule * const    channelModule = &policy->channelModule;
+    UA_StatusCode                             retval;
 
-    UA_LOG_INFO (logger, UA_LOGCATEGORY_SECURITYPOLICY, 
+    UA_LOG_INFO (logger, UA_LOGCATEGORY_SECURITYPOLICY,
                  "The basic256 security policy with openssl is added.");
 
     UA_Openssl_Init ();
@@ -60464,7 +60464,7 @@ UA_SecurityPolicy_Basic256 (UA_SecurityPolicy * policy,
     asySigAlgorithm->uri = UA_STRING("http://www.w3.org/2000/09/xmldsig#rsa-sha1\0");
     asySigAlgorithm->getRemoteSignatureSize = UA_AsySig_Basic256_getRemoteSignatureSize;
     asySigAlgorithm->getLocalSignatureSize = UA_AsySig_Basic256_getLocalSignatureSize;
-    asySigAlgorithm->verify = UA_AsySig_Basic256_Verify;    
+    asySigAlgorithm->verify = UA_AsySig_Basic256_Verify;
     asySigAlgorithm->sign = UA_AsySig_Basic256_Sign;
     asySigAlgorithm->getLocalKeyLength = NULL;
     asySigAlgorithm->getRemoteKeyLength = NULL;
@@ -60479,7 +60479,7 @@ UA_SecurityPolicy_Basic256 (UA_SecurityPolicy * policy,
     asymEncryAlg->getRemoteKeyLength = UA_AsymEn_Basic256_getRemoteKeyLength;
     asymEncryAlg->getLocalKeyLength = UA_AsymEn_Basic256_getLocalKeyLength;
     asymEncryAlg->getLocalPlainTextBlockSize = NULL;
-    asymEncryAlg->getLocalBlockSize = NULL;    
+    asymEncryAlg->getLocalBlockSize = NULL;
     asymEncryAlg->decrypt = UA_AsymEn_Basic256_Decrypt;
     asymEncryAlg->encrypt = UA_AsymEn_Basic256_Encrypt;
 
@@ -60487,13 +60487,13 @@ UA_SecurityPolicy_Basic256 (UA_SecurityPolicy * policy,
 
     symmetricModule->secureChannelNonceLength = 32;
     symmetricModule->generateNonce = UA_Sym_Basic256_generateNonce;
-    symmetricModule->generateKey = UA_Sym_Basic256_generateKey; 
+    symmetricModule->generateKey = UA_Sym_Basic256_generateKey;
 
     /* Symmetric encryption Algorithm */
 
     UA_SecurityPolicyEncryptionAlgorithm * symEncryptionAlgorithm =
         &symmetricModule->cryptoModule.encryptionAlgorithm;
-    symEncryptionAlgorithm->uri = UA_STRING("http://www.w3.org/2001/04/xmlenc#aes256-cbc\0");   
+    symEncryptionAlgorithm->uri = UA_STRING("http://www.w3.org/2001/04/xmlenc#aes256-cbc\0");
     symEncryptionAlgorithm->getLocalKeyLength = UA_SymEn_Basic256_getLocalKeyLength;
     symEncryptionAlgorithm->getLocalBlockSize = UA_SymEn_Basic256_getBlockSize;
     symEncryptionAlgorithm->getRemoteKeyLength = UA_SymEn_Basic256_getRemoteKeyLength;
@@ -60522,9 +60522,9 @@ UA_SecurityPolicy_Basic256 (UA_SecurityPolicy * policy,
         UA_ByteString_clear (&policy->localCertificate);
         return retval;
     }
-    policy->clear = UA_Policy_Basic256_Clear_Context;    
+    policy->clear = UA_Policy_Basic256_Clear_Context;
 
-    /* Use the same signature algorithm as the asymmetric component for 
+    /* Use the same signature algorithm as the asymmetric component for
        certificate signing (see standard) */
     policy->certificateSigningAlgorithm = policy->asymmetricModule.cryptoModule.signatureAlgorithm;
 
@@ -60566,25 +60566,25 @@ UA_SecurityPolicy_Basic256 (UA_SecurityPolicy * policy,
 typedef struct {
     EVP_PKEY *                localPrivateKey;
     UA_ByteString             localCertThumbprint;
-    const UA_Logger *         logger;    
+    const UA_Logger *         logger;
 } Policy_Context_Basic256Sha256;
 
 typedef struct {
-    UA_ByteString localSymSigningKey;  
-    UA_ByteString localSymEncryptingKey; 
-    UA_ByteString localSymIv; 
+    UA_ByteString localSymSigningKey;
+    UA_ByteString localSymEncryptingKey;
+    UA_ByteString localSymIv;
     UA_ByteString remoteSymSigningKey;
     UA_ByteString remoteSymEncryptingKey;
     UA_ByteString remoteSymIv;
 
     Policy_Context_Basic256Sha256 * policyContext;
     UA_ByteString                   remoteCertificate;
-    X509 *                          remoteCertificateX509; /* X509 */      
+    X509 *                          remoteCertificateX509; /* X509 */
 } Channel_Context_Basic256Sha256;
 
 /* create the policy context */
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_Policy_New_Context (UA_SecurityPolicy * securityPolicy,
                        const UA_ByteString localPrivateKey,
                        const UA_Logger *   logger) {
@@ -60593,7 +60593,7 @@ UA_Policy_New_Context (UA_SecurityPolicy * securityPolicy,
     if (context == NULL) {
         return UA_STATUSCODE_BADOUTOFMEMORY;
     }
-    
+
     context->localPrivateKey = UA_OpenSSL_LoadPrivateKey(&localPrivateKey);
 
     if (!context->localPrivateKey) {
@@ -60608,7 +60608,7 @@ UA_Policy_New_Context (UA_SecurityPolicy * securityPolicy,
     if (retval != UA_STATUSCODE_GOOD) {
         EVP_PKEY_free(context->localPrivateKey);
         UA_free (context);
-        return retval; 
+        return retval;
     }
 
     context->logger = logger;
@@ -60632,19 +60632,19 @@ UA_Policy_Clear_Context (UA_SecurityPolicy *policy) {
         policy->policyContext;
     EVP_PKEY_free(pc->localPrivateKey);
     UA_ByteString_clear(&pc->localCertThumbprint);
-    UA_free (pc);        
+    UA_free (pc);
     return;
 }
 
 /* create the channel context */
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_ChannelModule_New_Context (const UA_SecurityPolicy * securityPolicy,
                               const UA_ByteString * remoteCertificate,
                               void ** channelContext) {
-    if (securityPolicy == NULL || remoteCertificate == NULL || 
+    if (securityPolicy == NULL || remoteCertificate == NULL ||
         channelContext == NULL) {
-        return UA_STATUSCODE_BADINTERNALERROR;                                  
+        return UA_STATUSCODE_BADINTERNALERROR;
         }
     Channel_Context_Basic256Sha256 * context = (Channel_Context_Basic256Sha256 *)
             UA_malloc (sizeof (Channel_Context_Basic256Sha256));
@@ -60659,7 +60659,7 @@ UA_ChannelModule_New_Context (const UA_SecurityPolicy * securityPolicy,
     UA_ByteString_init(&context->remoteSymEncryptingKey);
     UA_ByteString_init(&context->remoteSymIv);
 
-    UA_StatusCode retval = UA_copyCertificate (&context->remoteCertificate, 
+    UA_StatusCode retval = UA_copyCertificate (&context->remoteCertificate,
                                                remoteCertificate);
     if (retval != UA_STATUSCODE_GOOD) {
         UA_free (context);
@@ -60669,17 +60669,17 @@ UA_ChannelModule_New_Context (const UA_SecurityPolicy * securityPolicy,
     /* decode to X509 */
     context->remoteCertificateX509 = UA_OpenSSL_LoadCertificate(&context->remoteCertificate);
     if (context->remoteCertificateX509 == NULL) {
-        UA_ByteString_clear (&context->remoteCertificate); 
+        UA_ByteString_clear (&context->remoteCertificate);
         UA_free (context);
     }
 
-    context->policyContext = (Policy_Context_Basic256Sha256 *) 
+    context->policyContext = (Policy_Context_Basic256Sha256 *)
                              (securityPolicy->policyContext);
 
     *channelContext = context;
 
-    UA_LOG_INFO (securityPolicy->logger, 
-                 UA_LOGCATEGORY_SECURITYPOLICY, 
+    UA_LOG_INFO (securityPolicy->logger,
+                 UA_LOGCATEGORY_SECURITYPOLICY,
                  "The basic256sha256 security policy channel with openssl is created.");
 
     return UA_STATUSCODE_GOOD;
@@ -60687,13 +60687,13 @@ UA_ChannelModule_New_Context (const UA_SecurityPolicy * securityPolicy,
 
 /* delete the channel context */
 
-static void 
+static void
 UA_ChannelModule_Delete_Context (void * channelContext) {
     if (channelContext != NULL) {
         Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *)
                                            channelContext;
-        X509_free (cc->remoteCertificateX509);                                           
-        UA_ByteString_clear (&cc->remoteCertificate); 
+        X509_free (cc->remoteCertificateX509);
+        UA_ByteString_clear (&cc->remoteCertificate);
         UA_ByteString_clear (&cc->localSymSigningKey);
         UA_ByteString_clear (&cc->localSymEncryptingKey);
         UA_ByteString_clear (&cc->localSymIv);
@@ -60701,10 +60701,10 @@ UA_ChannelModule_Delete_Context (void * channelContext) {
         UA_ByteString_clear (&cc->remoteSymEncryptingKey);
         UA_ByteString_clear (&cc->remoteSymIv);
 
-        UA_LOG_INFO (cc->policyContext->logger, 
-                 UA_LOGCATEGORY_SECURITYPOLICY, 
-                 "The basic256sha256 security policy channel with openssl is deleted.");   
-        UA_free (cc);                      
+        UA_LOG_INFO (cc->policyContext->logger,
+                 UA_LOGCATEGORY_SECURITYPOLICY,
+                 "The basic256sha256 security policy channel with openssl is deleted.");
+        UA_free (cc);
     }
 }
 
@@ -60712,26 +60712,26 @@ UA_ChannelModule_Delete_Context (void * channelContext) {
  * AsymmetricSignatureAlgorithm_RSA-PKCS15-SHA2-256
  */
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_AsySig_Basic256Sha256_Verify (const UA_SecurityPolicy * securityPolicy,
-                                 void *                    channelContext, 
+                                 void *                    channelContext,
                                  const UA_ByteString *     message,
                                  const UA_ByteString *     signature) {
-    if (securityPolicy == NULL || message == NULL || signature == NULL || 
+    if (securityPolicy == NULL || message == NULL || signature == NULL ||
         channelContext == NULL) {
         return UA_STATUSCODE_BADINTERNALERROR;
         }
 
-    Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *) 
+    Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *)
                                           channelContext;
-    UA_StatusCode retval = UA_OpenSSL_RSA_PKCS1_V15_SHA256_Verify (message, 
+    UA_StatusCode retval = UA_OpenSSL_RSA_PKCS1_V15_SHA256_Verify (message,
                             cc->remoteCertificateX509, signature);
 
     return retval;
 }
 
-/* Compares the supplied certificate with the certificate 
- * in the endpoint context 
+/* Compares the supplied certificate with the certificate
+ * in the endpoint context
  */
 
 static UA_StatusCode
@@ -60749,15 +60749,15 @@ UA_compareCertificateThumbprint (const UA_SecurityPolicy * securityPolicy,
 
 /* Generates a thumbprint for the specified certificate */
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_makeCertificateThumbprint (const UA_SecurityPolicy * securityPolicy,
                               const UA_ByteString * certificate,
                               UA_ByteString * thumbprint) {
-    return UA_Openssl_X509_GetCertificateThumbprint (certificate, 
-               thumbprint, false); 
+    return UA_Openssl_X509_GetCertificateThumbprint (certificate,
+               thumbprint, false);
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_Asym_Basic256Sha256_Decrypt (const UA_SecurityPolicy *securityPolicy,
                                 void * channelContext,
                                 UA_ByteString * data) {
@@ -60766,9 +60766,9 @@ UA_Asym_Basic256Sha256_Decrypt (const UA_SecurityPolicy *securityPolicy,
 
     Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *)
                                            channelContext;
-    UA_StatusCode ret = UA_Openssl_RSA_Oaep_Decrypt (data, 
+    UA_StatusCode ret = UA_Openssl_RSA_Oaep_Decrypt (data,
                         cc->policyContext->localPrivateKey);
-    return ret;                        
+    return ret;
 }
 
 static size_t
@@ -60782,22 +60782,22 @@ UA_Asym_Basic256Sha256_getRemoteSignatureSize (
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Public_GetKeyLength (cc->remoteCertificateX509, &keyLen);
     UA_assert (keyLen == 256); /* 256 bytes 2048 bit */
-    return (size_t) keyLen; 
+    return (size_t) keyLen;
 }
 
-static size_t 
+static size_t
 UA_AsySig_Basic256Sha256_getLocalSignatureSize (const UA_SecurityPolicy *securityPolicy,
                                                 const void *channelContext) {
     if (securityPolicy == NULL || channelContext == NULL)
         return UA_STATUSCODE_BADINTERNALERROR;
 
-    Policy_Context_Basic256Sha256 * pc = 
+    Policy_Context_Basic256Sha256 * pc =
                (Policy_Context_Basic256Sha256 *) securityPolicy->policyContext;
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Private_GetKeyLength (pc->localPrivateKey, &keyLen);
     UA_assert (keyLen == 256); /* 256 bytes 2048 bits */
 
-    return (size_t) keyLen; 
+    return (size_t) keyLen;
 }
 
 static size_t
@@ -60812,7 +60812,7 @@ UA_AsymEn_Basic256Sha256_getRemotePlainTextBlockSize (const UA_SecurityPolicy *s
     return (size_t) keyLen - UA_SECURITYPOLICY_BASIC256SHA256_RSAPADDING_LEN;
 }
 
-static size_t 
+static size_t
 UA_AsymEn_Basic256Sha256_getRemoteBlockSize (const UA_SecurityPolicy *securityPolicy,
                                                       const void *channelContext) {
     if (securityPolicy == NULL || channelContext == NULL)
@@ -60843,34 +60843,34 @@ UA_Sym_Basic256Sha256_generateNonce (const UA_SecurityPolicy * sp,
     if (rc != 1) {
         return UA_STATUSCODE_BADUNEXPECTEDERROR;
     }
-    return UA_STATUSCODE_GOOD;                                         
+    return UA_STATUSCODE_GOOD;
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic256Sha256_getLocalKeyLength (const UA_SecurityPolicy *securityPolicy,
                                            const void *channelContext) {
     /* 32 bytes 256 bits */
-    return UA_SECURITYPOLICY_BASIC256SHA256_SYM_ENCRYPTION_KEY_LENGTH; 
+    return UA_SECURITYPOLICY_BASIC256SHA256_SYM_ENCRYPTION_KEY_LENGTH;
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic256Sha256_getLocalBlockSize (
                                 const UA_SecurityPolicy *securityPolicy,
                                 const void *channelContext) {
     return UA_SECURITYPOLICY_BASIC256SHA256_SYM_ENCRYPTION_BLOCK_SIZE;
 }
 
-static size_t 
+static size_t
 UA_SymSig_Basic256Sha256_getLocalKeyLength (const UA_SecurityPolicy * securityPolicy,
                                             const void *              channelContext) {
-    /* 32 bytes 256 bits */                                                
-    return UA_SECURITYPOLICY_BASIC256SHA256_SYM_SIGNING_KEY_LENGTH; 
+    /* 32 bytes 256 bits */
+    return UA_SECURITYPOLICY_BASIC256SHA256_SYM_SIGNING_KEY_LENGTH;
 }
 
 static UA_StatusCode
 UA_Sym_Basic256Sha256_generateKey (const UA_SecurityPolicy * securityPolicy,
                                    const UA_ByteString *     secret,
-                                   const UA_ByteString *     seed, 
+                                   const UA_ByteString *     seed,
                                    UA_ByteString *           out) {
     return UA_Openssl_Random_Key_PSHA256_Derive (secret, seed, out);
 }
@@ -60909,7 +60909,7 @@ static size_t
 UA_SymEn_Basic256Sha256_getRemoteKeyLength (const UA_SecurityPolicy * securityPolicy,
                                             const void * channelContext) {
     /* 32 bytes 256 bits */
-    return UA_SECURITYPOLICY_BASIC256SHA256_SYM_ENCRYPTION_KEY_LENGTH; 
+    return UA_SECURITYPOLICY_BASIC256SHA256_SYM_ENCRYPTION_KEY_LENGTH;
 }
 
 static size_t
@@ -60921,7 +60921,7 @@ UA_SymEn_Basic256Sha256_getRemoteBlockSize (const UA_SecurityPolicy *securityPol
 static size_t
 UA_SymSig_Basic256Sha256_getRemoteKeyLength (const UA_SecurityPolicy * securityPolicy,
                                             const void * channelContext) {
-    /* 32 bytes 256 bits */                                                
+    /* 32 bytes 256 bits */
     return UA_SECURITYPOLICY_BASIC256SHA256_SYM_SIGNING_KEY_LENGTH;
 }
 
@@ -60957,13 +60957,13 @@ UA_ChannelM_Basic256Sha256_setRemoteSymIv (void *channelContext,
 
 static UA_StatusCode
 UA_AsySig_Basic256Sha256_sign (const UA_SecurityPolicy * securityPolicy,
-                               void *                channelContext, 
+                               void *                channelContext,
                                const UA_ByteString * message,
                                UA_ByteString *       signature) {
     if (securityPolicy == NULL || channelContext == NULL ||
         message == NULL || signature == NULL)
-        return UA_STATUSCODE_BADINTERNALERROR; 
-    Policy_Context_Basic256Sha256 * pc = 
+        return UA_STATUSCODE_BADINTERNALERROR;
+    Policy_Context_Basic256Sha256 * pc =
                (Policy_Context_Basic256Sha256 *) securityPolicy->policyContext;
     return UA_Openssl_RSA_PKCS1_V15_SHA256_Sign (message, pc->localPrivateKey,
                                                  signature);
@@ -60975,8 +60975,8 @@ UA_AsymEn_Basic256Sha256_encrypt (const UA_SecurityPolicy * securityPolicy,
                                   UA_ByteString *           data) {
     if (securityPolicy == NULL || channelContext == NULL ||
         data == NULL)
-        return UA_STATUSCODE_BADINTERNALERROR; 
-    Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *) channelContext;    
+        return UA_STATUSCODE_BADINTERNALERROR;
+    Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *) channelContext;
     return UA_Openssl_RSA_OAEP_Encrypt (data, UA_SECURITYPOLICY_BASIC256SHA256_RSAPADDING_LEN,
                                         cc->remoteCertificateX509);
 }
@@ -60989,28 +60989,28 @@ UA_SymSig_Basic256Sha256_getRemoteSignatureSize (const UA_SecurityPolicy *securi
 
 static UA_StatusCode
 UA_SymSig_Basic256Sha256_verify (const UA_SecurityPolicy * securityPolicy,
-                                 void *                    channelContext, 
+                                 void *                    channelContext,
                                  const UA_ByteString *     message,
                                  const UA_ByteString *     signature) {
-    if (securityPolicy == NULL || channelContext == NULL || 
+    if (securityPolicy == NULL || channelContext == NULL ||
        message == NULL || signature == NULL)
         return UA_STATUSCODE_BADINTERNALERROR;
-    
+
     Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *) channelContext;
-    return UA_OpenSSL_HMAC_SHA256_Verify (message, 
-                                          &cc->remoteSymSigningKey, 
-                                          signature);   
+    return UA_OpenSSL_HMAC_SHA256_Verify (message,
+                                          &cc->remoteSymSigningKey,
+                                          signature);
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_SymSig_Basic256Sha256_sign (const UA_SecurityPolicy * securityPolicy,
-                               void *                    channelContext, 
+                               void *                    channelContext,
                                const UA_ByteString *     message,
                                UA_ByteString *           signature) {
-    if (securityPolicy == NULL || channelContext == NULL || 
+    if (securityPolicy == NULL || channelContext == NULL ||
        message == NULL || signature == NULL)
         return UA_STATUSCODE_BADINTERNALERROR;
-    
+
     Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *) channelContext;
     return UA_OpenSSL_HMAC_SHA256_Sign (message, &cc->localSymSigningKey, signature);
 }
@@ -61027,7 +61027,7 @@ UA_SymEn_Basic256Sha256_decrypt (const UA_SecurityPolicy * securityPolicy,
                                  UA_ByteString *           data) {
     if(securityPolicy == NULL || channelContext == NULL || data == NULL)
         return UA_STATUSCODE_BADINTERNALERROR;
-    Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *) channelContext;    
+    Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *) channelContext;
     return UA_OpenSSL_AES_256_CBC_Decrypt (&cc->remoteSymIv, &cc->remoteSymEncryptingKey, data);
 }
 
@@ -61037,7 +61037,7 @@ UA_SymEn_Basic256Sha256_encrypt (const UA_SecurityPolicy * securityPolicy,
                                  UA_ByteString *           data) {
     if(securityPolicy == NULL || channelContext == NULL || data == NULL)
         return UA_STATUSCODE_BADINTERNALERROR;
-    
+
     Channel_Context_Basic256Sha256 * cc = (Channel_Context_Basic256Sha256 *) channelContext;
     return UA_OpenSSL_AES_256_CBC_Encrypt (&cc->localSymIv, &cc->localSymEncryptingKey, data);
 }
@@ -61047,31 +61047,31 @@ UA_ChannelM_Basic256Sha256_compareCertificate (const void *channelContext,
                                                const UA_ByteString *certificate) {
     if(channelContext == NULL || certificate == NULL)
         return UA_STATUSCODE_BADINTERNALERROR;
-    
-    const Channel_Context_Basic256Sha256 * cc = 
+
+    const Channel_Context_Basic256Sha256 * cc =
                      (const Channel_Context_Basic256Sha256 *) channelContext;
     return UA_OpenSSL_X509_compare (certificate, cc->remoteCertificateX509);
 }
 
-static size_t 
+static size_t
 UA_SymEn_Basic256Sha256_getLocalPlainTextBlockSize (const UA_SecurityPolicy * securityPolicy,
                                                     const void *              channelContext) {
-    return UA_SECURITYPOLICY_BASIC256SHA256_SYM_PLAIN_TEXT_BLOCK_SIZE;                                                        
+    return UA_SECURITYPOLICY_BASIC256SHA256_SYM_PLAIN_TEXT_BLOCK_SIZE;
 }
 
-static size_t 
+static size_t
 UA_AsymEn_Basic256Sha256_getLocalKeyLength (const UA_SecurityPolicy * securityPolicy,
                                             const void *              channelContext) {
     if (securityPolicy == NULL || channelContext == NULL)
         return UA_STATUSCODE_BADINTERNALERROR;
 
-    Policy_Context_Basic256Sha256 * pc = 
+    Policy_Context_Basic256Sha256 * pc =
                (Policy_Context_Basic256Sha256 *) securityPolicy->policyContext;
     UA_Int32 keyLen = 0;
     UA_Openssl_RSA_Private_GetKeyLength (pc->localPrivateKey, &keyLen);
     UA_assert (keyLen == 256); /* 256 bytes 2048 bits */
 
-    return (size_t) keyLen * 8; 
+    return (size_t) keyLen * 8;
 }
 
 /* the main entry of Basic256Sha256 */
@@ -61079,15 +61079,15 @@ UA_AsymEn_Basic256Sha256_getLocalKeyLength (const UA_SecurityPolicy * securityPo
 UA_StatusCode
 UA_SecurityPolicy_Basic256Sha256(UA_SecurityPolicy * policy,
                                  const UA_ByteString localCertificate,
-                                 const UA_ByteString localPrivateKey, 
+                                 const UA_ByteString localPrivateKey,
                                  const UA_Logger *   logger) {
 
     UA_SecurityPolicyAsymmetricModule * const asymmetricModule = &policy->asymmetricModule;
     UA_SecurityPolicySymmetricModule * const  symmetricModule = &policy->symmetricModule;
-    UA_SecurityPolicyChannelModule * const    channelModule = &policy->channelModule; 
+    UA_SecurityPolicyChannelModule * const    channelModule = &policy->channelModule;
     UA_StatusCode                             retval;
 
-    UA_LOG_INFO (logger, UA_LOGCATEGORY_SECURITYPOLICY, 
+    UA_LOG_INFO (logger, UA_LOGCATEGORY_SECURITYPOLICY,
                  "The basic256sha256 security policy with openssl is added.");
 
     UA_Openssl_Init ();
@@ -61130,7 +61130,7 @@ UA_SecurityPolicy_Basic256Sha256(UA_SecurityPolicy * policy,
         &asymmetricModule->cryptoModule.encryptionAlgorithm;
     asymEncryAlg->uri = UA_STRING("http://www.w3.org/2001/04/xmlenc#rsa-oaep\0");
     asymEncryAlg->decrypt = UA_Asym_Basic256Sha256_Decrypt;
-    asymEncryAlg->getRemotePlainTextBlockSize = 
+    asymEncryAlg->getRemotePlainTextBlockSize =
             UA_AsymEn_Basic256Sha256_getRemotePlainTextBlockSize;
     asymEncryAlg->getRemoteBlockSize = UA_AsymEn_Basic256Sha256_getRemoteBlockSize;
     asymEncryAlg->getRemoteKeyLength = UA_AsymEn_Basic256Sha256_getRemoteKeyLength;
@@ -61154,14 +61154,14 @@ UA_SecurityPolicy_Basic256Sha256(UA_SecurityPolicy * policy,
 
     UA_SecurityPolicyEncryptionAlgorithm * symEncryptionAlgorithm =
         &symmetricModule->cryptoModule.encryptionAlgorithm;
-    symEncryptionAlgorithm->uri = UA_STRING("http://www.w3.org/2001/04/xmlenc#aes256-cbc\0");        
+    symEncryptionAlgorithm->uri = UA_STRING("http://www.w3.org/2001/04/xmlenc#aes256-cbc\0");
     symEncryptionAlgorithm->getLocalKeyLength = UA_SymEn_Basic256Sha256_getLocalKeyLength;
     symEncryptionAlgorithm->getLocalBlockSize = UA_SymEn_Basic256Sha256_getLocalBlockSize;
     symEncryptionAlgorithm->getRemoteKeyLength = UA_SymEn_Basic256Sha256_getRemoteKeyLength;
     symEncryptionAlgorithm->getRemoteBlockSize = UA_SymEn_Basic256Sha256_getRemoteBlockSize;
     symEncryptionAlgorithm->decrypt = UA_SymEn_Basic256Sha256_decrypt;
     symEncryptionAlgorithm->encrypt = UA_SymEn_Basic256Sha256_encrypt;
-    symEncryptionAlgorithm->getLocalPlainTextBlockSize = 
+    symEncryptionAlgorithm->getLocalPlainTextBlockSize =
                   UA_SymEn_Basic256Sha256_getLocalPlainTextBlockSize;
 
     /* Symmetric signature Algorithm */
@@ -61171,7 +61171,7 @@ UA_SecurityPolicy_Basic256Sha256(UA_SecurityPolicy * policy,
     symSignatureAlgorithm->uri = UA_STRING("http://www.w3.org/2000/09/xmldsig#hmac-sha2-256\0");
     symSignatureAlgorithm->getLocalKeyLength = UA_SymSig_Basic256Sha256_getLocalKeyLength;
     symSignatureAlgorithm->getRemoteKeyLength = UA_SymSig_Basic256Sha256_getRemoteKeyLength;
-    symSignatureAlgorithm->getRemoteSignatureSize = 
+    symSignatureAlgorithm->getRemoteSignatureSize =
                            UA_SymSig_Basic256Sha256_getRemoteSignatureSize;
     symSignatureAlgorithm->verify = UA_SymSig_Basic256Sha256_verify;
     symSignatureAlgorithm->sign = UA_SymSig_Basic256Sha256_sign;
@@ -61184,9 +61184,9 @@ UA_SecurityPolicy_Basic256Sha256(UA_SecurityPolicy * policy,
     }
     policy->clear = UA_Policy_Clear_Context;
 
-    /* Use the same signature algorithm as the asymmetric component for 
+    /* Use the same signature algorithm as the asymmetric component for
        certificate signing (see standard) */
-       
+
     policy->certificateSigningAlgorithm = policy->asymmetricModule.cryptoModule.signatureAlgorithm;
 
     return UA_STATUSCODE_GOOD;
@@ -61289,7 +61289,7 @@ UA_Policy_Aes128Sha256RsaOaep_Clear_Context(UA_SecurityPolicy *policy) {
     Policy_Context_Aes128Sha256RsaOaep *pc =
         (Policy_Context_Aes128Sha256RsaOaep *)policy->policyContext;
     if (pc == NULL) {
-        return; 
+        return;
     }
 
     EVP_PKEY_free(pc->localPrivateKey);
@@ -61943,40 +61943,40 @@ UA_Bstrstr(const unsigned char *s1, size_t l1, const unsigned char *s2, size_t l
 }
 
 typedef struct {
-    /* 
+    /*
      * If the folders are defined, we use them to reload the certificates during
-     * runtime 
+     * runtime
      */
 
-    UA_String             trustListFolder;  
+    UA_String             trustListFolder;
     UA_String             issuerListFolder;
-    UA_String             revocationListFolder; 
+    UA_String             revocationListFolder;
 
     STACK_OF(X509) *      skIssue;
     STACK_OF(X509) *      skTrusted;
     STACK_OF(X509_CRL) *  skCrls; /* Revocation list*/
 } CertContext;
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_CertContext_sk_Init (CertContext * context) {
     context->skTrusted = sk_X509_new_null();
     context->skIssue = sk_X509_new_null();
-    context->skCrls = sk_X509_CRL_new_null();    
+    context->skCrls = sk_X509_CRL_new_null();
     if (context->skTrusted == NULL || context->skIssue == NULL ||
         context->skCrls == NULL) {
-        return UA_STATUSCODE_BADOUTOFMEMORY;    
+        return UA_STATUSCODE_BADOUTOFMEMORY;
     }
     return UA_STATUSCODE_GOOD;
 }
 
-static void 
+static void
 UA_CertContext_sk_free (CertContext * context) {
     sk_X509_pop_free (context->skTrusted, X509_free);
     sk_X509_pop_free (context->skIssue, X509_free);
     sk_X509_CRL_pop_free (context->skCrls, X509_CRL_free);
 }
 
-static UA_StatusCode 
+static UA_StatusCode
 UA_CertContext_Init (CertContext * context) {
     (void) memset (context, 0, sizeof (CertContext));
     UA_ByteString_init (&context->trustListFolder);
@@ -61990,7 +61990,7 @@ UA_CertificateVerification_clear (UA_CertificateVerification * cv) {
     if (cv == NULL) {
         return ;
     }
-    CertContext * context = (CertContext *) cv->context;    
+    CertContext * context = (CertContext *) cv->context;
     if (context == NULL) {
         return;
     }
@@ -62010,7 +62010,7 @@ static UA_StatusCode
 UA_skTrusted_Cert2X509 (const UA_ByteString *   certificateTrustList,
                         size_t                  certificateTrustListSize,
                         CertContext *           ctx) {
-    size_t                i;        
+    size_t                i;
 
     for (i = 0; i < certificateTrustListSize; i++) {
         X509 * x509 = UA_OpenSSL_LoadCertificate(&certificateTrustList[i]);
@@ -62021,7 +62021,7 @@ UA_skTrusted_Cert2X509 (const UA_ByteString *   certificateTrustList,
         sk_X509_push (ctx->skTrusted, x509);
     }
 
-    return UA_STATUSCODE_GOOD;                            
+    return UA_STATUSCODE_GOOD;
 }
 
 static UA_StatusCode
@@ -62039,14 +62039,14 @@ UA_skIssuer_Cert2X509 (const UA_ByteString *   certificateIssuerList,
         sk_X509_push (ctx->skIssue, x509);
     }
 
-    return UA_STATUSCODE_GOOD;                            
+    return UA_STATUSCODE_GOOD;
 }
 
 static UA_StatusCode
 UA_skCrls_Cert2X509 (const UA_ByteString *   certificateRevocationList,
                      size_t                  certificateRevocationListSize,
                      CertContext *           ctx) {
-    size_t                i;        
+    size_t                i;
     const unsigned char * pData;
 
     for (i = 0; i < certificateRevocationListSize; i++) {
@@ -62075,10 +62075,10 @@ UA_skCrls_Cert2X509 (const UA_ByteString *   certificateRevocationList,
         sk_X509_CRL_push (ctx->skCrls, crl);
     }
 
-    return UA_STATUSCODE_GOOD;                            
+    return UA_STATUSCODE_GOOD;
 }
 
-#ifdef __linux__ 
+#ifdef __linux__
 #include <dirent.h>
 
 static int UA_Certificate_Filter_der_pem (const struct dirent * entry) {
@@ -62087,7 +62087,7 @@ static int UA_Certificate_Filter_der_pem (const struct dirent * entry) {
 
     /* check file extension */
     const char *pszFind = strrchr(entry->d_name, '.');
-    if (pszFind == 0) 
+    if (pszFind == 0)
         return 0;
     pszFind++;
     if (strcmp (pszFind, "der") == 0 || strcmp (pszFind, "pem") == 0)
@@ -62103,7 +62103,7 @@ static int UA_Certificate_Filter_crl (const struct dirent * entry) {
 
     /* check file extension */
     const char *pszFind = strrchr(entry->d_name, '.');
-    if (pszFind == 0) 
+    if (pszFind == 0)
         return 0;
     pszFind++;
     if (strcmp (pszFind, "crl") == 0)
@@ -62132,12 +62132,12 @@ UA_BuildFullPath (const char * path,
 static UA_StatusCode
 UA_loadCertFromFile (const char *     fileName,
                      UA_ByteString *  cert) {
- 
-    FILE * fp = fopen(fileName, "rb"); 
+
+    FILE * fp = fopen(fileName, "rb");
 
     if (fp == NULL)
         return UA_STATUSCODE_BADINTERNALERROR;
-    
+
     fseek(fp, 0, SEEK_END);
     cert->length = (size_t)  ftell(fp);
     if (UA_ByteString_allocBuffer (cert, cert->length) != UA_STATUSCODE_GOOD) {
@@ -62164,13 +62164,13 @@ UA_ReloadCertFromFolder (CertContext * ctx) {
     int              i;
     int              numCertificates;
     char             certFile[PATH_MAX];
-    UA_ByteString    strCert; 
+    UA_ByteString    strCert;
     char             folderPath[PATH_MAX];
 
     UA_ByteString_init (&strCert);
 
     if (ctx->trustListFolder.length > 0) {
-        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Reloading the trust-list"); 
+        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Reloading the trust-list");
 
         sk_X509_pop_free (ctx->skTrusted, X509_free);
         ctx->skTrusted = sk_X509_new_null();
@@ -62178,21 +62178,21 @@ UA_ReloadCertFromFolder (CertContext * ctx) {
             return UA_STATUSCODE_BADOUTOFMEMORY;
         }
 
-        (void) memcpy (folderPath, ctx->trustListFolder.data, 
+        (void) memcpy (folderPath, ctx->trustListFolder.data,
                        ctx->trustListFolder.length);
         folderPath[ctx->trustListFolder.length] = 0;
-        numCertificates = scandir(folderPath, &dirlist, 
+        numCertificates = scandir(folderPath, &dirlist,
                                   UA_Certificate_Filter_der_pem,
                                   alphasort);
         for (i = 0; i < numCertificates; i++) {
-            if (UA_BuildFullPath (folderPath, dirlist[i]->d_name, 
+            if (UA_BuildFullPath (folderPath, dirlist[i]->d_name,
                                   PATH_MAX, certFile) != UA_STATUSCODE_GOOD) {
-                continue; 
+                continue;
             }
             ret = UA_loadCertFromFile (certFile, &strCert);
             if (ret != UA_STATUSCODE_GOOD) {
                 UA_LOG_INFO (UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-                            "Failed to load the certificate file %s", certFile); 
+                            "Failed to load the certificate file %s", certFile);
                 continue;  /* continue or return ? */
             }
             if (UA_skTrusted_Cert2X509 (&strCert, 1, ctx) != UA_STATUSCODE_GOOD) {
@@ -62206,7 +62206,7 @@ UA_ReloadCertFromFolder (CertContext * ctx) {
     }
 
     if (ctx->issuerListFolder.length > 0) {
-        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Reloading the issuer-list");    
+        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Reloading the issuer-list");
 
         sk_X509_pop_free (ctx->skIssue, X509_free);
         ctx->skIssue = sk_X509_new_null();
@@ -62216,23 +62216,23 @@ UA_ReloadCertFromFolder (CertContext * ctx) {
 
         memcpy (folderPath, ctx->issuerListFolder.data, ctx->issuerListFolder.length);
         folderPath[ctx->issuerListFolder.length] = 0;
-        numCertificates = scandir(folderPath, &dirlist, 
+        numCertificates = scandir(folderPath, &dirlist,
                                   UA_Certificate_Filter_der_pem,
                                   alphasort);
         for (i = 0; i < numCertificates; i++) {
-            if (UA_BuildFullPath (folderPath, dirlist[i]->d_name, 
+            if (UA_BuildFullPath (folderPath, dirlist[i]->d_name,
                                   PATH_MAX, certFile) != UA_STATUSCODE_GOOD) {
-                continue; 
+                continue;
             }
             ret = UA_loadCertFromFile (certFile, &strCert);
             if (ret != UA_STATUSCODE_GOOD) {
                 UA_LOG_INFO (UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-                            "Failed to load the certificate file %s", certFile); 
+                            "Failed to load the certificate file %s", certFile);
                 continue;  /* continue or return ? */
             }
             if (UA_skIssuer_Cert2X509 (&strCert, 1, ctx) != UA_STATUSCODE_GOOD) {
                 UA_LOG_INFO (UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-                            "Failed to decode the certificate file %s", certFile);                 
+                            "Failed to decode the certificate file %s", certFile);
                 UA_ByteString_clear (&strCert);
                 continue;  /* continue or return ? */
             }
@@ -62241,33 +62241,33 @@ UA_ReloadCertFromFolder (CertContext * ctx) {
     }
 
     if (ctx->revocationListFolder.length > 0) {
-        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Reloading the revocation-list");   
+        UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Reloading the revocation-list");
 
         sk_X509_CRL_pop_free (ctx->skCrls, X509_CRL_free);
-        ctx->skCrls = sk_X509_CRL_new_null();    
+        ctx->skCrls = sk_X509_CRL_new_null();
         if (ctx->skCrls == NULL) {
             return UA_STATUSCODE_BADOUTOFMEMORY;
         }
 
         memcpy (folderPath, ctx->revocationListFolder.data, ctx->revocationListFolder.length);
         folderPath[ctx->revocationListFolder.length] = 0;
-        numCertificates = scandir(folderPath, &dirlist, 
-                                  UA_Certificate_Filter_crl, 
+        numCertificates = scandir(folderPath, &dirlist,
+                                  UA_Certificate_Filter_crl,
                                   alphasort);
         for (i = 0; i < numCertificates; i++) {
-            if (UA_BuildFullPath (folderPath, dirlist[i]->d_name, 
+            if (UA_BuildFullPath (folderPath, dirlist[i]->d_name,
                                   PATH_MAX, certFile) != UA_STATUSCODE_GOOD) {
-                continue; 
+                continue;
             }
             ret = UA_loadCertFromFile (certFile, &strCert);
             if (ret != UA_STATUSCODE_GOOD) {
                 UA_LOG_INFO (UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-                            "Failed to load the revocation file %s", certFile);                 
+                            "Failed to load the revocation file %s", certFile);
                 continue;  /* continue or return ? */
             }
             if (UA_skCrls_Cert2X509 (&strCert, 1, ctx) != UA_STATUSCODE_GOOD) {
                 UA_LOG_INFO (UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-                            "Failed to decode the revocation file %s", certFile);                                 
+                            "Failed to decode the revocation file %s", certFile);
                 UA_ByteString_clear (&strCert);
                 continue;  /* continue or return ? */
             }
@@ -62284,7 +62284,7 @@ UA_ReloadCertFromFolder (CertContext * ctx) {
 static UA_StatusCode
 UA_X509_Store_CTX_Error_To_UAError (int opensslErr) {
     UA_StatusCode ret;
-    
+
     switch (opensslErr) {
         case X509_V_ERR_CERT_HAS_EXPIRED:
         case X509_V_ERR_CERT_NOT_YET_VALID:
@@ -62332,15 +62332,15 @@ UA_CertificateVerification_Verify (void *                verificationContext,
         return UA_STATUSCODE_BADINTERNALERROR;
     }
     ctx = (CertContext *) verificationContext;
-  
+
     store = X509_STORE_new();
     storeCtx = X509_STORE_CTX_new();
-    
+
     if (store == NULL || storeCtx == NULL) {
         ret = UA_STATUSCODE_BADOUTOFMEMORY;
         goto cleanup;
     }
-#ifdef __linux__ 
+#ifdef __linux__
     ret = UA_ReloadCertFromFolder (ctx);
     if (ret != UA_STATUSCODE_GOOD) {
         goto cleanup;
@@ -62351,10 +62351,10 @@ UA_CertificateVerification_Verify (void *                verificationContext,
     if (certificateX509 == NULL) {
         ret = UA_STATUSCODE_BADCERTIFICATEINVALID;
         goto cleanup;
-    } 
+    }
 
     X509_STORE_set_flags(store, 0);
-    opensslRet = X509_STORE_CTX_init (storeCtx, store, certificateX509, 
+    opensslRet = X509_STORE_CTX_init (storeCtx, store, certificateX509,
                                       ctx->skIssue);
     if (opensslRet != 1) {
         ret = UA_STATUSCODE_BADINTERNALERROR;
@@ -62512,7 +62512,7 @@ UA_CertificateVerification_VerifyApplicationURI (void *                verificat
         return UA_STATUSCODE_BADSECURITYCHECKSFAILED;
     }
 
-    pNames = (GENERAL_NAMES *) X509_get_ext_d2i(certificateX509, NID_subject_alt_name, 
+    pNames = (GENERAL_NAMES *) X509_get_ext_d2i(certificateX509, NID_subject_alt_name,
                                                 NULL, NULL);
     if (pNames == NULL) {
         X509_free (certificateX509);
@@ -62578,7 +62578,7 @@ UA_CertificateVerification_Trustlist(UA_CertificateVerification * cv,
         cv->verifyCertificate = UA_CertificateVerification_Verify;
     else
         cv->verifyCertificate = UA_VerifyCertificateAllowAll;
-    
+
     if (certificateTrustListSize > 0) {
         if (UA_skTrusted_Cert2X509 (certificateTrustList, certificateTrustListSize,
                                     context) != UA_STATUSCODE_GOOD) {
@@ -62590,7 +62590,7 @@ UA_CertificateVerification_Trustlist(UA_CertificateVerification * cv,
     if (certificateIssuerListSize > 0) {
         if (UA_skIssuer_Cert2X509 (certificateIssuerList, certificateIssuerListSize,
                                   context) != UA_STATUSCODE_GOOD) {
-            ret = UA_STATUSCODE_BADINTERNALERROR;                                       
+            ret = UA_STATUSCODE_BADINTERNALERROR;
             goto errout;
         }
     }
@@ -62598,9 +62598,9 @@ UA_CertificateVerification_Trustlist(UA_CertificateVerification * cv,
     if (certificateRevocationListSize > 0) {
         if (UA_skCrls_Cert2X509 (certificateRevocationList, certificateRevocationListSize,
                                   context) != UA_STATUSCODE_GOOD) {
-            ret = UA_STATUSCODE_BADINTERNALERROR; 
+            ret = UA_STATUSCODE_BADINTERNALERROR;
             goto errout;
-        }        
+        }
     }
 
     return UA_STATUSCODE_GOOD;
@@ -62619,7 +62619,7 @@ UA_CertificateVerification_CertFolders(UA_CertificateVerification * cv,
     UA_StatusCode ret;
     if (cv == NULL) {
         return UA_STATUSCODE_BADINTERNALERROR;
-    }   
+    }
 
     CertContext * context = (CertContext *) UA_malloc (sizeof (CertContext));
     if (context == NULL) {
@@ -62650,7 +62650,7 @@ UA_CertificateVerification_CertFolders(UA_CertificateVerification * cv,
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/plugins/crypto/mbedtls/securitypolicy_mbedtls_common.h" ***********************************/
 
 /* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
- * See http://creativecommons.org/publicdomain/zero/1.0/ for more information. 
+ * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
  *
  *    Copyright 2019 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  */
@@ -63033,7 +63033,7 @@ UA_ByteString UA_mbedTLS_CopyDataFormatAware(const UA_ByteString *data)
  *    Copyright 2018 (c) HMS Industrial Networks AB (Author: Jonas Green)
  *    Copyright 2020 (c) Wind River Systems, Inc.
  *    Copyright 2020 (c) basysKom GmbH
- * 
+ *
  */
 
 
@@ -64105,7 +64105,7 @@ sym_verify_sp_basic256(const UA_SecurityPolicy *securityPolicy,
 
     Basic256_PolicyContext *pc =
         (Basic256_PolicyContext *)securityPolicy->policyContext;
-    
+
     unsigned char mac[UA_SHA1_LENGTH];
     mbedtls_hmac(&pc->sha1MdContext, &cc->remoteSymSigningKey, message, mac);
 
@@ -66568,7 +66568,7 @@ fileNamesFromFolder(const UA_String *folder, size_t *pathsSize, UA_String **path
 
     memcpy(buf, folder->data, folder->length);
     buf[folder->length] = 0;
-    
+
     DIR *dir = opendir(buf);
     if(!dir)
         return UA_STATUSCODE_BADINTERNALERROR;
@@ -66683,7 +66683,7 @@ reloadCertificates(CertInfo *ci) {
             char errBuff[300];
             mbedtls_strerror(err, errBuff, 300);
             UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_SERVER,
-                        "Failed to load certificate from %s, mbedTLS error: %s (error code: %d)", 
+                        "Failed to load certificate from %s, mbedTLS error: %s (error code: %d)",
                         f, errBuff, err);
             internalErrorFlag = 1;
         }
@@ -66700,7 +66700,7 @@ reloadCertificates(CertInfo *ci) {
 static UA_StatusCode
 certificateVerification_allow(void *verificationContext,
                               const UA_ByteString *certificate) {
-    return UA_STATUSCODE_GOOD;  
+    return UA_STATUSCODE_GOOD;
 }
 
 static UA_StatusCode
@@ -67168,7 +67168,7 @@ UA_Logger UA_Log_Stdout_withLevel(UA_LogLevel minlevel)
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/plugins/ua_accesscontrol_default.c" ***********************************/
 
 /* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
- * See http://creativecommons.org/publicdomain/zero/1.0/ for more information. 
+ * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
  *
  *    Copyright 2016-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
@@ -67516,7 +67516,7 @@ UA_AccessControl_default(UA_ServerConfig *config, UA_Boolean allowAnonymous,
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/plugins/ua_nodestore_ziptree.c" ***********************************/
 
 /* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
- * See http://creativecommons.org/publicdomain/zero/1.0/ for more information. 
+ * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
  *
  *    Copyright 2014-2018 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Julian Grothoff
@@ -67875,14 +67875,14 @@ UA_Nodestore_ZipTree(UA_Nodestore *ns) {
     ns->removeNode = zipNsRemoveNode;
     ns->getReferenceTypeId = zipNsGetReferenceTypeId;
     ns->iterate = zipNsIterate;
-    
+
     return UA_STATUSCODE_GOOD;
 }
 
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/plugins/ua_nodestore_hashmap.c" ***********************************/
 
 /* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
- * See http://creativecommons.org/publicdomain/zero/1.0/ for more information. 
+ * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
  *
  *    Copyright 2014-2019 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Julian Grothoff
@@ -68705,7 +68705,7 @@ UA_ServerConfig_addNetworkLayerTCP(UA_ServerConfig *conf, UA_UInt16 portNumber,
 }
 
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyNone(UA_ServerConfig *config, 
+UA_ServerConfig_addSecurityPolicyNone(UA_ServerConfig *config,
                                       const UA_ByteString *certificate) {
     /* Allocate the SecurityPolicies */
     UA_SecurityPolicy *tmp = (UA_SecurityPolicy *)
@@ -68714,7 +68714,7 @@ UA_ServerConfig_addSecurityPolicyNone(UA_ServerConfig *config,
     if(!tmp)
         return UA_STATUSCODE_BADOUTOFMEMORY;
     config->securityPolicies = tmp;
-    
+
     /* Populate the SecurityPolicies */
     UA_ByteString localCertificate = UA_BYTESTRING_NULL;
     if(certificate)
@@ -68735,7 +68735,7 @@ UA_ServerConfig_addSecurityPolicyNone(UA_ServerConfig *config,
 }
 
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addEndpoint(UA_ServerConfig *config, const UA_String securityPolicyUri, 
+UA_ServerConfig_addEndpoint(UA_ServerConfig *config, const UA_String securityPolicyUri,
                             UA_MessageSecurityMode securityMode) {
     /* Allocate the endpoint */
     UA_EndpointDescription *tmp = (UA_EndpointDescription *)
@@ -68863,7 +68863,7 @@ UA_ServerConfig_setMinimalCustomBuffer(UA_ServerConfig *config, UA_UInt16 portNu
 #ifdef UA_ENABLE_ENCRYPTION
 
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyBasic128Rsa15(UA_ServerConfig *config, 
+UA_ServerConfig_addSecurityPolicyBasic128Rsa15(UA_ServerConfig *config,
                                                const UA_ByteString *certificate,
                                                const UA_ByteString *privateKey) {
     /* Allocate the SecurityPolicies */
@@ -68873,7 +68873,7 @@ UA_ServerConfig_addSecurityPolicyBasic128Rsa15(UA_ServerConfig *config,
     if(!tmp)
         return UA_STATUSCODE_BADOUTOFMEMORY;
     config->securityPolicies = tmp;
-    
+
     /* Populate the SecurityPolicies */
     UA_ByteString localCertificate = UA_BYTESTRING_NULL;
     UA_ByteString localPrivateKey  = UA_BYTESTRING_NULL;
@@ -68897,7 +68897,7 @@ UA_ServerConfig_addSecurityPolicyBasic128Rsa15(UA_ServerConfig *config,
 }
 
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyBasic256(UA_ServerConfig *config, 
+UA_ServerConfig_addSecurityPolicyBasic256(UA_ServerConfig *config,
                                           const UA_ByteString *certificate,
                                           const UA_ByteString *privateKey) {
     /* Allocate the SecurityPolicies */
@@ -68907,7 +68907,7 @@ UA_ServerConfig_addSecurityPolicyBasic256(UA_ServerConfig *config,
     if(!tmp)
         return UA_STATUSCODE_BADOUTOFMEMORY;
     config->securityPolicies = tmp;
-    
+
     /* Populate the SecurityPolicies */
     UA_ByteString localCertificate = UA_BYTESTRING_NULL;
     UA_ByteString localPrivateKey  = UA_BYTESTRING_NULL;
@@ -68931,7 +68931,7 @@ UA_ServerConfig_addSecurityPolicyBasic256(UA_ServerConfig *config,
 }
 
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyBasic256Sha256(UA_ServerConfig *config, 
+UA_ServerConfig_addSecurityPolicyBasic256Sha256(UA_ServerConfig *config,
                                                 const UA_ByteString *certificate,
                                                 const UA_ByteString *privateKey) {
     /* Allocate the SecurityPolicies */
@@ -68941,7 +68941,7 @@ UA_ServerConfig_addSecurityPolicyBasic256Sha256(UA_ServerConfig *config,
     if(!tmp)
         return UA_STATUSCODE_BADOUTOFMEMORY;
     config->securityPolicies = tmp;
-    
+
     /* Populate the SecurityPolicies */
     UA_ByteString localCertificate = UA_BYTESTRING_NULL;
     UA_ByteString localPrivateKey  = UA_BYTESTRING_NULL;
@@ -68965,7 +68965,7 @@ UA_ServerConfig_addSecurityPolicyBasic256Sha256(UA_ServerConfig *config,
 }
 
 UA_EXPORT UA_StatusCode
-UA_ServerConfig_addSecurityPolicyAes128Sha256RsaOaep(UA_ServerConfig *config, 
+UA_ServerConfig_addSecurityPolicyAes128Sha256RsaOaep(UA_ServerConfig *config,
                                                 const UA_ByteString *certificate,
                                                 const UA_ByteString *privateKey) {
     /* Allocate the SecurityPolicies */
@@ -68975,7 +68975,7 @@ UA_ServerConfig_addSecurityPolicyAes128Sha256RsaOaep(UA_ServerConfig *config,
     if(!tmp)
         return UA_STATUSCODE_BADOUTOFMEMORY;
     config->securityPolicies = tmp;
-    
+
     /* Populate the SecurityPolicies */
     UA_ByteString localCertificate = UA_BYTESTRING_NULL;
     UA_ByteString localPrivateKey  = UA_BYTESTRING_NULL;
@@ -69203,7 +69203,7 @@ UA_ClientConfig_setDefaultEncryption(UA_ClientConfig *config,
     if(!sp)
         return UA_STATUSCODE_BADOUTOFMEMORY;
     config->securityPolicies = sp;
-                  
+
     retval = UA_SecurityPolicy_Basic128Rsa15(&config->securityPolicies[config->securityPoliciesSize],
                                              localCertificate, privateKey, &config->logger);
     if(retval == UA_STATUSCODE_GOOD) {
@@ -69576,7 +69576,7 @@ UA_Log_Syslog_withLevel(UA_LogLevel minlevel) {
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/arch/posix/ua_clock.c" ***********************************/
 
 /* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
- * See http://creativecommons.org/publicdomain/zero/1.0/ for more information. 
+ * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
  *
  *    Copyright 2016-2017 (c) Fraunhofer IOSB (Author: Julius Pfrommer)
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
@@ -69678,7 +69678,7 @@ void UA_deinitialize_architecture_network(void){
 /*********************************** amalgamated original file "/home/rosselliot/sandbox/open62541/arch/win32/ua_clock.c" ***********************************/
 
 /* This work is licensed under a Creative Commons CCZero 1.0 Universal License.
- * See http://creativecommons.org/publicdomain/zero/1.0/ for more information. 
+ * See http://creativecommons.org/publicdomain/zero/1.0/ for more information.
  *
  *    Copyright 2016-2017 (c) Julius Pfrommer, Fraunhofer IOSB
  *    Copyright 2017 (c) Stefan Profanter, fortiss GmbH
@@ -69728,7 +69728,7 @@ UA_Int64 UA_DateTime_localTimeUtcOffset(void) {
     gmtime_s(&rawtime, &ptm);
 #else
     gmtime_s(&ptm, &rawtime);
-#endif    
+#endif
     // Request that mktime() looksup dst in timezone database
     ptm.tm_isdst = -1;
     gmt = mktime(&ptm);

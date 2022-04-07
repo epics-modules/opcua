@@ -10,8 +10,8 @@
 #define SLEEP_TIME_MS 1000
 #define MAX_COUNT 1000
 
-/* Structure definition for passing to the 
- * thread simulation routine. 
+/* Structure definition for passing to the
+ * thread simulation routine.
  * Server and namespace variables
  */
 struct simThreadParams {
@@ -31,33 +31,33 @@ static void stopHandler(int sig) {
 }
 /* Simulation routine. To be launched as a parallel thread */
 void *simVariable(void *ptr) {
-    
+
     struct simThreadParams *threadParams = ptr;
     int utime = SLEEP_TIME_MS * 1000;
     int count = 0;
     UA_Variant value;
     UA_Double cntDouble;
     UA_Server *server = *(&threadParams->server);
-    
+
     /* While the server is running */
     while(running) {
 
-        /* Increment count */    
+        /* Increment count */
         if (count >= MAX_COUNT) {
             count = 0;
         } else {
             count++;
         }
 
-        /* Cast value, assign variant, and write to server */ 
+        /* Cast value, assign variant, and write to server */
         cntDouble = (UA_Double)count;
         UA_Variant_setScalarCopy(&value, &cntDouble, &UA_TYPES[UA_TYPES_DOUBLE]);
         UA_Server_writeValue(server, UA_NODEID_STRING((*(&threadParams->ns))[1], "Sim.TestRamp"), value);
-        
+
         /* Sleep the thread */
         usleep(utime);
     }
-    
+
     UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "Exiting thread");
 }
 
@@ -76,17 +76,17 @@ int main(void) {
 
     /* Add simulation NodeSet */
     UA_StatusCode retval = opcuaTestNodeSet(server);
-    
+
     pthread_t threadSim;
     int ret = 0;
-    
-    /* Create struct to pass to threaded simulation routine 
-     * Contains server and namespace variables 
-     */ 
+
+    /* Create struct to pass to threaded simulation routine
+     * Contains server and namespace variables
+     */
     struct simThreadParams threadParams;
     threadParams.server = server;
     threadParams.ns = ns;
-    
+
     /* Create nodes from nodeset */
     if(retval != UA_STATUSCODE_GOOD) {
         UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Could not add the example nodeset. "
@@ -99,8 +99,8 @@ int main(void) {
             exit(EXIT_FAILURE);
         }
         /* Main server loop. Will remain in this function
-         * while running = true 
-         */  
+         * while running = true
+         */
         retval = UA_Server_run(server, &running);
     }
 
