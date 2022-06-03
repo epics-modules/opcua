@@ -18,8 +18,9 @@ This module is under development.
 Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 :warning:
 
-The first (and - at this time - only) supported OPC UA client library is the
+The first supported OPC UA client library is the
 commercially available Unified Automation C++ Based OPC UA Client SDK.
+The second one one is the open source implementation open62541.
 
 ## Prerequisites
 
@@ -42,8 +43,16 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
     openssl/libcrypto on your system - both when compiling the SDK and when
     generating any binaries (IOCs).
 
+*  In `CONFIG_SITE.local`, set `UASDK` to the path of the SDK installation.
+
 *   For more details, refer to the `README.md` in the
     [`devOpcuaSup/UaSdk`][uasdk.dir] directory.
+
+### Using the open62541 SDK
+
+*  The open62541 SDK is available at https://open62541.org/
+
+*  In `CONFIG_SITE.local`, set `OPEN62541` to the path of the SDK installation.
 
 ## Building the module
 

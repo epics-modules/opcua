@@ -26,3 +26,10 @@ O.*/
 .idea/
 *.orig
 *.log
+/devOpcuaSup/.vs/devOpcuaSup/v16
+/devOpcuaSup/x64
+*.sln
+*.vcxproj
+*.filters
+*.user
+/devOpcuaSup/opcuaIoc/x64

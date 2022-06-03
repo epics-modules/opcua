@@ -1,0 +1,98 @@
+#*************************************************************************
+# Copyright (c) 2018 ITER Organization.
+# This module is distributed subject to a Software License Agreement found
+# in file LICENSE that is included with this distribution.
+#*************************************************************************
+
+# Author: Ralph Lange <ralph.lange@gmx.de>
+#
+# based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
+# and example code from the Unified Automation C++ Based OPC UA Client SDK
+
+#==================================================
+# Unified Automation SDK libraries
+
+# The OPC UA Device Support module itself needs some special treatment
+# and sets OPCUA_DEVICE_SUPPORT to indicate that
+
+ifneq ($(OPCUA_DEVICE_SUPPORT),)
+  OPCUA_NEEDS_INCLUDES=1
+else
+  ifneq ($(UASDK_DEPLOY_MODE),EMBED)
+  OPCUA_NEEDS_INCLUDES=1
+  endif
+endif
+
+# UASDK settings that have to be done after the overrides
+UASDK_MODULES = uaclient uapki uabase uastack
+ifeq ($(UASDK_USE_XMLPARSER),YES)
+UASDK_MODULES += xmlparser
+USR_SYS_LIBS_Linux += xml2
+endif
+ifeq ($(UASDK_USE_CRYPTO),YES)
+USR_SYS_LIBS_Linux += crypto
+endif
+
+# Depending on SDK version, C++ modules may have a 'cpp' suffix
+UASDK_LIBS = $(notdir $(foreach module, $(UASDK_MODULES), \
+$(firstword $(wildcard $(UASDK)/include/$(module)cpp $(UASDK)/include/$(module)))))
+
+ifdef OPCUA_NEEDS_INCLUDES
+USR_INCLUDES += -I$(UASDK)/include
+USR_INCLUDES += $(foreach lib, $(UASDK_LIBS),-I$(UASDK)/include/$(lib))
+# SDK libraries are not built with correct RUNPATH - rely on executable
+USR_LDFLAGS += -Wl,--disable-new-dtags
+endif
+
+ifeq ($(UASDK_DEPLOY_MODE),SYSTEM)
+USR_SYS_LIBS += $(UASDK_LIBS)
+endif
+
+ifeq ($(UASDK_DEPLOY_MODE),PROVIDED)
+USR_LIBS += $(UASDK_LIBS)
+$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
+endif
+
+# Embed the SDK libraries in libopcua.so
+ifdef OPCUA_DEVICE_SUPPORT
+ifeq ($(UASDK_DEPLOY_MODE),EMBED)
+ifeq ($(LIBRARY_IOC),opcua)
+USR_LDFLAGS += -L$(UASDK_DIR)
+SHRLIB_LDLIBS = $(STATIC_LDFLAGS_YES) \
+    $(addprefix -l, $(UASDK_LIBS)) \
+    $(STATIC_LDLIBS_YES) \
+    $(addprefix -l, $($*_LDLIBS) $(LIB_LIBS) $(filter-out $(UASDK_LIBS),$(USR_LIBS)) \
+    $($*_SYS_LIBS) $(LIB_SYS_LIBS) $(USR_SYS_LIBS)) \
+    $(LDLIBS)
+else
+USR_LIBS += $(UASDK_LIBS)
+$(foreach lib, $(UASDK_LIBS), $(eval $(lib)_DIR = $(UASDK_DIR)))
+endif
+endif
+endif
+
+ifeq ($(UASDK_DEPLOY_MODE),INSTALL)
+USR_LIBS += $(UASDK_LIBS)
+
+# Installing the SDK libraries in the Device Support module
+ifneq ($(OPCUA_DEVICE_SUPPORT),)
+EXTLIB_INSTALLS += $(addprefix $(INSTALL_LIB)/, \
+    $(notdir $(wildcard $(foreach lib, $(UASDK_LIBS), \
+    $(UASDK_DIR)/$(LIB_PREFIX)$(lib)$(LIB_SUFFIX) ))))
+    ifeq ($(SHARED_LIBRARIES),YES)
+EXTLIB_INSTALLS += $(addprefix $(INSTALL_LIB)/, \
+    $(notdir $(wildcard $(foreach lib, $(UASDK_LIBS), \
+    $(UASDK_DIR)/$(SHRLIB_PREFIX)$(lib)$(SHRLIB_SUFFIX) ))))
+    endif
+
+build: $(EXTLIB_INSTALLS)
+
+$(INSTALL_LIB)/$(LIB_PREFIX)%$(LIB_SUFFIX) : $(UASDK_DIR)/$(LIB_PREFIX)%$(LIB_SUFFIX)
+	$(ECHO) "Installing library $@ from Unified Automation SDK"
+	$(INSTALL) -d -m 444 $< $(@D)
+
+$(INSTALL_LIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX) : $(UASDK_DIR)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX)
+	$(ECHO) "Installing shared library $@ from Unified Automation SDK"
+	$(INSTALL) -d -m 555 $< $(@D)
+endif
+endif
