@@ -1,0 +1,77 @@
+# OPC UA Support
+# binary distribution build using s blank CentOS7 container
+
+# Inside the container, I am building as root (as there are no users).
+# On a real system, only run the "yum" commands as root.
+# Download and build everything else under your own user name.
+
+langer @ DOCKER-84MRG : ~ $ podman run -it centos:7
+
+# Create a working dir under /root (home of root)
+
+[root@3e9225087f30 /]# cd
+[root@3e9225087f30 ~]# mkdir epics-opcua
+[root@3e9225087f30 ~]# cd epics-opcua/
+
+# Install prerequisites for EPICS Base
+
+[root@3e9225087f30 epics-opcua]# yum -y install gcc-c++ perl make libreadline
+
+# Install prerequisites for OPC UA binary distribution
+
+[root@3e9225087f30 epics-opcua]# yum -y install openssl-devel libxml2-devel
+
+# Download, unpack, configure and build EPICS Base
+
+[root@3e9225087f30 epics-opcua]# curl -OL https://epics-controls.org/download/base/base-7.0.6.1.tar.gz
+[root@3e9225087f30 epics-opcua]# tar xzf base-7.0.6.1.tar.gz
+[root@3e9225087f30 epics-opcua]# cat > base-7.0.6.1/configure/CONFIG_SITE.local <<EOF
+> USR_CXXFLAGS_Linux += -std=c++11
+> EOF
+[root@3e9225087f30 epics-opcua]# make -j2 -C base-7.0.6.1
+
+# Download, unpack, configure and build the OPC UA IOC
+
+[root@3e9225087f30 epics-opcua]# curl -OL  https://github.com/epics-modules/opcua/releases/download/v0.9.4/IOC_opcua-0.9.4_Base-7.0.6.1_RHEL7.tar.gz
+[root@3e9225087f30 epics-opcua]# tar xzf IOC_opcua-0.9.4_Base-7.0.6.1_RHEL7.tar.gz
+[root@3e9225087f30 epics-opcua]# cat > RELEASE.local <<EOF
+> EPICS_BASE = /root/epics-opcua/base-7.0.6.1
+> EOF
+[root@3e9225087f30 epics-opcua]# make -j2 -C binaryOpcuaIoc/
+
+# Run the OPC UA IOC
+
+[root@3e9225087f30 epics-opcua]# ( cd binaryOpcuaIoc/iocBoot/iocS7-1500/; ../../bin/linux-x86_64/opcuaIoc st.cmd )
+#!../../bin/linux-x86_64/opcuaIoc
+## You may have to change opcuaIoc to something else
+## everywhere it appears in this file
+< envPaths
+epicsEnvSet("IOC","iocS7-1500")
+epicsEnvSet("TOP","/root/epics-opcua/binaryOpcuaIoc")
+epicsEnvSet("OPCUA","/root/epics-opcua/binaryOpcuaIoc/..")
+epicsEnvSet("EPICS_BASE","/root/epics-opcua/base-7.0.6.1")
+cd "/root/epics-opcua/binaryOpcuaIoc"
+## Register all support components
+dbLoadDatabase "dbd/opcuaIoc.dbd"
+opcuaIoc_registerRecordDeviceDriver pdbbase
+## Pretty minimal setup: one session with a 200ms subscription on top
+opcuaSession OPC1 opc.tcp://localhost:4840
+opcuaSubscription SUB1 OPC1 200
+# Switch off security
+opcuaOptions OPC1 sec-mode=None
+## Load the databases for one of the examples
+## Siemens S7-1500 PLC
+dbLoadRecords "db/S7-1500-server.db", "P=OPC:,R=,SESS=OPC1,SUBS=SUB1"
+dbLoadRecords "db/S7-1500-DB1.db", "P=OPC:,R=DB1:,SESS=OPC1,SUBS=SUB1"
+iocInit
+Starting iocInit
+############################################################################
+## EPICS R7.0.6.1
+## Rev. 2022-05-03T10:59+0000
+############################################################################
+OPC UA Client Device Support 0.9.4 (-); using Unified Automation C++ Client SDK v1.5.5-355
+iocRun: All initialization complete
+OPC UA: Autoconnecting sessions
+## Start any sequence programs
+#seq sncopcuaIoc,"user=ralph"
+epics>
