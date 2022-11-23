@@ -637,10 +637,7 @@ class TestPerformanceTests:
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
                 r1 = resource.getrusage(resource.RUSAGE_THREAD)
-                dr = (
-                    resource.getrusage(resource.RUSAGE_THREAD).ru_maxrss
-                    - r0.ru_maxrss  # NoQA: E501
-                )
+                dr = r1.ru_maxrss - r0.ru_maxrss  # NoQA: E501
 
                 # Collect data for statistics
                 if dt > maxt:
@@ -702,10 +699,7 @@ class TestPerformanceTests:
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
                 r1 = resource.getrusage(resource.RUSAGE_SELF)
-                dr = (
-                    resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-                    - r0.ru_maxrss  # NoQA: E501
-                )
+                dr = r1.ru_maxrss - r0.ru_maxrss  # NoQA: E501
 
                 # Collect data for statistics
                 if dt > maxt:
