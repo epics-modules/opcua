@@ -152,22 +152,22 @@ The test points are split into four classes:
 ### Running the test suite
 You can run the test suite from the root of the repository wuth the following command:
 ```
-pytest -v test/opcua_test_cases.py
+pytest -v
 ```
 
 To view the stdout output from the tests in real-time, you can provide the ``-s`` flag:
 ```
-pytest -v -s test/opcua_test_cases.py
+pytest -v -s
 ```
 
 To run all tests in a class:
 ```
-pytest -v test/opcua_test_cases.py::TestConnectionTests
+pytest -v -k TestConnectionTests
 ```
 
 To run an individual test point:
 ```
-pytest -v test/opcua_test_cases.py::TestConnectionTests::test_connect_disconnect
+pytest -v -k test_connect_disconnect
 ```
 
 ## References
