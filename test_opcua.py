@@ -25,9 +25,6 @@ class opcuaTestHarness:
         if self.TEMP_CELL_PATH is None:
             self.TEMP_CELL_PATH = "cellMods"
 
-        # run-iocsh parameters
-        self.IOCSH_PATH = f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh"
-
         self.TestArgs = [
             "-l",
             self.TEMP_CELL_PATH,
@@ -85,7 +82,6 @@ class opcuaTestHarness:
         return IOC(
             *self.TestArgs,
             self.cmd,
-            ioc_executable=self.IOCSH_PATH,
         )
 
     def start_server(self, withPIPE=False):
@@ -437,7 +433,6 @@ class TestVariableTests:
         with IOC(
             *test_inst.TestArgs,
             test_inst.cmd,
-            ioc_executable=test_inst.IOCSH_PATH,
         ):
             sleep(1)
             # PV name
