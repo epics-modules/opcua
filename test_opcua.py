@@ -600,6 +600,7 @@ class TestVariableTests:
 
 
 class TestPerformanceTests:
+    @pytest.mark.xfail("CI" in environ, reason="GitLab runner performance issues")
     def test_write_performance(self, test_inst):
         """
         Write 5000 variable values and measure
@@ -659,7 +660,7 @@ class TestPerformanceTests:
 
             assert maxt < 17
             assert mint > 1
-            assert avgt < 15
+            assert avgt < 5
             assert totr < 3000
 
     def test_read_performance(self, test_inst):
