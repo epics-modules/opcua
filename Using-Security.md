@@ -84,7 +84,7 @@ In the fully detailed form (using four arguments), the four locations are specif
 
 ### Client Certificate
 
-The iocShell command `setClientCertificate` sets the locations for the client certificate (PEM or DER format) and the matching private key (PEM format).
+The iocShell command `opcuaClientCertificate` sets the locations for the client certificate (PEM or DER format) and the matching private key (PEM format).
 
 ### Session Security Setting
 
