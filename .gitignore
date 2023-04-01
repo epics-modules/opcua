@@ -23,6 +23,7 @@ envPaths
 
 O.*/
 /QtC-*
+/.qtc_*
 .idea/
 *.orig
 *.log
