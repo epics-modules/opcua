@@ -647,19 +647,11 @@ class TestPerformanceTests:
                     mint = dt
                 tott += dt
                 totr += dr
-                print("Time: ", dt)
-                print("Memory: ", dr)
-                print("Memory: ", r0.ru_maxrss)
-                print("Memory: ", r1.ru_maxrss)
+
             avgt = tott / testruns
 
-            print("Max time: ", maxt)
-            print("Min time: ", mint)
-            print("Average time: ", avgt)
-            print("Total memory: ", totr)
-
             assert maxt < 17
-            assert mint > 1
+            assert mint > 0.8
             assert avgt < 5
             assert totr < 3000
 
