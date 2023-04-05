@@ -68,7 +68,7 @@ ifneq ($(words $(foreach SDK,$(SUPPORTED_SDKS),$($(SDK)))),1)
 $(warning Set your UPC UA SDK in CONFIG_SITE.local)
 $(warning Define exactly one of these variables: $(SUPPORTED_SDKS))
 $(foreach SDK,$(SUPPORTED_SDKS),$(warning $(SDK) = $($(SDK))))
-$(error )
+$(error Exiting)
 endif
 
 # Unified Automation C++ Based OPC UA Client SDK
@@ -76,6 +76,7 @@ ifdef UASDK
 include $(OPCUA)/UaSdk/Makefile
 endif
 
+# open62541.org Open Source UA SDK
 ifdef OPEN62541
 include $(OPCUA)/open62541/Makefile
 endif

@@ -15,14 +15,18 @@
 # Implementation using open62541 (https://open62541.org/)
 
 SRC_DIRS += $(OPCUA)/open62541
-#USR_INCLUDES += -I$(OPCUA)/open62541
-#USR_DBDFLAGS += -I $(OPCUA)/open62541
+
+# The build directoy of open62541, named "build" by default
+# but look for dirs with EPICS $(T_A) in the name, too.
+ifndef OPEN62541_BUILD_DIR
+OPEN62541_BUILD_DIR := $(notdir $(firstword $(wildcard $(OPEN62541)/build/$(T_A) $(OPEN62541)/build_$(T_A) $(OPEN62541)/build-$(T_A) $(OPEN62541)/$(T_A) $(OPEN62541)/build)))
+endif
 
 # Find open62541 library and header files
 # This should work with installed (typically to /usr/local) as well as not installed open62541
-USR_INCLUDES += $(addprefix -I$(OPEN62541)/,include plugins/include arch build/src_generated)
+USR_INCLUDES += $(addprefix -I$(OPEN62541)/,include plugins/include arch $(OPEN62541_BUILD_DIR:%=%/src_generated))
 LIB_LIBS += open62541
-open62541_DIR += $(if $(filter %64,$(ARCH_CLASS)),$(OPEN62541)/lib64) $(OPEN62541)/lib $(OPEN62541)/build/bin/Release $(OPEN62541)/build/bin
+open62541_DIR += $(if $(filter %64,$(ARCH_CLASS)),$(OPEN62541)/lib64) $(OPEN62541)/lib $(OPEN62541)/$(OPEN62541_BUILD_DIR)/bin/Release $(OPEN62541)/$(OPEN62541_BUILD_DIR)/bin
 
 opcua_SRCS += Session.cpp
 opcua_SRCS += SessionOpen62541.cpp
