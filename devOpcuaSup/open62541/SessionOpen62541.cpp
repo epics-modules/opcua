@@ -87,22 +87,34 @@ struct ReadRequest {
     ItemOpen62541 *item;
 };
 
-inline const char *
+const char *
 toStr(UA_SecureChannelState channelState) {
     switch (channelState) {
-        case UA_SECURECHANNELSTATE_CLOSED:       return "Closed";
-        case UA_SECURECHANNELSTATE_HEL_SENT:     return "HELSent";
-        case UA_SECURECHANNELSTATE_HEL_RECEIVED: return "HELReceived";
-        case UA_SECURECHANNELSTATE_ACK_SENT:     return "ACKSent";
-        case UA_SECURECHANNELSTATE_ACK_RECEIVED: return "AckReceived";
-        case UA_SECURECHANNELSTATE_OPN_SENT:     return "OPNSent";
-        case UA_SECURECHANNELSTATE_OPEN:         return "Open";
-        case UA_SECURECHANNELSTATE_CLOSING:      return "Closing";
-        default:                                 return "<unknown>";
+        case UA_SECURECHANNELSTATE_FRESH:               return "Fresh";
+#if UA_OPEN62541_VER_MAJOR*100+UA_OPEN62541_VER_MINOR >= 104
+        case UA_SECURECHANNELSTATE_REVERSE_LISTENING:   return "ReverseListening";
+        case UA_SECURECHANNELSTATE_CONNECTING:          return "Connecting";
+        case UA_SECURECHANNELSTATE_CONNECTED:           return "Connected";
+        case UA_SECURECHANNELSTATE_REVERSE_CONNECTED:   return "ReverseConnected";
+        case UA_SECURECHANNELSTATE_RHE_SENT:            return "RheSent";
+#endif
+        case UA_SECURECHANNELSTATE_HEL_SENT:            return "HelSent";
+        case UA_SECURECHANNELSTATE_HEL_RECEIVED:        return "HelReceived";
+        case UA_SECURECHANNELSTATE_ACK_SENT:            return "AckSent";
+        case UA_SECURECHANNELSTATE_ACK_RECEIVED:        return "AckReceived";
+        case UA_SECURECHANNELSTATE_OPN_SENT:            return "OPNSent";
+        case UA_SECURECHANNELSTATE_OPEN:                return "Open";
+        case UA_SECURECHANNELSTATE_CLOSING:             return "Closing";
+        case UA_SECURECHANNELSTATE_CLOSED:              return "Closed";
+        default: {
+            static char unknownstate[32];
+            sprintf(unknownstate, "<unknown %u>", channelState);
+            return unknownstate;
+        }
     }
 }
 
-inline const char *
+const char *
 toStr(UA_SessionState sessionState) {
     switch (sessionState) {
         case UA_SESSIONSTATE_CLOSED:             return "Closed";
@@ -111,7 +123,11 @@ toStr(UA_SessionState sessionState) {
         case UA_SESSIONSTATE_ACTIVATE_REQUESTED: return "ActivateRequested";
         case UA_SESSIONSTATE_ACTIVATED:          return "Activated";
         case UA_SESSIONSTATE_CLOSING:            return "Closing";
-        default:                                 return "<unknown>";
+        default: {
+            static char unknownstate[32];
+            sprintf(unknownstate, "<unknown %u>", sessionState);
+            return unknownstate;
+        }
     }
 }
 
@@ -707,14 +723,7 @@ void SessionOpen62541::connectionStatusChanged (
                       << channelState << " to " << newChannelState  << std::endl;
 // TODO: What to do for each channelState change?
         switch (newChannelState) {
-            case UA_SECURECHANNELSTATE_CLOSED:       break;
-            case UA_SECURECHANNELSTATE_HEL_SENT:     break;
-            case UA_SECURECHANNELSTATE_HEL_RECEIVED: break;
-            case UA_SECURECHANNELSTATE_ACK_SENT:     break;
-            case UA_SECURECHANNELSTATE_ACK_RECEIVED: break;
-            case UA_SECURECHANNELSTATE_OPN_SENT:     break;
-            case UA_SECURECHANNELSTATE_OPEN:         break;
-            case UA_SECURECHANNELSTATE_CLOSING:      break;
+            default: break;
         }
         channelState = newChannelState;
     }
@@ -741,10 +750,6 @@ void SessionOpen62541::connectionStatusChanged (
                 }
                 break;
             }
-            case UA_SESSIONSTATE_CLOSED:             break;
-            case UA_SESSIONSTATE_CREATE_REQUESTED:   break;
-            case UA_SESSIONSTATE_CREATED:            break;
-            case UA_SESSIONSTATE_ACTIVATE_REQUESTED: break;
             case UA_SESSIONSTATE_ACTIVATED:
             {
                 //updateNamespaceMap(puasession->getNamespaceTable());
@@ -769,6 +774,7 @@ void SessionOpen62541::connectionStatusChanged (
                 reader.pushRequest(cargo, menuPriorityHIGH);
                 break;
             }
+            default: break;
         }
         sessionState = newSessionState;
     }
