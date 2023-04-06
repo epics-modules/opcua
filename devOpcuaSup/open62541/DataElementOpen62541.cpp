@@ -109,11 +109,18 @@ DataElementOpen62541::createMap (const UA_DataType *type)
              std::cout << " ** creating index-to-element map for child elements" << std::endl;
 
          // Walk the structure and cache offset, array size (0 for scalars), and type for each member
-         const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+         // See copyStructure() in open62541 src/ua_types.c
          ptrdiff_t memberOffs = 0;
          for (int i = 0; i < type->membersSize; ++i) {
              const UA_DataTypeMember *member = &type->members[i];
+#ifdef UA_BUILTIN_TYPES_COUNT
+// Older open62541 before version 1.3 uses type index
+             const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
              const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
+#else
+// Newer open62541 before version 3.x uses pointer
+             const UA_DataType *memberType = member->memberType;
+#endif
              memberOffs += member->padding;
              if (member->isArray) {
                  memberOffs += sizeof(size_t); // array length
