@@ -146,6 +146,7 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     , readNodesMax(0)
     , readTimeoutMin(0)
     , readTimeoutMax(0)
+    , batchNodesMax(batchNodes)
     , client(nullptr)
     , channelState(UA_SECURECHANNELSTATE_CLOSED)
     , sessionState(UA_SESSIONSTATE_CLOSED)
@@ -187,12 +188,12 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
-//        connectInfo.nMaxOperationsPerServiceCall = ul;
+        batchNodesMax = ul;
         updateReadBatcher = true;
         updateWriteBatcher = true;
     } else if (name == "nodes-max") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
-//        connectInfo.nMaxOperationsPerServiceCall = ul;
+        batchNodesMax = ul;
         updateReadBatcher = true;
         updateWriteBatcher = true;
     } else if (name == "read-nodes-max") {
@@ -224,22 +225,19 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     }
 
     unsigned int max = 0;
-/*
-    if (connectInfo.nMaxOperationsPerServiceCall > 0 && readNodesMax > 0) {
-        max = std::min<unsigned int>(connectInfo.nMaxOperationsPerServiceCall, readNodesMax);
+
+    if (batchNodesMax > 0 && readNodesMax > 0) {
+        max = std::min<unsigned int>(batchNodesMax, readNodesMax);
     } else {
-        max = connectInfo.nMaxOperationsPerServiceCall + readNodesMax;
+        max = batchNodesMax + readNodesMax;
     }
-*/
     if (updateReadBatcher) reader.setParams(max, readTimeoutMin, readTimeoutMax);
 
-/*
-    if (connectInfo.nMaxOperationsPerServiceCall > 0 && writeNodesMax > 0) {
-        max = std::min<unsigned int>(connectInfo.nMaxOperationsPerServiceCall, writeNodesMax);
+    if (batchNodesMax > 0 && writeNodesMax > 0) {
+        max = std::min<unsigned int>(batchNodesMax, writeNodesMax);
     } else {
-        max = connectInfo.nMaxOperationsPerServiceCall + writeNodesMax;
+        max = batchNodesMax + writeNodesMax;
     }
-*/
     if (updateWriteBatcher) writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
 }
 
@@ -276,9 +274,7 @@ SessionOpen62541::connect ()
                 connectionStatusChanged(channelState, sessionState, connectStatus);
         };
     config.outStandingPublishRequests = 5;
-/*
-    connectInfo.nMaxOperationsPerServiceCall = batchNodes;
-*/
+
     client = UA_Client_newWithConfig(&config);
     if (!client) {
         std::cerr << "Session " << name
@@ -598,7 +594,7 @@ SessionOpen62541::show (const int level) const
     else
 */
     std::cout << "?";
-    std::cout // << "(" << connectInfo.nMaxOperationsPerServiceCall << ")"
+    std::cout << "(" << batchNodesMax << ")"
 //               << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "y" : "n")
               << " items=" << items.size()
               << " registered=" << registeredItemsNo
