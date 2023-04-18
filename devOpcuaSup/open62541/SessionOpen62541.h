@@ -300,7 +300,6 @@ private:
     unsigned int readNodesMax;                                    /**< max number of nodes per read request */
     unsigned int readTimeoutMin;                                  /**< timeout after read request batch of 1 node [ms] */
     unsigned int readTimeoutMax;                                  /**< timeout after read request batch of NodesMax nodes [ms] */
-    unsigned int batchNodesMax;                                   /**< max number of nodes in any request batch */
 
     /** open62541 interfaces */
     UA_Client *client;                                            /**< low level handle for this session */
@@ -308,6 +307,8 @@ private:
     UA_SecureChannelState channelState;                           /**< status for this session */
     UA_SessionState sessionState;                                 /**< status for this session */
     UA_StatusCode connectStatus;                                  /**< status for this session */
+    unsigned int MaxNodesPerRead;                                 /**< server max number of nodes per write request */
+    unsigned int MaxNodesPerWrite;                                /**< server max number of nodes per write request */
     epicsThread *workerThread;                                    /**< Asynchronous worker thread */
 };
 

@@ -26,6 +26,7 @@
 #include <errlog.h>
 
 #include <open62541/client.h>
+#include <open62541/client_highlevel.h>
 #include <open62541/client_highlevel_async.h>
 
 #define epicsExportSharedSymbols
@@ -167,14 +168,13 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     , registeredItemsNo(0)
     , transactionId(0)
     , writer("OPCwr-" + name, *this, batchNodes)
-    , writeNodesMax(0)
+    , writeNodesMax(batchNodes)
     , writeTimeoutMin(0)
     , writeTimeoutMax(0)
     , reader("OPCrd-" + name, *this, batchNodes)
-    , readNodesMax(0)
+    , readNodesMax(batchNodes)
     , readTimeoutMin(0)
     , readTimeoutMax(0)
-    , batchNodesMax(batchNodes)
     , client(nullptr)
     , channelState(UA_SECURECHANNELSTATE_CLOSED)
     , sessionState(UA_SESSIONSTATE_CLOSED)
@@ -216,12 +216,14 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
-        batchNodesMax = ul;
+        readNodesMax = ul;
+        writeNodesMax = ul;
         updateReadBatcher = true;
         updateWriteBatcher = true;
     } else if (name == "nodes-max") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
-        batchNodesMax = ul;
+        readNodesMax = ul;
+        writeNodesMax = ul;
         updateReadBatcher = true;
         updateWriteBatcher = true;
     } else if (name == "read-nodes-max") {
@@ -254,17 +256,17 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
 
     unsigned int max = 0;
 
-    if (batchNodesMax > 0 && readNodesMax > 0) {
-        max = std::min<unsigned int>(batchNodesMax, readNodesMax);
+    if (MaxNodesPerRead > 0 && readNodesMax > 0) {
+        max = std::min<unsigned int>(MaxNodesPerRead, readNodesMax);
     } else {
-        max = batchNodesMax + readNodesMax;
+        max = MaxNodesPerRead + readNodesMax;
     }
     if (updateReadBatcher) reader.setParams(max, readTimeoutMin, readTimeoutMax);
 
-    if (batchNodesMax > 0 && writeNodesMax > 0) {
-        max = std::min<unsigned int>(batchNodesMax, writeNodesMax);
+    if (MaxNodesPerWrite > 0 && writeNodesMax > 0) {
+        max = std::min<unsigned int>(MaxNodesPerWrite, writeNodesMax);
     } else {
-        max = batchNodesMax + writeNodesMax;
+        max = MaxNodesPerWrite + writeNodesMax;
     }
     if (updateWriteBatcher) writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
 }
@@ -631,14 +633,8 @@ SessionOpen62541::show (const int level) const
               << " cert="        << "[none]"
               << " key="         << "[none]"
               << " debug="       << debug
-              << " batch=";
-/*
-    if (isConnected())
-        std::cout << puasession->maxOperationsPerServiceCall();
-    else
-*/
-    std::cout << "?";
-    std::cout << "(" << batchNodesMax << ")"
+              << " batch r/w="   << MaxNodesPerRead << "/" << MaxNodesPerWrite
+              << "(" << readNodesMax << "/" << writeNodesMax << ")"
 //               << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "y" : "n")
               << " items=" << items.size()
               << " registered=" << registeredItemsNo
@@ -789,6 +785,41 @@ SessionOpen62541::connectionStatusChanged (
             }
             case UA_SESSIONSTATE_ACTIVATED:
             {
+                // read some settings from server
+                UA_Variant value;
+                UA_StatusCode status;
+                unsigned int max;
+
+                UA_Variant_init(&value);
+
+                // max nodes per read request
+                status = UA_Client_readValueAttribute(client,
+                    UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERCAPABILITIES_OPERATIONLIMITS_MAXNODESPERREAD)
+                    , &value);
+                if (status == UA_STATUSCODE_GOOD && UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_UINT32]))
+                    MaxNodesPerRead = *static_cast<UA_UInt32*>(value.data);
+                UA_Variant_clear(&value);
+                if (MaxNodesPerRead > 0 && readNodesMax > 0)
+                    max = std::min<unsigned int>(MaxNodesPerRead, readNodesMax);
+                else
+                    max = MaxNodesPerRead + readNodesMax;
+                if (max != readNodesMax)
+                    reader.setParams(max, readTimeoutMin, readTimeoutMax);
+
+                // max nodes per write request
+                status = UA_Client_readValueAttribute(client,
+                    UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERCAPABILITIES_OPERATIONLIMITS_MAXNODESPERWRITE)
+                    , &value);
+                if (status == UA_STATUSCODE_GOOD && UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_UINT32]))
+                    MaxNodesPerWrite = *static_cast<UA_UInt32*>(value.data);
+                UA_Variant_clear(&value);
+                if (MaxNodesPerWrite > 0 && writeNodesMax > 0)
+                    max = std::min<unsigned int>(MaxNodesPerWrite, writeNodesMax);
+                else
+                    max = MaxNodesPerWrite + writeNodesMax;
+                if (max != writeNodesMax)
+                    writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
+
                 //updateNamespaceMap(puasession->getNamespaceTable());
                 rebuildNodeIds();
                 registerNodes();
