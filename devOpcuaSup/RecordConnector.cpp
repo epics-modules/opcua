@@ -17,6 +17,7 @@
 
 #include <link.h>
 #include <shareLib.h>
+#include <epicsString.h>
 #include <epicsThread.h>
 #include <callback.h>
 #include <recSup.h>
@@ -188,13 +189,61 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
 RecordConnector *
 RecordConnector::findRecordConnector (const std::string &name)
 {
+    RecordConnector *result;
     DBENTRY entry;
     dbInitEntry(pdbbase, &entry);
     if (dbFindRecord(&entry, name.c_str())) {
         dbFinishEntry(&entry);
         return nullptr;
     }
-    return static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+    result = static_cast<RecordConnector *>(static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+    dbFinishEntry(&entry);
+    return result;
+}
+
+std::set<RecordConnector *>
+RecordConnector::glob(const std::string &pattern)
+{
+    DBENTRY entry;
+    long status;
+    std::set<RecordConnector *> result;
+
+    dbInitEntry(pdbbase, &entry);
+    status = dbFirstRecordType(&entry);
+    while (!status) {
+        status = dbFirstRecord(&entry);
+        while (!status) {
+            if (!(dbFindField(&entry, "RTYP") || strcmp(dbGetString(&entry), "opcuaItem"))
+                || !(dbFindField(&entry, "DTYP") || strcmp(dbGetString(&entry), "OPCUA"))) {
+                char *pname = dbGetRecordName(&entry);
+                RecordConnector *rc = static_cast<RecordConnector *>(
+                    static_cast<dbCommon *>(entry.precnode->precord)->dpvt);
+                if (rc) {
+                    bool match = false;
+                    if (epicsStrGlobMatch(pname, pattern.c_str())) {
+                        match = true;
+                    } else if (rc->plinkinfo) {
+                        if (rc->plinkinfo->identifierIsNumeric) {
+                            if (epicsStrGlobMatch(std::to_string(rc->plinkinfo->identifierNumber)
+                                                      .c_str(),
+                                                  pattern.c_str()))
+                                match = true;
+                        } else {
+                            if (epicsStrGlobMatch(rc->plinkinfo->identifierString.c_str(),
+                                                  pattern.c_str()))
+                                match = true;
+                        }
+                    }
+                    if (match)
+                        result.insert(rc);
+                }
+            }
+            status = dbNextRecord(&entry);
+        }
+        status = dbNextRecordType(&entry);
+    }
+    dbFinishEntry(&entry);
+    return result;
 }
 
 } // namespace DevOpcua

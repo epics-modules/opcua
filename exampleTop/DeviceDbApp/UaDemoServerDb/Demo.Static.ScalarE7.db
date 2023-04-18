@@ -1,0 +1,38 @@
+# Database connecting to the UaServerCpp example server
+# that is part of all Unified Automation bundles
+
+# Dynamic part of the Demo server
+
+# int64 and long string records connecting to scalar variables
+
+# This database works only on EPICS 7 !!
+
+# int64in/int64out  -  Int64
+
+record(int64in, "$(P)$(R)int64in") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.Int64")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(int64out, "$(P)$(R)int64out") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.Int64")
+    field(TSE,  "-2")
+}
+
+# lsi/lso  -  String
+
+record(lsi, "$(P)$(R)lsistring") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(lso, "$(P)$(R)lsostring") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")
+    field(TSE,  "-2")
+}

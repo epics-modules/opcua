@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <map>
+#include <set>
 
 #include <epicsTypes.h>
 #include <shareLib.h>
@@ -87,6 +88,15 @@ public:
      * @return  pointer to subscription, nullptr if not found
      */
     static Subscription *find(const std::string &name);
+
+    /**
+     * @brief Find subscriptions with names matching a glob pattern.
+     *
+     * @param pattern  subscription name pattern to match
+     *
+     * @return  set of pointers to matching subscriptions
+     */
+    static std::set<Subscription *> glob(const std::string &pattern);
 
     const std::string name; /**< subscription name */
     int debug;              /**< debug verbosity level */

@@ -470,7 +470,7 @@ DataElementUaSdk::dbgReadArray (const UpdateUaSdk *upd,
 
 // Read array for EPICS String / OpcUa_String
 long int
-DataElementUaSdk::readArray (char **value, const epicsUInt32 len,
+DataElementUaSdk::readArray (char *value, const epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              OpcUa_BuiltInType expectedType,
@@ -491,7 +491,7 @@ DataElementUaSdk::readArray (char **value, const epicsUInt32 len,
 
     ProcessReason nReason;
     std::shared_ptr<UpdateUaSdk> upd = incomingQueue.popUpdate(&nReason);
-    dbgReadArray(upd.get(), num, epicsTypeString(**value));
+    dbgReadArray(upd.get(), num, epicsTypeString(*value));
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -520,7 +520,7 @@ DataElementUaSdk::readArray (char **value, const epicsUInt32 len,
                     ret = 1;
                 } else if (data.type() != expectedType) {
                     errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data.type()), epicsTypeString(**value));
+                                 prec->name, variantTypeString(data.type()), epicsTypeString(*value));
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
                 } else {
@@ -531,8 +531,8 @@ DataElementUaSdk::readArray (char **value, const epicsUInt32 len,
                     UaVariant_to(upd->getData(), arr);
                     elemsWritten = num < arr.length() ? num : arr.length();
                     for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                        strncpy(value[i], UaString(arr[i]).toUtf8(), len);
-                        value[i][len-1] = '\0';
+                        strncpy(value + i * len, UaString(arr[i]).toUtf8(), len);
+                        (value + i * len)[len - 1] = '\0';
                     }
                     prec->udf = false;
                 }
@@ -774,7 +774,7 @@ DataElementUaSdk::readArray (char *value, const epicsUInt32 len,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray(&value, len, num, numRead, OpcUaType_String, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray(value, len, num, numRead, OpcUaType_String, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 inline

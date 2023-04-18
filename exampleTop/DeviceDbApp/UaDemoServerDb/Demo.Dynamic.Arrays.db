@@ -1,0 +1,87 @@
+# Database connecting to the UaServerCpp example server
+# that is part of all Unified Automation bundles
+
+# Dynamic part of the Demo server
+
+# waveform records connecting to arrays of different types
+
+record(waveform, "$(P)$(R)wfchar") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.SByte")
+    field(FTVL, "CHAR")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wfint16") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.Int16")
+    field(FTVL, "SHORT")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wfint32") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.Int32")
+    field(FTVL, "LONG")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wfuchar") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.Byte")
+    field(FTVL, "UCHAR")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wfuint16") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.UInt16")
+    field(FTVL, "USHORT")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wfuint32") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.UInt32")
+    field(FTVL, "ULONG")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wffloat") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.Float")
+    field(FTVL, "FLOAT")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wfdouble") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.Double")
+    field(FTVL, "DOUBLE")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
+record(waveform, "$(P)$(R)wfstring") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.String")
+    field(FTVL, "STRING")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}

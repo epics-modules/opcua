@@ -56,7 +56,7 @@ splitString(const std::string &str, const char delim)
             sep = str.length();
         std::string token = str.substr(prev, sep - prev);
         // allow escaping delimiters
-        while (sep != std::string::npos && sep > 0 && str[sep - 1] == '\\') {
+        while (sep < str.length() && sep > 0 && str[sep - 1] == '\\') {
             prev = sep + 1;
             sep = str.find_first_of(delim, prev);
             if (sep == std::string::npos)

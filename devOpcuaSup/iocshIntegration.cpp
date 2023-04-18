@@ -11,6 +11,7 @@
  */
 
 #include <iostream>
+#include <set>
 #include <string>
 #include <string.h>
 #include <stdexcept>
@@ -249,6 +250,9 @@ static const iocshFuncDef opcuaShowSessionFuncDef = {"opcuaShowSession", 2, opcu
 static
 void opcuaShowSessionCallFunc (const iocshArgBuf *args)
 {
+    std::cerr << "DEPRECATION WARNING: opcuaShowSession is obsolete; use the improved opcuaShow "
+                 "command instead (that supports glob patterns)."
+              << std::endl;
     try {
         if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
             Session::showAll(args[1].ival);
@@ -430,6 +434,10 @@ static const iocshFuncDef opcuaShowSubscriptionFuncDef = {"opcuaShowSubscription
 static
 void opcuaShowSubscriptionCallFunc (const iocshArgBuf *args)
 {
+    std::cerr
+        << "DEPRECATION WARNING: opcuaShowSubscription is obsolete; use the improved opcuaShow "
+           "command instead (that supports glob patterns)."
+        << std::endl;
     try {
         if (args[0].sval == nullptr || args[0].sval[0] == '\0') {
             Subscription::showAll(args[1].ival);
@@ -473,6 +481,9 @@ static const iocshFuncDef opcuaShowDataFuncDef = {"opcuaShowData", 2, opcuaShowD
 static
 void opcuaShowDataCallFunc (const iocshArgBuf *args)
 {
+    std::cerr << "DEPRECATION WARNING: opcuaShowData is obsolete; use the improved opcuaShow "
+                 "command instead (that supports glob patterns)."
+              << std::endl;
     try {
         if (args[0].sval == NULL || args[0].sval[0] == '\0') {
             errlogPrintf("missing argument #1 (record name)\n");
@@ -488,6 +499,47 @@ void opcuaShowDataCallFunc (const iocshArgBuf *args)
     }
     catch (std::exception &e) {
         std::cerr << "ERROR : " << e.what() << std::endl;
+    }
+}
+
+static const iocshArg opcuaShowArg0 = {"pattern", iocshArgString};
+static const iocshArg opcuaShowArg1 = {"verbosity", iocshArgInt};
+
+static const iocshArg *const opcuaShowArg[2] = {&opcuaShowArg0, &opcuaShowArg1};
+
+static const iocshFuncDef opcuaShowFuncDef = {"opcuaShow", 2, opcuaShowArg};
+
+static void
+opcuaShowCallFunc(const iocshArgBuf *args)
+{
+    if (args[0].sval == NULL || args[0].sval[0] == '\0') {
+        errlogPrintf("missing argument #1 (pattern for name)\n");
+    } else {
+        bool foundSomething = false;
+        std::set<Session *> sessions = Session::glob(args[0].sval);
+        if (sessions.size()) {
+            foundSomething = true;
+            for (auto &s : sessions)
+                s->show(args[1].ival);
+        }
+        if (!foundSomething) {
+            std::set<Subscription *> subscriptions = Subscription::glob(args[0].sval);
+            if (subscriptions.size()) {
+                foundSomething = true;
+                for (auto &s : subscriptions)
+                    s->show(args[1].ival);
+            }
+        }
+        if (!foundSomething) {
+            std::set<RecordConnector *> connectors = RecordConnector::glob(args[0].sval);
+            if (connectors.size()) {
+                foundSomething = true;
+                for (auto &rc : connectors)
+                    rc->pitem->show(args[1].ival);
+            }
+        }
+        if (!foundSomething)
+            errlogPrintf("No matches for pattern '%s'\n", args[0].sval);
     }
 }
 
@@ -508,6 +560,7 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaDebugSubscriptionFuncDef, opcuaDebugSubscriptionCallFunc);
 
     iocshRegister(&opcuaShowDataFuncDef, opcuaShowDataCallFunc);
+    iocshRegister(&opcuaShowFuncDef, opcuaShowCallFunc);
 }
 
 extern "C" {

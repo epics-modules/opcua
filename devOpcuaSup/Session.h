@@ -14,6 +14,7 @@
 #define DEVOPCUA_SESSION_H
 
 #include <string>
+#include <set>
 
 #include <shareLib.h>
 
@@ -149,6 +150,15 @@ public:
      * @return  pointer to session, nullptr if not found
      */
     static Session *find(const std::string &name);
+
+    /**
+     * @brief Find sessions with names matching a glob pattern.
+     *
+     * @param pattern  session name pattern to match
+     *
+     * @return  set of pointers to matching sessions
+     */
+    static std::set<Session *> glob(const std::string &pattern);
 
     /**
      * @brief Print help text for available options.

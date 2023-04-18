@@ -882,7 +882,7 @@ private:
 
     // Read array value for EPICS String / OpcUa_String
     long
-    readArray (char **value, const epicsUInt32 len,
+    readArray (char *value, const epicsUInt32 len,
                const epicsUInt32 num,
                epicsUInt32 *numRead,
                OpcUa_BuiltInType expectedType,
