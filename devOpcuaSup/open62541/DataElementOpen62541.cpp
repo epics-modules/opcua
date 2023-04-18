@@ -565,7 +565,7 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
 
 // Read array for EPICS String / UA_String
 long int
-DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
+DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              const UA_DataType *expectedType,
@@ -586,7 +586,7 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
 
     ProcessReason nReason;
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
-    dbgReadArray(upd.get(), num, epicsTypeString(**value));
+    dbgReadArray(upd.get(), num, epicsTypeString(*value));
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -615,7 +615,7 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
                     ret = 1;
                 } else if (data.type != expectedType) {
                     errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data), epicsTypeString(**value));
+                                 prec->name, variantTypeString(data), epicsTypeString(*value));
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
                 } else {
@@ -624,8 +624,8 @@ DataElementOpen62541::readArray (char **value, const epicsUInt32 len,
                     }
                     elemsWritten = num < static_cast<epicsUInt32>(data.arrayLength) ? num : static_cast<epicsUInt32>(data.arrayLength);
                     for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                        strncpy(value[i], reinterpret_cast<char*>(static_cast<UA_String *>(data.data)[i].data), len);
-                        value[i][len-1] = '\0';
+                        strncpy(value + i * len, reinterpret_cast<char*>(static_cast<UA_String *>(data.data)[i].data), len);
+                        (value + i * len)[len - 1] = '\0';
                     }
                     prec->udf = false;
                 }
@@ -780,7 +780,7 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray(&value, len, num, numRead, &UA_TYPES[UA_TYPES_STRING], prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray(value, len, num, numRead, &UA_TYPES[UA_TYPES_STRING], prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 inline

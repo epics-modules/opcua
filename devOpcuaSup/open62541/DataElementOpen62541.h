@@ -978,7 +978,7 @@ private:
 
     // Read array value for EPICS String / UA_String
     long
-    readArray (char **value, const epicsUInt32 len,
+    readArray (char *value, const epicsUInt32 len,
                const epicsUInt32 num,
                epicsUInt32 *numRead,
                const UA_DataType *expectedType,
