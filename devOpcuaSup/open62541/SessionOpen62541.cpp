@@ -185,6 +185,7 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     , channelState(UA_SECURECHANNELSTATE_CLOSED)
     , sessionState(UA_SESSIONSTATE_CLOSED)
     , connectStatus(UA_STATUSCODE_BADINVALIDSTATE)
+    , workerThread(nullptr)
 {
     static epicsThreadOnceId init_once_id = EPICS_THREAD_ONCE_INIT;
     epicsThreadOnce(&init_once_id, initOnce, nullptr);
@@ -359,11 +360,12 @@ SessionOpen62541::disconnect ()
         UA_Client_delete(client);
         client = nullptr;
     }
-
     // Worker thread terminates when client was destroyed
-    workerThread->exitWait();
-    delete workerThread;
-    workerThread = nullptr;
+    if (workerThread) {
+        workerThread->exitWait();
+        delete workerThread;
+        workerThread = nullptr;
+    }
     return 0;
 }
 
@@ -718,21 +720,44 @@ SessionOpen62541::run ()
     // Unfortunately, there is no way to release the mutex while
     // UA_Client_run_iterate() waits for incoming network traffic.
     // Thus use a short timeout and sleep without holding the mutex.
-    while (connectStatus == UA_STATUSCODE_GOOD)
+    std::cerr << "Session " << name
+              << " worker thread start"
+              << std::endl;
+    Guard G(clientlock);
+    while (true)
     {
-        {
-            Guard G(clientlock);
-            if (!client) return;
-            connectStatus = UA_Client_run_iterate(client, 1);
+        if (!client) {
+             std::cerr << "Session " << name
+                       << " worker thread: Client destroyed. Finishing."
+                       << std::endl;
+            return;
         }
-        epicsThreadSleep(0.01); // give other threads a chance to execute
+        connectStatus = UA_Client_run_iterate(client, 1);
+        {
+            UnGuard U(G);
+            epicsThreadSleep(0.01); // give other threads a chance to execute
+        }
+        if (client && connectStatus != UA_STATUSCODE_GOOD) {
+            if (!autoConnect) break;
+            // Try to reconnect after 10 seconds but sleep only .5 seconds
+            // To be able to terminate early when someone calls disconnect
+            for (int i = 0; i < 20; i++) {
+                UnGuard U(G);
+                epicsThreadSleep(0.5);
+                if (!client) return;
+            }
+            std::cerr << "Session " << name
+                      << " trying to reconnect."
+                      << std::endl;
+            UA_Client_connectAsync(client, serverURL.c_str());
+        }
     }
     std::cerr << "Session " << name
-        << " worker thread error: connectStatus:"
-        << UA_StatusCode_name(connectStatus)
-        << " sessionState:" << sessionState
-        << " channelState:" << channelState
-        << std::endl;
+              << " worker thread error: connectStatus:"
+              << UA_StatusCode_name(connectStatus)
+              << " sessionState:" << sessionState
+              << " channelState:" << channelState
+              << std::endl;
     disconnect();
 }
 
@@ -744,10 +769,13 @@ SessionOpen62541::connectionStatusChanged (
     UA_SessionState newSessionState,
     UA_StatusCode newConnectStatus)
 {
+    connectStatus = newConnectStatus;
     if (newConnectStatus != UA_STATUSCODE_GOOD) {
-        connectStatus = newConnectStatus;
-        errlogPrintf("Session %s irrecoverably failed: %s\n",
-                 name.c_str(), UA_StatusCode_name(connectStatus));
+        if (debug)
+            std::cout << "Session " << name
+                      << " irrecoverably failed: "
+                      << UA_StatusCode_name(connectStatus)
+                      << std::endl;
         return;
     }
 
@@ -756,7 +784,8 @@ SessionOpen62541::connectionStatusChanged (
             std::cout << "Session " << name
                       << ": secure channel state changed from "
                       << channelState << " to "
-                      << newChannelState << std::endl;
+                      << newChannelState
+                      << std::endl;
 // TODO: What to do for each channelState change?
         switch (newChannelState) {
             default: break;
@@ -769,7 +798,8 @@ SessionOpen62541::connectionStatusChanged (
             std::cout << "Session " << name
                       << ": session state changed from "
                       << sessionState << " to "
-                      << newSessionState << std::endl;
+                      << newSessionState
+                      << std::endl;
 // TODO: What to do for each sessionState change?
         switch (newSessionState) {
             case UA_SESSIONSTATE_CLOSING:
@@ -839,7 +869,8 @@ SessionOpen62541::connectionStatusChanged (
                 if (debug) {
                     std::cout << "Session " << name
                               << ": triggering initial read for all "
-                              << items.size() << " items" << std::endl;
+                              << items.size() << " items"
+                              << std::endl;
                 }
                 auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
                 unsigned int i = 0;
@@ -944,9 +975,9 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             if (debug >= 5) {
                 std::cout << "** Session " << name
                           << ": (writeComplete) getting results for item "
-                         << item->getNodeId()
-                         << ' '<< UA_StatusCode_name(response->results[i])
-                         << std::endl;
+                          << item->getNodeId()
+                          << ' ' << UA_StatusCode_name(response->results[i])
+                          << std::endl;
             }
             ProcessReason reason = ProcessReason::writeComplete;
             if (UA_STATUS_IS_BAD(response->results[i]))
@@ -974,7 +1005,8 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             if (debug >= 5) {
                 std::cout << "** Session " << name
                           << ": (writeComplete) filing write error for item "
-                          << item->getNodeId() << std::endl;
+                          << item->getNodeId()
+                          << std::endl;
             }
             item->setIncomingEvent(ProcessReason::writeFailure);
             item->setState(ConnectionStatus::up);
@@ -999,7 +1031,8 @@ SessionOpen62541::showAll (const int level)
               << sessions.size() << " session(s) ("
               << connected << " connected) with "
               << subscriptions << " subscription(s) and "
-              << items << " items" << std::endl;
+              << items << " items"
+              << std::endl;
     if (level >= 1) {
         for (auto &it : sessions) {
             it.second->show(level-1);
