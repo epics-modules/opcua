@@ -111,7 +111,7 @@ DataElementOpen62541::createMap (const UA_DataType *type)
          // Walk the structure and cache offset, array size (0 for scalars), and type for each member
          // See copyStructure() in open62541 src/ua_types.c
          ptrdiff_t memberOffs = 0;
-         for (int i = 0; i < type->membersSize; ++i) {
+         for (unsigned int i = 0; i < type->membersSize; ++i) {
              const UA_DataTypeMember *member = &type->members[i];
 #ifdef UA_BUILTIN_TYPES_COUNT
 // Older open62541 before version 1.3 uses type index
@@ -135,7 +135,7 @@ DataElementOpen62541::createMap (const UA_DataType *type)
          // Map member names to index
          for (auto &it : elements) {
              auto pelem = it.lock();
-             int i;
+             unsigned int i;
              for (i = 0; i < type->membersSize; i++) {
                  if (pelem->name == type->members[i].memberName) {
                      elementMap.insert({i, it});
@@ -622,7 +622,7 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
                     if (UA_STATUS_IS_UNCERTAIN(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
-                    elemsWritten = num < static_cast<epicsUInt32>(data.arrayLength) ? num : static_cast<epicsUInt32>(data.arrayLength);
+                    elemsWritten = static_cast<epicsUInt32>(num < data.arrayLength ? num : data.arrayLength);
                     for (epicsUInt32 i = 0; i < elemsWritten; i++) {
                         strncpy(value + i * len, reinterpret_cast<char*>(static_cast<UA_String *>(data.data)[i].data), len);
                         (value + i * len)[len - 1] = '\0';
