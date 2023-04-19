@@ -286,7 +286,6 @@ private:
 
     static Registry<SessionOpen62541> sessions;                   /**< session management */
 
-    const std::string name;                                       /**< unique session name */
     const std::string serverURL;                                  /**< server URL */
     std::map<std::string, SubscriptionOpen62541*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemOpen62541 *> items;                           /**< items on this session */

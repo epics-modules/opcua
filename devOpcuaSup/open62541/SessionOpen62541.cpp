@@ -167,8 +167,7 @@ SessionOpen62541::initOnce (void*)
 SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &serverUrl,
                             bool autoConnect, int debug, epicsUInt32 batchNodes,
                             const char *clientCertificate, const char *clientPrivateKey)
-    : Session(debug, autoConnect)
-    , name(name)
+    : Session(name, debug, autoConnect)
     , serverURL(serverUrl)
     , registeredItemsNo(0)
     , transactionId(0)
