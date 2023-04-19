@@ -288,7 +288,6 @@ private:
 
     const std::string name;                                       /**< unique session name */
     const std::string serverURL;                                  /**< server URL */
-    bool autoConnect;                                             /**< auto (re)connect flag */
     std::map<std::string, SubscriptionOpen62541*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemOpen62541 *> items;                           /**< items on this session */
     UA_UInt32 registeredItemsNo;                                  /**< number of registered items */

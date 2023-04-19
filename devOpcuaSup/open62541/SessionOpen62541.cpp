@@ -167,10 +167,9 @@ SessionOpen62541::initOnce (void*)
 SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &serverUrl,
                             bool autoConnect, int debug, epicsUInt32 batchNodes,
                             const char *clientCertificate, const char *clientPrivateKey)
-    : Session(debug)
+    : Session(debug, autoConnect)
     , name(name)
     , serverURL(serverUrl)
-    , autoConnect(autoConnect)
     , registeredItemsNo(0)
     , transactionId(0)
     , writer("OPCwr-" + name, *this, batchNodes)
@@ -643,7 +642,7 @@ SessionOpen62541::show (const int level) const
               << " debug="       << debug
               << " batch r/w="   << MaxNodesPerRead << "/" << MaxNodesPerWrite
               << "(" << readNodesMax << "/" << writeNodesMax << ")"
-//               << " autoconnect=" << (connectInfo.bAutomaticReconnect ? "y" : "n")
+              << " autoconnect=" << (autoConnect ? "y" : "n")
               << " items=" << items.size()
               << " registered=" << registeredItemsNo
               << " subscriptions=" << subscriptions.size()
