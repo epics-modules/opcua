@@ -42,6 +42,11 @@ struct WriteRequest;
 struct ReadRequest;
 
 /**
+ * @brief Enum for the requested security mode
+ */
+enum RequestedSecurityMode { Best, None, Sign, SignAndEncrypt };
+
+/**
  * @brief The SessionUaSdk implementation of an OPC UA client session.
  *
  * See DevOpcua::Session
@@ -78,8 +83,7 @@ public:
      * @param clientPrivateKey   path to client-side private key
      */
     SessionUaSdk(const std::string &name, const std::string &serverUrl,
-                 bool autoConnect = true, int debug = 0, epicsUInt32 batchNodes = 0,
-                 const char *clientCertificate = nullptr, const char *clientPrivateKey = nullptr);
+                 bool autoConnect = true, int debug = 0);
     ~SessionUaSdk() override;
 
     /**
@@ -105,6 +109,11 @@ public:
      * @param level
      */
     virtual void show(const int level) const override;
+
+    /**
+     * @brief Do a discovery and show the available endpoints.
+     */
+    virtual void showSecurity() override;
 
     /**
      * @brief Get session name. See DevOpcua::Session::getName
@@ -221,14 +230,6 @@ public:
      */
     static void initHook(initHookState state);
 
-    /**
-     * @brief EPICS IOC Database atExit function.
-     *
-     * Hook function called when the EPICS IOC is exiting.
-     * Disconnects all sessions.
-     */
-    static void atExit(void *junk);
-
     // Get a new (unique per session) transaction id
     OpcUa_UInt32 getTransactionId();
 
@@ -253,6 +254,13 @@ public:
     virtual void processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch) override;
     virtual void processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch) override;
 
+    /**
+     * @brief Setup ClientSecurityInfo object from PKI store locations and cert files
+     */
+    static void setupClientSecurityInfo(ClientSecurityInfo &securityInfo,
+                                        const std::string *sessionName = nullptr,
+                                        const int debug = 0);
+
 private:
     /**
      * @brief Register all nodes that are configured to be registered.
@@ -269,11 +277,35 @@ private:
      */
     void updateNamespaceMap(const UaStringArray &nsArray);
 
+    enum ConnectResult { fatal = -1, ok = 0
+                         , cantConnect
+                         , noMatchingEndpoint
+                       };
+    const char *connectResultString(const ConnectResult result);
+
+    /**
+     * @brief Mark connection loss: clear request queues and process records.
+     */
+    void markConnectionLoss();
+
+    /**
+     * @brief Read user/pass or cert/key/pass credentials from credentials file.
+     */
+    void setupIdentity();
+
+    /**
+     * @brief Set up security.
+     *
+     * Discovers the endpoints and finds the one matching the user configuration.
+     * Verifies the presented server certificate.
+     *
+     * @returns status (0 = OK)
+     */
+    ConnectResult setupSecurity();
+
     static Registry<SessionUaSdk> sessions;                   /**< session management */
 
-    const std::string name;                                   /**< unique session name */
     UaString serverURL;                                       /**< server URL */
-    bool autoConnect;                                         /**< auto (re)connect flag */
     std::map<std::string, SubscriptionUaSdk*> subscriptions;  /**< subscriptions on this session */
     std::vector<ItemUaSdk *> items;                           /**< items on this session */
     OpcUa_UInt32 registeredItemsNo;                           /**< number of registered items */
@@ -282,6 +314,9 @@ private:
     UaSession* puasession;                                    /**< pointer to low level session */
     SessionConnectInfo connectInfo;                           /**< connection metadata */
     SessionSecurityInfo securityInfo;                         /**< security metadata */
+    unsigned char securityLevel;                              /**< actual security level */
+    RequestedSecurityMode reqSecurityMode;                    /**< requested security mode */
+    UaString reqSecurityPolicyURI;                            /**< requested security policy */
     UaClient::ServerStatus serverConnectionStatus;            /**< connection status for this session */
     int transactionId;                                        /**< next transaction id */
     /** itemUaSdk vectors of outstanding read or write operations, indexed by transaction id */

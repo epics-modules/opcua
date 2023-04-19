@@ -20,6 +20,7 @@
 #include <epicsTime.h>
 #include <epicsEvent.h>
 #include <epicsMutex.h>
+#include <epicsThread.h>
 #include <menuPriority.h>
 
 #include "devOpcua.h"

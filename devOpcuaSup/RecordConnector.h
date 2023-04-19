@@ -23,6 +23,7 @@
 #include <dbCommon.h>
 #include <dbScan.h>
 #include <recGbl.h>
+#include <osiSock.h> // needed before callback.h to get Windows definition of CALLBACK in
 #include <callback.h>
 #include <alarm.h>
 #include <menuPriority.h>
