@@ -40,14 +40,21 @@ struct ReadRequest;
 
 // print some UA types
 
-inline std::ostream& operator<<(std::ostream& os, const UA_String& ua_string) {
+inline std::ostream& operator << (std::ostream& os, const UA_String& ua_string)
+{
     // ua_string.data is not terminated!
-    return os.write(reinterpret_cast<char*>(ua_string.data), ua_string.length);
+    return os.write(reinterpret_cast<const char*>(ua_string.data), ua_string.length);
 }
 
-std::ostream& operator<<(std::ostream& os, const UA_NodeId& ua_nodeId);
+inline std::ostream& operator << (std::ostream& os, const UA_LocalizedText& ua_localizedText)
+{
+    if (ua_localizedText.locale.length) os << ua_localizedText.locale << ':';
+    return os << ua_localizedText.text;
+}
 
-std::ostream& operator<<(std::ostream& os, const UA_Variant &ua_variant);
+std::ostream& operator << (std::ostream& os, const UA_NodeId& ua_nodeId);
+
+std::ostream& operator << (std::ostream& os, const UA_Variant &ua_variant);
 
 /**
  * @brief The SessionOpen62541 implementation of an open62541 client session.

@@ -86,6 +86,44 @@ operator += (std::string& str, const UA_String& ua_string)
     return str.append(reinterpret_cast<const char*>(ua_string.data), ua_string.length);
 }
 
+inline std::ostream&
+operator << (std::ostream& os, UA_SecureChannelState channelState)
+{
+    switch (channelState) {
+        case UA_SECURECHANNELSTATE_FRESH:               return os << "Fresh";
+#if UA_OPEN62541_VER_MAJOR*100+UA_OPEN62541_VER_MINOR >= 104
+        case UA_SECURECHANNELSTATE_REVERSE_LISTENING:   return os << "ReverseListening";
+        case UA_SECURECHANNELSTATE_CONNECTING:          return os << "Connecting";
+        case UA_SECURECHANNELSTATE_CONNECTED:           return os << "Connected";
+        case UA_SECURECHANNELSTATE_REVERSE_CONNECTED:   return os << "ReverseConnected";
+        case UA_SECURECHANNELSTATE_RHE_SENT:            return os << "RheSent";
+#endif
+        case UA_SECURECHANNELSTATE_HEL_SENT:            return os << "HelSent";
+        case UA_SECURECHANNELSTATE_HEL_RECEIVED:        return os << "HelReceived";
+        case UA_SECURECHANNELSTATE_ACK_SENT:            return os << "AckSent";
+        case UA_SECURECHANNELSTATE_ACK_RECEIVED:        return os << "AckReceived";
+        case UA_SECURECHANNELSTATE_OPN_SENT:            return os << "OPNSent";
+        case UA_SECURECHANNELSTATE_OPEN:                return os << "Open";
+        case UA_SECURECHANNELSTATE_CLOSING:             return os << "Closing";
+        case UA_SECURECHANNELSTATE_CLOSED:              return os << "Closed";
+        default: return os << "<unknown " << static_cast<unsigned int>(channelState) << ">";
+    }
+}
+
+inline std::ostream&
+operator << (std::ostream& os, UA_SessionState sessionState)
+{
+    switch (sessionState) {
+        case UA_SESSIONSTATE_CLOSED:             return os << "Closed";
+        case UA_SESSIONSTATE_CREATE_REQUESTED:   return os << "CreateRequested";
+        case UA_SESSIONSTATE_CREATED:            return os << "Created";
+        case UA_SESSIONSTATE_ACTIVATE_REQUESTED: return os << "ActivateRequested";
+        case UA_SESSIONSTATE_ACTIVATED:          return os << "Activated";
+        case UA_SESSIONSTATE_CLOSING:            return os << "Closing";
+        default: return os << "<unknown " << static_cast<unsigned int>(sessionState) << ">";
+    }
+}
+
 Registry<SessionOpen62541> SessionOpen62541::sessions;
 
 // Cargo structure and batcher for write requests
@@ -98,64 +136,6 @@ struct WriteRequest {
 struct ReadRequest {
     ItemOpen62541 *item;
 };
-
-const char *
-toStr(UA_SecureChannelState channelState)
-{
-    switch (channelState) {
-        case UA_SECURECHANNELSTATE_FRESH:               return "Fresh";
-#if UA_OPEN62541_VER_MAJOR*100+UA_OPEN62541_VER_MINOR >= 104
-        case UA_SECURECHANNELSTATE_REVERSE_LISTENING:   return "ReverseListening";
-        case UA_SECURECHANNELSTATE_CONNECTING:          return "Connecting";
-        case UA_SECURECHANNELSTATE_CONNECTED:           return "Connected";
-        case UA_SECURECHANNELSTATE_REVERSE_CONNECTED:   return "ReverseConnected";
-        case UA_SECURECHANNELSTATE_RHE_SENT:            return "RheSent";
-#endif
-        case UA_SECURECHANNELSTATE_HEL_SENT:            return "HelSent";
-        case UA_SECURECHANNELSTATE_HEL_RECEIVED:        return "HelReceived";
-        case UA_SECURECHANNELSTATE_ACK_SENT:            return "AckSent";
-        case UA_SECURECHANNELSTATE_ACK_RECEIVED:        return "AckReceived";
-        case UA_SECURECHANNELSTATE_OPN_SENT:            return "OPNSent";
-        case UA_SECURECHANNELSTATE_OPEN:                return "Open";
-        case UA_SECURECHANNELSTATE_CLOSING:             return "Closing";
-        case UA_SECURECHANNELSTATE_CLOSED:              return "Closed";
-        default: {
-            static char unknownstate[32];
-            sprintf(unknownstate, "<unknown %u>", channelState);
-            return unknownstate;
-        }
-    }
-}
-
-const char *
-toStr(UA_SessionState sessionState)
-{
-    switch (sessionState) {
-        case UA_SESSIONSTATE_CLOSED:             return "Closed";
-        case UA_SESSIONSTATE_CREATE_REQUESTED:   return "CreateRequested";
-        case UA_SESSIONSTATE_CREATED:            return "Created";
-        case UA_SESSIONSTATE_ACTIVATE_REQUESTED: return "ActivateRequested";
-        case UA_SESSIONSTATE_ACTIVATED:          return "Activated";
-        case UA_SESSIONSTATE_CLOSING:            return "Closing";
-        default: {
-            static char unknownstate[32];
-            sprintf(unknownstate, "<unknown %u>", sessionState);
-            return unknownstate;
-        }
-    }
-}
-
-inline std::ostream&
-operator << (std::ostream& os, UA_SecureChannelState channelState)
-{
-    return os << toStr(channelState);
-}
-
-inline std::ostream&
-operator << (std::ostream& os, UA_SessionState sessionState)
-{
-    return os << toStr(sessionState);
-}
 
 void
 SessionOpen62541::initOnce (void*)
