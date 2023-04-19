@@ -14,6 +14,7 @@
 #define DEVOPCUA_SUBSCRIPTIONOPEN62541_H
 
 #include <epicsTypes.h>
+#include <shareLib.h>
 
 #include "SessionOpen62541.h"
 #include "Subscription.h"
