@@ -305,6 +305,9 @@ private:
     std::map<std::string, UA_UInt16> namespaceMap;                /**< local namespace map (URI->index) */
     std::map<UA_UInt16, UA_UInt16> nsIndexMap;                    /**< namespace index map (local->server-side) */
 
+    UA_MessageSecurityMode reqSecurityMode;                       /**< requested security mode */
+    std::string reqSecurityPolicyURI;                             /**< requested security policy */
+
     int transactionId;                                            /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */
     std::map<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>> outstandingOps;

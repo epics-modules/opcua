@@ -175,6 +175,8 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
     : Session(name, debug, autoConnect)
     , serverURL(serverUrl)
     , registeredItemsNo(0)
+    , reqSecurityMode(UA_MESSAGESECURITYMODE_NONE)
+    , reqSecurityPolicyURI("http://opcfoundation.org/UA/SecurityPolicy#None")
     , transactionId(0)
     , writer("OPCwr-" + name, *this, batchNodes)
     , writeNodesMax(batchNodes)
@@ -223,6 +225,39 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
         errlogPrintf("security not implemented\n");
     } else if (name == "clientkey") {
         errlogPrintf("security not implemented\n");
+    } else if (name == "sec-mode") {
+        if (value == "None" || value == "none") {
+            reqSecurityMode = UA_MESSAGESECURITYMODE_NONE;
+        } else if (value == "SignAndEncrypt") {
+            reqSecurityMode = UA_MESSAGESECURITYMODE_SIGNANDENCRYPT;
+        } else if (value == "Sign") {
+            reqSecurityMode = UA_MESSAGESECURITYMODE_SIGN;
+        } else {
+            errlogPrintf("invalid security-mode (valid: None Sign SignAndEncrypt)\n");
+            reqSecurityMode = UA_MESSAGESECURITYMODE_INVALID;
+        }
+    } else if (name == "sec-policy") {
+        if (value == "None" || value == "none") {
+            reqSecurityPolicyURI = "http://opcfoundation.org/UA/SecurityPolicy#None";
+        } else if (value == "Basic128Rsa15") {
+            reqSecurityPolicyURI = "http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15";
+        } else if (value == "Basic256") {
+            reqSecurityPolicyURI = "http://opcfoundation.org/UA/SecurityPolicy#Basic256";
+        } else if (value == "Basic256Sha256") {
+            reqSecurityPolicyURI = "http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256";
+        } else if (value == "Aes128Sha256RsaOaep") {
+            reqSecurityPolicyURI = "http://opcfoundation.org/UA/SecurityPolicy#Aes128_Sha256_RsaOaep";
+        } else if (value == "Aes256Sha256RsaPss") {
+            reqSecurityPolicyURI = "http://opcfoundation.org/UA/SecurityPolicy#Aes256_Sha256_RsaPss";
+        } else {
+            errlogPrintf("invalid security-policy (valid: None"
+                         " Basic128Rsa15"
+                         " Basic256"
+                         " Basic256Sha256"
+                         " Aes128Sha256RsaOaep"
+                         " Aes256Sha256RsaPss"
+                         ")\n");
+        }
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -658,6 +693,8 @@ SessionOpen62541::showSecurity ()
                       << "\n  Server Url:  " << applicationDescriptions[i].discoveryUrls[j];
             if (serverURL != applicationDescriptions[i].discoveryUrls[j])
                 std::cout << "    (using " << serverURL << ")";
+            std::cout << "\n  Requested Mode: " << reqSecurityMode
+                      << "    Policy: " << reqSecurityPolicyURI;
 
             if (serverURL.compare(0, 7, "opc.tcp") == 0) {
                 UA_EndpointDescription* endpointDescriptions;
@@ -711,8 +748,8 @@ SessionOpen62541::show (const int level) const
               << " connect status=" << UA_StatusCode_name(connectStatus)
               << " sessionState="   << sessionState
               << " channelState="   << channelState
-              << " cert="        << "[none]"
-              << " key="         << "[none]"
+              << " sec-mode="    << reqSecurityMode
+              << " sec-policy="  << reqSecurityPolicyURI
               << " debug="       << debug
               << " batch r/w="   << MaxNodesPerRead << "/" << MaxNodesPerWrite
               << "(" << readNodesMax << "/" << writeNodesMax << ")"
