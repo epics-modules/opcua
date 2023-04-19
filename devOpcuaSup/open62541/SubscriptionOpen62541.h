@@ -13,6 +13,10 @@
 #ifndef DEVOPCUA_SUBSCRIPTIONOPEN62541_H
 #define DEVOPCUA_SUBSCRIPTIONOPEN62541_H
 
+#include <vector>
+#include <set>
+
+#include <epicsString.h>
 #include <epicsTypes.h>
 #include <shareLib.h>
 
@@ -78,6 +82,12 @@ public:
     find(const std::string &name)
     {
         return subscriptions.find(name);
+    }
+
+    static std::set<Subscription *>
+    glob(const std::string &pattern)
+    {
+        return subscriptions.glob<Subscription>(pattern);
     }
 
     /**

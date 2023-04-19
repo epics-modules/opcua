@@ -44,6 +44,12 @@ Subscription::find (const std::string &name)
     return SubscriptionOpen62541::find(name);
 }
 
+std::set<Subscription *>
+Subscription::glob(const std::string &pattern)
+{
+    return SubscriptionOpen62541::glob(pattern);
+}
+
 void
 Subscription::showAll (const int level)
 {

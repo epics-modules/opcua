@@ -17,7 +17,9 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <set>
 
+#include <epicsString.h>
 #include <epicsMutex.h>
 #include <epicsTypes.h>
 #include <epicsThread.h>
@@ -173,6 +175,12 @@ public:
     find(const std::string &name)
     {
         return sessions.find(name);
+    }
+
+    static std::set<Session *>
+    glob(const std::string &pattern)
+    {
+        return sessions.glob<Session>(pattern);
     }
 
     /**

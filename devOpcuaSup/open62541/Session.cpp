@@ -39,6 +39,12 @@ Session::find(const std::string &name)
     return SessionOpen62541::find(name);
 }
 
+std::set<Session *>
+Session::glob(const std::string &pattern)
+{
+    return SessionOpen62541::glob(pattern);
+}
+
 void
 Session::showAll (const int level)
 {
