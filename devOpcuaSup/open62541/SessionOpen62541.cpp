@@ -11,6 +11,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <map>
 #include <algorithm>
@@ -122,6 +123,30 @@ operator << (std::ostream& os, UA_SessionState sessionState)
         case UA_SESSIONSTATE_CLOSING:            return os << "Closing";
         default: return os << "<unknown " << static_cast<unsigned int>(sessionState) << ">";
     }
+}
+
+inline std::ostream&
+operator << (std::ostream& os, UA_MessageSecurityMode securityMode)
+{
+    switch (securityMode) {
+        case UA_MESSAGESECURITYMODE_INVALID:         return os << "Invalid";
+        case UA_MESSAGESECURITYMODE_NONE:            return os << "None";
+        case UA_MESSAGESECURITYMODE_SIGN:            return os << "Sign";
+        case UA_MESSAGESECURITYMODE_SIGNANDENCRYPT:  return os << "SignAndEncrypt";
+        default: return os << "<unknown " << static_cast<unsigned int>(securityMode) << ">";
+    }
+}
+
+inline bool
+operator != (const std::string& str, const UA_String& ua_string)
+{
+    return str.compare(0, str.size(), reinterpret_cast<const char*>(ua_string.data), ua_string.length) != 0;
+}
+
+inline bool
+operator == (const UA_String& ua_string1, const UA_String& ua_string2)
+{
+    return UA_String_equal(&ua_string1, &ua_string2);
 }
 
 Registry<SessionOpen62541> SessionOpen62541::sessions;
@@ -603,6 +628,76 @@ SessionOpen62541::updateNamespaceMap(const UA_String *nsArray, UA_UInt16 nsCount
             if (nsIndexMap.find(it.second) == nsIndexMap.end()) {
                 errlogPrintf("OPC UA session %s: locally mapped namespace '%s' not found on server\n",
                              name.c_str(), it.first.c_str());
+            }
+        }
+    }
+}
+
+void
+SessionOpen62541::showSecurity ()
+{
+    UA_StatusCode status;
+    UA_ApplicationDescription* applicationDescriptions;
+    size_t applicationDescriptionsLength;
+
+    status = UA_Client_findServers(client, serverURL.c_str(),
+        0, NULL, 0, NULL,
+        &applicationDescriptionsLength, &applicationDescriptions);
+    if (UA_STATUS_IS_BAD(status)) {
+        std::cerr << "Session " << name << ": (showSecurity) UA_Client_findServers failed"
+                  << " with status " << UA_StatusCode_name(status)
+                  << std::endl;
+        return;
+    }
+
+    for (size_t i = 0; i < applicationDescriptionsLength; i++) {
+        for (size_t j = 0; j < applicationDescriptions[i].discoveryUrlsSize; j++) {
+            std::cout << "Session " << name << "    (discovery at " << serverURL << ")"
+                      << "\n  Server Name: " << applicationDescriptions[i].applicationName
+                      << "\n  Server Uri:  " << applicationDescriptions[i].applicationUri
+                      << "\n  Server Url:  " << applicationDescriptions[i].discoveryUrls[j];
+            if (serverURL != applicationDescriptions[i].discoveryUrls[j])
+                std::cout << "    (using " << serverURL << ")";
+
+            if (serverURL.compare(0, 7, "opc.tcp") == 0) {
+                UA_EndpointDescription* endpointDescriptions;
+                size_t endpointDescriptionsLength;
+                status = UA_Client_getEndpoints(client, serverURL.c_str(),
+                    &endpointDescriptionsLength, &endpointDescriptions);
+                if (UA_STATUS_IS_BAD(status)) {
+                    std::cerr << "Session " << name << ": (showSecurity) UA_Client_getEndpoints failed"
+                              << " with status" << UA_StatusCode_name(status)
+                              << std::endl;
+                    return;
+                }
+
+                for (size_t k = 0; k < endpointDescriptionsLength; k++) {
+                    if (std::string(reinterpret_cast<const char*>(endpointDescriptions[k].endpointUrl.data),
+                        endpointDescriptions[k].endpointUrl.length).compare(0, 7, "opc.tcp") == 0) {
+                        std::cout << "\n  ----- Level: " << std::setw(3) << +endpointDescriptions[k].securityLevel
+                                  << " ----------------------------------------- Endpoint " << k
+                                  << "\n    Security Mode: " << endpointDescriptions[k].securityMode
+                                  << "    Policy: " << endpointDescriptions[k].securityPolicyUri
+                                  << "\n    URL: " << endpointDescriptions[k].endpointUrl;
+                        if (endpointDescriptions[k].endpointUrl == applicationDescriptions[i].discoveryUrls[j])
+                            std::cout << "    (using " << serverURL << ")";
+
+/* Not implemented in Open62541; use openssl directly?
+                        securityInfo.serverCertificate = endpointDescriptions[k].serverCertificate;
+
+                        UaPkiCertificate cert = UaPkiCertificate::fromDER(securityInfo.serverCertificate);
+                        UaPkiIdentity id = cert.subject();
+                        std::cout << "\n    Server Certificate: " << id.commonName
+                                  << " (" << id.organization << ")"
+                                  << " serial " << cert.serialNumber()
+                                  << " (thumb " << cert.thumbPrint().toHex(false) << ")"
+                                  << (cert.isSelfSigned() ? " self-signed" : "")
+                                  << (securityInfo.verifyServerCertificate().isBad() ? " - not" : " -")
+                                  << " trusted";
+*/
+                    }
+                }
+                std::cout << std::endl;
             }
         }
     }
