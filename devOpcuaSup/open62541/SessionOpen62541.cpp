@@ -170,20 +170,19 @@ SessionOpen62541::initOnce (void*)
 }
 
 SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &serverUrl,
-                            bool autoConnect, int debug, epicsUInt32 batchNodes,
-                            const char *clientCertificate, const char *clientPrivateKey)
+                            bool autoConnect, int debug)
     : Session(name, debug, autoConnect)
     , serverURL(serverUrl)
     , registeredItemsNo(0)
     , reqSecurityMode(UA_MESSAGESECURITYMODE_NONE)
     , reqSecurityPolicyURI("http://opcfoundation.org/UA/SecurityPolicy#None")
     , transactionId(0)
-    , writer("OPCwr-" + name, *this, batchNodes)
-    , writeNodesMax(batchNodes)
+    , writer("OPCwr-" + name, *this)
+    , writeNodesMax(0)
     , writeTimeoutMin(0)
     , writeTimeoutMax(0)
-    , reader("OPCrd-" + name, *this, batchNodes)
-    , readNodesMax(batchNodes)
+    , reader("OPCrd-" + name, *this)
+    , readNodesMax(0)
     , readTimeoutMin(0)
     , readTimeoutMax(0)
     , client(nullptr)
@@ -194,11 +193,6 @@ SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &
 {
     static epicsThreadOnceId init_once_id = EPICS_THREAD_ONCE_INIT;
     epicsThreadOnce(&init_once_id, initOnce, nullptr);
-
-    //TODO: init security settings
-    if ((clientCertificate && (clientCertificate[0] != '\0'))
-            || (clientPrivateKey && (clientPrivateKey[0] != '\0')))
-        errlogPrintf("OPC UA security not supported yet\n");
 
     sessions.insert({name, this});
 }

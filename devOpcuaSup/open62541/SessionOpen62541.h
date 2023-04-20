@@ -93,8 +93,7 @@ public:
      * @param clientPrivateKey   path to client-side private key
      */
     SessionOpen62541(const std::string &name, const std::string &serverUrl,
-                 bool autoConnect = true, int debug = 0, epicsUInt32 batchNodes = 0,
-                 const char *clientCertificate = nullptr, const char *clientPrivateKey = nullptr);
+                 bool autoConnect = true, int debug = 0);
     ~SessionOpen62541() override;
 
     /**
