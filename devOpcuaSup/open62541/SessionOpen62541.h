@@ -16,16 +16,15 @@
 #include <algorithm>
 #include <vector>
 #include <memory>
-#include <map>
 #include <set>
+
+#include <open62541/client_config_default.h>
 
 #include <epicsString.h>
 #include <epicsMutex.h>
 #include <epicsTypes.h>
 #include <epicsThread.h>
 #include <initHooks.h>
-
-#include <open62541/client_config_default.h>
 
 #include "RequestQueueBatcher.h"
 #include "Session.h"
@@ -38,6 +37,11 @@ class ItemOpen62541;
 struct WriteRequest;
 struct ReadRequest;
 
+/**
+ * @brief Enum for the requested security mode
+ */
+enum RequestedSecurityMode { Best, None, Sign, SignAndEncrypt };
+
 // print some UA types
 
 inline std::ostream& operator << (std::ostream& os, const UA_String& ua_string)
@@ -48,20 +52,49 @@ inline std::ostream& operator << (std::ostream& os, const UA_String& ua_string)
 
 inline std::ostream& operator << (std::ostream& os, const UA_LocalizedText& ua_localizedText)
 {
-    if (ua_localizedText.locale.length) os << ua_localizedText.locale << ':';
-    return os << ua_localizedText.text;
+    if (ua_localizedText.locale.length) os << '[' << ua_localizedText.locale << ']';
+    return os << '"' << ua_localizedText.text << '"';
 }
 
 std::ostream& operator << (std::ostream& os, const UA_NodeId& ua_nodeId);
 
 std::ostream& operator << (std::ostream& os, const UA_Variant &ua_variant);
 
+// Open62541 has no ClientSecurityInfo structure
+// Make our own for convenience
+struct ClientSecurityInfo {
+    UA_ByteString serverCertificate;
+    UA_ByteString clientCertificate;
+    UA_ByteString privateKey;
+    UA_ExtensionObject userIdentityToken;
+    UA_String securityPolicyUri;
+    UA_MessageSecurityMode securityMode;
+    ClientSecurityInfo () {
+        serverCertificate = UA_STRING_NULL;
+        clientCertificate = UA_STRING_NULL;
+        privateKey = UA_STRING_NULL;
+        userIdentityToken = {};
+        securityPolicyUri = UA_STRING_NULL;
+        securityMode = UA_MESSAGESECURITYMODE_NONE;
+    }
+    ~ClientSecurityInfo () {
+        UA_ExtensionObject_clear(&userIdentityToken);
+        UA_ByteString_clear(&privateKey);
+        UA_ByteString_clear(&clientCertificate);
+        UA_ByteString_clear(&serverCertificate);
+        UA_String_clear(&securityPolicyUri);
+    }
+};
+
 /**
  * @brief The SessionOpen62541 implementation of an open62541 client session.
  *
+ * See DevOpcua::Session
+ *
  * The connect call establishes and maintains a Session with a Server.
  * After a successful connect, the connection is monitored by the low level driver.
- * Connection status changes are reported through the connectionStatusChanged callback.
+ * Connection status changes are reported through the callback
+ * SessionOpen62541::connectionStatusChanged.
  *
  * The disconnect call disconnects the Session, deleting all Subscriptions
  * and freeing all related resources on both server and client.
@@ -136,7 +169,7 @@ public:
      * @param dataTypeId data type of the extension object
      * @return structure definition
      */
-//    UaStructureDefinition structureDefinition(const UaNodeId &dataTypeId)
+//    UA_StructureDefinition structureDefinition(const UaNodeId &dataTypeId)
 //    { return puasession->structureDefinition(dataTypeId); }
 
     /**
@@ -230,12 +263,6 @@ public:
      */
     UA_UInt16 mapNamespaceIndex(const UA_UInt16 nsIndex) const;
 
-private:
-    /**
-     * @brief Initialize global resources.
-     */
-    static void initOnce(void*);
-
     /**
      * @brief EPICS IOC Database initHook function.
      *
@@ -246,23 +273,10 @@ private:
      */
     static void initHook(initHookState state);
 
-    /**
-     * @brief EPICS IOC Database atExit function.
-     *
-     * Hook function called when the EPICS IOC is exiting.
-     * Disconnects all sessions.
-     */
-    static void atExit(void *);
-
-    /**
-     * @brief Asynchronous worker thread body.
-     */
-    virtual void run() override;
-
     // Get a new (unique per session) transaction id
     UA_UInt32 getTransactionId();
 
-    // callbacks
+    // Open62541 session callbacks
     void connectionStatusChanged(
             UA_SecureChannelState channelState,
             UA_SessionState sessionState,
@@ -281,6 +295,14 @@ private:
     virtual void processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch) override;
 
     /**
+     * @brief Setup ClientSecurityInfo object from PKI store locations and cert files
+     */
+    static void setupClientSecurityInfo(ClientSecurityInfo &securityInfo,
+                                        const std::string *sessionName = nullptr,
+                                        const int debug = 0);
+
+private:
+    /**
      * @brief Register all nodes that are configured to be registered.
      */
     void registerNodes();
@@ -295,6 +317,44 @@ private:
      */
     void updateNamespaceMap(const UA_String *nsArray, UA_UInt16 nsCount);
 
+    enum ConnectResult { fatal = -1, ok = 0
+                         , cantConnect
+                         , noMatchingEndpoint
+                       };
+    const char* connectResultString (const ConnectResult result);
+
+    /**
+     * @brief Mark connection loss: clear request queues and process records.
+     */
+    void markConnectionLoss();
+
+    /**
+     * @brief Read user/pass or cert/key/pass credentials from credentials file.
+     */
+    void setupIdentity();
+
+    /**
+     * @brief Set up security.
+     *
+     * Discovers the endpoints and finds the one matching the user configuration.
+     * Verifies the presented server certificate.
+     *
+     * @returns status (0 = OK)
+     */
+    ConnectResult setupSecurity();
+
+    /**
+     * @brief Asynchronous worker thread body.
+     */
+    virtual void run() override;
+
+    // Wrapper for Session::securityPolicyString to match argument type
+    static std::string securityPolicyString(const UA_String& policy)
+    {
+        return Session::securityPolicyString(
+            std::string(reinterpret_cast<const char*>(policy.data), policy.length));
+    }
+
     static Registry<SessionOpen62541> sessions;                   /**< session management */
 
     const std::string serverURL;                                  /**< server URL */
@@ -304,8 +364,10 @@ private:
     std::map<std::string, UA_UInt16> namespaceMap;                /**< local namespace map (URI->index) */
     std::map<UA_UInt16, UA_UInt16> nsIndexMap;                    /**< namespace index map (local->server-side) */
 
-    UA_MessageSecurityMode reqSecurityMode;                       /**< requested security mode */
-    std::string reqSecurityPolicyURI;                             /**< requested security policy */
+    ClientSecurityInfo securityInfo;                              /**< security metadata */
+    unsigned int securityLevel;                                   /**< actual security level */
+    RequestedSecurityMode reqSecurityMode;                        /**< requested security mode */
+    std::string reqSecurityPolicyUri;                             /**< requested security policy */
 
     int transactionId;                                            /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */

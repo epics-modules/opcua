@@ -24,9 +24,10 @@ endif
 
 # Find open62541 library and header files
 # This should work with installed (typically to /usr/local) as well as not installed open62541
-USR_INCLUDES += $(addprefix -I$(OPEN62541)/,include plugins/include arch $(OPEN62541_BUILD_DIR:%=%/src_generated))
+USR_INCLUDES += $(addprefix -I$(OPEN62541)/,. include plugins/include arch $(OPEN62541_BUILD_DIR:%=%/src_generated))
 LIB_LIBS += open62541
-open62541_DIR += $(if $(filter %64,$(ARCH_CLASS)),$(OPEN62541)/lib64) $(OPEN62541)/lib $(OPEN62541)/$(OPEN62541_BUILD_DIR)/bin/Release $(OPEN62541)/$(OPEN62541_BUILD_DIR)/bin
+open62541_DIR += $(OPEN62541)/$(OPEN62541_BUILD_DIR)/bin/Release $(OPEN62541)/$(OPEN62541_BUILD_DIR)/bin $(if $(filter %64,$(ARCH_CLASS)),$(OPEN62541)/lib64) $(OPEN62541)/lib
+USR_SYS_LIBS_Linux += crypto
 
 opcua_SRCS += Session.cpp
 opcua_SRCS += SessionOpen62541.cpp

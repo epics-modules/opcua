@@ -17,8 +17,16 @@
 #include <limits>
 
 #include <open62541/client.h>
-#define UA_STATUS_IS_BAD(status) (((status)&0x80000000)!=0)
-#define UA_STATUS_IS_UNCERTAIN(status) (((status)&0x40000000)!=0)
+
+#ifndef UA_STATUSCODE_BAD  // Not yet defined in open62541 version 1.2
+#define UA_STATUSCODE_BAD 0x80000000
+#endif
+#define UA_STATUS_IS_BAD(status) (((status)&UA_STATUSCODE_BAD)!=0)
+
+#ifndef UA_STATUSCODE_UNCERTAIN
+#define UA_STATUSCODE_UNCERTAIN 0x40000000
+#endif
+#define UA_STATUS_IS_UNCERTAIN(status) (((status)&UA_STATUSCODE_UNCERTAIN)!=0)
 
 #include <errlog.h>
 
