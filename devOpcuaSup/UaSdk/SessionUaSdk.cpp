@@ -281,7 +281,7 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
 }
 
 long
-SessionUaSdk::connect()
+SessionUaSdk::connect(bool manual)
 {
     if (!puasession) {
         std::cerr << "Session " << name.c_str() << ": invalid session, cannot connect" << std::endl;
@@ -289,7 +289,7 @@ SessionUaSdk::connect()
     }
 
     if (isConnected()) {
-        if (debug)
+        if (debug || manual)
             std::cerr << "Session " << name.c_str() << ": already connected ("
                       << serverStatusString(serverConnectionStatus) << ")" << std::endl;
         return 0;
@@ -301,7 +301,7 @@ SessionUaSdk::connect()
 
     ConnectResult secResult = setupSecurity();
     if (secResult) {
-        if (!autoConnect || debug)
+        if (manual || debug)
             errlogPrintf("OPC UA session %s: security discovery and setup failed with status %s\n",
                          name.c_str(),
                          connectResultString(secResult));
@@ -316,27 +316,11 @@ SessionUaSdk::connect()
                                           this);        // Callback interface
 
     if (result.isGood()) {
-        std::string token;
-        auto type = securityInfo.pUserIdentityToken()->getTokenType();
-        if (type == OpcUa_UserTokenType_UserName)
-            token = " (username token)";
-        else if (type == OpcUa_UserTokenType_Certificate)
-            token = " (certificate token)";
-        errlogPrintf("OPC UA session %s: connect succeeded as '%s'%s with security level %u "
-                     "(mode=%s; policy=%s)\n",
-                     name.c_str(),
-                     (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
-                     token.c_str(),
-                     securityLevel,
-                     securityModeString(securityInfo.messageSecurityMode),
-                     securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
-        if (securityInfo.messageSecurityMode == OpcUa_MessageSecurityMode_None) {
-            errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
-                         name.c_str());
-        }
+        if (debug)
+            std::cerr << "Session " << name.c_str() << ": connect service succeeded" << std::endl;
     } else {
-        if (!autoConnect || debug)
-            errlogPrintf("OPC UA session %s: connect failed with status %s\n",
+        if (manual || debug)
+            errlogPrintf("OPC UA session %s: connect service failed with status %s\n",
                          name.c_str(),
                          result.toString().toUtf8());
         if (autoConnect)
@@ -415,27 +399,29 @@ SessionUaSdk::processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch)
 
     if (isConnected()) {
         Guard G(opslock);
+
         status = puasession->beginRead(serviceSettings,                // Use default settings
                                        0,                              // Max age
                                        OpcUa_TimestampsToReturn_Both,  // Time stamps to return
                                        nodesToRead,                    // Array of nodes to read
                                        id);                            // Transaction id
 
-	    if (status.isBad()) {
-	        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
-	                     name.c_str(), status.toString().toUtf8());
+        if (status.isBad()) {
+            errlogPrintf(
+                "OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
+                name.c_str(),
+                status.toString().toUtf8());
             //TODO: create writeFailure events for all items of the batch
             //	    item.setIncomingEvent(ProcessReason::readFailure);
+        } else {
+            if (debug >= 5)
+                std::cout << "Session " << name.c_str() << ": (requestRead) beginRead service ok"
+                          << " (transaction id " << id << "; retrieving " << nodesToRead.length()
+                          << " nodes)" << std::endl;
+            outstandingOps.insert(
+                std::pair<OpcUa_UInt32,
+                          std::unique_ptr<std::vector<ItemUaSdk *>>>(id, std::move(itemsToRead)));
         }
-    } else {
-        if (debug >= 5)
-            std::cout << "Session " << name.c_str() << ": (requestRead) beginRead service ok"
-                      << " (transaction id " << id << "; retrieving " << nodesToRead.length()
-                      << " nodes)" << std::endl;
-        outstandingOps.insert(
-            std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>(id,
-                                                                               std::move(
-                                                                                   itemsToRead)));
     }
 }
 
@@ -479,25 +465,26 @@ SessionUaSdk::processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch)
 
     if (isConnected()) {
         Guard G(opslock);
-        status = puasession->beginWrite(serviceSettings,        // Use default settings
-                                        nodesToWrite,           // Array of nodes/data to write
-                                        id);                    // Transaction id
+        status = puasession->beginWrite(serviceSettings, // Use default settings
+                                        nodesToWrite,    // Array of nodes/data to write
+                                        id);             // Transaction id
 
-	    if (status.isBad()) {
-	        errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
-	                     name.c_str(), status.toString().toUtf8());
+        if (status.isBad()) {
+            errlogPrintf(
+                "OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
+                name.c_str(),
+                status.toString().toUtf8());
             //TODO: create writeFailure events for all items of the batch
             //	    item.setIncomingEvent(ProcessReason::writeFailure);
+        } else {
+            if (debug >= 5)
+                std::cout << "Session " << name.c_str() << ": (requestWrite) beginWrite service ok"
+                          << " (transaction id " << id << "; writing " << nodesToWrite.length()
+                          << " nodes)" << std::endl;
+            outstandingOps.insert(
+                std::pair<OpcUa_UInt32,
+                          std::unique_ptr<std::vector<ItemUaSdk *>>>(id, std::move(itemsToWrite)));
         }
-    } else {
-        if (debug >= 5)
-            std::cout << "Session " << name.c_str() << ": (requestWrite) beginWrite service ok"
-                      << " (transaction id " << id << "; writing " << nodesToWrite.length()
-                      << " nodes)" << std::endl;
-        outstandingOps.insert(
-            std::pair<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>>(id,
-                                                                               std::move(
-                                                                                   itemsToWrite)));
     }
 }
 
@@ -1135,6 +1122,27 @@ void SessionUaSdk::connectionStatusChanged (
 
         // "The connection to the server is established and is working in normal mode."
     case UaClient::Connected:
+        if (serverConnectionStatus == UaClient::Disconnected
+            || serverConnectionStatus == UaClient::ConnectionErrorApiReconnect
+            || serverConnectionStatus == UaClient::NewSessionCreated) {
+            std::string token;
+            auto type = securityInfo.pUserIdentityToken()->getTokenType();
+            if (type == OpcUa_UserTokenType_UserName)
+                token = " (username token)";
+            else if (type == OpcUa_UserTokenType_Certificate)
+                token = " (certificate token)";
+            errlogPrintf(
+                "OPC UA session %s: connected as '%s'%s (sec-mode: %s; sec-policy: %s)\n",
+                name.c_str(),
+                (securityUserName.length() ? securityUserName.c_str() : "Anonymous"),
+                token.c_str(),
+                securityModeString(securityInfo.messageSecurityMode),
+                securityPolicyString(securityInfo.sSecurityPolicy.toUtf8()).c_str());
+            if (securityInfo.messageSecurityMode == OpcUa_MessageSecurityMode_None) {
+                errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
+                             name.c_str());
+            }
+        }
         if (serverConnectionStatus == UaClient::Disconnected) {
             updateNamespaceMap(puasession->getNamespaceTable());
             rebuildNodeIds();

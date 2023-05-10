@@ -432,7 +432,7 @@ void opcuaConnectCallFunc (const iocshArgBuf *args)
         try {
             Session *s = Session::find(args[0].sval);
             if (s)
-                s->connect();
+                s->connect(true);
         } catch (std::exception &e) {
             std::cerr << "ERROR : " << e.what() << std::endl;
         }

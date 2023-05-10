@@ -63,9 +63,14 @@ public:
      * If the connection attempt fails and the autoConnect flag is true,
      * the reconnect timer shall be restarted.
      *
+     * The manual parameter does not affect the OPC UA functional part, but
+     * enables printing the result of the connect service.
+     * (Logging failures because of autoconnect attempts is suppressed.)
+     *
+     * @param manual  set if called as a result of a manual action
      * @return long status (0 = OK)
      */
-    virtual long connect() = 0;
+    virtual long connect(bool manual=true) = 0;
 
     /**
      * @brief Disconnect the underlying OPC UA Session.
@@ -331,7 +336,7 @@ protected:
         virtual ~AutoConnect() override { timer.destroy(); }
         void start() { timer.start(*this, delay); }
         virtual expireStatus expire(const epicsTime &/*currentTime*/) override {
-            client.connect();
+            client.connect(false);
             return expireStatus(noRestart); // client.connect() starts the timer on failure
         }
     private:
