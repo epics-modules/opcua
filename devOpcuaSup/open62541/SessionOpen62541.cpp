@@ -357,10 +357,10 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
 }
 
 long
-SessionOpen62541::connect ()
+SessionOpen62541::connect (bool manual)
 {
     if (isConnected()) {
-        if (debug)
+        if (debug || manual)
             std::cerr << "Session " << name
                     << " already connected ("
                     << sessionState << ')'
@@ -419,7 +419,7 @@ SessionOpen62541::connect ()
 
     ConnectResult secResult = setupSecurity();
     if (secResult) {
-        if (!autoConnect || debug)
+        if (manual || debug)
             errlogPrintf("OPC UA session %s: security discovery and setup failed with status %s\n",
                          name.c_str(),
                          connectResultString(secResult));
@@ -444,25 +444,13 @@ SessionOpen62541::connect ()
     connectStatus = UA_Client_connect(client, serverURL.c_str());
 
     if (!UA_STATUS_IS_BAD(connectStatus)) {
-        std::string token;
-        auto type = config->userIdentityToken.content.decoded.type;
-        if (type == &UA_TYPES[UA_TYPES_USERNAMEIDENTITYTOKEN])
-            token = " (username token)";
-        if (type == &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN])
-            token = " (certificate token)";
-        std::cerr << "OPC UA session " << name
-                  << ": connect succeeded as '" << securityUserName << "'" << token
-                  << " with security level " << securityLevel
-                  << " (mode=" << config->securityMode
-                  << "; policy=" << securityPolicyString(config->securityPolicyUri)
-                  << ")" << std::endl;
-        if (config->securityMode == UA_MESSAGESECURITYMODE_NONE) {
-            errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
-                         name.c_str());
-        }
+        if (debug)
+            std::cerr << "Session " << name
+                      << ": connect service succeeded"
+                      << std::endl;
     } else {
-        if (!autoConnect || debug)
-            errlogPrintf("OPC UA session %s: connect failed with status %s\n",
+        if (manual || debug)
+            errlogPrintf("OPC UA session %s: connect service failed with status %s\n",
                          name.c_str(),
                          UA_StatusCode_name(connectStatus));
         UA_Client_delete(client);
@@ -561,8 +549,10 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
     }
     UA_ReadRequest_clear(&request);
     if (UA_STATUS_IS_BAD(status)) {
-        errlogPrintf("OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
-                     name.c_str(), UA_StatusCode_name(status));
+        errlogPrintf(
+            "OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
+            name.c_str(),
+            UA_StatusCode_name(status));
         // Create readFailure events for all items of the batch
         for (auto c : batch) {
             c->item->setIncomingEvent(ProcessReason::readFailure);
@@ -577,8 +567,8 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
                       << std::endl;
         Guard G(opslock);
         outstandingOps.insert(
-            std::pair<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>>
-                (id, std::move(itemsToRead)));
+            std::pair<UA_UInt32,
+                std::unique_ptr<std::vector<ItemOpen62541 *>>>(id, std::move(itemsToRead)));
     }
 }
 
@@ -649,8 +639,8 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
                       << " nodes)"
                       << std::endl;
         Guard G(opslock);
-        outstandingOps.insert(std::pair<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>>
-                              (id, std::move(itemsToWrite)));
+        outstandingOps.insert(std::pair<UA_UInt32,
+            std::unique_ptr<std::vector<ItemOpen62541 *>>>(id, std::move(itemsToWrite)));
     }
 }
 
@@ -1382,6 +1372,26 @@ SessionOpen62541::connectionStatusChanged (
                         autoConnector.start();
                 }
                 break;
+            case UA_SECURECHANNELSTATE_OPEN: {
+                UA_ClientConfig *config = UA_Client_getConfig(client);
+                std::string token;
+                auto type = config->userIdentityToken.content.decoded.type;
+                if (type == &UA_TYPES[UA_TYPES_USERNAMEIDENTITYTOKEN])
+                    token = " (username token)";
+                if (type == &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN])
+                    token = " (certificate token)";
+                std::cerr << "OPC UA session " << name
+                        << ": connect succeeded as '" << securityUserName << "'" << token
+                        << " with security level " << securityLevel
+                        << " (mode=" << config->securityMode
+                        << "; policy=" << securityPolicyString(config->securityPolicyUri)
+                        << ")" << std::endl;
+                if (config->securityMode == UA_MESSAGESECURITYMODE_NONE) {
+                    errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
+                                name.c_str());
+                }
+                break;
+            }
             default: break;
         }
         channelState = newChannelState;
