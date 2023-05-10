@@ -123,11 +123,14 @@ special (DBADDR *paddr, int after)
 
     if (paddr->special == SPC_MOD) {
         int fieldIndex = dbGetFieldIndex(paddr);
-        auto preason = &(reinterpret_cast<RecordConnector *>(paddr->precord->dpvt)->reason);
+        auto pcon = reinterpret_cast<RecordConnector *>(paddr->precord->dpvt);
         if (fieldIndex == opcuaItemRecordWRITE) {
-            *preason = ProcessReason::writeRequest;
+            pcon->reason = ProcessReason::writeRequest;
         } else if (fieldIndex == opcuaItemRecordREAD) {
-            *preason = ProcessReason::readRequest;
+            pcon->reason = ProcessReason::readRequest;
+        } else if (fieldIndex == opcuaItemRecordWOC) {
+            if (reinterpret_cast<opcuaItemRecord *>(paddr->precord)->woc == menuWocIMMEDIATE)
+                pcon->pitem->requestWriteIfDirty();
         }
     }
 

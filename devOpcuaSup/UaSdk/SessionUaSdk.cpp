@@ -430,8 +430,7 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
 {
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
-    item.getOutgoingData().copyTo(&cargo->wvalue.Value.Value);
-    item.clearOutgoingData();
+    item.copyAndClearOutgoingData(cargo->wvalue);
     writer.pushRequest(cargo, item.recConnector->getRecordPriority());
 }
 
@@ -457,11 +456,6 @@ SessionUaSdk::processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch)
         itemsToWrite->push_back(c->item);
         i++;
     }
-
-    Guard G(opslock);
-    status = puasession->beginWrite(serviceSettings, // Use default settings
-                                    nodesToWrite,    // Array of nodes/data to write
-                                    id);             // Transaction id
 
     if (isConnected()) {
         Guard G(opslock);
@@ -647,7 +641,7 @@ SessionUaSdk::showSecurity ()
                 status = discovery.getEndpoints(serviceSettings, serverURL, securityInfo, endpointDescriptions);
                 if (status.isBad()) {
                     std::cerr << "Session " << name << ": (showSecurity) UaDiscovery::getEndpoints failed"
-                              << " with status" << status.toString()
+                              << " with status" << status.toString().toUtf8()
                               << std::endl;
                     return;
                 }
@@ -1105,7 +1099,8 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::ConnectionErrorApiReconnect:
         // "The server sent a shut-down event and the client API tries a reconnect."
     case UaClient::ServerShutdown:
-        markConnectionLoss();
+        if (serverConnectionStatus == UaClient::Connected)
+            markConnectionLoss();
         if (autoConnect)
             autoConnector.start();
         break;
@@ -1230,7 +1225,7 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (readComplete) for read service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << result.toString() << std::endl;
+                      << ") failed with status " << result.toString().toUtf8() << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()
@@ -1283,7 +1278,7 @@ SessionUaSdk::writeComplete (OpcUa_UInt32 transactionId,
             std::cout << "Session " << name.c_str()
                       << ": (writeComplete) for write service"
                       << " (transaction id " << transactionId
-                      << ") failed with status " << result.toString() << std::endl;
+                      << ") failed with status " << result.toString().toUtf8() << std::endl;
         for (auto item : (*it->second)) {
             if (debug >= 5) {
                 std::cout << "** Session " << name.c_str()

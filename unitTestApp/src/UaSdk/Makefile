@@ -24,9 +24,7 @@ GTESTS += RangeCheckTest
 
 GTESTPROD_HOST += NamespaceMapTest
 NamespaceMapTest_SRCS += NamespaceMapTest.cpp
-NamespaceMapTest_LIBS_DEFAULT += opcua
-NamespaceMapTest_OBJS_WIN32 += linkParser iocshIntegration
-NamespaceMapTest_OBJS_WIN32 += SessionUaSdk SubscriptionUaSdk ItemUaSdk DataElementUaSdk
-NamespaceMapTest_OBJS_WIN32 += RecordConnector Session Subscription
-NamespaceMapTest_LIBS_WIN32 += $(EPICS_BASE_IOC_LIBS)
+NamespaceMapTest_LIBS += $(OPCUA_LIBS) $(EPICS_BASE_IOC_LIBS)
+NamespaceMapTest_SYS_LIBS_Linux += $(OPCUA_SYS_LIBS_Linux)
+NamespaceMapTest_OBJS += $(OPCUA_OBJS)
 GTESTS += NamespaceMapTest

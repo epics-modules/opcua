@@ -97,10 +97,8 @@ include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
 
+# Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-ifndef UASDK_MODULES
-include $(OPCUA)/UaSdk/RULES_OPCUA
-endif
 include $(OPCUA)/UaSdk/RULES_UASDK
 endif
 

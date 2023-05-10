@@ -101,6 +101,16 @@ public:
     const char *getRecordName() const { return prec->name; }
     const char *getRecordType() const { return prec->rdes->name; }
     menuPriority getRecordPriority() const { return static_cast<menuPriority>(prec->prio); }
+
+    menuWoc
+    woc() const
+    {
+        if (plinkinfo->isItemRecord)
+            return static_cast<menuWoc>(reinterpret_cast<opcuaItemRecord *>(prec)->woc);
+        else
+            return static_cast<menuWoc>(0);
+    }
+
     LinkOptionBini bini() const {
         if (plinkinfo->isItemRecord)
             return static_cast<LinkOptionBini>(reinterpret_cast<opcuaItemRecord*>(prec)->bini);
