@@ -25,10 +25,10 @@ UASDK = {0}
 UASDK_USE_CRYPTO = YES
 UASDK_USE_XMLPARSER = YES'''.format(sdkdir))
 
-    if cue.ci['compiler'] == 'gcc-6':
-        uasdkcc = 'gcc6.3.0'
-    else:
+    if os.environ['UASDK'].startswith('1.5.'):
         uasdkcc = 'gcc4.7.2'
+    else:
+        uasdkcc = 'gcc6.3.0'
 
     try:
         os.makedirs(sourcedir)

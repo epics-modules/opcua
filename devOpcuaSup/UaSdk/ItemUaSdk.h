@@ -234,7 +234,8 @@ private:
     ConnectionStatus connState;            /**< Connection state of the item */
     epicsTime tsClient;                    /**< client (local) time stamp */
     epicsTime tsServer;                    /**< server time stamp */
-    epicsTime tsSource;                    /**< device time stamp */
+    epicsTime tsSource;                    /**< source time stamp */
+    epicsTime tsData;                      /**< data time stamp */
 };
 
 } // namespace DevOpcua

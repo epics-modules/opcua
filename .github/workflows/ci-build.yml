@@ -1,0 +1,95 @@
+# OPCUA CI build using EPICS ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# This is YAML - indentation levels are crucial
+
+# Set the 'name:' properties to values that work for you
+
+name: opcua
+
+# Trigger on pushes and PRs to any branch
+on:
+  push:
+    paths-ignore:
+      - 'documentation/*'
+      - '**/*.html'
+      - '**/*.md'
+  pull_request:
+
+env:
+  SETUP_PATH: .ci-local:.ci
+  MODULES: "gtest"
+  GTEST: "v1.0.1"
+  BASE_HOOK: ".ci-local/base.patch"
+  encrypted_178ee45b7f75_pass: ${{ secrets.encrypted_178ee45b7f75_pass }}
+
+jobs:
+  build-linux:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    # Set environment variables from matrix parameters
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+      BASE: ${{ matrix.base }}
+      UASDK: ${{ matrix.uasdk }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "7.0"
+            uasdk: "1.6.3"
+            name: "7.0 Ub-20 SDK-1.6.3"
+
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "R3.15.5"
+            uasdk: "1.6.3"
+            name: "3.15.5 Ub-20 SDK-1.6.3"
+
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "3.15"
+            uasdk: "1.6.3"
+            name: "3.15 Ub-20 SDK-1.6.3"
+
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "7.0"
+            uasdk: "1.7.2"
+            name: "7.0 Ub-20 SDK-1.7.2"
+
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "R3.15.5"
+            uasdk: "1.7.2"
+            name: "3.15.5 Ub-20 SDK-1.7.2"
+
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "3.15"
+            uasdk: "1.7.2"
+            name: "3.15 Ub-20 SDK-1.7.2"
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Prepare and compile dependencies
+      run: |
+        python .ci-local/install-sdk.py
+        python .ci/cue.py prepare
+    - name: Build main module
+      run: python .ci/cue.py build
+    - name: Run main module tests
+      run: python .ci/cue.py test
+    - name: Collect and show test results
+      run: python .ci/cue.py test-results
