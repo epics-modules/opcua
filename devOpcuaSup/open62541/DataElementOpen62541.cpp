@@ -745,7 +745,7 @@ DataElementOpen62541::readArray (epicsUInt64 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt64>(value, num, numRead, &UA_TYPES[UA_TYPES_INT64], prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsUInt64>(value, num, numRead, &UA_TYPES[UA_TYPES_UINT64], prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
