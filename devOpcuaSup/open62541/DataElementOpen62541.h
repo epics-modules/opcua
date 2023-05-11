@@ -733,6 +733,12 @@ private:
 
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
+    void
+    markAsDirty()
+    {
+        isdirty = true;
+        pitem->markAsDirty();
+    }
 
     // Get the time stamp from the incoming object
     const epicsTime &getIncomingTimeStamp() const {
@@ -1009,17 +1015,17 @@ private:
         case UA_TYPES_BOOLEAN:
         { // Scope of Guard G
             Guard G(outgoingLock);
-            isdirty = true;
             UA_Boolean val = (value != 0);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
+            markAsDirty();
             break;
         }
         case UA_TYPES_BYTE:
             if (isWithinRange<UA_Byte>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_Byte val = static_cast<UA_Byte>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1028,9 +1034,9 @@ private:
         case UA_TYPES_SBYTE:
             if (isWithinRange<UA_SByte>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_SByte val = static_cast<UA_Byte>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1039,9 +1045,9 @@ private:
         case UA_TYPES_UINT16:
             if (isWithinRange<UA_UInt16>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_UInt16 val = static_cast<UA_UInt16>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1050,9 +1056,9 @@ private:
         case UA_TYPES_INT16:
             if (isWithinRange<UA_Int16>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_Int16 val = static_cast<UA_Int16>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1061,9 +1067,9 @@ private:
         case UA_TYPES_UINT32:
             if (isWithinRange<UA_UInt32>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_UInt32 val = static_cast<UA_UInt32>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1072,9 +1078,9 @@ private:
         case UA_TYPES_INT32:
             if (isWithinRange<UA_Int32>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_Int32 val = static_cast<UA_Int32>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1083,9 +1089,9 @@ private:
         case UA_TYPES_UINT64:
             if (isWithinRange<UA_UInt64>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_UInt64 val = static_cast<UA_UInt64>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1094,9 +1100,9 @@ private:
         case UA_TYPES_INT64:
             if (isWithinRange<UA_Int64>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_Int64 val = static_cast<UA_Int64>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1105,9 +1111,9 @@ private:
         case UA_TYPES_FLOAT:
             if (isWithinRange<UA_Float>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_Float val = static_cast<UA_Float>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1116,9 +1122,9 @@ private:
         case UA_TYPES_DOUBLE:
             if (isWithinRange<UA_Double>(value)) {
                 Guard G(outgoingLock);
-                isdirty = true;
                 UA_Double val = static_cast<UA_Double>(value);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
+                markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
@@ -1132,8 +1138,8 @@ private:
             val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(strval.c_str()));
             { // Scope of Guard G
                 Guard G(outgoingLock);
-                isdirty = true;
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
+                markAsDirty();
             }
             break;
         }
@@ -1186,8 +1192,8 @@ private:
             UA_StatusCode status;
             { // Scope of Guard G
                 Guard G(outgoingLock);
-                isdirty = true;
                 status = UA_Variant_setArrayCopy(&outgoingData, value, num, targetType);
+                markAsDirty();
             }
             if (UA_STATUS_IS_BAD(status)) {
                 errlogPrintf("%s : array copy failed: %s\n",
@@ -1212,7 +1218,7 @@ private:
     bool mapped;                             /**< child name to index mapping done */
     UpdateQueue<UpdateOpen62541> incomingQueue;  /**< queue of incoming values */
     UA_Variant incomingData;                 /**< cache of latest incoming value */
-    epicsMutex outgoingLock;                 /**< data lock for outgoing value */
+    epicsMutex &outgoingLock;                /**< data lock for outgoing value */
     UA_Variant outgoingData;                 /**< cache of latest outgoing value */
     bool isdirty;                            /**< outgoing value has been (or needs to be) updated */
 };

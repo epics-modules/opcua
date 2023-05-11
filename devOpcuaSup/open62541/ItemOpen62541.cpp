@@ -37,6 +37,7 @@ ItemOpen62541::ItemOpen62541(const linkInfo &info)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
     , dataTree(this)
+    , dataTreeDirty(false)
     , lastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED)
     , lastReason(ProcessReason::connectionLoss)
     , connState(ConnectionStatus::down)
@@ -73,6 +74,14 @@ ItemOpen62541::rebuildNodeId ()
 }
 
 void
+ItemOpen62541::requestWriteIfDirty()
+{
+    Guard G(dataTreeWriteLock);
+    if (dataTreeDirty)
+        recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+}
+
+void
 ItemOpen62541::show (int level) const
 {
     std::cout << "item"
@@ -89,6 +98,7 @@ ItemOpen62541::show (int level) const
     std::cout << " record=" << recConnector->getRecordName()
               << " state=" << connectionStatusString(connState)
               << " status=" << UA_StatusCode_name(lastStatus)
+              << " dataDirty=" << (dataTreeDirty ? "y" : "n")
               << " context=" << linkinfo.subscription
               << "@" << session->getName()
               << " sampling=" << revisedSamplingInterval
@@ -121,23 +131,17 @@ int ItemOpen62541::debug() const
     return recConnector->debug();
 }
 
-//FIXME: in case of itemRecord there might be no rootElement
-const UA_Variant &
-ItemOpen62541::getOutgoingData() const
-{
-    if (auto pd = dataTree.root().lock()) {
-        return pd->getOutgoingData();
-    } else {
-        throw std::runtime_error(SB() << "stale pointer to root data element");
-    }
-}
-
 void
-ItemOpen62541::clearOutgoingData()
+ItemOpen62541::copyAndClearOutgoingData(UA_WriteValue &wvalue)
 {
+    Guard G(dataTreeWriteLock);
     if (auto pd = dataTree.root().lock()) {
+//    UA_Variant_copy(&item.getOutgoingData(), &cargo->wvalue.value.value);
+
+        UA_Variant_copy(&pd->getOutgoingData(), &wvalue.value.value);
         pd->clearOutgoingData();
     }
+    dataTreeDirty = false;
 }
 
 epicsTime
@@ -201,6 +205,19 @@ ItemOpen62541::setIncomingEvent(const ProcessReason reason)
 
     if (linkinfo.isItemRecord)
         recConnector->requestRecordProcessing(reason);
+}
+
+void
+ItemOpen62541::markAsDirty()
+{
+    if (recConnector->plinkinfo->isItemRecord) {
+        Guard G(dataTreeWriteLock);
+        if (!dataTreeDirty) {
+            dataTreeDirty = true;
+            if (recConnector->woc() == menuWocIMMEDIATE)
+                recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+        }
+    }
 }
 
 void

@@ -577,8 +577,7 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 {
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
-    UA_Variant_copy(&item.getOutgoingData(), &cargo->wvalue.value.value);
-    item.clearOutgoingData();
+    item.copyAndClearOutgoingData(cargo->wvalue);
     writer.pushRequest(cargo, item.recConnector->getRecordPriority());
 }
 
@@ -1363,6 +1362,7 @@ SessionOpen62541::connectionStatusChanged (
 // TODO: What to do for each channelState change?
         switch (newChannelState) {
             case UA_SECURECHANNELSTATE_CLOSED:
+                // Deactivated by user or server shut down
                 markConnectionLoss();
                 break;
             case UA_SECURECHANNELSTATE_FRESH:
@@ -1373,6 +1373,7 @@ SessionOpen62541::connectionStatusChanged (
                 }
                 break;
             case UA_SECURECHANNELSTATE_OPEN: {
+                // Connection to server has been established
                 UA_ClientConfig *config = UA_Client_getConfig(client);
                 std::string token;
                 auto type = config->userIdentityToken.content.decoded.type;

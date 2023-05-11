@@ -43,6 +43,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
+    , outgoingLock(pitem->dataTreeWriteLock)
     , isdirty(false)
 {
     UA_Variant_init(&incomingData);
@@ -55,6 +56,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
     , pitem(item)
     , mapped(false)
     , incomingQueue(0ul)
+    , outgoingLock(pitem->dataTreeWriteLock)
     , isdirty(false)
 {
     UA_Variant_init(&incomingData);
@@ -835,26 +837,26 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
         { // Scope of Guard G
             Guard G(outgoingLock);
-            isdirty = true;
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
+            markAsDirty();
         }
         break;
     }
     case UA_TYPES_BOOLEAN:
     { // Scope of Guard G
         Guard G(outgoingLock);
-        isdirty = true;
         UA_Boolean val = strchr("YyTt1", *value) != NULL;
         status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
+        markAsDirty();
         break;
     }
     case UA_TYPES_BYTE:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_Byte>(ul)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_Byte val = static_cast<UA_Byte>(ul);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -864,9 +866,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_SByte>(l)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_SByte val = static_cast<UA_Byte>(l);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -876,9 +878,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt16>(ul)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_UInt16 val = static_cast<UA_UInt16>(ul);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -888,9 +890,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int16>(l)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_Int16 val = static_cast<UA_Int16>(l);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -900,9 +902,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt32>(ul)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_UInt32 val = static_cast<UA_UInt32>(ul);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -912,9 +914,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int32>(l)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_Int32 val = static_cast<UA_Int32>(l);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -924,9 +926,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt64>(ul)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_UInt64 val = static_cast<UA_UInt64>(ul);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -936,9 +938,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int64>(l)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_Int64 val = static_cast<UA_Int64>(l);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -948,9 +950,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         d = strtod(value, nullptr);
         if (isWithinRange<UA_Float>(d)) {
             Guard G(outgoingLock);
-            isdirty = true;
             UA_Float val = static_cast<UA_Float>(d);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
+            markAsDirty();
         } else {
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
@@ -960,9 +962,9 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     {
         d = strtod(value, nullptr);
         Guard G(outgoingLock);
-        isdirty = true;
         UA_Double val = static_cast<UA_Double>(d);
         status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
+        markAsDirty();
         break;
     }
     default:
@@ -1037,8 +1039,8 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
             UA_StatusCode status;
             { // Scope of Guard G
                 Guard G(outgoingLock);
-                isdirty = true;
                 status = UA_Variant_setArrayCopy(&outgoingData, arr, num, targetType);
+                markAsDirty();
             }
             if (UA_STATUS_IS_BAD(status)) {
                 errlogPrintf("%s : array copy failed: %s\n",
