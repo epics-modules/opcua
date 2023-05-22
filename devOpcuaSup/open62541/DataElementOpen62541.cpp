@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2021 ITER Organization.
+* Copyright (c) 2018-2023 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -41,6 +41,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
                                     RecordConnector *pconnector)
     : DataElement(pconnector, name)
     , pitem(item)
+    , timesrc(-1)
     , mapped(false)
     , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
     , outgoingLock(pitem->dataTreeWriteLock)
@@ -54,6 +55,7 @@ DataElementOpen62541::DataElementOpen62541 (const std::string &name,
                                             ItemOpen62541 *item)
     : DataElement(name)
     , pitem(item)
+    , timesrc(-1)
     , mapped(false)
     , incomingQueue(0ul)
     , outgoingLock(pitem->dataTreeWriteLock)
@@ -87,7 +89,7 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
         std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")="
                   << pconnector->getRecordName()
                   << " type=" << variantTypeString(incomingData)
-                  << " timestamp=" << (pconnector->plinkinfo->useServerTimestamp ? "server" : "source")
+                  << " timestamp=" << linkOptionTimestampString(pconnector->plinkinfo->timestamp)
                   << " bini=" << linkOptionBiniString(pconnector->plinkinfo->bini)
                   << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
     } else {
@@ -102,60 +104,75 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
 }
 
 bool
-DataElementOpen62541::createMap (const UA_DataType *type)
+DataElementOpen62541::createMap (const UA_DataType *type,
+                                 const std::string *timefrom)
 {
     switch (type->typeKind) {
     case UA_DATATYPEKIND_STRUCTURE:
     {
-         if (debug() >= 5)
-             std::cout << " ** creating index-to-element map for child elements" << std::endl;
+        if (debug() >= 5)
+            std::cout << " ** creating index-to-element map for child elements" << std::endl;
 
-         // Walk the structure and cache offset, array size (0 for scalars), and type for each member
-         // See copyStructure() in open62541 src/ua_types.c
-         ptrdiff_t memberOffs = 0;
-         for (unsigned int i = 0; i < type->membersSize; ++i) {
-             const UA_DataTypeMember *member = &type->members[i];
+        // Walk the structure and for each member cache
+        // offset, array size (0 for scalars), and type
+        // See copyStructure() in open62541 src/ua_types.c
+        ptrdiff_t memberOffs = 0;
+        for (unsigned int i = 0; i < type->membersSize; ++i) {
+            const UA_DataTypeMember *member = &type->members[i];
 #ifdef UA_BUILTIN_TYPES_COUNT
 // Older open62541 before version 1.3 uses type index
-             const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
-             const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
+            const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+            const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
 #else
 // Newer open62541 before version 3.x uses pointer
-             const UA_DataType *memberType = member->memberType;
+            const UA_DataType *memberType = member->memberType;
 #endif
-             memberOffs += member->padding;
-             if (member->isArray) {
-                 memberOffs += sizeof(size_t); // array length
-                 elementDesc.push_back({memberOffs, memberType});
-                 memberOffs += sizeof(void*);  // array data pointer
-             } else {
-                 elementDesc.push_back({memberOffs, memberType});
-                 memberOffs += memberType->memSize;
-             }
-         }
+            memberOffs += member->padding;
+            if (member->isArray) {
+                memberOffs += sizeof(size_t); // array length
+                elementDesc.push_back({memberOffs, memberType});
+                memberOffs += sizeof(void*);  // array data pointer
+            } else {
+                if (timefrom) {
+#ifdef UA_ENABLE_TYPEDESCRIPTION
+                    if (*timefrom == member->memberName) {
+                        timesrc = memberOffs;
+                    }
+#endif
+                }
+                elementDesc.push_back({memberOffs, memberType});
+                memberOffs += memberType->memSize;
+            }
+        }
+        if (timefrom && timesrc == -1) {
+            errlogPrintf(
+                "%s: timestamp element %s not found - using source timestamp\n",
+                pitem->recConnector->getRecordName(),
+                timefrom->c_str());
+        }
 
-         // Map member names to index
-         for (auto &it : elements) {
-             auto pelem = it.lock();
-             unsigned int i;
-             for (i = 0; i < type->membersSize; i++) {
-                 if (pelem->name == type->members[i].memberName) {
-                     elementMap.insert({i, it});
-                     break;
-                 }
-             }
-             if (i == type->membersSize) {
-                 std::cerr << "Item " << pitem->getNodeId()
-                           << ": element " << pelem->name
-                           << " not found in " << variantTypeString(type)
-                           << std::endl;
-             }
-         }
-         if (debug() >= 5)
-             std::cout << " ** " << elementMap.size() << "/" << elements.size()
-                       << " child elements mapped to a "
-                       << "structure of " << type->membersSize << " elements" << std::endl;
-         break;
+        // Map member names to index
+        for (auto &it : elements) {
+            auto pelem = it.lock();
+            unsigned int i;
+            for (i = 0; i < type->membersSize; i++) {
+                if (pelem->name == type->members[i].memberName) {
+                    elementMap.insert({i, it});
+                    break;
+                }
+            }
+            if (i == type->membersSize) {
+                std::cerr << "Item " << pitem->getNodeId()
+                          << ": element " << pelem->name
+                          << " not found in " << variantTypeString(type)
+                          << std::endl;
+            }
+        }
+        if (debug() >= 5)
+            std::cout << " ** " << elementMap.size() << "/" << elements.size()
+                      << " child elements mapped to a "
+                      << "structure of " << type->membersSize << " elements" << std::endl;
+        break;
     }
     case UA_TYPES_LOCALIZEDTEXT:
     {
@@ -179,9 +196,9 @@ DataElementOpen62541::createMap (const UA_DataType *type)
         break;
     }
     default:
-         std::cerr << "Item " << pitem->getNodeId()
-                   << " has unimplemented type " << variantTypeString(type)
-                   << std::endl;
+        std::cerr << "Item " << pitem->getNodeId()
+                  << " has unimplemented type " << variantTypeString(type)
+                  << std::endl;
         return false;
     }
     mapped = true;
@@ -191,7 +208,9 @@ DataElementOpen62541::createMap (const UA_DataType *type)
 // Getting the timestamp and status information from the Item assumes that only one thread
 // is pushing data into the Item's DataElement structure at any time.
 void
-DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason reason)
+DataElementOpen62541::setIncomingData (const UA_Variant &value,
+                                       ProcessReason reason,
+                                       const std::string *timefrom)
 {
     // Make a copy of this element and cache it
 
@@ -244,7 +263,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value, ProcessReason re
             }
         }
         if (!mapped) {
-            createMap(type);
+            createMap(type, timefrom);
         }
         for (auto &it : elementMap) {
             auto pelem = it.second.lock();
@@ -368,7 +387,7 @@ DataElementOpen62541::getOutgoingData ()
             }
         }
         if (!mapped) {
-            createMap(type);
+            createMap(type, nullptr);
         }
         for (auto &it : elementMap) {
             auto pelem = it.second.lock();
@@ -401,8 +420,10 @@ DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
         std::cout << pconnector->getRecordName() << ": ";
         if (reason == ProcessReason::incomingData || reason == ProcessReason::readComplete) {
             UA_Variant &data = upd->getData();
-            std::cout << "(" << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device")
-                      << " time " << time_buf << ") read " << processReasonString(reason) << " ("
+            std::cout << "(" << linkOptionTimestampString(pconnector->plinkinfo->timestamp);
+            if (pconnector->plinkinfo->timestamp == LinkOptionTimestamp::data)
+                std::cout << "(@" << pconnector->plinkinfo->timestampElement << ")";
+            std::cout << " time " << time_buf << ") read " << processReasonString(reason) << " ("
                       << UA_StatusCode_name(upd->getStatus()) << ") "
                       << data
                       << " as " << targetTypeName;
@@ -550,8 +571,10 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
 
         std::cout << pconnector->getRecordName() << ": ";
         if (reason == ProcessReason::incomingData || reason == ProcessReason::readComplete) {
-            std::cout << "(" << ( pconnector->plinkinfo->useServerTimestamp ? "server" : "device")
-                      << " time " << time_buf << ") read " << processReasonString(reason) << " ("
+            std::cout << "(" << linkOptionTimestampString(pconnector->plinkinfo->timestamp);
+            if (pconnector->plinkinfo->timestamp == LinkOptionTimestamp::data)
+                std::cout << "@" << pconnector->plinkinfo->timestampElement;
+            std::cout << " time " << time_buf << ") read " << processReasonString(reason) << " ("
                       << UA_StatusCode_name(upd->getStatus()) << ") ";
             UA_Variant &data = upd->getData();
             std::cout << " array of " << variantTypeString(data)

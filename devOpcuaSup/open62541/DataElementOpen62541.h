@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2021 ITER Organization.
+* Copyright (c) 2018-2023 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -291,8 +291,11 @@ public:
      *
      * @param value  new value for this data element
      * @param reason  reason for this value update
+     * @param timefrom  name of element to read item timestamp from
      */
-    void setIncomingData(const UA_Variant &value, ProcessReason reason);
+    void setIncomingData(const UA_Variant &value,
+                         ProcessReason reason,
+                         const std::string *timefrom = nullptr);
 
     /**
      * @brief Push an incoming event into the DataElement.
@@ -729,7 +732,7 @@ private:
                             const int index,
                             std::shared_ptr<DataElementOpen62541> pelem);
 
-    bool createMap(const UA_DataType *type);
+    bool createMap(const UA_DataType *type, const std::string* timefrom);
 
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
@@ -740,17 +743,30 @@ private:
         pitem->markAsDirty();
     }
 
-    // Get the time stamp from the incoming object
+     // Convert the time stamp from a data element
+    epicsTime
+    epicsTimeFromUaVariant(const UA_Variant &data) const
+    {
+        if (UA_Variant_hasScalarType(&data, &UA_TYPES[UA_TYPES_DATETIME])) {
+            return ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(data.data), 0);
+        }
+        return pitem->tsSource;
+    }
+
+   // Get the time stamp from the incoming object
     const epicsTime &getIncomingTimeStamp() const {
         ProcessReason reason = pitem->getReason();
         if ((reason == ProcessReason::incomingData || reason == ProcessReason::readComplete)
                 && isLeaf())
-            if (pconnector->plinkinfo->useServerTimestamp)
+            switch (pconnector->plinkinfo->timestamp) {
+            case LinkOptionTimestamp::server:
                 return pitem->tsServer;
-            else
+            case LinkOptionTimestamp::source:
                 return pitem->tsSource;
-        else
-            return pitem->tsClient;
+            case LinkOptionTimestamp::data:
+                return pitem->tsData;
+            }
+        return pitem->tsClient;
     }
 
     // Get the read status from the incoming object
@@ -1212,6 +1228,8 @@ private:
     std::shared_ptr<DataElementOpen62541> parent;               /**< parent */
 
     std::unordered_map<int, std::weak_ptr<DataElementOpen62541>> elementMap;
+    int timesrc;
+
     typedef struct {ptrdiff_t offs; const UA_DataType *type;} ElementDesc;
     std::vector<ElementDesc> elementDesc;
 

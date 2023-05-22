@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2021 ITER Organization.
+* Copyright (c) 2018-2023 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -94,21 +94,19 @@ ItemOpen62541::show (int level) const
         std::cout << ";i=" << linkinfo.identifierNumber;
     else
         std::cout << ";s=" << linkinfo.identifierString;
-
     std::cout << " record=" << recConnector->getRecordName()
               << " state=" << connectionStatusString(connState)
               << " status=" << UA_StatusCode_name(lastStatus)
               << " dataDirty=" << (dataTreeDirty ? "y" : "n")
-              << " context=" << linkinfo.subscription
-              << "@" << session->getName()
-              << " sampling=" << revisedSamplingInterval
-              << "(" << linkinfo.samplingInterval << ")"
-              << " qsize=" << revisedQueueSize
-              << "(" << linkinfo.queueSize << ")"
+              << " context=" << linkinfo.subscription << "@" << session->getName()
+              << " sampling=" << revisedSamplingInterval << "(" << linkinfo.samplingInterval << ")"
+              << " qsize=" << revisedQueueSize << "(" << linkinfo.queueSize << ")"
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
-              << " timestamp=" << (linkinfo.useServerTimestamp ? "server" : "source")
-              << " bini=" << linkOptionBiniString(linkinfo.bini)
+              << " timestamp=" << linkOptionTimestampString(linkinfo.timestamp);
+    if (linkinfo.timestamp == LinkOptionTimestamp::data)
+        std::cout << "@" << linkinfo.timestampElement;
+    std::cout << " bini=" << linkOptionBiniString(linkinfo.bini)
               << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
               << " registered=";
@@ -136,8 +134,6 @@ ItemOpen62541::copyAndClearOutgoingData(UA_WriteValue &wvalue)
 {
     Guard G(dataTreeWriteLock);
     if (auto pd = dataTree.root().lock()) {
-//    UA_Variant_copy(&item.getOutgoingData(), &cargo->wvalue.value.value);
-
         UA_Variant_copy(&pd->getOutgoingData(), &wvalue.value.value);
         pd->clearOutgoingData();
     }
@@ -176,8 +172,13 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
 
     setLastStatus(value.status);
 
-    if (auto pd = dataTree.root().lock())
-        pd->setIncomingData(value.value, reason);
+    if (auto pd = dataTree.root().lock()) {
+        const std::string *timefrom = nullptr;
+        if (linkinfo.timestamp == LinkOptionTimestamp::data && linkinfo.timestampElement.length())
+            timefrom = &linkinfo.timestampElement;
+        pd->setIncomingData(value.value, reason, timefrom);
+    }
+
     if (linkinfo.isItemRecord) {
         if (state() == ConnectionStatus::initialRead
                 && reason == ProcessReason::readComplete
@@ -230,10 +231,17 @@ ItemOpen62541::getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len, e
     }
 
     if (ts && recConnector) {
-        if (recConnector->plinkinfo->useServerTimestamp)
+        switch (recConnector->plinkinfo->timestamp) {
+        case LinkOptionTimestamp::server:
             *ts = tsServer;
-        else
+            break;
+        case LinkOptionTimestamp::source:
             *ts = tsSource;
+            break;
+        case LinkOptionTimestamp::data:
+            *ts = tsData;
+            break;
+        }
     }
 }
 

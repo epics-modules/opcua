@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2021 ITER Organization.
+* Copyright (c) 2018-2023 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -15,9 +15,9 @@
 
 #include <memory>
 
-#include <epicsTime.h>
-
 #include <open62541/client.h>
+
+#include <epicsTime.h>
 
 #include "Item.h"
 #include "opcuaItemRecord.h"
@@ -146,6 +146,7 @@ public:
      * @param dataTypeId data type of the extension object
      * @return structure definition
      */
+// TODO: implement structured data
 //    UaStructureDefinition structureDefinition(const UA_NodeId &dataTypeId)
 //    { return session->structureDefinition(dataTypeId); }
 
@@ -228,7 +229,8 @@ private:
     ConnectionStatus connState;            /**< Connection state of the item */
     epicsTime tsClient;                    /**< client (local) time stamp */
     epicsTime tsServer;                    /**< server time stamp */
-    epicsTime tsSource;                    /**< device time stamp */
+    epicsTime tsSource;                    /**< source time stamp */
+    epicsTime tsData;                      /**< data time stamp */
 };
 
 } // namespace DevOpcua
