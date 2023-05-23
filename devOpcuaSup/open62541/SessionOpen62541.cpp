@@ -1017,9 +1017,10 @@ SessionOpen62541::setupSecurity ()
                                   << " (level " << +securityLevel << ")" << std::endl;
                 }
             } else {
-                errlogPrintf("OPC UA session %s: (setupSecurity) found no endpoint that matches "
-                             "the security requirements",
-                             name.c_str());
+                if (debug)
+                    std::cout << "Session " << name
+                              << ": (setupSecurity) found no endpoint that matches"
+                              << " the security requirements" << std::endl;
                 UA_Array_delete(endpointDescriptions, endpointDescriptionsLength, &UA_TYPES[UA_TYPES_ENDPOINTDESCRIPTION]);
                 return ConnectResult::noMatchingEndpoint;
             }
