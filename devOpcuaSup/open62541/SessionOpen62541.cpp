@@ -1652,7 +1652,7 @@ void
 SessionOpen62541::initHook (initHookState state)
 {
     switch (state) {
-    case initHookAfterDatabaseRunning:
+    case initHookAfterIocRunning:
     {
         errlogPrintf("OPC UA: Autoconnecting sessions\n");
         for (auto &it : sessions) {
@@ -1674,6 +1674,9 @@ SessionOpen62541::atExit (void *)
     errlogPrintf("OPC UA: Disconnecting sessions\n");
     for (auto &it : sessions) {
         it.second->disconnect();
+        SessionOpen62541 *session = it.second;
+        if (session->isConnected())
+            session->disconnect();
     }
 }
 
