@@ -589,9 +589,8 @@ opcua_read_analog (REC *prec)
                 }
                 traceReadPrint(pdbc, pcon, ret, setValFromValue, prec->val);
             } else {
-                if (setValFromValue) {
-                    ret = pcon->readScalar(&prec->rval, &nextReason);
-                } else {
+                ret = pcon->readScalar(&prec->rval, &nextReason);
+                if (!setValFromValue) {
                     ret = 2;     // don't convert
                 }
                 traceReadPrint(pdbc, pcon, ret, setValFromValue, prec->rval, "RVAL");

@@ -23,6 +23,7 @@
 
 #include <osiSock.h>
 #include <shareLib.h>
+#include <epicsThread.h>
 #include <epicsTimer.h>
 #include <errlog.h>
 
@@ -221,7 +222,10 @@ public:
 
     static const char optionUsage[]; /**< option info for the specific implementation */
 
-    int debug;  /**< debug verbosity level */
+    int debug; /**< debug verbosity level */
+
+    static epicsThreadOnceId onceId;  /**< epicsThreadOnce id */
+    static void initOnce(void *junk); /**< epicsThreadOnce runner */
 
 protected:
     Session(const std::string &name)
@@ -252,7 +256,6 @@ protected:
 #endif
             securitySaveRejectedDir = basedir + iocname + "@" + hostname;
         }
-
     }
 
     static std::string hostname;
@@ -347,10 +350,6 @@ protected:
     bool autoConnect;                      /**< auto (re)connect flag */
     std::string securityIdentityFile;      /**< full path to file with Identity token settings */
     std::string securityUserName;          /**< user name set in Username token */
-
-private:
-    static epicsThreadOnceId onceId;       /**< epicsThreadOnce id */
-    static void initOnce(void *junk);      /**< epicsThreadOnce runner */
 };
 
 

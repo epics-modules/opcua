@@ -61,6 +61,16 @@ record(ai, "$(P)$(R)aidouble") {
     field(TSE,  "-2")
 }
 
+record(ai, "$(P)$(R)aiint32") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Int32")
+    field(LINR, "SLOPE")
+    field(ESLO, "0.1")
+    field(PREC, "1")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+}
+
 record(stringin, "$(P)$(R)sistring") {
     field(DTYP, "OPCUA")
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")

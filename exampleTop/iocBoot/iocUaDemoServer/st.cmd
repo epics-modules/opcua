@@ -16,7 +16,7 @@ opcuaSession OPC1 opc.tcp://localhost:48010
 opcuaSubscription SUB1 OPC1 200
 
 # Switch off security
-opcuaOption OPC1 sec-mode=None
+opcuaOptions OPC1 sec-mode=None
 
 # Load the databases for the UaServerCpp demo server
 

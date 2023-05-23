@@ -40,6 +40,17 @@ _UASDK_MODS = $(notdir $(foreach module, $(UASDK_MODULES), \
 $(firstword $(wildcard $(UASDK)/include/$(module)cpp \
 $(UASDK)/include/$(module)))))
 UASDK_LIBS = $(addsuffix $(D_MARKER), $(_UASDK_MODS))
+
+ifeq ($(LIBRARY_IOC),opcua)
+USR_LDFLAGS += -L$(UASDK_LIB_DIR)
+SHRLIB_LDLIBS = $(STATIC_LDFLAGS_YES) \
+    $(addprefix -l, $(UASDK_LIBS)) \
+    $(STATIC_LDLIBS_YES) \
+    $(addprefix -l, $($*_LDLIBS) $(LIB_LIBS) $(filter-out $(UASDK_LIBS),$(USR_LIBS)) \
+    $($*_SYS_LIBS) $(LIB_SYS_LIBS) $(USR_SYS_LIBS)) \
+    $(LDLIBS)
+endif
+
 endif # EMBED
 
 # INSTALL the SDK shared libraries in the Device Support module
