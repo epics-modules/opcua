@@ -900,7 +900,7 @@ SessionOpen62541::setupSecurity ()
         UA_String_clear(&securityInfo.securityPolicyUri);
         securityLevel = 0;
         UA_ByteString_clear(&securityInfo.serverCertificate);
-        UA_ExtensionObject_clear(&securityInfo.userIdentityToken);
+        setupIdentity();
 
         if (debug)
             std::cout << "Session " << name
