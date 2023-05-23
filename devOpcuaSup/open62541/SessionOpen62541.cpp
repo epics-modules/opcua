@@ -1181,7 +1181,6 @@ SessionOpen62541::markConnectionLoss()
         it->setState(ConnectionStatus::down);
         it->setIncomingEvent(ProcessReason::connectionLoss);
     }
-    registeredItemsNo = 0;
 }
 
 void
@@ -1375,6 +1374,7 @@ SessionOpen62541::connectionStatusChanged (
             case UA_SECURECHANNELSTATE_CLOSED:
                 // Deactivated by user or server shut down
                 markConnectionLoss();
+                registeredItemsNo = 0;
                 break;
             case UA_SECURECHANNELSTATE_FRESH:
                 if (sessionState == UA_SESSIONSTATE_CREATED) {
