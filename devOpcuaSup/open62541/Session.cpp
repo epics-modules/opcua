@@ -52,13 +52,11 @@ isWritable(const std::string &dir)
 
 Session *
 Session::createSession(const std::string &name,
-                       const std::string &url,
-                       const int debuglevel,
-                       const bool autoconnect)
+                       const std::string &url)
 {
     if (RegistryKeyNamespace::global.contains(name))
         return nullptr;
-    return new SessionOpen62541(name, url, autoconnect, debuglevel);
+    return new SessionOpen62541(name, url);
 }
 
 Session *
@@ -145,26 +143,25 @@ Session::showClientSecurity()
 }
 #endif
 
-void
-Session::showOptionHelp ()
-{
-    std::cout << "Options:\n"
-              << "clientcert         path to client certificate [none]\n"
-              << "clientkey          path to client private key [none]\n"
-              << "nodes-max          max. nodes per service call [0 = no limit]\n"
-              << "read-nodes-max     max. nodes per read service call [0 = no limit]\n"
-              << "read-timeout-min   min. timeout (holdoff) after read service call [ms]\n"
-              << "read-timeout-max   timeout (holdoff) after read service call w/ max elements [ms]\n"
-              << "write-nodes-max    max. nodes per write service call [0 = no limit]\n"
-              << "write-timeout-min  min. timeout (holdoff) after write service call [ms]\n"
-              << "write-timeout-max  timeout (holdoff) after write service call w/ max elements [ms]"
-              << "sec-mode           requested security mode\n"
-              << "sec-policy         requested security policy\n"
-              << "sec-level-min      requested minimal security level\n"
-              << "ident-file         file to read identity credentials from\n"
-              << "batch-nodes        max. nodes per service call [0 = no limit]"
-              << std::endl;
-}
+const char Session::optionUsage[]
+    = "Sets options for existing OPC UA sessions or subscriptions.\n\n"
+      "pattern    pattern for session or subscription names (* and ? supported)\n"
+      "[options]  colon separated list of options in 'key=value' format\n\n"
+      "Valid session options are:\n"
+      "debug              debug level [default 0 = no debug]\n"
+      "nodes-max          max. nodes per service call [0 = no limit]\n"
+      "read-nodes-max     max. nodes per read service call [0 = no limit]\n"
+      "read-timeout-min   min. timeout (holdoff) after read service call [ms]\n"
+      "read-timeout-max   timeout (holdoff) after read service call w/ max elements [ms]\n"
+      "write-nodes-max    max. nodes per write service call [0 = no limit]\n"
+      "write-timeout-min  min. timeout (holdoff) after write service call [ms]\n"
+      "write-timeout-max  timeout (holdoff) after write service call w/ max elements [ms]\n"
+      "clientcert         path to client certificate [none]\n"
+      "clientkey          path to client private key [none]\n"
+      "sec-mode           requested security mode\n"
+      "sec-policy         requested security policy\n"
+      "ident-file         file to read identity credentials from\n\n"
+      "";
 
 void
 Session::setupPKI(const std::string &&certTrustList,

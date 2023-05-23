@@ -10,13 +10,15 @@
  *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
-#define epicsExportSharedSymbols
-
 #include <iostream>
 #include <string>
 #include <map>
+
 #include <open62541/client_subscriptions.h>
+
 #include <errlog.h>
+
+#define epicsExportSharedSymbols
 #include "SubscriptionOpen62541.h"
 #include "ItemOpen62541.h"
 #include "DataElementOpen62541.h"
@@ -32,23 +34,43 @@ namespace DevOpcua {
 Registry<SubscriptionOpen62541> SubscriptionOpen62541::subscriptions;
 
 SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOpen62541 &session,
-                                      const double publishingInterval, const epicsUInt8 priority,
-                                      const int debug)
-    : Subscription(name, debug)
+                                              const double publishingInterval)
+    : Subscription(name)
     , session(session)
     //TODO: add runtime support for subscription enable/disable
     , requestedSettings(UA_CreateSubscriptionRequest_default())
     , enable(true)
 {
-    // keep the default timeout
     UA_CreateSubscriptionResponse_init(&subscriptionSettings);
+    // keep the default timeout
     double deftimeout = requestedSettings.requestedPublishingInterval * requestedSettings.requestedLifetimeCount;
     subscriptionSettings.revisedPublishingInterval = requestedSettings.requestedPublishingInterval = publishingInterval;
     subscriptionSettings.revisedLifetimeCount = requestedSettings.requestedLifetimeCount = static_cast<UA_UInt32>(deftimeout / publishingInterval);
-    requestedSettings.priority = priority;
 
     subscriptions.insert({name, this});
     session.subscriptions[name] = this;
+}
+
+void SubscriptionOpen62541::setOption(const std::string &name, const std::string &value)
+{
+    if (debug || name == "debug")
+        std::cerr << "Subscription " << this->name
+                  << ": setting option " << name
+                  << " to " << value
+                  << std::endl;
+
+    if (name == "debug") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        debug = ul;
+    } else if (name == "priority") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        if (ul > 255ul)
+            errlogPrintf("option '%s' value out of range - ignored\n", name.c_str());
+        else
+            requestedSettings.priority = ul;
+    } else {
+        errlogPrintf("unknown option '%s' - ignored\n", name.c_str());
+    }
 }
 
 void

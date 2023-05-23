@@ -159,6 +159,7 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
     } else {
         tsSource = tsClient;
         tsServer = tsClient;
+        tsData = tsClient;
     }
     setReason(reason);
     if (getLastStatus() == UA_STATUSCODE_BADSERVERNOTCONNECTED && value.status == UA_STATUSCODE_BADNODEIDUNKNOWN)
@@ -185,6 +186,8 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
                 && recConnector->bini() == LinkOptionBini::write) {
             setState(ConnectionStatus::initialWrite);
             recConnector->requestRecordProcessing(ProcessReason::writeRequest);
+        } else {
+            recConnector->requestRecordProcessing(reason);
         }
     }
 }
@@ -194,10 +197,12 @@ ItemOpen62541::setIncomingEvent(const ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
     setReason(reason);
-    if (reason == ProcessReason::connectionLoss) {
+    if (!(reason == ProcessReason::incomingData || reason == ProcessReason::readComplete)) {
         tsSource = tsClient;
         tsServer = tsClient;
-        setLastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED);
+        tsData = tsClient;
+        if (reason == ProcessReason::connectionLoss)
+            setLastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED);
     }
 
     if (auto pd = dataTree.root().lock()) {

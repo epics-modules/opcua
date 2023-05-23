@@ -223,9 +223,9 @@ SessionOpen62541::connectResultString (const ConnectResult result)
     return "";
 }
 
-SessionOpen62541::SessionOpen62541 (const std::string &name, const std::string &serverUrl,
-                            bool autoConnect, int debug)
-    : Session(name, debug, autoConnect)
+SessionOpen62541::SessionOpen62541 (const std::string &name,
+                                    const std::string &serverUrl)
+    : Session(name)
     , serverURL(serverUrl)
     , registeredItemsNo(0)
     , reqSecurityMode(RequestedSecurityMode::Best)
@@ -268,6 +268,12 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     bool updateReadBatcher = false;
     bool updateWriteBatcher = false;
 
+    if (debug || name == "debug")
+        std::cerr << "Session " << this->name
+                  << ": setting option " << name
+                  << " to " << value
+                  << std::endl;
+
     if (name == "sec-mode") {
         if (value == "best") {
             reqSecurityMode = RequestedSecurityMode::Best;
@@ -296,6 +302,9 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
         }
     } else if (name == "sec-id") {
         securityIdentityFile = value;
+    } else if (name == "debug") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        debug = ul;
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -337,7 +346,7 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
         if (value.length() > 0)
             autoConnect = getYesNo(value[0]);
     } else {
-        errlogPrintf("unknown option '%s' ignored\n", name.c_str());
+        errlogPrintf("unknown option '%s' - ignored\n", name.c_str());
     }
 
     unsigned int max = 0;
@@ -1094,7 +1103,9 @@ SessionOpen62541::show (const int level) const
               << " sessionState="   << sessionState
               << " channelState="   << channelState
               << " sec-mode="    << securityInfo.securityMode
+              << "(" << reqSecurityMode << ")"
               << " sec-policy="  << securityPolicyString(securityInfo.securityPolicyUri)
+              << "(" << reqSecurityPolicyUri << ")"
               << " debug="       << debug
               << " batch r/w="   << MaxNodesPerRead << "/" << MaxNodesPerWrite
               << "(" << readNodesMax << "/" << writeNodesMax << ")"

@@ -47,12 +47,14 @@ public:
      * @param name  subscription name
      * @param session  session that the subscription should be linked to
      * @param publishingInterval  initial publishing interval
-     * @param priority  priority (default 0=lowest)
-     * @param debug  debug verbosity (default 0=no debug)
      */
     SubscriptionOpen62541(const std::string &name, SessionOpen62541 &session,
-                      const double publishingInterval, const epicsUInt8 priority = 0,
-                      const int debug = 0);
+                          const double publishingInterval);
+
+    /**
+     * @brief Set an option for the subscription. See DevOpcua::Subscription::setOption
+     */
+    virtual void setOption(const std::string &name, const std::string &value) override;
 
     /**
      * @brief Print configuration and status. See DevOpcua::Subscription::show
