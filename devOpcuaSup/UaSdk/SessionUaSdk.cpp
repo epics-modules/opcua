@@ -1000,7 +1000,6 @@ SessionUaSdk::markConnectionLoss()
         it->setState(ConnectionStatus::down);
         it->setIncomingEvent(ProcessReason::connectionLoss);
     }
-    registeredItemsNo = 0;
 }
 
 void
@@ -1114,13 +1113,19 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::ServerShutdown:
         if (serverConnectionStatus == UaClient::Connected)
             markConnectionLoss();
+        if (serverStatus == UaClient::ServerShutdown)
+            registeredItemsNo = 0;
         if (autoConnect)
             autoConnector.start();
         break;
+
         // "The connection to the server is deactivated by the user of the client API."
     case UaClient::Disconnected:
-        if (serverConnectionStatus == UaClient::Connected)
+        if (serverConnectionStatus == UaClient::Connected) {
             markConnectionLoss();
+            registeredItemsNo = 0;
+        }
+
         break;
 
         // "The monitoring of the connection to the server indicated

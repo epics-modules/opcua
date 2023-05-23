@@ -163,7 +163,6 @@ opcua_get_ioint (int cmd, dbCommon *prec, IOSCANPVT *ppvt)
 {
     if (!prec->dpvt) return 0;
     RecordConnector *pcon = static_cast<RecordConnector *>(prec->dpvt);
-    pcon->isIoIntrScanned = (cmd ? false : true);
     *ppvt = pcon->ioscanpvt;
     return 0;
 }
@@ -393,8 +392,10 @@ opcua_read_int32_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            prec->pact = true;
-            pcon->requestOpcuaRead();
+            if (pcon->pitem->state() == ConnectionStatus::up) {
+                prec->pact = true;
+                pcon->requestOpcuaRead();
+            }
         } else {
             epicsInt32 *value = useReadValue(pcon) ? &prec->val : nullptr;
             ret = pcon->readScalar(value, &nextReason);
@@ -450,8 +451,10 @@ opcua_read_int64_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            prec->pact = true;
-            pcon->requestOpcuaRead();
+            if (pcon->pitem->state() == ConnectionStatus::up) {
+                prec->pact = true;
+                pcon->requestOpcuaRead();
+            }
         } else {
             epicsInt64 *value = useReadValue(pcon) ? &prec->val : nullptr;
             ret = pcon->readScalar(value, &nextReason);
@@ -509,8 +512,10 @@ opcua_read_uint32_rval (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            prec->pact = true;
-            pcon->requestOpcuaRead();
+            if (pcon->pitem->state() == ConnectionStatus::up) {
+                prec->pact = true;
+                pcon->requestOpcuaRead();
+            }
         } else {
             epicsUInt32 *value = useReadValue(pcon) ? &prec->rval : nullptr;
             ret = pcon->readScalar(value, &nextReason);
@@ -567,8 +572,10 @@ opcua_read_analog (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            prec->pact = true;
-            pcon->requestOpcuaRead();
+            if (pcon->pitem->state() == ConnectionStatus::up) {
+                prec->pact = true;
+                pcon->requestOpcuaRead();
+            }
         } else {
             bool setValFromValue = useReadValue(pcon);
             if (prec->linr == menuConvertNO_CONVERSION) {
@@ -829,8 +836,10 @@ opcua_read_string_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            prec->pact = true;
-            pcon->requestOpcuaRead();
+            if (pcon->pitem->state() == ConnectionStatus::up) {
+                prec->pact = true;
+                pcon->requestOpcuaRead();
+            }
         } else {
             char *value = useReadValue(pcon) ? prec->val : nullptr;
             unsigned short num = value ? MAX_STRING_SIZE : 0;
@@ -889,8 +898,10 @@ opcua_read_lstring_val (REC *prec)
         ProcessReason nextReason = ProcessReason::none;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            prec->pact = true;
-            pcon->requestOpcuaRead();
+            if (pcon->pitem->state() == ConnectionStatus::up) {
+                prec->pact = true;
+                pcon->requestOpcuaRead();
+            }
         } else {
             char *value = useReadValue(pcon) ? prec->val : nullptr;
             ret = pcon->readScalar(value, prec->sizv, &nextReason);
@@ -952,8 +963,10 @@ opcua_read_array (REC *prec)
         epicsUInt32 nord = prec->nord;
 
         if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
-            prec->pact = true;
-            pcon->requestOpcuaRead();
+            if (pcon->pitem->state() == ConnectionStatus::up) {
+                prec->pact = true;
+                pcon->requestOpcuaRead();
+            }
         } else {
             void *bptr = useReadValue(pcon) ? prec->bptr : nullptr;
             switch (prec->ftvl) {

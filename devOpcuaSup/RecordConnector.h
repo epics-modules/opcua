@@ -144,7 +144,6 @@ public:
     std::unique_ptr<linkInfo> plinkinfo;
     Item *pitem;
     std::shared_ptr<DataElement> pdataelement;
-    bool isIoIntrScanned;
     IOSCANPVT ioscanpvt;
     ProcessReason reason;
 
