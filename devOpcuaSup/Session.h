@@ -323,8 +323,8 @@ protected:
     /** @brief Delay timer for reconnecting whenever connection is down. */
     class AutoConnect : public epicsTimerNotify {
     public:
-        AutoConnect(Session &client, const double delay, epicsTimerQueueActive &queue)
-            : timer(queue.createTimer())
+        AutoConnect(Session &client, const double delay, epicsTimerQueueActive *queue)
+            : timer(queue->createTimer())
             , client(client)
             , delay(delay)
         {}
@@ -340,13 +340,17 @@ protected:
         const double delay;
     };
 
-    static epicsTimerQueueActive &queue;   /**< timer queue for session reconnects */
+    static epicsTimerQueueActive *queue;   /**< timer queue for session reconnects */
 
     const std::string name;                /**< unique session name */
     AutoConnect autoConnector;             /**< reconnection timer */
     bool autoConnect;                      /**< auto (re)connect flag */
     std::string securityIdentityFile;      /**< full path to file with Identity token settings */
     std::string securityUserName;          /**< user name set in Username token */
+
+private:
+    static epicsThreadOnceId onceId;       /**< epicsThreadOnce id */
+    static void initOnce(void *junk);      /**< epicsThreadOnce runner */
 };
 
 

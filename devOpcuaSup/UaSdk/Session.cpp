@@ -34,15 +34,16 @@
 
 namespace DevOpcua {
 
-static epicsThreadOnceId opcuaUaSdk_once = EPICS_THREAD_ONCE_INIT;
+epicsThreadOnceId Session::onceId = EPICS_THREAD_ONCE_INIT;
+epicsTimerQueueActive *Session::queue = nullptr;
 
 RegistryKeyNamespace RegistryKeyNamespace::global;
 
-static
-void opcuaUaSdk_init (void *junk)
+void Session::initOnce(void *junk)
 {
     (void)junk;
     UaPlatformLayer::init();
+    queue = &epicsTimerQueueActive::allocate(true);
 }
 
 static bool
@@ -73,7 +74,7 @@ Session *
 Session::createSession(const std::string &name,
                        const std::string &url)
 {
-    epicsThreadOnce(&opcuaUaSdk_once, &opcuaUaSdk_init, nullptr);
+    epicsThreadOnce(&onceId, &initOnce, nullptr);
     if (RegistryKeyNamespace::global.contains(name))
         return nullptr;
     return new SessionUaSdk(name, url);
@@ -252,7 +253,5 @@ const std::map<std::string, std::string> Session::securitySupportedPolicies
        , {OpcUa_SecurityPolicy_Aes256Sha256RsaPss, "Aes256_Sha256_RsaPss"}
 #endif
 };
-
-epicsTimerQueueActive &Session::queue = epicsTimerQueueActive::allocate(true);
 
 } // namespace DevOpcua

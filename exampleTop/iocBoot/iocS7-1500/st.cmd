@@ -12,8 +12,11 @@ dbLoadDatabase "dbd/opcuaIoc.dbd"
 opcuaIoc_registerRecordDeviceDriver pdbbase
 
 ## Pretty minimal setup: one session with a 200ms subscription on top
-opcuaCreateSession OPC1 opc.tcp://localhost:4840
-opcuaCreateSubscription SUB1 OPC1 200
+opcuaSession OPC1 opc.tcp://localhost:4840
+opcuaSubscription SUB1 OPC1 200
+
+# Switch off security
+opcuaOption OPC1 sec-mode=None
 
 ## Load the databases for one of the examples
 

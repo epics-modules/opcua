@@ -12,11 +12,11 @@ dbLoadDatabase "dbd/opcuaIoc.dbd"
 opcuaIoc_registerRecordDeviceDriver pdbbase
 
 # Pretty minimal setup: one session with a 200ms subscription on top
-opcuaCreateSession OPC1 opc.tcp://localhost:48010
-opcuaCreateSubscription SUB1 OPC1 200
+opcuaSession OPC1 opc.tcp://localhost:48010
+opcuaSubscription SUB1 OPC1 200
 
 # Switch off security
-opcuaSetOption OPC1 sec-mode None
+opcuaOption OPC1 sec-mode=None
 
 # Load the databases for the UaServerCpp demo server
 
@@ -28,6 +28,7 @@ dbLoadRecords "db/Demo.Static.Scalar.db", "P=OPC:,R=DSS:,SESS=OPC1,SUBS=SUB1"
 
 dbLoadRecords "db/Demo.WorkOrder.db", "P=OPC:,SESS=OPC1,SUBS=SUB1"
 
+# DO NOT LOAD THESE DBs ON EPICS BASE < 7.0     \/  \/  \/     EPICS 7 ONLY
 # int64 and long string records need EPICS 7
 dbLoadRecords "db/Demo.Dynamic.ScalarE7.db", "P=OPC:,R=DDS:,SESS=OPC1,SUBS=SUB1"
 dbLoadRecords "db/Demo.Dynamic.ArraysE7.db", "P=OPC:,R=DDA:,SESS=OPC1,SUBS=SUB1"
