@@ -24,7 +24,15 @@
 
 namespace DevOpcua {
 
+epicsThreadOnceId Session::onceId = EPICS_THREAD_ONCE_INIT;
+epicsTimerQueueActive *Session::queue = nullptr;
+
 RegistryKeyNamespace RegistryKeyNamespace::global;
+
+void Session::initOnce(void *)
+{
+    queue = &epicsTimerQueueActive::allocate(true);
+}
 
 static bool
 isWritable(const std::string &dir)
@@ -54,6 +62,7 @@ Session *
 Session::createSession(const std::string &name,
                        const std::string &url)
 {
+    epicsThreadOnce(&onceId, &initOnce, nullptr);
     if (RegistryKeyNamespace::global.contains(name))
         return nullptr;
     return new SessionOpen62541(name, url);
@@ -225,7 +234,5 @@ const std::map<std::string, std::string> Session::securitySupportedPolicies
      , {"http://opcfoundation.org/UA/SecurityPolicy#Aes256_Sha256_RsaPss",  "Aes256_Sha256_RsaPss"}
 #endif
 };
-
-epicsTimerQueueActive &Session::queue = epicsTimerQueueActive::allocate(true);
 
 } // namespace DevOpcua
