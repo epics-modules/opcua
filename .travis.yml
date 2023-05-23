@@ -20,6 +20,7 @@ env:
     - MODULES=gtest
     - GTEST=v1.0.0
     - BASE_HOOK=.ci-local/base.patch
+    - BASE_RECURSIVE=NO
 
 addons:
   apt:

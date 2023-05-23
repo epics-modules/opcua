@@ -1,7 +1,7 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
-<a target="_blank" href="https://travis-ci.com/ralphlange/opcua">![Travis status][badge.travis]</a>
-<a target="_blank" href="https://github.com/ralphlange/opcua/actions/workflows/ci-build.yml">![GitHub Actions status][badge.gha]</a>
-<a target="_blank" href="https://www.codacy.com/app/ralphlange/opcua">![Codacy grade][badge.codacy]</a>
+<a target="_blank" href="https://app.travis-ci.com/github/epics-modules/opcua">![Travis status][badge.travis]</a>
+<a target="_blank" href="https://github.com/epics-modules/opcua/actions/workflows/ci-build.yml">![GitHub Actions status][badge.gha]</a>
+<a target="_blank" href="https://www.codacy.com/gh/epics-modules/opcua/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=epics-modules/opcua&amp;utm_campaign=Badge_Grade">![Codacy grade][badge.codacy]</a>
 
 # opcua - EPICS Device Support for OPC UA
 
@@ -96,10 +96,17 @@ features.
 The [Cheat Sheet][cheatsheet.pdf] explains the configuration in the startup
 script and the database links.
 
+## Binaries
+
+Please look at the "Assets" sections of specific releases on the
+[release page](https://github.com/epics-modules/opcua/releases) for binaries.
+These are fully functional and contain the Unified Automation Client SDK. They
+can be used without limitations and without any fees.
+
 ## Feedback / Reporting issues
 
 Please use the GitHub project's
-[issue tracker](https://github.com/ralphlange/opcua/issues).
+[issue tracker](https://github.com/epics-modules/opcua/issues).
 
 ## Credits
 
@@ -115,13 +122,13 @@ This module is distributed subject to a Software License Agreement found
 in file LICENSE that is included with this distribution.
 
 <!-- Links -->
-[badge.version]: https://img.shields.io/github/v/release/ralphlange/opcua?sort=semver
-[badge.travis]: https://travis-ci.com/ralphlange/opcua.svg?branch=master
-[badge.codacy]: https://api.codacy.com/project/badge/Grade/65b1d28ca5e34a7d853d168f50beaafc
-[badge.gha]: https://github.com/ralphlange/opcua/actions/workflows/ci-build.yml/badge.svg
+[badge.version]: https://img.shields.io/github/v/release/epics-modules/opcua?sort=semver
+[badge.travis]: https://app.travis-ci.com/epics-modules/opcua.svg?branch=master
+[badge.codacy]: https://app.codacy.com/project/badge/Grade/ec0d53f8285249d394b3af067acf2ad4
+[badge.gha]: https://github.com/epics-modules/opcua/actions/workflows/ci-build.yml/badge.svg
 
 [unified.sdk]: https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html
 
-[uasdk.dir]: https://github.com/ralphlange/opcua/tree/master/devOpcuaSup/UaSdk
-[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
-[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
+[uasdk.dir]: https://github.com/epics-modules/opcua/tree/master/devOpcuaSup/UaSdk
+[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
+[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf

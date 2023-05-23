@@ -56,6 +56,7 @@ namespace DevOpcua {
 using namespace UaClientSdk;
 
 static epicsThreadOnceId session_uasdk_ihooks_once = EPICS_THREAD_ONCE_INIT;
+static epicsThreadOnceId session_uasdk_atexit_once = EPICS_THREAD_ONCE_INIT;
 
 Registry<SessionUaSdk> SessionUaSdk::sessions;
 
@@ -75,6 +76,13 @@ void session_uasdk_ihooks_register (void *junk)
 {
     (void)junk;
     (void) initHookRegister(SessionUaSdk::initHook);
+}
+
+static
+void session_uasdk_atexit_register (void *junk)
+{
+    (void)junk;
+    epicsAtExit(SessionUaSdk::atExit, nullptr);
 }
 
 inline const char *
@@ -711,7 +719,7 @@ SessionUaSdk::setupSecurity ()
         securityInfo.sSecurityPolicy = OpcUa_SecurityPolicy_None;
         securityLevel = 0;
         securityInfo.serverCertificate.clear();
-        securityInfo.setAnonymousUserIdentity();
+        setupIdentity();
 
         if (debug)
             std::cout << "Session " << name.c_str()
@@ -816,9 +824,10 @@ SessionUaSdk::setupSecurity ()
                                   << " (level " << +securityLevel << ")" << std::endl;
                 }
             } else {
-                errlogPrintf("OPC UA session %s: (setupSecurity) found no endpoint that matches "
-                             "the security requirements",
-                             name.c_str());
+                if (debug)
+                    std::cout << "Session " << name.c_str()
+                              << ": (setupSecurity) found no endpoint that matches"
+                              << " the security requirements" << std::endl;
                 return ConnectResult::noMatchingEndpoint;
             }
             return ConnectResult::ok;
@@ -1349,7 +1358,7 @@ void
 SessionUaSdk::initHook (initHookState state)
 {
     switch (state) {
-    case initHookAfterDatabaseRunning:
+    case initHookAfterIocRunning:
     {
         errlogPrintf("OPC UA: Autoconnecting sessions\n");
         for (auto &it : sessions) {
@@ -1357,10 +1366,25 @@ SessionUaSdk::initHook (initHookState state)
             if (it.second->autoConnect)
                 it.second->connect();
         }
+        epicsThreadOnce(&DevOpcua::session_uasdk_atexit_once, &DevOpcua::session_uasdk_atexit_register, nullptr);
         break;
     }
     default:
         break;
+    }
+}
+
+void
+SessionUaSdk::atExit (void *junk)
+{
+    (void)junk;
+    errlogPrintf("OPC UA: Disconnecting sessions\n");
+    for (auto &it : sessions) {
+        SessionUaSdk *session = it.second;
+        // See #130 and reverted commit ab7184ef
+        // Make sure low-level session is valid before running disconnect()
+        if (session->puasession && session->isConnected())
+            session->disconnect();
     }
 }
 

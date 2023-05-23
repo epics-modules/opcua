@@ -12,10 +12,6 @@
 #==================================================
 # Unified Automation SDK libraries
 
-USR_INCLUDES += $(foreach lib, $(_UASDK_MODS),-I$(UASDK)/include/$(lib))
-# SDK libraries are not built with correct RUNPATH - rely on executable
-USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
-
 ifeq ($(UASDK_DEPLOY_MODE),SYSTEM)
 USR_SYS_LIBS += $(UASDK_LIBS)
 endif

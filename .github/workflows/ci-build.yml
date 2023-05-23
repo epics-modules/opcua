@@ -5,7 +5,7 @@
 
 # Set the 'name:' properties to values that work for you
 
-name: opcua
+name: opcua build and end-to-end test
 
 # Trigger on pushes and PRs to any branch
 on:
@@ -21,6 +21,7 @@ env:
   MODULES: "gtest"
   GTEST: "v1.0.1"
   BASE_HOOK: ".ci-local/base.patch"
+  BASE_RECURSIVE: NO
   encrypted_178ee45b7f75_pass: ${{ secrets.encrypted_178ee45b7f75_pass }}
 
 jobs:
@@ -80,7 +81,7 @@ jobs:
             name: "3.15 Ub-20 SDK-1.7.2"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
     - name: Prepare and compile dependencies
@@ -93,3 +94,13 @@ jobs:
       run: python .ci/cue.py test
     - name: Collect and show test results
       run: python .ci/cue.py test-results
+    - name: Install end2end test dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libfaketime faketime
+        sudo pip3 install pytest opcua pyepics
+        sudo pip3 install run-iocsh -i https://artifactory.esss.lu.se/artifactory/api/pypi/pypi-virtual/simple
+    - name: Run end2end tests
+      run: |
+        python .ci/cue.py exec make -C end2endTest/server
+        python .ci/cue.py exec pytest -v end2endTest/opcua_test_cases.py

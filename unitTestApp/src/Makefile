@@ -12,6 +12,9 @@ SRC_DIRS += $(DEVSUP_SRC)
 
 TESTSRC = $(TOP)/unitTestApp/src
 
+# Needed to find indirect library dependencies through RUNPATH
+USR_LDFLAGS += -Wl,--no-as-needed
+
 # Link against objects as libopcua might be static (deploy mode EMBED)
 OPCUA_OBJS += linkParser iocshIntegration
 ifdef UASDK
@@ -59,7 +62,7 @@ GTESTS += ElementTreeTest
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(TESTSRC)/UaSdk/Makefile
+include $(TESTSRC)/UaSdk/Makefile.config
 endif
 
 USR_LIBS += Com
@@ -72,5 +75,5 @@ include $(TOP)/configure/RULES
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(DEVSUP_SRC)/UaSdk/RULES_UASDK
+include $(DEVSUP_SRC)/UaSdk/Makefile.rules
 endif

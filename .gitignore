@@ -23,6 +23,8 @@ envPaths
 
 O.*/
 /QtC-*
+/.qtc_*
+.idea/
 *.orig
 *.log
 /devOpcuaSup/.vs/devOpcuaSup/v16

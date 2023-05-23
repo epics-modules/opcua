@@ -73,7 +73,7 @@ endif
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(OPCUA)/UaSdk/Makefile
+include $(OPCUA)/UaSdk/Makefile.config
 endif
 
 # open62541.org Open Source UA SDK
@@ -99,7 +99,7 @@ include $(TOP)/configure/RULES
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(OPCUA)/UaSdk/RULES_UASDK
+include $(OPCUA)/UaSdk/Makefile.rules
 endif
 
 # Can't use EXPAND as generated headers must appear

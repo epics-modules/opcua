@@ -84,7 +84,7 @@ In the fully detailed form (using four arguments), the four locations are specif
 
 ### Client Certificate
 
-The iocShell command `setClientCertificate` sets the locations for the client certificate (PEM or DER format) and the matching private key (PEM format).
+The iocShell command `opcuaClientCertificate` sets the locations for the client certificate (PEM or DER format) and the matching private key (PEM format).
 
 ### Session Security Setting
 
@@ -150,9 +150,17 @@ The source tree contains an Xca certificate template that can be imported and mo
 
 For the IOC, save the certificate in DER or PEM format, the private key as PEM. The server may need different formats - refer to the documentation of your server for more details.
 
+A simple client certificate/key pair can also be created using the `openssl` command line utility, e.g.:
+
+```bash
+openssl req -x509 -newkey rsa:2048 -keyout private_key.pem -out cert.pem -sha256 -days 365 -nodes -addext "subjectAltName=URI:urn:<IOC>@<HOST>:EPICS:IOC,IP:<IP>"
+```
+
 ### Certificates and Network / DNS Setup
 
 The `URI:`, `DNS:` and `IP:` entries in the Subject Alternative Name section require the network and DNS to be set up correctly, otherwise the certificates will not work.
+
+This applies to both the IOC and the server. If any of the two uses a host name in its certificate that doesn't match the host name that the other side gets when doing a reverse lookup, the connection is likely to fail.
 
 The IOC uses the `gethostname()` result in the `URI:` entry, which might differ from its DNS host name that has to appear in the `DNS:` entry. Depending on your DNS setup, the host names in the `DNS:` entry need to be simple or fully qualified. Finding out the right way to set up your certificates may be frustrating and time consuming.
 
