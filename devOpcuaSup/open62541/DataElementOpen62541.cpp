@@ -493,7 +493,9 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
     long ret = 0;
 
     if (incomingQueue.empty()) {
-        errlogPrintf("%s : incoming data queue empty\n", prec->name);
+        errlogPrintf("%s: incoming data queue empty\n", prec->name);
+        if (nextReason)
+            *nextReason = ProcessReason::none;
         return 1;
     }
 
