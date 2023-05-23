@@ -190,7 +190,8 @@ operator += (std::string& str, const UA_String& ua_string)
     return str.append(reinterpret_cast<const char*>(ua_string.data), ua_string.length);
 }
 
-static epicsThreadOnceId session_open62541_init_once_id = EPICS_THREAD_ONCE_INIT;
+static epicsThreadOnceId session_open62541_ihooks_once = EPICS_THREAD_ONCE_INIT;
+static epicsThreadOnceId session_open62541_atexit_once = EPICS_THREAD_ONCE_INIT;
 
 Registry<SessionOpen62541> SessionOpen62541::sessions;
 
@@ -209,6 +210,12 @@ static
 void session_open62541_ihooks_register (void*)
 {
     initHookRegister(SessionOpen62541::initHook);
+}
+
+static
+void session_open62541_atexit_register (void *)
+{
+    epicsAtExit(SessionOpen62541::atExit, nullptr);
 }
 
 inline const char *
@@ -246,7 +253,7 @@ SessionOpen62541::SessionOpen62541 (const std::string &name,
     , workerThread(nullptr)
 {
     sessions.insert({name, this});
-    epicsThreadOnce(&session_open62541_init_once_id, &session_open62541_ihooks_register, nullptr);
+    epicsThreadOnce(&session_open62541_ihooks_once, &session_open62541_ihooks_register, nullptr);
     securityUserName = "Anonymous";
 }
 
@@ -1653,10 +1660,20 @@ SessionOpen62541::initHook (initHookState state)
             if (it.second->autoConnect)
                 it.second->connect();
         }
+        epicsThreadOnce(&DevOpcua::session_open62541_atexit_once, &DevOpcua::session_open62541_atexit_register, nullptr);
         break;
     }
     default:
         break;
+    }
+}
+
+void
+SessionOpen62541::atExit (void *)
+{
+    errlogPrintf("OPC UA: Disconnecting sessions\n");
+    for (auto &it : sessions) {
+        it.second->disconnect();
     }
 }
 
