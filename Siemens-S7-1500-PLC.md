@@ -19,6 +19,21 @@ _The PLC has to be disconnected for this configuration._
 In the list view of a Data Block, the checkboxes for "Accessible from HMI/OPC UA"
 and "Writable from HMI/OPC UA" determine which data are accessible and which are writable.
 
+# Specific settings
+
+## Batch size
+
+All known firmware versions have a limit of 1000 items per low-level OPC UA service call.
+To enforce this limit in the client IOC, call
+```sh
+opcuaOption <pattern> batch-nodes=1000
+```
+from the st.cmd script with a _pattern_ matching all S7-1500 sessions that you want to use
+for more than 1000 items.
+
+_Note:_ This is not a limitation on the total number of nodes. (See "System Limits" below.)
+This setting will just split up larger requests into multiple requests of that size.
+
 # S7-1500 Firmware Versions
 
 With every update of the firmware, Siemens changes the server behavior a lot,
@@ -32,14 +47,6 @@ to see what things were fixed.
 Known issues:
 
 *   Firmware V2.6.0 or higher is needed for subscriptions on registered items to work.
-
-*   All known firmware versions have a limit of 1000 items per low-level
-    OPC UA service call. To enforce this limit in the client IOC, call
-    ```sh
-    opcuaOption <pattern> batch-nodes=1000
-    ```
-    with a _pattern_ matching all S7-1500 sessions that you want to use for more than 1000 items.
-    Doing so will split up larger requests into batches of that size.
 
 # Links
 
