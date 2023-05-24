@@ -1,4 +1,5 @@
-# General Hints
+# [General Hints](Home)
 
-# OPC UA Server Knowledge Base
-- [Siemens S7-1500](Siemens-S7-1500-PLC)
+# [OPC UA Servers](OPC-UA-Server-Knowledge-Database)
+
+- [Siemens S7-1500 PLC](Siemens-S7-1500-PLC)
