@@ -80,6 +80,12 @@ operator << (std::ostream& os, const UA_Variant &ua_variant)
     return os;
 }
 
+inline std::string&
+operator += (std::string& str, const UA_String& ua_string)
+{
+    return str.append(reinterpret_cast<const char*>(ua_string.data), ua_string.length);
+}
+
 Registry<SessionOpen62541> SessionOpen62541::sessions;
 
 // Cargo structure and batcher for write requests
@@ -595,19 +601,20 @@ SessionOpen62541::addNamespaceMapping (const unsigned short nsIndex, const std::
 
 /* If a local namespaceMap exists, create a local->remote numerical index mapping
  * for every URI that is found both there and in the server's array */
-/*
 void
-SessionOpen62541::updateNamespaceMap(const UaStringArray &nsArray)
+SessionOpen62541::updateNamespaceMap(const UA_String *nsArray, UA_UInt16 nsCount)
 {
     if (debug)
         std::cout << "Session " << name
-                  << ": (updateNamespaceMap) namespace array with " << nsArray.length()
+                  << ": (updateNamespaceMap) namespace array with " << nsCount
                   << " elements read; updating index map with " << namespaceMap.size()
                   << " entries" << std::endl;
     if (namespaceMap.size()) {
         nsIndexMap.clear();
-        for (UA_UInt16 i = 0; i < nsArray.length(); i++) {
-            auto it = namespaceMap.find(UaString(nsArray[i]).toUtf8());
+        for (UA_UInt16 i = 0; i < nsCount; i++) {
+            std::string ns;
+            ns += nsArray[i];
+            auto it = namespaceMap.find(ns);
             if (it != namespaceMap.end())
                 nsIndexMap.insert({it->second, i});
         }
@@ -620,7 +627,6 @@ SessionOpen62541::updateNamespaceMap(const UaStringArray &nsArray)
         }
     }
 }
-*/
 
 void
 SessionOpen62541::show (const int level) const
@@ -646,7 +652,6 @@ SessionOpen62541::show (const int level) const
               << std::endl;
 
     if (level >= 3) {
-/*
         if (namespaceMap.size()) {
             std::cout << "Configured Namespace Mapping "
                       << "(local -> Namespace URI -> server)" << std::endl;
@@ -655,7 +660,6 @@ SessionOpen62541::show (const int level) const
                           << mapNamespaceIndex(p.second) << std::endl;
             }
         }
-*/
     }
 
     if (level >= 1) {
@@ -820,7 +824,14 @@ SessionOpen62541::connectionStatusChanged (
                 if (max != writeNodesMax)
                     writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
 
-                //updateNamespaceMap(puasession->getNamespaceTable());
+                // namespaces
+                status = UA_Client_readValueAttribute(client,
+                    UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_NAMESPACEARRAY)
+                    , &value);
+                if (status == UA_STATUSCODE_GOOD && UA_Variant_hasArrayType(&value, &UA_TYPES[UA_TYPES_STRING]))
+                    updateNamespaceMap(static_cast<UA_String*>(value.data), static_cast<UA_UInt16>(value.arrayLength));
+                UA_Variant_clear(&value);
+
                 rebuildNodeIds();
                 registerNodes();
                 createAllSubscriptions();

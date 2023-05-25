@@ -274,7 +274,7 @@ private:
     /**
      * @brief Rebuild the namespace index map from the server's array.
      */
-//    void updateNamespaceMap(const UaStringArray &nsArray);
+    void updateNamespaceMap(const UA_String *nsArray, UA_UInt16 nsCount);
 
     static Registry<SessionOpen62541> sessions;                   /**< session management */
 
