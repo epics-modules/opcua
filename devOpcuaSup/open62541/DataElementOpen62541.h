@@ -66,6 +66,16 @@ variantTypeString (const UA_Variant& v) {
     return variantTypeString(v.type);
 }
 
+inline int typeKindOf(const UA_DataType *type)
+{
+    return type ? (int)type->typeKind : -1;
+}
+
+inline int typeKindOf(const UA_Variant& v)
+{
+    return typeKindOf(v.type);
+}
+
 // Template for range check when writing
 template<typename TO, typename FROM>
 inline bool isWithinRange (const FROM &value) {
@@ -772,7 +782,7 @@ private:
     // Get the read status from the incoming object
     UA_StatusCode getIncomingReadStatus() const { return pitem->getLastStatus(); }
 
-    // Read scalar value as templated function on EPICS type and OPC UA type
+    // Read scalar value as templated function on EPICS type
     // value == nullptr is allowed and leads to the value being dropped (ignored),
     // including the extended status
     template<typename ET>
@@ -785,7 +795,6 @@ private:
                 const epicsUInt32 statusTextLen)
     {
         long ret = 0;
-
 
         if (incomingQueue.empty()) {
             errlogPrintf("%s: incoming data queue empty\n", prec->name);
@@ -819,7 +828,7 @@ private:
                 } else {
                     // Valid OPC UA value, so try to convert
                     UA_Variant &data = upd->getData();
-                    switch(data.type->typeKind) {
+                    switch(typeKindOf(data)) {
                         case UA_TYPES_BOOLEAN:
                             *value = (*static_cast<UA_Boolean*>(data.data) != 0);
                             break;
@@ -884,14 +893,19 @@ private:
                                 ret = 1;
                             break;
                         case UA_TYPES_STRING:
+                        {
                             UA_String* s = static_cast<UA_String*>(data.data); // Not terminated!
                             if (!string_to(std::string(reinterpret_cast<const char*>(s->data), s->length), *value))
                                 ret = 1;
                             break;
+                        }
+                        default:
+                            ret = 1;
                     }
                     if (ret == 1) {
-                        UA_String datastring;
-                        UA_print(&data, data.type, &datastring); // Not terminated!
+                        UA_String datastring = UA_STRING_NULL;
+                        if (data.type)
+                            UA_print(&data, data.type, &datastring); // Not terminated!
                         errlogPrintf("%s : incoming data (%.*s) out-of-bounds\n",
                                      prec->name,
                                      static_cast<int>(datastring.length), datastring.data);
@@ -922,8 +936,7 @@ private:
         return ret;
     }
 
-    // Read array value as templated function on EPICS type and OPC UA type
-    // (latter *must match* OPC UA type enum argument)
+    // Read array value as templated function on EPICS type
     // CAVEAT: changes must also be reflected in specializations (in DataElementOpen62541.cpp)
     template<typename ET>
     long
@@ -1029,7 +1042,7 @@ private:
         long ret = 0;
         UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
 
-        switch (incomingData.type->typeKind) {
+        switch (typeKindOf(incomingData)) {
         case UA_TYPES_BOOLEAN:
         { // Scope of Guard G
             Guard G(outgoingLock);
@@ -1162,6 +1175,7 @@ private:
             break;
         }
         default:
+            ret = 1;
             errlogPrintf("%s : unsupported conversion for outgoing data\n",
                          prec->name);
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -1171,6 +1185,7 @@ private:
                          prec->name, UA_StatusCode_name(status));
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
+
         }
         dbgWriteScalar();
         return ret;

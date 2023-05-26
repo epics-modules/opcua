@@ -107,7 +107,7 @@ bool
 DataElementOpen62541::createMap (const UA_DataType *type,
                                  const std::string *timefrom)
 {
-    switch (type->typeKind) {
+    switch (typeKindOf(type)) {
     case UA_DATATYPEKIND_STRUCTURE:
     {
         if (debug() >= 5)
@@ -375,7 +375,7 @@ DataElementOpen62541::getOutgoingData ()
         isdirty = false;
         const UA_DataType *type = outgoingData.type;
         void* container = outgoingData.data;
-        if (type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+        if (type && type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content decoded extension objects
@@ -528,15 +528,17 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 }
                 UA_Variant &data = upd->getData();
                 size_t n = num-1;
-                if (data.type->typeKind == UA_TYPES_STRING) {
+                if (typeKindOf(data) == UA_TYPES_STRING) {
                     UA_String *datastring = static_cast<UA_String *>(data.data); // Not terminated!
-                    if (n > datastring->length) n = datastring->length;
+                    if (n > datastring->length)
+                        n = datastring->length;
                     strncpy(value, reinterpret_cast<char*>(datastring->data), n);
                 } else {
-                    UA_String datastring;
-                    UA_String_init(&datastring);
-                    UA_print(data.data, data.type, &datastring); // Not terminated!
-                    if (n > datastring.length) n = datastring.length;
+                    UA_String datastring = UA_STRING_NULL;
+                    if (data.type)
+                        UA_print(data.data, data.type, &datastring); // Not terminated!
+                    if (n > datastring.length)
+                        n = datastring.length;
                     strncpy(value, reinterpret_cast<char*>(datastring.data), n);
                     UA_String_clear(&datastring);
                 }
@@ -854,7 +856,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     unsigned long ul;
     double d;
 
-    switch (incomingData.type->typeKind) {
+    switch (typeKindOf(incomingData)) {
     case UA_TYPES_STRING:
     {
         UA_String val;
