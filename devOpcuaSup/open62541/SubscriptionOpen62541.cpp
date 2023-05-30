@@ -149,6 +149,7 @@ SubscriptionOpen62541::addMonitoredItems ()
     UA_MonitoredItemCreateResult monitoredItemCreateResult;
 
     if (items.size()) {
+        monitoredItemCreateResult.statusCode = UA_STATUSCODE_GOOD; // suppress compiler warning
         i = 0;
         for (auto &it : items) {
             UA_MonitoredItemCreateRequest_init(&monitoredItemCreateRequest);
