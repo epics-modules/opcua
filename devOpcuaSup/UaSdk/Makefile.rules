@@ -1,5 +1,5 @@
 #*************************************************************************
-# Copyright (c) 2018-2021 ITER Organization.
+# Copyright (c) 2018-2023 ITER Organization.
 # This module is distributed subject to a Software License Agreement found
 # in file LICENSE that is included with this distribution.
 #*************************************************************************
@@ -65,3 +65,7 @@ $(INSTALL_SHRLIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE) : $(UASDK_SHRLIB_DIR)/$
 	@$(ECHO) "Installing shared library $@ from Unified Automation SDK"
 	$(INSTALL) -d -m 555 $< $(@D)
 endif # INSTALL
+
+# EXPAND the downstream user configuration
+CONFIG_OPCUA: CONFIG_OPCUA@
+	$(EXPAND_TOOL) $(EXPANDFLAGS) $($@_EXPANDFLAGS) $< $@
