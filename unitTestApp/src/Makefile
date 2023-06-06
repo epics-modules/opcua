@@ -12,6 +12,9 @@ SRC_DIRS += $(DEVSUP_SRC)
 
 TESTSRC = $(TOP)/unitTestApp/src
 
+# Needed to find indirect library dependencies through RUNPATH
+USR_LDFLAGS += -Wl,--no-as-needed
+
 # Link against objects as libopcua might be static (deploy mode EMBED)
 OPCUA_OBJS += linkParser iocshIntegration
 ifdef UASDK
