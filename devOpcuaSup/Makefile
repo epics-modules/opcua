@@ -64,7 +64,7 @@ HTMLS += menuDefAction.html
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(OPCUA)/UaSdk/Makefile
+include $(OPCUA)/UaSdk/Makefile.config
 endif
 
 # Module versioning
@@ -85,7 +85,7 @@ include $(TOP)/configure/RULES
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(OPCUA)/UaSdk/RULES_UASDK
+include $(OPCUA)/UaSdk/Makefile.rules
 endif
 
 # Can't use EXPAND as generated headers must appear

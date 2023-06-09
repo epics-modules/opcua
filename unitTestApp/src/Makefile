@@ -59,7 +59,7 @@ GTESTS += ElementTreeTest
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(TESTSRC)/UaSdk/Makefile
+include $(TESTSRC)/UaSdk/Makefile.config
 endif
 
 USR_LIBS += Com
@@ -72,5 +72,5 @@ include $(TOP)/configure/RULES
 
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
-include $(DEVSUP_SRC)/UaSdk/RULES_UASDK
+include $(DEVSUP_SRC)/UaSdk/Makefile.rules
 endif
