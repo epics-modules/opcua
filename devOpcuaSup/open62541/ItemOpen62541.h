@@ -233,6 +233,16 @@ private:
     epicsTime tsData;                      /**< data time stamp */
 };
 
+inline std::ostream& operator << (std::ostream& os, const ItemOpen62541& item)
+{
+    return os << item.getNodeId();
+}
+
+inline std::ostream& operator << (std::ostream& os, const ItemOpen62541* pitem)
+{
+    return os << pitem->getNodeId();
+}
+
 } // namespace DevOpcua
 
 #endif // DEVOPCUA_ITEMOPEN62541_H

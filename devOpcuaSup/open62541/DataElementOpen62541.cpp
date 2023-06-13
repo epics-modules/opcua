@@ -162,7 +162,7 @@ DataElementOpen62541::createMap (const UA_DataType *type,
                 }
             }
             if (i == type->membersSize) {
-                std::cerr << "Item " << pitem->getNodeId()
+                std::cerr << "Item " << pitem
                           << ": element " << pelem->name
                           << " not found in " << variantTypeString(type)
                           << std::endl;
@@ -187,7 +187,7 @@ DataElementOpen62541::createMap (const UA_DataType *type,
             } else if (pelem->name == "Text" || pelem->name == "text") {
                 elementMap.insert({1, it});
             } else {
-                 std::cerr << "Item " << pitem->getNodeId()
+                 std::cerr << "Item " << pitem
                            << ": element " << pelem->name
                            << " not found in " << variantTypeString(type)
                            << std::endl;
@@ -196,7 +196,7 @@ DataElementOpen62541::createMap (const UA_DataType *type,
         break;
     }
     default:
-        std::cerr << "Item " << pitem->getNodeId()
+        std::cerr << "Item " << pitem
                   << " has unimplemented type " << variantTypeString(type)
                   << std::endl;
         return false;
@@ -230,7 +230,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
             UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason, std::unique_ptr<UA_Variant>(valuecopy), getIncomingReadStatus()));
             incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
             if (debug() >= 5)
-                std::cout << "Item " << pitem->getNodeId()
+                std::cout << "Item " << pitem
                           << " element " << name
                           << " set data (" << processReasonString(reason)
                           << ") for record " << pconnector->getRecordName()
@@ -243,7 +243,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
         if (UA_Variant_isEmpty(&value))
             return;
         if (debug() >= 5)
-            std::cout << "Item " << pitem->getNodeId()
+            std::cout << "Item " << pitem
                       << " element " << name
                       << " splitting structured data to "
                       << elements.size() << " child elements"
@@ -258,7 +258,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                 type = extensionObject.content.decoded.type;
                 container = static_cast<char*>(extensionObject.content.decoded.data);
             } else {
-                std::cerr << "Item " << pitem->getNodeId() << " is not decoded" << std::endl;
+                std::cerr << "Item " << pitem << " is not decoded" << std::endl;
                 return;
             }
         }
@@ -333,7 +333,7 @@ DataElementOpen62541::updateDataInStruct (void* container,
                     arrayLength = data.arrayLength;
                 } else {
                     arrayLength = 0;
-                    std::cerr << "Item " << pitem->getNodeId()
+                    std::cerr << "Item " << pitem
                               << ": inserting data from from child element" << pelem->name
                               << " failed (" << UA_StatusCode_name(status) << ')'
                               << std::endl;
@@ -364,7 +364,7 @@ DataElementOpen62541::getOutgoingData ()
 {
     if (!isLeaf()) {
         if (debug() >= 4)
-            std::cout << "Item " << pitem->getNodeId()
+            std::cout << "Item " << pitem
                       << " element " << name
                       << " updating structured data from "
                       << elements.size() << " child elements"
@@ -382,7 +382,7 @@ DataElementOpen62541::getOutgoingData ()
                 type = extensionObject.content.decoded.type;
                 container = extensionObject.content.decoded.data;
             } else {
-                std::cerr << "Item " << pitem->getNodeId() << " is not decoded" << std::endl;
+                std::cerr << "Item " << pitem << " is not decoded" << std::endl;
                 return outgoingData;
             }
         }

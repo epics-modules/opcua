@@ -1528,7 +1528,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                 if (debug >= 5) {
                     std::cout << "** Session " << name
                               << ": (readComplete) getting data for item "
-                              << item->getNodeId()
+                              << item
                               << " = " << response->results[i].value
                               << ' ' << UA_StatusCode_name(response->results[i].status)
                               << std::endl;
@@ -1553,7 +1553,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
             if (debug >= 5) {
                 std::cout << "** Session " << name
                           << ": (readComplete) filing read error (no data) for item "
-                          << item->getNodeId() << std::endl;
+                          << item << std::endl;
             }
             item->setIncomingEvent(ProcessReason::readFailure);
             // Not doing initial write if the read has failed
@@ -1584,7 +1584,7 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             if (debug >= 5) {
                 std::cout << "** Session " << name
                           << ": (writeComplete) getting results for item "
-                          << item->getNodeId()
+                          << item
                           << ' ' << UA_StatusCode_name(response->results[i])
                           << std::endl;
             }
@@ -1608,7 +1608,7 @@ SessionOpen62541::writeComplete (UA_UInt32 transactionId,
             if (debug >= 5) {
                 std::cout << "** Session " << name
                           << ": (writeComplete) filing write error for item "
-                          << item->getNodeId()
+                          << item
                           << std::endl;
             }
             item->setIncomingEvent(ProcessReason::writeFailure);
