@@ -12,7 +12,11 @@
 TOP=..
 
 include $(TOP)/configure/CONFIG
+
+ifdef T_A
 include CONFIG_OPCUA
+endif
+
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
