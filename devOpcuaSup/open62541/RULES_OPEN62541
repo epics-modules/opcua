@@ -1,0 +1,71 @@
+#*************************************************************************
+# Copyright (c) 2018-2023 ITER Organization.
+# This module is distributed subject to a Software License Agreement found
+# in file LICENSE that is included with this distribution.
+#*************************************************************************
+
+# Author: Ralph Lange <ralph.lange@gmx.de>
+#
+# based on prototype work by Bernhard Kuner <bernhard.kuner@helmholtz-berlin.de>
+# and code by Michael Davidsaver <mdavidsaver@ospreydcs.com>
+
+#==================================================
+# Open62541 client libraries
+
+USR_INCLUDES += $(foreach lib, $(_OPEN62541_MODS),-I$(OPEN62541)/include/$(lib))
+# SDK libraries are not built with correct RUNPATH - rely on executable
+USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
+
+ifeq ($(OPEN62541_DEPLOY_MODE),SYSTEM)
+USR_SYS_LIBS += $(OPEN62541_LIBS)
+endif
+
+ifeq ($(OPEN62541_DEPLOY_MODE),PROVIDED)
+USR_LIBS += $(OPEN62541_LIBS)
+$(foreach lib, $(OPEN62541_LIBS), $(eval $(lib)_DIR = $(OPEN62541_LIB_DIR)))
+endif
+
+# EMBED the Open62541 client libraries in libopcua.so
+ifeq ($(OPEN62541_DEPLOY_MODE),EMBED)
+
+# Repeated as in CONFIG_OPCUA because in the EMBED case we do *not*
+# want these definitions for users but they are still needed here
+
+# Debug builds need the d-marker to be set
+# Depending on SDK version, C++ modules may have a 'cpp' suffix
+ifeq ($(HOST_OPT),NO)
+D_MARKER = d
+endif
+_OPEN62541_MODS = $(notdir $(foreach module, $(OPEN62541_MODULES), \
+$(firstword $(wildcard $(OPEN62541)/include/$(module)cpp \
+$(OPEN62541)/include/$(module)))))
+OPEN62541_LIBS = $(addsuffix $(D_MARKER), $(_OPEN62541_MODS))
+
+ifeq ($(LIBRARY_IOC),opcua)
+USR_LDFLAGS += -L$(OPEN62541_LIB_DIR)
+SHRLIB_LDLIBS = $(STATIC_LDFLAGS_YES) \
+    $(addprefix -l, $(OPEN62541_LIBS)) \
+    $(STATIC_LDLIBS_YES) \
+    $(addprefix -l, $($*_LDLIBS) $(LIB_LIBS) $(filter-out $(OPEN62541_LIBS),$(USR_LIBS)) \
+    $($*_SYS_LIBS) $(LIB_SYS_LIBS) $(USR_SYS_LIBS)) \
+    $(LDLIBS)
+endif
+
+endif # EMBED
+
+# INSTALL the SDK shared libraries in the Device Support module
+ifeq ($(OPEN62541_DEPLOY_MODE),INSTALL)
+
+USR_LIBS += $(OPEN62541_LIBS)
+$(foreach lib, $(OPEN62541_LIBS), $(eval $(lib)_DIR = $(OPEN62541_LIB_DIR)))
+
+EXTLIB_INSTALLS += $(addprefix $(INSTALL_SHRLIB)/, \
+    $(notdir $(wildcard $(foreach lib, $(OPEN62541_LIBS), \
+    $(OPEN62541_SHRLIB_DIR)/$(SHRLIB_PREFIX)$(lib)$(SHRLIB_SUFFIX_BASE) ))))
+
+build: $(EXTLIB_INSTALLS)
+
+$(INSTALL_SHRLIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE) : $(OPEN62541_SHRLIB_DIR)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE)
+        @$(ECHO) "Installing shared library $@ from Open62541 libraries"
+        $(INSTALL) -d -m 555 $< $(@D)
+endif # INSTALL

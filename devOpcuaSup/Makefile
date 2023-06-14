@@ -65,10 +65,10 @@ HTMLS += menuDefAction.html
 SUPPORTED_SDKS = UASDK OPEN62541
 
 ifneq ($(words $(foreach SDK,$(SUPPORTED_SDKS),$($(SDK)))),1)
-$(warning Set your UPC UA SDK in CONFIG_SITE.local)
+$(warning Set your OPC UA client library in CONFIG_SITE.local)
 $(warning Define exactly one of these variables: $(SUPPORTED_SDKS))
 $(foreach SDK,$(SUPPORTED_SDKS),$(warning $(SDK) = $($(SDK))))
-$(error )
+$(error)
 endif
 
 # Unified Automation C++ Based OPC UA Client SDK
@@ -76,6 +76,7 @@ ifdef UASDK
 include $(OPCUA)/UaSdk/Makefile.config
 endif
 
+# open62541 project
 ifdef OPEN62541
 include $(OPCUA)/open62541/Makefile
 endif
