@@ -79,7 +79,7 @@ endif
 
 # open62541 project
 ifdef OPEN62541
-include $(OPCUA)/open62541/Makefile
+include $(OPCUA)/open62541/Makefile.config
 endif
 
 # Module versioning
@@ -101,6 +101,11 @@ include $(TOP)/configure/RULES
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
 include $(OPCUA)/UaSdk/Makefile.rules
+endif
+
+# open62541 project
+ifdef OPEN62541
+include $(OPCUA)/open62541/Makefile.rules
 endif
 
 # Can't use EXPAND as generated headers must appear
