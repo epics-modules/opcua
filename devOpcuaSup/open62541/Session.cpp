@@ -24,13 +24,11 @@ RegistryKeyNamespace RegistryKeyNamespace::global;
 
 Session *
 Session::createSession(const std::string &name,
-                       const std::string &url,
-                       const int debuglevel,
-                       const bool autoconnect)
+                       const std::string &url)
 {
     if (RegistryKeyNamespace::global.contains(name))
         return nullptr;
-    return new SessionOpen62541(name, url, autoconnect, debuglevel);
+    return new SessionOpen62541(name, url);
 }
 
 Session *
