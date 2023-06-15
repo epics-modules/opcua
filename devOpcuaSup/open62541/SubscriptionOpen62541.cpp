@@ -32,9 +32,8 @@ namespace DevOpcua {
 Registry<SubscriptionOpen62541> SubscriptionOpen62541::subscriptions;
 
 SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOpen62541 &session,
-                                      const double publishingInterval, const epicsUInt8 priority,
-                                      const int debug)
-    : Subscription(name, debug)
+                                      const double publishingInterval)
+    : Subscription(name)
     , session(session)
     //TODO: add runtime support for subscription enable/disable
     , requestedSettings(UA_CreateSubscriptionRequest_default())
@@ -45,7 +44,6 @@ SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOp
     double deftimeout = requestedSettings.requestedPublishingInterval * requestedSettings.requestedLifetimeCount;
     subscriptionSettings.revisedPublishingInterval = requestedSettings.requestedPublishingInterval = publishingInterval;
     subscriptionSettings.revisedLifetimeCount = requestedSettings.requestedLifetimeCount = static_cast<UA_UInt32>(deftimeout / publishingInterval);
-    requestedSettings.priority = priority;
 
     subscriptions.insert({name, this});
     session.subscriptions[name] = this;
