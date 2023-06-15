@@ -644,6 +644,11 @@ SessionOpen62541::show (const int level) const
     }
 }
 
+void SessionOpen62541::showSecurity()
+{
+    std::cout << "Security features are not supported at this time." << std::endl;
+}
+
 void
 SessionOpen62541::addItemOpen62541 (ItemOpen62541 *item)
 {
