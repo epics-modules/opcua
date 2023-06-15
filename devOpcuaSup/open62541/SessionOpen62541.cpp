@@ -718,10 +718,11 @@ void SessionOpen62541::connectionStatusChanged (
     if (newChannelState != channelState) {
         if (debug)
             std::cout << "Session " << name
-                      << ": secure channel state changed from "
+                      << ": channel state changed from "
                       << channelState << " to " << newChannelState  << std::endl;
 // TODO: What to do for each channelState change?
         switch (newChannelState) {
+            case UA_SECURECHANNELSTATE_FRESH:        break;
             case UA_SECURECHANNELSTATE_CLOSED:       break;
             case UA_SECURECHANNELSTATE_HEL_SENT:     break;
             case UA_SECURECHANNELSTATE_HEL_RECEIVED: break;
