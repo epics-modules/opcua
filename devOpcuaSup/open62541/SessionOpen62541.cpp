@@ -244,11 +244,12 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
 }
 
 long
-SessionOpen62541::connect ()
+SessionOpen62541::connect (bool manual)
 {
     if (client) {
-        std::cerr << "Session " << name << " already connected ("
-                  << sessionState << '/' << channelState << ')' << std::endl;
+        if (debug || manual)
+            std::cerr << "Session " << name << " already connected ("
+                      << sessionState << '/' << channelState << ')' << std::endl;
         return 0;
     }
     Guard G(clientlock);
@@ -288,17 +289,18 @@ SessionOpen62541::connect ()
     UA_Client_getConfig(client)->clientContext = this;
     connectStatus = UA_Client_connectAsync(client, serverURL.c_str());
     if (connectStatus != UA_STATUSCODE_GOOD) {
-        std::cerr << "Session " << name
-                  << ": connect service failed with status "
-                  << UA_StatusCode_name(connectStatus) << std::endl;
+        if (debug || manual)
+            std::cerr << "Session " << name << ": connect service failed with status "
+                      << UA_StatusCode_name(connectStatus) << std::endl;
         return -1;
     }
-    std::cerr << "Session " << name
-                         << ": connect service ok" << std::endl;
+    if (debug)
+        std::cerr << "Session " << name << ": connect service ok" << std::endl;
     // asynchronous: remaining actions are done on the connectionStatusChanged callback
-    workerThread = new epicsThread(*this, ("wrk-" + name).c_str(),
-                 epicsThreadGetStackSize(epicsThreadStackSmall),
-                 epicsThreadPriorityMedium);
+    workerThread = new epicsThread(*this,
+                                   ("wrk-" + name).c_str(),
+                                   epicsThreadGetStackSize(epicsThreadStackSmall),
+                                   epicsThreadPriorityMedium);
     workerThread->start();
     return 0;
 }

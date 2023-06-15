@@ -92,7 +92,7 @@ public:
      * @brief Connect session. See DevOpcua::Session::connect
      * @return long status (0 = OK)
      */
-    virtual long connect() override;
+    virtual long connect(bool manual=true) override;
 
     /**
      * @brief Disconnect session. See DevOpcua::Session::disconnect
