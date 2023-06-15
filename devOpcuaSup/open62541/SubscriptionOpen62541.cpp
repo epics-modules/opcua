@@ -49,6 +49,26 @@ SubscriptionOpen62541::SubscriptionOpen62541 (const std::string &name, SessionOp
     session.subscriptions[name] = this;
 }
 
+void SubscriptionOpen62541::setOption(const std::string &name, const std::string &value)
+{
+    if (debug || name == "debug")
+        std::cerr << "Subscription " << this->name << ": setting option " << name << " to " << value
+                  << std::endl;
+
+    if (name == "debug") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        debug = ul;
+    } else if (name == "priority") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        if (ul > 255ul)
+            errlogPrintf("option '%s' value out of range - ignored\n", name.c_str());
+        else
+            requestedSettings.priority = ul;
+    } else {
+        errlogPrintf("unknown option '%s' - ignored\n", name.c_str());
+    }
+}
+
 void
 SubscriptionOpen62541::show (int level) const
 {

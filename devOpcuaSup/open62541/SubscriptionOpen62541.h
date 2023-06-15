@@ -47,6 +47,10 @@ public:
                           SessionOpen62541 &session,
                           const double publishingInterval);
 
+    /**
+     * @brief Set an option for the subscription. See DevOpcua::Subscription::setOption
+     */
+    virtual void setOption(const std::string &name, const std::string &value) override;
 
     /**
      * @brief Print configuration and status. See DevOpcua::Subscription::show
