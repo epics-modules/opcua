@@ -226,6 +226,7 @@ private:
     epicsTime tsClient;                    /**< client (local) time stamp */
     epicsTime tsServer;                    /**< server time stamp */
     epicsTime tsSource;                    /**< device time stamp */
+    epicsTime tsData;                      /**< data time stamp */
 };
 
 } // namespace DevOpcua
