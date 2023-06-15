@@ -31,6 +31,7 @@
 #define epicsExportSharedSymbols
 #include "Session.h"
 #include "RecordConnector.h"
+#include "linkParser.h"
 #include "RequestQueueBatcher.h"
 #include "SessionOpen62541.h"
 #include "SubscriptionOpen62541.h"
@@ -171,10 +172,19 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     bool updateReadBatcher = false;
     bool updateWriteBatcher = false;
 
-    if (name == "clientcert") {
+    if (debug || name == "debug")
+        std::cerr << "Session " << this->name << ": setting option " << name << " to " << value
+                  << std::endl;
+
+    if (name == "sec-mode") {
         errlogPrintf("security not implemented\n");
-    } else if (name == "clientkey") {
+    } else if (name == "sec-policy") {
         errlogPrintf("security not implemented\n");
+    } else if (name == "sec-id") {
+        errlogPrintf("security not implemented\n");
+    } else if (name == "debug") {
+        unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
+        debug = ul;
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -210,6 +220,9 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         writeTimeoutMax = ul;
         updateWriteBatcher = true;
+    } else if (name == "autoconnect") {
+        if (value.length() > 0)
+            autoConnect = getYesNo(value[0]);
     } else {
         errlogPrintf("unknown option '%s' ignored\n", name.c_str());
     }

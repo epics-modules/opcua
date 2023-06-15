@@ -43,21 +43,24 @@ Session::showAll (const int level)
     SessionOpen62541::showAll(level);
 }
 
-void
-Session::showOptionHelp ()
-{
-    std::cout << "Options:\n"
-              << "clientcert         path to client certificate [none]\n"
-              << "clientkey          path to client private key [none]\n"
-              << "nodes-max          max. nodes per service call [0 = no limit]\n"
-              << "read-nodes-max     max. nodes per read service call [0 = no limit]\n"
-              << "read-timeout-min   min. timeout (holdoff) after read service call [ms]\n"
-              << "read-timeout-max   timeout (holdoff) after read service call w/ max elements [ms]\n"
-              << "write-nodes-max    max. nodes per write service call [0 = no limit]\n"
-              << "write-timeout-min  min. timeout (holdoff) after write service call [ms]\n"
-              << "write-timeout-max  timeout (holdoff) after write service call w/ max elements [ms]"
-              << std::endl;
-}
+const char Session::optionUsage[]
+    = "Sets options for existing OPC UA sessions or subscriptions.\n\n"
+      "pattern    pattern for session or subscription names (* and ? supported)\n"
+      "[options]  colon separated list of options in 'key=value' format\n\n"
+      "Valid session options are:\n"
+      "debug              debug level [default 0 = no debug]\n"
+      "autoconnect        automatically connect sessions [default y]\n"
+      "nodes-max          max. nodes per service call [0 = no limit]\n"
+      "read-nodes-max     max. nodes per read service call [0 = no limit]\n"
+      "read-timeout-min   min. timeout (holdoff) after read service call [ms]\n"
+      "read-timeout-max   timeout (holdoff) after read service call w/ max elements [ms]\n"
+      "write-nodes-max    max. nodes per write service call [0 = no limit]\n"
+      "write-timeout-min  min. timeout (holdoff) after write service call [ms]\n"
+      "write-timeout-max  timeout (holdoff) after write service call w/ max elements [ms]\n"
+      "sec-mode           requested security mode\n"
+      "sec-policy         requested security policy\n"
+      "ident-file         file to read identity credentials from\n\n"
+      "";
 
 const std::string &
 opcuaGetDriverName ()
