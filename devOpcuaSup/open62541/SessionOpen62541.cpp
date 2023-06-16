@@ -82,7 +82,7 @@ extern const UA_String username_policy;
 extern const UA_String certificate_policy;
 #endif
 
-#ifdef UA_ENABLE_TYPEDESCRIPTION
+#ifdef HAS_XMLPARSER
 #include <libxml/tree.h>
 #endif
 
