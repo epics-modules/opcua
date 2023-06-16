@@ -12,10 +12,6 @@
 #==================================================
 # Open62541 client libraries
 
-USR_INCLUDES += $(foreach lib, $(_OPEN62541_MODS),-I$(OPEN62541)/include/$(lib))
-# SDK libraries are not built with correct RUNPATH - rely on executable
-USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
-
 ifeq ($(OPEN62541_DEPLOY_MODE),SYSTEM)
 USR_SYS_LIBS += $(OPEN62541_LIBS)
 endif
@@ -30,16 +26,6 @@ ifeq ($(OPEN62541_DEPLOY_MODE),EMBED)
 
 # Repeated as in CONFIG_OPCUA because in the EMBED case we do *not*
 # want these definitions for users but they are still needed here
-
-# Debug builds need the d-marker to be set
-# Depending on SDK version, C++ modules may have a 'cpp' suffix
-ifeq ($(HOST_OPT),NO)
-D_MARKER = d
-endif
-_OPEN62541_MODS = $(notdir $(foreach module, $(OPEN62541_MODULES), \
-$(firstword $(wildcard $(OPEN62541)/include/$(module)cpp \
-$(OPEN62541)/include/$(module)))))
-OPEN62541_LIBS = $(addsuffix $(D_MARKER), $(_OPEN62541_MODS))
 
 ifeq ($(LIBRARY_IOC),opcua)
 USR_LDFLAGS += -L$(OPEN62541_LIB_DIR)
@@ -66,6 +52,10 @@ EXTLIB_INSTALLS += $(addprefix $(INSTALL_SHRLIB)/, \
 build: $(EXTLIB_INSTALLS)
 
 $(INSTALL_SHRLIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE) : $(OPEN62541_SHRLIB_DIR)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE)
-        @$(ECHO) "Installing shared library $@ from Open62541 libraries"
-        $(INSTALL) -d -m 555 $< $(@D)
+	@$(ECHO) "Installing shared library $@ from Open62541 libraries"
+	$(INSTALL) -d -m 555 $< $(@D)
 endif # INSTALL
+
+# EXPAND the downstream user configuration
+CONFIG_OPCUA: CONFIG_OPCUA@
+	$(EXPAND_TOOL) $(EXPANDFLAGS) $($@_EXPANDFLAGS) $< $@
