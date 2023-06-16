@@ -56,6 +56,11 @@ inline std::ostream& operator << (std::ostream& os, const UA_LocalizedText& ua_l
     return os << '"' << ua_localizedText.text << '"';
 }
 
+inline std::ostream& operator << (std::ostream& os, const UA_QualifiedName& ua_qualifiedName)
+{
+    return os << "ns" << ua_qualifiedName.namespaceIndex << ":\"" << ua_qualifiedName.name << '"';
+}
+
 std::ostream& operator << (std::ostream& os, const UA_NodeId& ua_nodeId);
 
 std::ostream& operator << (std::ostream& os, const UA_Variant &ua_variant);

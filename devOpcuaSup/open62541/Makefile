@@ -29,6 +29,9 @@ LIB_LIBS += open62541
 open62541_DIR += $(OPEN62541)/$(OPEN62541_BUILD_DIR)/bin/Release $(OPEN62541)/$(OPEN62541_BUILD_DIR)/bin $(if $(filter %64,$(ARCH_CLASS)),$(OPEN62541)/lib64) $(OPEN62541)/lib
 USR_SYS_LIBS_Linux += crypto
 
+USR_INCLUDES += -I/usr/include/libxml2
+USR_SYS_LIBS_Linux += xml2
+
 opcua_SRCS += Session.cpp
 opcua_SRCS += SessionOpen62541.cpp
 opcua_SRCS += Subscription.cpp
