@@ -39,8 +39,7 @@
 // Older open62541 uses type index
 #endif
 
-#ifdef UA_ENABLE_ENCRYPTION
-#define HAS_SECURITY
+#ifdef HAS_SECURITY
 extern const UA_String username_policy;
 extern const UA_String certificate_policy;
 #endif

@@ -18,10 +18,6 @@
 #include "SessionOpen62541.h"
 #include "Registry.h"
 
-#ifdef UA_ENABLE_ENCRYPTION
-#define HAS_SECURITY
-#endif
-
 namespace DevOpcua {
 
 epicsThreadOnceId Session::onceId = EPICS_THREAD_ONCE_INIT;
