@@ -124,7 +124,7 @@ DataElementOpen62541::createMap (const UA_DataType *type,
             const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
             const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
 #else
-// Newer open62541 before version 3.x uses pointer
+// Newer open62541 uses pointer
             const UA_DataType *memberType = member->memberType;
 #endif
             memberOffs += member->padding;
@@ -213,7 +213,6 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                                        const std::string *timefrom)
 {
     // Make a copy of this element and cache it
-
     UA_Variant_clear(&incomingData);
     UA_Variant_copy(&value, &incomingData);
 
@@ -235,16 +234,14 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                           << " set data (" << processReasonString(reason)
                           << ") for record " << pconnector->getRecordName()
                           << " (queue use " << incomingQueue.size()
-                          << "/" << incomingQueue.capacity() << ")" << std::endl;
+                          << "/" << incomingQueue.capacity() << ")"
+                          << std::endl;
             if (wasFirst)
                 pconnector->requestRecordProcessing(reason);
         }
     } else {
         if (UA_Variant_isEmpty(&value))
             return;
-
-        std::cerr << "Structured data in item " << pitem << " is not supported - ignoring" << std::endl;
-        return;
 
         if (debug() >= 5)
             std::cout << "Item " << pitem
@@ -367,11 +364,6 @@ const UA_Variant &
 DataElementOpen62541::getOutgoingData ()
 {
     if (!isLeaf()) {
-
-        std::cerr << "Structured data in item " << pitem
-                  << " element " << name << " is not supported - ignoring" << std::endl;
-        return outgoingData;
-
         if (debug() >= 4)
             std::cout << "Item " << pitem
                       << " element " << name

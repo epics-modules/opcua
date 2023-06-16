@@ -26,6 +26,10 @@
 #include <epicsThread.h>
 #include <initHooks.h>
 
+#ifdef HAS_XMLPARSER
+#include <libxml/tree.h>
+#endif
+
 #include "RequestQueueBatcher.h"
 #include "Session.h"
 #include "Registry.h"
@@ -398,6 +402,18 @@ private:
     unsigned int MaxNodesPerRead;                                 /**< server max number of nodes per write request */
     unsigned int MaxNodesPerWrite;                                /**< server max number of nodes per write request */
     epicsThread *workerThread;                                    /**< Asynchronous worker thread */
+
+#ifdef HAS_XMLPARSER
+    /** open62541 type dictionary handling */
+    std::vector<UA_DataType> userTypes;                           /**< descriptions of non-standard OPC-UA types */
+    std::map<std::string, UA_NodeId> binaryTypeIds;               /**< server defined binary ids of user types */
+    void getTypeDictionaries();
+    void addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex);
+    size_t getTypeIndexByName(UA_UInt16 nsIndex, const char* typeName);
+    UA_StatusCode typeSystemIteratorCallback(const UA_NodeId& dictNodeId);
+    UA_StatusCode dictIteratorCallback(const UA_NodeId& childId, const UA_NodeId& referenceTypeId);
+    UA_StatusCode typeIteratorCallback(const UA_NodeId& childId, const UA_NodeId& referenceTypeId, const UA_QualifiedName& typeName);
+#endif
 };
 
 } // namespace DevOpcua
