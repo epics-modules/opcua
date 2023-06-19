@@ -6,9 +6,11 @@
 ifeq (,$(_CONFIG_OPCUA_INCLUDED))
 _CONFIG_OPCUA_INCLUDED := YES
 
-ifdef T_A
-
 # Open62541 settings expanded to be the same as in the support module
+CLIENT = OPEN62541
+CLIENT_SUBDIR = open62541
+
+ifdef T_A
 
 # Path to the Open62541 C++ installation
 OPEN62541 = @OPEN62541@

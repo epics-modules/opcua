@@ -6,9 +6,11 @@
 ifeq (,$(_CONFIG_OPCUA_INCLUDED))
 _CONFIG_OPCUA_INCLUDED := YES
 
-ifdef T_A
-
 # UA SDK settings expanded to be the same as in the support module
+CLIENT = UASDK
+CLIENT_SUBDIR = UaSdk
+
+ifdef T_A
 
 # Path to the Unified Automation OPC UA C++ SDK
 UASDK = @UASDK@
