@@ -20,6 +20,9 @@ OPCUA_OBJS += linkParser iocshIntegration
 ifdef UASDK
 OPCUA_OBJS += SessionUaSdk SubscriptionUaSdk ItemUaSdk DataElementUaSdk
 endif
+ifdef OPEN62541
+OPCUA_OBJS += SessionOpen62541 SubscriptionOpen62541 ItemOpen62541 DataElementOpen62541
+endif
 OPCUA_OBJS += RecordConnector Session Subscription
 
 #==================================================
@@ -64,6 +67,9 @@ GTESTS += ElementTreeTest
 ifdef UASDK
 include $(TESTSRC)/UaSdk/Makefile.config
 endif
+ifdef OPEN62541
+include $(TESTSRC)/open62541/Makefile.config
+endif
 
 USR_LIBS += Com
 
@@ -76,4 +82,7 @@ include $(TOP)/configure/RULES
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
 include $(DEVSUP_SRC)/UaSdk/Makefile.rules
+endif
+ifdef OPEN62541
+include $(DEVSUP_SRC)/open62541/Makefile.rules
 endif
