@@ -53,14 +53,14 @@ GTESTS += RegistryTest
 
 GTESTPROD_HOST += LinkParserTest
 LinkParserTest_SRCS += LinkParserTest.cpp
-LinkParserTest_LIBS += $(OPCUA_LIBS) $(EPICS_BASE_IOC_LIBS)
+LinkParserTest_LIBS += $($(CLIENT)_LIBS) $(EPICS_BASE_IOC_LIBS)
 LinkParserTest_SYS_LIBS_Linux += $(OPCUA_SYS_LIBS_Linux)
 LinkParserTest_OBJS += $(OPCUA_OBJS)
 GTESTS += LinkParserTest
 
 GTESTPROD_HOST += ElementTreeTest
 ElementTreeTest_SRCS += ElementTreeTest.cpp
-ElementTreeTest_LIBS += $(OPCUA_LIBS) $(EPICS_BASE_IOC_LIBS)
+ElementTreeTest_LIBS += $($(CLIENT)_LIBS) $(EPICS_BASE_IOC_LIBS)
 ElementTreeTest_SYS_LIBS_Linux += $(OPCUA_SYS_LIBS_Linux)
 ElementTreeTest_OBJS += $(OPCUA_OBJS)
 GTESTS += ElementTreeTest
