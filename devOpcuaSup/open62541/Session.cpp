@@ -204,7 +204,7 @@ Session::saveRejected(const std::string &location)
 const std::string &
 opcuaGetDriverName ()
 {
-    static const std::string version("Open62541 Client API " UA_OPEN62541_VER_COMMIT);
+    static const std::string version("Open62541 Client API " UA_OPEN62541_VERSION);
     return version;
 }
 
