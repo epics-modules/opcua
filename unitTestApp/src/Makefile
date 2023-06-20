@@ -80,6 +80,3 @@ USR_LIBS += Com
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
-
-# Include client specific Makefile fragment (rules part)
-include $(DEVSUP_SRC)/$(CLIENT_SUBDIR)/Makefile.rules
