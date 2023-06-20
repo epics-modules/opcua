@@ -14,7 +14,9 @@ _OPCUA_CHECK_VARS := PROD TESTPROD $(PROD) $(TESTPROD) $(LIBRARY)
 
 # $(1) is PROD or LIBRARY name
 define _UASDK_ADD_SDKLIBS
+ifneq ($(UASDK_DEPLOY_MODE),EMBED)
 $(1)_LIBS := $$($(1)_LIBS) $$(if $$(filter opcua,$$($(1)_LIBS)),$$(UASDK_LIBS))
+endif
 $(1)_SYS_LIBS_Linux := $$($(1)_SYS_LIBS_Linux) $$(if $$(filter opcua,$$($(1)_LIBS)),$$(OPCUA_SYS_LIBS_Linux))
 endef
 
