@@ -25,10 +25,12 @@ opcuaIoc_LIBS += opcua
 opcuaIoc_SRCS += opcuaIoc_registerRecordDeviceDriver.cpp
 opcuaIoc_SRCS += opcuaIocMain.cpp
 
-# Use RPATH when SDK libs are PROVIDED to find indirect dependencies
-ifeq ($(UASDK_DEPLOY_MODE),PROVIDED)
-USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
-USR_LDFLAGS_Linux += -Wl,-rpath,$(UASDK_LIB_DIR)
+# Use RPATH when UASDK libs are PROVIDED to find indirect dependencies
+ifdef UASDK
+  ifeq ($(UASDK_DEPLOY_MODE),PROVIDED)
+    USR_LDFLAGS_Linux += -Wl,--disable-new-dtags
+    USR_LDFLAGS_Linux += -Wl,-rpath,$(UASDK_LIB_DIR)
+  endif
 endif
 
 # Finally link to the EPICS Base libraries
