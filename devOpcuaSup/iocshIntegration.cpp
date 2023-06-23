@@ -19,6 +19,7 @@
 #if defined(_WIN32)
 #include <cstdlib>
 #include <regex>
+#include <winsock2.h>
 #endif
 
 #include <iocsh.h>

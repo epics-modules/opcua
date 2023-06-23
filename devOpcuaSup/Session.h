@@ -18,10 +18,14 @@
 #include <map>
 #include <cstring>
 #include <fstream>
+#include <unistd.h>
 
 #include <limits.h>
 
-#include <osiSock.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+
 #include <shareLib.h>
 #include <epicsThread.h>
 #include <epicsTimer.h>

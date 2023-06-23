@@ -24,6 +24,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+
 #include <uaplatformlayer.h>
 #include <uaclientsdk.h>
 #include <uasession.h>

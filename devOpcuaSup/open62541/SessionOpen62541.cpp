@@ -20,6 +20,10 @@
 #include <vector>
 #include <limits>
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+
 #include <epicsExit.h>
 #include <epicsThread.h>
 #include <epicsAtomic.h>

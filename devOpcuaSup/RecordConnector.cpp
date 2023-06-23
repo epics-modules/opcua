@@ -15,11 +15,14 @@
 #include <stdexcept>
 #include <string.h>
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+
 #include <link.h>
 #include <shareLib.h>
 #include <epicsString.h>
 #include <epicsThread.h>
-#include <osiSock.h> // needed before callback.h to get Windows definition of CALLBACK in
 #include <callback.h>
 #include <recSup.h>
 #include <recGbl.h>
@@ -73,7 +76,7 @@ long reProcess (dbCommon *prec)
     return status;
 }
 
-void processCallback (CALLBACK *pcallback, const ProcessReason reason)
+void processCallback (epicsCallback *pcallback, const ProcessReason reason)
 {
     void *pUsr;
     dbCommon *prec;
@@ -94,42 +97,42 @@ void processCallback (CALLBACK *pcallback, const ProcessReason reason)
     dbScanUnlock(prec);
 }
 
-void processIncomingDataCallback (CALLBACK *pcallback)
+void processIncomingDataCallback (epicsCallback *pcallback)
 {
     processCallback(pcallback, ProcessReason::incomingData);
 }
 
-void processWriteCompleteCallback (CALLBACK *pcallback)
+void processWriteCompleteCallback (epicsCallback *pcallback)
 {
     processCallback(pcallback, ProcessReason::writeComplete);
 }
 
-void processReadCompleteCallback (CALLBACK *pcallback)
+void processReadCompleteCallback (epicsCallback *pcallback)
 {
     processCallback(pcallback, ProcessReason::readComplete);
 }
 
-void processConnectionLossCallback (CALLBACK *pcallback)
+void processConnectionLossCallback (epicsCallback *pcallback)
 {
     processCallback(pcallback, ProcessReason::connectionLoss);
 }
 
-void processReadFailureCallback (CALLBACK *pcallback)
+void processReadFailureCallback (epicsCallback *pcallback)
 {
     processCallback(pcallback, ProcessReason::readFailure);
 }
 
-void processWriteFailureCallback (CALLBACK *pcallback)
+void processWriteFailureCallback (epicsCallback *pcallback)
 {
     processCallback(pcallback, ProcessReason::writeFailure);
 }
 
-void processReadRequestCallback (CALLBACK *pcallback)
+void processReadRequestCallback (epicsCallback *pcallback)
 {
     processCallback(pcallback, ProcessReason::readRequest);
 }
 
-void processWriteRequestCallback (CALLBACK *pcallback)
+void processWriteRequestCallback (epicsCallback *pcallback)
 {
     processCallback(pcallback, ProcessReason::writeRequest);
 }
@@ -164,7 +167,7 @@ RecordConnector::requestRecordProcessing (const ProcessReason reason)
     if (debug() > 5)
         std::cout << "Registering record " << getRecordName() << " for processing"
                   << " (" << processReasonString(reason) << ")" << std::endl;
-    CALLBACK *callback = nullptr;
+    epicsCallback *callback = nullptr;
     switch (reason) {
     case ProcessReason::none :
     case ProcessReason::incomingData : callback = &incomingDataCallback; break;

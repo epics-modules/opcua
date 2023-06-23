@@ -19,6 +19,10 @@
 #include <list>
 #include <algorithm>
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+
 #include <dbCommon.h>
 #include <dbAccess.h>
 #include <epicsStdlib.h>

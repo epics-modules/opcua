@@ -23,7 +23,6 @@
 #include <dbCommon.h>
 #include <dbScan.h>
 #include <recGbl.h>
-#include <osiSock.h> // needed before callback.h to get Windows definition of CALLBACK in
 #include <callback.h>
 #include <alarm.h>
 #include <menuPriority.h>
@@ -149,14 +148,14 @@ public:
 
 private:
     dbCommon *prec;
-    CALLBACK incomingDataCallback;
-    CALLBACK readCompleteCallback;
-    CALLBACK writeCompleteCallback;
-    CALLBACK connectionLossCallback;
-    CALLBACK readFailureCallback;
-    CALLBACK writeFailureCallback;
-    CALLBACK readRequestCallback;
-    CALLBACK writeRequestCallback;
+    epicsCallback incomingDataCallback;
+    epicsCallback readCompleteCallback;
+    epicsCallback writeCompleteCallback;
+    epicsCallback connectionLossCallback;
+    epicsCallback readFailureCallback;
+    epicsCallback writeFailureCallback;
+    epicsCallback readRequestCallback;
+    epicsCallback writeRequestCallback;
 };
 
 } // namespace DevOpcua

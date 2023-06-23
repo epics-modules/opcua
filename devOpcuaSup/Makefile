@@ -22,7 +22,9 @@ endif
 #=============================
 
 # Windows builds define NOMINMAX (macros min, max clash with numeric_limits<>)
+# and CALLBACK (clashes with EPICS callback.h)
 USR_CXXFLAGS_WIN32 += -DNOMINMAX
+USR_CXXFLAGS += -DEPICS_NO_CALLBACK
 
 OPCUA = $(TOP)/devOpcuaSup
 SRC_DIRS += $(OPCUA)
