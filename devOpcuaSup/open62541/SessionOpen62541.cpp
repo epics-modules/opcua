@@ -2081,7 +2081,7 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                       << std::endl;
         if ((*it->second).size() != response->resultsSize)
             errlogPrintf("OPC UA session %s: (readComplete) received a callback "
-                         "with %zu values for a request containing %zu items\n",
+                         "with %lu values for a request containing %lu items\n",
                          name.c_str(), response->resultsSize, (*it->second).size());
         UA_UInt32 i = 0;
         for (auto item : (*it->second)) {
