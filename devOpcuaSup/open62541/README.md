@@ -13,14 +13,17 @@ Please contact the authors [Dirk Zimoch](mailto:dirk.zimoch@psi.ch) and [Ralph L
     (1.2 and 1.3 have been tested; system packages should also work).
 *   Cmake (3.x) if you're building Open62541 from sources.
 *   For OPC UA security support (authentication/encryption), we suggest using the openssl plugin for Open62541. For that to work, you need openssl on your system - both when compiling the client library and when generating any binaries (IOCs).
-    The name of the package you have to install depends on the Linux distribution: development packages are called `openssl-devel` on RedHat/CentOS/Fedora and `libssl-dev` on Debian/Ubuntu, runtime packages are called `openssl` on RedHat/CentOS/Fedora and `libssl` on Debian/Ubuntu, respectively.
+    On Linux, the name of the package you have to install depends on the distribution: development packages are called `openssl-devel` on RedHat/CentOS/Fedora and `libssl-dev` on Debian/Ubuntu, runtime packages are called `openssl` on RedHat/CentOS/Fedora and `libssl` on Debian/Ubuntu, respectively.
+    See below for Windows instructions.
     In your `CONFIG_SITE.local` file (see below), enable the OPC UA Security option.
 
 ## Building Open62541
 
-*   Preface: The Open62541 project is focused on the server implementation of OPC UA. The client functionality is certainly present, complete and usable, but it does not get the attention that the server parts get.
-    
-*   Create a build directory on the top level and `cd` into it. We'll use the usual convention of calling it `build` .
+Note: The Open62541 project is focused on the server implementation of OPC UA. The client functionality is certainly present, complete and usable, but it does not get the attention that the server parts get.
+
+### On Linux
+
+*   Unpack the open62541 distribution. Create a build directory on the top level and `cd` into it. We'll use the usual convention of calling it `build` .
     
 *   The cmake build of Open62541 creates a static library by default. This type of library is needed for the EMBED type of Device Support build (see below).
     
@@ -61,6 +64,28 @@ The same is true if you want to use the Open62541 library in its build location.
     
 *   After running `cmake`, run `make` followed by `make install`. Installation into a system location will need root permission.
 
+### On Windows
+
+See the [Windows Installation How-To](https://docs.epics-controls.org/projects/how-tos/en/latest/getting-started/installation-windows.html) for an overview and introduction to the different compilation options under Windows. 
+
+#### Using MSYS2/MinGW
+
+- Install the necessary tools and dependencies using the `pacman` system package manager. You will need `mingw-w64-x86_64-cmake`, `mingw-w64-x86_64-libxml2` and `mingw-w64-x86_64-openssl`.
+
+- Unpack the open62541 distribution. Create a build directory on the top level and `cd` into it. We'll use the usual convention of calling it `build` .
+
+- A reasonable option setting for running `cmake` would look similar to the Linux variant:
+
+  ```shell
+  cmake .. -DBUILD_SHARED_LIBS=ON \
+           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+           -DUA_ENABLE_ENCRYPTION=OPENSSL
+  ```
+
+- Run `mingw32-make` followed by `mingw32-make install`.
+
+
+
 ## Building the device support module
 
 Inside the `configure` subdirectory or one level above the TOP location,
@@ -86,14 +111,25 @@ OPEN62541_LIB_DIR = $(OPEN62541)/lib
 OPEN62541_SHRLIB_DIR = $(OPEN62541_LIB_DIR)
 # How the Open62541 libraries were built
 OPEN62541_USE_CRYPTO = YES
+OPEN62541_USE_XMLPARSER = YES
 ```
 
 Note: On Windows, paths must include "short names" where needed, e.g.
 ```Makefile
-OPEN62541 = C:/PROGRA~2/Open62541/
+OPEN62541 = C:/PROGRA~2/open62541-1.3.6-MinGW/
 ```
 
 The Open62541 related configuration only has to be done in this module, which creates a `CONFIG_OPCUA` file that is automatically included by all downstream modules (those creating IOCs), so that the configuration is always consistent.
+
+### On Windows
+
+If you're using MSYS2/MinGW64, you need to set the location of the MinGW64 installation in a CONFIG_SITE file, e.g.
+
+```makefile
+MSYSTEM_PREFIX = C:/msys64/mingw64
+```
+
+As usual on Windows, the build environment as well as the runtime environment (for any IOC) need to have the location of the open62541 DLL in the PATH.
 
 ## Feedback / Reporting issues
 
