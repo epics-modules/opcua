@@ -21,6 +21,9 @@ endif
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
+# Windows builds define NOMINMAX (macros min, max clash with numeric_limits<>)
+USR_CXXFLAGS_WIN32 += -DNOMINMAX
+
 OPCUA = $(TOP)/devOpcuaSup
 SRC_DIRS += $(OPCUA)
 

@@ -1,8 +1,3 @@
-# Windows builds define NOMINMAX (macros min, max clash with numeric_limits<>)
-USR_CXXFLAGS_WIN32 += -DNOMINMAX
-
-UASDK_SHRLIB_DIR = $(UASDK)/bin
-
 # Second-level dependencies of the UA SDK
 
 # Different UASDK bundles have third-party modules in different locations
