@@ -26,6 +26,10 @@ endif
 ifeq ($($(CLIENT)_USE_XMLPARSER),YES)
 USR_CXXFLAGS += -DHAS_XMLPARSER
 USR_INCLUDES_Linux += -I/usr/include/libxml2
+ifneq ($(filter -D_MINGW,$(OP_SYS_CPPFLAGS)),)
+USR_INCLUDES += -I$(MSYSTEM_PREFIX)/include/libxml2
+USR_SYS_LIBS += xml2
+endif
 endif
 
 # Link explicitly against locally compiled library objects
