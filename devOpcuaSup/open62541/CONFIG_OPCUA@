@@ -39,7 +39,7 @@ OPCUA_SYS_LIBS_Linux += xml2
 endif
 
 ifeq ($(OPEN62541_DEPLOY_MODE),PROVIDED)
-open62541_DIR = $(OPEN62541_SHRLIB_DIR)
+open62541_DIR = $(OPEN62541_LIB_DIR)
 endif
 
 endif # T_A
