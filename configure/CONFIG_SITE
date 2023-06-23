@@ -56,6 +56,9 @@ UASDK_USE_XMLPARSER = YES
 
 USR_CXXFLAGS += -DUSE_TYPED_RSET
 
+# Needed for gethostname()
+USR_SYS_LIBS_WIN32 += ws2_32
+
 # These allow developers to override the CONFIG_SITE variable
 # settings without having to modify the configure/CONFIG_SITE
 # file itself.

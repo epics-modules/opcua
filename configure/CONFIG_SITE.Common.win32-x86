@@ -6,4 +6,4 @@
 USR_LDFLAGS_WIN32 += /LIBPATH:$(OPENSSL)
 #USR_INCLUDES_WIN32 += -I$(OPENSSL)/include/openssl
 #USR_INCLUDES_WIN32 += -I$(OPENSSL)/include/crypto
-USR_SYS_LIBS_WIN32 +=  libssl libcrypto oleaut32 ole32 ws2_32
+USR_SYS_LIBS_WIN32 +=  libssl libcrypto oleaut32 ole32
