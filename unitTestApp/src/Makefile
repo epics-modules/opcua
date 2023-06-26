@@ -9,12 +9,15 @@ include $(TOP)/configure/CONFIG
 # To avoid mix-ups, the specific library classes are recompiled here for their tests
 # and the test executables are not linked against libopcua.
 
+# Windows builds define NOMINMAX (macros min, max clash with numeric_limits<>)
+USR_CXXFLAGS_WIN32 += -DNOMINMAX
+
 DEVSUP_SRC = $(TOP)/devOpcuaSup
 
 TESTSRC = $(TOP)/unitTestApp/src
 CLIENT_SRC = $(DEVSUP_SRC)/$(CLIENT_SUBDIR)
 
-# Client specific tests
+# Add client specific tests
 SRC_DIRS += $(TESTSRC)/$(CLIENT_SUBDIR)
 # Location of the library classes under test
 SRC_DIRS += $(DEVSUP_SRC) $(CLIENT_SRC)
