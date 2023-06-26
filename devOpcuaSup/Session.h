@@ -18,12 +18,13 @@
 #include <map>
 #include <cstring>
 #include <fstream>
-#include <unistd.h>
 
 #include <limits.h>
 
 #if defined(_WIN32)
 #include <winsock2.h>
+#else
+#include <unistd.h>
 #endif
 
 #include <shareLib.h>
