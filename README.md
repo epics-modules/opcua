@@ -33,7 +33,7 @@ There are two choices for the low-level OPC Ua client library:
     g++ needs to be 4.6 or above.
 
 *   [EPICS Base](https://epics-controls.org/resources-and-support/base/)
-    3.15.5 (and up; EPICS 7 is supported).
+    3.15 (>= 3.15.7) or EPICS 7 (>= 7.0.4).
 
 *   The [gtest module](https://github.com/epics-modules/gtest) to compile and
     run the Google Test based tests.
