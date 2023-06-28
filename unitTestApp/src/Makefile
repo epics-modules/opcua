@@ -87,3 +87,18 @@ USR_LIBS += Com
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
+
+ifdef UASDK
+
+# Try to fight DLL Hell by putting SSL DLLs next to the binaries
+
+SSLLIB_INSTALLS += $(foreach lib, $(UASDK_SSL_LIBS), \
+    $(SHRLIB_PREFIX)$(lib)$(SHRLIB_SUFFIX_BASE) )
+
+$(GTESTLISTS) : $(SSLLIB_INSTALLS)
+
+$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE) : $(UASDK_SHRLIB_DIR)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE)
+	@$(ECHO) "Installing shared library $@ from Unified Automation SDK"
+	$(INSTALL) -d -m 555 $< $(@D)
+
+endif

@@ -996,7 +996,7 @@ SessionOpen62541::setupSecurity ()
                                 size_t l;
                                 for (l = 0; l < config->securityPoliciesSize; l++) {
                                     if (UA_String_equal(&config->securityPolicies[l].policyUri, &endpointDescriptions[k].securityPolicyUri)) {
-                                        selectedEndpoint = k;
+                                        selectedEndpoint = static_cast<int>(k);
                                         selectedSecurityLevel = endpointDescriptions[k].securityLevel;
                                         break;
                                     }

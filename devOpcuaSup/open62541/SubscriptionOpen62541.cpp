@@ -67,7 +67,7 @@ void SubscriptionOpen62541::setOption(const std::string &name, const std::string
         if (ul > 255ul)
             errlogPrintf("option '%s' value out of range - ignored\n", name.c_str());
         else
-            requestedSettings.priority = ul;
+            requestedSettings.priority = static_cast<UA_Byte>(ul);
     } else {
         errlogPrintf("unknown option '%s' - ignored\n", name.c_str());
     }

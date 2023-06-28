@@ -136,7 +136,7 @@ DataElementOpen62541::createMap (const UA_DataType *type,
                 if (timefrom) {
 #ifdef UA_ENABLE_TYPEDESCRIPTION
                     if (*timefrom == member->memberName) {
-                        timesrc = memberOffs;
+                        timesrc = static_cast<int>(memberOffs);
                     }
 #endif
                 }
