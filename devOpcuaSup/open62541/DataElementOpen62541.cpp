@@ -242,6 +242,10 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
     } else {
         if (UA_Variant_isEmpty(&value))
             return;
+
+        std::cerr << "Structured data in item " << pitem << " is not supported - ignoring" << std::endl;
+        return;
+
         if (debug() >= 5)
             std::cout << "Item " << pitem
                       << " element " << name
@@ -363,6 +367,11 @@ const UA_Variant &
 DataElementOpen62541::getOutgoingData ()
 {
     if (!isLeaf()) {
+
+        std::cerr << "Structured data in item " << pitem
+                  << " element " << name << " is not supported - ignoring" << std::endl;
+        return outgoingData;
+
         if (debug() >= 4)
             std::cout << "Item " << pitem
                       << " element " << name
