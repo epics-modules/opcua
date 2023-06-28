@@ -78,7 +78,9 @@ GTESTS += ElementTreeTest
 # Makefile fragments
 
 # Include client specific Makefile fragment (config part)
+ifdef T_A
 include $(TESTSRC)/$(CLIENT_SUBDIR)/Makefile.config
+endif
 
 USR_LIBS += Com
 
