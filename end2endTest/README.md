@@ -1,39 +1,43 @@
 # Test Setup - opcua
+
 This directory contains the sources for the automatic testing of the e3-opcua module.
+(The following notes assume this directory is named `test`.)
+
 
 ## Prerequisites
-In order to run the test suite, you must install the following:
+In order to run the test suite, you must install the following system packages:
 
  * python3
  * libfaketime
 
-On CentOS 7, run the following:
+E.g., on CentOS 7 run
 
 ```
 sudo yum install -y python3 libfaketime
 ```
 
-And the following python modules:
+The following python modules are also needed:
 
  * pytest
  * pyepics
  * opcua
  * run-iocsh
 
-You can use the following pip3 commands:
+You can use the following pip3 commands (as root) to install them
 
 ```
 pip3 install pytest opcua pyepics
 pip3 install run-iocsh -i https://artifactory.esss.lu.se/artifactory/api/pypi/pypi-virtual/simple
 ```
 
-You must configure the EPICS environment before running the test suite. 
+You must configure EPICS environment variables before running the test suite. 
 For the E3 environment, this requires you to ``source setE3Env.bash``.
 
-Finally, compile the test server for use by the test suite:
+At least `EPICS_BASE` and `EPICS_HOST_ARCH` need to be set.
+
+Finally, compile the test server that is used by the test suite:
 ```
-cd test/server
-make
+make -C test/server
 ```
 
 
@@ -41,7 +45,7 @@ make
 
 The test setup consists of three main components:
 
-### OPC-UA Server - open62541
+### OPC-UA Test Server
 A simple test opcua server, created using open62541 [1]. The server configuration currently
 consists of a number of variables provided for testing purposes.
 
@@ -78,7 +82,9 @@ A secondary IOC is provided for use with the negative tests, consisting of two r
 Startup scripts and database files are provided in the
 cmd/ and db/ subdirectories.
 
+
 ## Python Test Files
+
 The pytest framework [2] is used to implement the test cases. Individual test cases are provided
 as python functions (defs) in [\(opcua_test_cases.py\)](test/opcua_test_cases.py). Under the hood, 
 run_iocsh [3] and pyepics [4] are used for communication with the test IOC.
@@ -169,6 +175,7 @@ To run an individual test point:
 ```
 pytest -v test/opcua_test_cases.py::TestConnectionTests::test_connect_disconnect
 ```
+
 
 ## References
 [1] https://open62541.org/
