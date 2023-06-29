@@ -2265,7 +2265,7 @@ SessionOpen62541::initHook (initHookState state)
         for (auto &it : sessions) {
             it.second->markConnectionLoss();
             if (it.second->autoConnect)
-                it.second->connect();
+                it.second->connect(false);
         }
         epicsThreadOnce(&DevOpcua::session_open62541_atexit_once, &DevOpcua::session_open62541_atexit_register, nullptr);
         break;
