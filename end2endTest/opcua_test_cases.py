@@ -89,24 +89,10 @@ class opcuaTestHarness:
 
         # Message catalog
         self.connectMsg = (
-            "OPC UA session OPC1: connection status changed"
-            + " from Disconnected to Connected"
-        )
-        self.reconnectMsg = (
-            "OPC UA session OPC1: connection status changed"
-            + " from ConnectionErrorApiReconnect to NewSessionCreated"
-        )
-        self.reconnectMsg1 = (
-            "OPC UA session OPC1: connection status changed"
-            + " from NewSessionCreated to Connected"
+            "OPC UA session OPC1: connected as 'Anonymous'"
         )
         self.disconnectMsg = (
-            "OPC UA session OPC1: connection status changed"
-            + " from Connected to ConnectionErrorApiReconnect"
-        )
-        self.noConnectMsg = (
-            "OPC UA session OPC1: connection status changed"
-            + " from Disconnected to ConnectionErrorApiReconnect"
+            "OPC UA session OPC1: disconnected"
         )
 
         self.badNodeIdMsg = "item ns=2;s=Sim.BadVarName : BadNodeIdUnknown"
@@ -363,11 +349,8 @@ class TestConnectionTests:
     #            output.find(test_inst.noConnectMsg) >= 0
     #        ), "%d: Failed to find no connection message\n%s" % (i, output)
             assert (
-                output.find(test_inst.reconnectMsg) >= 0
-            ), "%d: Failed to find reconnect message in output\n%s" % (i, output)
-            assert (
-                output.find(test_inst.reconnectMsg1) >= 0
-            ), "%d: Failed to find reconnect message 1 in output\n%s" % (i, output)
+                output.find(test_inst.connectMsg) >= 0
+            ), "%d: Failed to find connect message in output\n%s" % (i, output)
 
     def test_disconnect_on_ioc_exit(self, test_inst):
         """

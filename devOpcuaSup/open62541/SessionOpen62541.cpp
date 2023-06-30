@@ -509,6 +509,7 @@ SessionOpen62541::connect (bool manual)
     config->securityMode = securityInfo.securityMode;
     UA_String_copy(&securityInfo.securityPolicyUri, &config->securityPolicyUri);
     UA_copy(&securityInfo.userIdentityToken, &config->userIdentityToken, &UA_TYPES[UA_TYPES_EXTENSIONOBJECT]);
+
     connectStatus = UA_Client_connect(client, serverURL.c_str());
 
     if (!UA_STATUS_IS_BAD(connectStatus)) {
@@ -1367,7 +1368,7 @@ SessionOpen62541::run ()
     // Currently (open62541 version 1.3), the client has no internal mechanism
     // to run asynchronous tasks. We need to create our own thread to call
     // UA_Client_run_iterate() repeatedly for asynchronous events to happen.
-    // Also until now, the client is not thread save. We have to use our own
+    // Also until now, the client is not thread safe. We have to use our own
     // mutex (clientlock) to synchonize access to the client object from
     // different threads. These are in particular this worker thread, which
     // calls the callbacks connectionStatusChanged() and read/writeComplete(),
@@ -1375,32 +1376,34 @@ SessionOpen62541::run ()
     // Unfortunately, there is no way to release the mutex while
     // UA_Client_run_iterate() waits for incoming network traffic.
     // Thus use a short timeout and sleep without holding the mutex.
-    std::cerr << "Session " << name
-              << " worker thread start"
-              << std::endl;
+
+    UA_StatusCode status = 0;
+
+    if (debug)
+        std::cerr << "Session " << name << " worker thread starts" << std::endl;
+
     Guard G(clientlock);
+
     while (true)
     {
         if (!client) {
-             std::cerr << "Session " << name
-                       << " worker thread: Client destroyed. Finishing."
-                       << std::endl;
+            if (debug)
+                std::cerr << "Session " << name << " worker thread: client destroyed. Exiting."
+                          << std::endl;
             return;
         }
-        connectStatus = UA_Client_run_iterate(client, 1);
+        status = UA_Client_run_iterate(client, 1);
         {
             UnGuard U(G);
             epicsThreadSleep(0.01); // give other threads a chance to execute
         }
-        if (client && UA_STATUS_IS_BAD(connectStatus))
+        if (client && UA_STATUS_IS_BAD(status))
             break;
     }
-    std::cerr << "Session " << name
-              << " worker thread error: connectStatus:"
-              << UA_StatusCode_name(connectStatus)
-              << " sessionState:" << sessionState
-              << " channelState:" << channelState
-              << std::endl;
+    if (debug)
+        std::cerr << "Session " << name
+                  << " worker thread error: status:" << UA_StatusCode_name(status)
+                  << std::endl;
     disconnect();
 }
 
@@ -1933,7 +1936,7 @@ SessionOpen62541::connectionStatusChanged (
 
     if (newChannelState != channelState) {
         if (debug)
-            std::cout << "Session " << name
+            std::cerr << "Session " << name
                       << ": secure channel state changed from "
                       << channelState << " to "
                       << newChannelState
@@ -1954,23 +1957,6 @@ SessionOpen62541::connectionStatusChanged (
                 break;
             case UA_SECURECHANNELSTATE_OPEN: {
                 // Connection to server has been established
-                UA_ClientConfig *config = UA_Client_getConfig(client);
-                std::string token;
-                auto type = config->userIdentityToken.content.decoded.type;
-                if (type == &UA_TYPES[UA_TYPES_USERNAMEIDENTITYTOKEN])
-                    token = " (username token)";
-                if (type == &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN])
-                    token = " (certificate token)";
-                std::cerr << "OPC UA session " << name
-                        << ": connect succeeded as '" << securityUserName << "'" << token
-                        << " with security level " << securityLevel
-                        << " (mode=" << config->securityMode
-                        << "; policy=" << securityPolicyString(config->securityPolicyUri)
-                        << ")" << std::endl;
-                if (config->securityMode == UA_MESSAGESECURITYMODE_NONE) {
-                    errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
-                                name.c_str());
-                }
                 break;
             }
             default: break;
@@ -1980,15 +1966,35 @@ SessionOpen62541::connectionStatusChanged (
 
     if (newSessionState != sessionState) {
         if (debug)
-            std::cout << "Session " << name
+            std::cerr << "Session " << name
                       << ": session state changed from "
                       << sessionState << " to "
                       << newSessionState
                       << std::endl;
 // TODO: What to do for each sessionState change?
         switch (newSessionState) {
+
             case UA_SESSIONSTATE_ACTIVATED:
             {
+                UA_ClientConfig *config = UA_Client_getConfig(client);
+                std::string token;
+                auto type = config->userIdentityToken.content.decoded.type;
+                if (type == &UA_TYPES[UA_TYPES_USERNAMEIDENTITYTOKEN])
+                    token = " (username token)";
+                if (type == &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN])
+                    token = " (certificate token)";
+                std::ostringstream buf;
+                buf << "OPC UA session " << name << ": connected as '" << securityUserName << "'"
+                    << token << " with security level " << securityLevel
+                    << " (mode=" << config->securityMode
+                    << "; policy=" << securityPolicyString(config->securityPolicyUri) << ")"
+                    << std::endl;
+                errlogPrintf("%s", buf.str().c_str());
+                if (config->securityMode == UA_MESSAGESECURITYMODE_NONE) {
+                    errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
+                                 name.c_str());
+                }
+
                 // read some settings from server
                 UA_Variant value;
                 UA_StatusCode status;
@@ -2056,6 +2062,13 @@ SessionOpen62541::connectionStatusChanged (
                 reader.pushRequest(cargo, menuPriorityHIGH);
                 break;
             }
+
+            case UA_SESSIONSTATE_CREATED: {
+                if (sessionState == UA_SESSIONSTATE_ACTIVATED)
+                    errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
+                break;
+            }
+
             default: break;
         }
         sessionState = newSessionState;
