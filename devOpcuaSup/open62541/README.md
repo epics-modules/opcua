@@ -42,26 +42,28 @@ Note: The Open62541 project is focused on the server implementation of OPC UA. T
     
 *   Open62541 supports multiple low-level libraries to implement OPC UA Security. The most widely used option (that also keeps things simple by staying in line with the UA SDK client) is based on openssl. We suggest to select that by setting the cmake option `UA_ENABLE_ENCRYPTION=OPENSSL`.
 
-*   Given all the above, for a Linux build, a reasonable option setting would be:
+* Given all the above, for a Linux build, a reasonable option setting would be:
 
-    ```shell
-    cmake .. -DBUILD_SHARED_LIBS=ON \
-             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-             -DUA_ENABLE_ENCRYPTION=OPENSSL
-    ```
-    
-    to create a shared library, and
-    
-    ```shell
-    cmake .. -DBUILD_SHARED_LIBS=OFF \
-             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
-             -DUA_ENABLE_ENCRYPTION=OPENSSL
-    ```
-    
-    to create the static variant.
-    
-    There are a lot of other options available, but most of them affect only the server part and are not relevant for use of the client.
+  ```shell
+  cmake .. -DBUILD_SHARED_LIBS=ON \
+           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+           -DUA_ENABLE_ENCRYPTION=OPENSSL
+  ```
+
+  to create a shared library, and
+
+  ```shell
+  cmake .. -DBUILD_SHARED_LIBS=OFF \
+           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+           -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
+           -DUA_ENABLE_ENCRYPTION=OPENSSL
+  ```
+
+  to create the static variant.
+
+  There are a lot of other options available, but most of them affect only the server part and are not relevant for use of the client.
+
+  For Open62541 version 1.2, set `UA_ENABLE_ENCRYPTION_OPENSSL=ON` instead of the OPENSSL setting shown above. You may also have to explicitly set the Open62541 version string in file `CMakeLists.txt`, as the auto-detection doesn't work when you're not working under git.
 
 *   The default installation location is below `/usr/local`. Normally, this is a system location, so that the deploy mode setting (see below) would be `SYSTEM`.
     If you want to install into another location, set the option `CMAKE_INSTALL_PREFIX=/other/location`. In that case, the deploy mode setting (see below) would be `PROVIDED` and the library location needs to be set.
