@@ -57,10 +57,21 @@ OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
         pass
 
     print('Compiling & installing open62541 v{0}'.format(version))
+
+    ver = version.split('.')
+    if ver[0] = '1' and ver[1] = '2':
+        sp.check_call(['sed', '-i',
+        '|set_open62541_version()|a set(OPEN62541_VER_MAJOR {0})\\\n'
+        'set(OPEN62541_VER_MINOR {1})\\\n'
+        'set(OPEN62541_VER_PATCH {2})\\\n'
+        'set(OPEN62541_VER_LABEL -undefined)'.format(ver[0], ver[1], ver[2]),
+        os.path.join(sdkdir, 'CMakeLists.txt')])
+
     sp.check_call(['cmake', '..',
                    '-DBUILD_SHARED_LIBS=ON',
                    '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
                    '-DUA_ENABLE_ENCRYPTION=OPENSSL',
+                   '-DUA_ENABLE_ENCRYPTION_OPENSSL=ON',
                    '-DCMAKE_INSTALL_PREFIX={0}'.format(installdir)],
                    cwd=builddir)
 
