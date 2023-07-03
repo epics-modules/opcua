@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import sys, os
 import shutil
+import fileinput
 import subprocess as sp
 import re
 
@@ -59,13 +60,13 @@ OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
     print('Compiling & installing open62541 v{0}'.format(version))
 
     ver = version.split('.')
-    if ver[0] = '1' and ver[1] = '2':
-        sp.check_call(['sed', '-i',
-        '|set_open62541_version()|a set(OPEN62541_VER_MAJOR {0})\\\n'
-        'set(OPEN62541_VER_MINOR {1})\\\n'
-        'set(OPEN62541_VER_PATCH {2})\\\n'
-        'set(OPEN62541_VER_LABEL -undefined)'.format(ver[0], ver[1], ver[2]),
-        os.path.join(sdkdir, 'CMakeLists.txt')])
+    if ver[0] == '1' and ver[1] == '2':
+        for line in fileinput.input(os.path.join(sdkdir, 'CMakeLists.txt'), inplace=True):
+            print(line.replace('set_open62541_version()',
+            'set(OPEN62541_VER_MAJOR 1)\n'
+            'set(OPEN62541_VER_MINOR 2)\n'
+            'set(OPEN62541_VER_PATCH 7)\n'
+            'set(OPEN62541_VER_LABEL -undefined)'.format(ver[0], ver[1], ver[2])), end='')
 
     sp.check_call(['cmake', '..',
                    '-DBUILD_SHARED_LIBS=ON',

@@ -201,10 +201,16 @@ Session::saveRejected(const std::string &location)
     }
 }
 
+#define OPEN62541_VERSION(MAJOR, MINOR, PATCH) "v" str(MAJOR) "." str(MINOR) "." str(PATCH)
+#define str(s) #s
+
 const std::string &
 opcuaGetDriverName ()
 {
-    static const std::string version("Open62541 Client API " UA_OPEN62541_VERSION);
+    static const std::string version(
+        "Open62541 Client API " OPEN62541_VERSION(UA_OPEN62541_VER_MAJOR,
+                                                  UA_OPEN62541_VER_MINOR,
+                                                  UA_OPEN62541_VER_PATCH));
     return version;
 }
 
