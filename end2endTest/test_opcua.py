@@ -304,6 +304,8 @@ class TestConnectionTests:
             ioc.start()
             assert ioc.is_running()
 
+            sleep(test_inst.sleepTime)
+
             test_inst.stop_server()
             assert ioc.is_running()
 

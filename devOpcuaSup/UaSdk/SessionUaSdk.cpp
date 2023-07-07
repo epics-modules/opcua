@@ -1108,7 +1108,7 @@ void SessionUaSdk::connectionStatusChanged (
     OpcUa_ReferenceParameter(clientConnectionId);
     // Don't print Disconnected <-> ConnectionErrorApiReconnect unless in debug mode
     if (debug)
-        std::cout << "Session " << name.c_str() << ": connection status changed from "
+        std::cerr << "Session " << name.c_str() << ": connection status changed from "
                   << serverStatusString(serverConnectionStatus) << " to "
                   << serverStatusString(serverStatus) << std::endl;
 
