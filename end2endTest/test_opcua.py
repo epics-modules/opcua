@@ -1,3 +1,4 @@
+import gc
 import os
 import resource
 import signal
@@ -198,6 +199,9 @@ def test_inst():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+
+    # Run the garbage collector to work around bug in pyepics
+    gc.collect()
     # Initialize channel access
     ca.initialize_libca()
 
@@ -221,6 +225,7 @@ def test_inst():
     # Shut down channel access
     ca.flush_io()
     ca.clear_cache()
+    ca.finalize_libca()
 
 
 # test fixture for use with timezone server
