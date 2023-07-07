@@ -98,17 +98,19 @@ The test points are split into four classes:
 
 #### Connection tests (TestConnectionTests)
 
- 1. **_test_connect_disconnect_**: start and stop the test IOC 5 times. Parse the IOC output,
-      and check it connects and disconnects to the OPC-UA server successfully.
+ 1. **_test_start_server_then_ioc_**: With the server running,
+      start and stop the test IOC. Parse the IOC output
+      and check it connects and disconnects to the OPC UA server successfully.
 
- 2. **_test_connect_reconnect_**: Start the server, start the IOC. Stop the server,
+ 2. **_test_stop_and_restart_server_**: Start the server, start the IOC. Stop the server,
       check for appropriate messaging. Start the server, check that the IOC reconnects.
 
- 3. **_test_no_connection_**: Start an IOC with no server running. Check the module reports appropriately.
+ 3. **_test_start_ioc_then_server_**: Start an IOC with no server running.
+      Then start the server. Check the module reports appropriately.
 
- 4. **_test_shutdown_on_ioc_reboot_**: Start the server. Start an IOC and ensure connection
-      is made to the server. Shutdown the IOC and endure that the subscriptions and sessions are
-      cleanly disconnected.
+ 4. **_test_disconnect_on_ioc_exit_**: Start the server. Start an IOC and ensure connection
+      is made to the server.
+      Shutdown the IOC. Check that the subscriptions and sessions are cleanly disconnected.
 
 
 #### Variable tests (TestVariableTests)
@@ -148,32 +150,33 @@ The test points are split into four classes:
  1. **_test_no_server_**: Start an OPC-UA IOC with no server running.
       Check the module reports this correctly.
 
- 2. **_test_bad_var_name_**:  Specify an incorrect variable name in a db record.
+ 2. **_test_bad_var_name_**:  Specify an incorrect OPC UA variable name in an EPICS record.
       Start the IOC and verify a sensible error is displayed.
 
- 3. **_test_wrong_datatype_**: Specify an incorrect record type for an OPC-UA variable.
+ 3. **_test_wrong_datatype_**: Specify an incorrect record type for an OPC UA variable.
       Binary input record for a float datatype.
+      Check that appripriate errors are displayed.
 
 
 ### Running the test suite
 You can run the test suite from the root of the repository wuth the following command:
 ```
-pytest -v
+pytest -v end2endTest
 ```
 
 To view the stdout output from the tests in real-time, you can provide the ``-s`` flag:
 ```
-pytest -v -s
+pytest -v -s end2endTest
 ```
 
 To run all tests in a class:
 ```
-pytest -v -k TestConnectionTests
+pytest -v end2endTest -k TestConnectionTests
 ```
 
 To run an individual test point:
 ```
-pytest -v -k test_connect_disconnect
+pytest -v end2endTest -k test_stop_and_restart_server
 ```
 
 
