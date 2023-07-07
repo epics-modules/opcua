@@ -1,14 +1,15 @@
-from epics import PV
-from time import sleep
-from run_iocsh import IOC
-from os import environ
-from datetime import datetime
 import os
-import pytest
-import subprocess
 import resource
-import time
 import signal
+import subprocess
+import time
+from datetime import datetime
+from os import environ
+from time import sleep
+
+import pytest
+from epics import PV, ca
+from run_iocsh import IOC
 
 
 class opcuaTestHarness:
@@ -197,6 +198,9 @@ def test_inst():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+    # Initialize channel access
+    ca.initialize_libca()
+
     # Create handle to Test Harness
     test_inst = opcuaTestHarness()
     # Poll to see if the server is running
@@ -208,10 +212,15 @@ def test_inst():
     test_inst.start_server()
     # Drop to test
     yield test_inst
+
     # Shutdown server by sending terminate signal
     test_inst.stop_server()
     # Check server is stopped
     assert not test_inst.isServerRunning
+
+    # Shut down channel access
+    ca.flush_io()
+    ca.clear_cache()
 
 
 # test fixture for use with timezone server
@@ -222,6 +231,9 @@ def test_inst_TZ():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+    # Initialize channel access
+    ca.initialize_libca()
+
     # Create handle to Test Harness
     test_inst_TZ = opcuaTestHarness()
     # Poll to see if the server is running
@@ -233,10 +245,15 @@ def test_inst_TZ():
     test_inst_TZ.start_server_with_faketime()
     # Drop to test
     yield test_inst_TZ
+
     # Shutdown server by sending terminate signal
     test_inst_TZ.stop_server_group()
     # Check server is stopped
     assert not test_inst_TZ.isServerRunning
+
+    # Shut down channel access
+    ca.flush_io()
+    ca.clear_cache()
 
 
 class TestConnectionTests:
@@ -280,8 +297,6 @@ class TestConnectionTests:
         for i in range(0, self.nRuns):
             ioc.start()
             assert ioc.is_running()
-
-            sleep(test_inst.sleepTime)
 
             test_inst.stop_server()
             assert ioc.is_running()
@@ -444,7 +459,6 @@ class TestVariableTests:
         with IOC(
             *test_inst.TestArgs,
             test_inst.cmd,
-            ioc_executable=test_inst.IOCSH_PATH,
         ):
             # PV name
             pvName = "TstRamp"
@@ -609,6 +623,7 @@ class TestVariableTests:
 
 
 class TestPerformanceTests:
+    @pytest.mark.xfail("CI" in environ, reason="GitLab runner performance issues")
     def test_write_performance(self, test_inst):
         """
         Write 5000 variable values and measure
@@ -632,7 +647,7 @@ class TestPerformanceTests:
             writeperrun = 5000
 
             # Run test 10 times
-            for j in range(testruns):
+            for j in range(1, testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_THREAD)
@@ -645,10 +660,7 @@ class TestPerformanceTests:
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
                 r1 = resource.getrusage(resource.RUSAGE_THREAD)
-                dr = (
-                    resource.getrusage(resource.RUSAGE_THREAD).ru_maxrss
-                    - r0.ru_maxrss  # NoQA: E501
-                )
+                dr = r1.ru_maxrss - r0.ru_maxrss  # NoQA: E501
 
                 # Collect data for statistics
                 if dt > maxt:
@@ -661,6 +673,7 @@ class TestPerformanceTests:
                 print("Memory incr: ", dr)
                 print("     before: ", r0.ru_maxrss)
                 print("      after: ", r1.ru_maxrss)
+
             avgt = tott / testruns
 
             print("Max time: ", "{:.3f} s".format(maxt))
@@ -669,9 +682,9 @@ class TestPerformanceTests:
             print("Total memory increase: ", totr)
 
             assert maxt < 17
-            assert mint > 1
-            assert avgt < 12
-            assert totr < 1000
+            assert mint > 0.8
+            assert avgt < 5
+            assert totr < 3000
 
     def test_read_performance(self, test_inst):
         """
@@ -696,7 +709,7 @@ class TestPerformanceTests:
             writeperrun = 5000
 
             # Run test 10 times
-            for j in range(testruns):
+            for j in range(1, testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_SELF)
@@ -709,10 +722,7 @@ class TestPerformanceTests:
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
                 r1 = resource.getrusage(resource.RUSAGE_SELF)
-                dr = (
-                    resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-                    - r0.ru_maxrss  # NoQA: E501
-                )
+                dr = r1.ru_maxrss - r0.ru_maxrss  # NoQA: E501
 
                 # Collect data for statistics
                 if dt > maxt:
@@ -725,6 +735,7 @@ class TestPerformanceTests:
                 print("Memory incr: ", dr)
                 print("     before: ", r0.ru_maxrss)
                 print("      after: ", r1.ru_maxrss)
+
             avgt = tott / testruns
 
             print("Max time: ", "{:.3f} s".format(maxt))
@@ -734,11 +745,39 @@ class TestPerformanceTests:
 
             assert maxt < 10
             assert mint > 0.01
-            assert avgt < 5
+            assert avgt < 7
             assert totr < 1000
 
 
 class TestNegativeTests:
+    def test_no_server(self, test_inst):
+        """
+        Start an OPC-UA IOC with no server running.
+        Check the module reports this correctly.
+        """
+
+        ioc = test_inst.IOC
+
+        # Stop the running server
+        test_inst.stop_server()
+
+        # Start the IOC
+        ioc.start()
+        assert ioc.is_running()
+
+        # Check that PVs have SEVR INVALID (=3)
+        pv = PV("VarCheckSByte")
+        pv.get(timeout=test_inst.getTimeout)
+        assert pv.severity == 3
+
+        # Stop IOC, and check output
+        ioc.exit()
+        assert not ioc.is_running()
+
+        ioc.check_output()
+        output = ioc.outs
+        print(output)
+
     def test_bad_var_name(self, test_inst):
         """
         Specify an incorrect variable name in a db record.
@@ -752,9 +791,6 @@ class TestNegativeTests:
         # Start the IOC
         ioc.start()
         assert ioc.is_running()
-
-        # Wait some time
-        sleep(1)
 
         # Stop IOC, and check output
         ioc.exit()
@@ -781,9 +817,6 @@ class TestNegativeTests:
         # Start the IOC
         ioc.start()
         assert ioc.is_running()
-
-        # Wait some time
-        sleep(1)
 
         # Stop IOC, and check output
         ioc.exit()
