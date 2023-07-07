@@ -56,9 +56,7 @@ class opcuaTestHarness:
                 self.TEMP_CELL_PATH = "cellMods"
 
             # run-iocsh parameters
-            self.IOCSH_PATH = (
-                f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh.bash"
-            )
+            self.IOCSH_PATH = f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh"
 
             self.TestArgs = [
                 "-l",
@@ -236,6 +234,8 @@ def test_inst_TZ():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+    # Run the garbage collector to work around bug in pyepics
+    gc.collect()
     # Initialize channel access
     ca.initialize_libca()
 
@@ -259,6 +259,7 @@ def test_inst_TZ():
     # Shut down channel access
     ca.flush_io()
     ca.clear_cache()
+    ca.finalize_libca()
 
 
 class TestConnectionTests:
@@ -390,6 +391,9 @@ class TestConnectionTests:
             ioc.start()
             assert ioc.is_running()
 
+            # Wait a second to allow it to get up and running
+            sleep(1)
+
             ioc.exit()
             assert not ioc.is_running()
 
@@ -464,6 +468,7 @@ class TestVariableTests:
         with IOC(
             *test_inst.TestArgs,
             test_inst.cmd,
+            ioc_executable=test_inst.IOCSH_PATH,
         ):
             # PV name
             pvName = "TstRamp"
