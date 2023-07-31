@@ -1099,7 +1099,7 @@ private:
             if (isWithinRange<UA_UInt32>(value)) {
                 Guard G(outgoingLock);
                 UA_UInt32 val = static_cast<UA_UInt32>(value);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
                 markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
@@ -1110,7 +1110,7 @@ private:
             if (isWithinRange<UA_Int32>(value)) {
                 Guard G(outgoingLock);
                 UA_Int32 val = static_cast<UA_Int32>(value);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
                 markAsDirty();
             } else {
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
