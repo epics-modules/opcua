@@ -158,4 +158,4 @@ jobs:
     - name: Run end2end tests
       run: |
         python .ci/cue.py exec make -C end2endTest/server
-        python .ci/cue.py exec pytest -v end2endTest/opcua_test_cases.py
+        python .ci/cue.py exec pytest -v end2endTest/test_opcua.py
