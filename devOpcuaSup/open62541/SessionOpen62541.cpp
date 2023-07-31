@@ -2059,6 +2059,7 @@ SessionOpen62541::connectionStatusChanged (
                     i++;
                 }
                 // status needs to be updated before requests are being issued
+                sessionState = newSessionState;
                 reader.pushRequest(cargo, menuPriorityHIGH);
                 break;
             }
