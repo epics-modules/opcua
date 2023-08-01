@@ -261,6 +261,24 @@ def test_inst_TZ():
     ca.clear_cache()
     ca.finalize_libca()
 
+def wait_for_value(pv, expValue, timeout=0, format=None):
+    """
+    Wait for a (monitored) PV to reach the expected value,
+    up to a specified timeout. (returns None on timeout.)
+    """
+    t0 = time.perf_counter()
+    dt = 0.0
+
+    while dt < timeout:
+        res = pv.get()
+        if format is not None:
+            res = format % res
+        if res == expValue:
+            return res
+        sleep(0.1)
+        dt = time.perf_counter() - t0
+
+    return None
 
 class TestConnectionTests:
     nRuns = 5
@@ -541,11 +559,10 @@ class TestVariableTests:
 
         with ioc:
             pv = PV(pvName)
-            res = pv.get(timeout=test_inst.getTimeout)
-            # Check UInt64 with correct scientific notation
+            fmt = None
             if pvName == "VarCheckUInt64":
-                res = "%.16e" % res
-            # Compare
+                fmt = "%.16e"
+            res = wait_for_value(pv, expectedVal, timeout=test_inst.getTimeout, format=fmt)
             assert res == expectedVal
             pv.disconnect()
 
@@ -587,26 +604,10 @@ class TestVariableTests:
                 is not None
             ), ("Failed to write to PV %s\n" % pvOutName)
 
-            # Wait 1s to ensure write has time to pass through
-            # asynchronous layers
-            sleep(1)
-
             # Read back via input PV
-            pvRead = PV(pvName)
             assert ioc.is_running()
-            res = pvRead.get(use_monitor=False, timeout=test_inst.getTimeout)
-            retryCnt = 0
-            while res is None:
-                print("%d: Read timeout. Try again...\n" % retryCnt)
-                ioc.exit()
-                ioc.start()
-                res = pvRead.get(
-                    use_monitor=False, timeout=test_inst.getTimeout
-                )  # NoQA: E501
-                if retryCnt > 3:
-                    break
-
-            # Compare
+            pvRead = PV(pvName)
+            res = wait_for_value(pvRead, writeVal, timeout=test_inst.getTimeout)
             assert res == writeVal
             pvWrite.disconnect()
             pvRead.disconnect()
@@ -733,7 +734,7 @@ class TestPerformanceTests:
 
                 # Read 5000 PVs
                 for i in range(1, writeperrun):
-                    pvRead.get(timeout=test_inst.putTimeout)
+                    pvRead.get(timeout=test_inst.getTimeout)
 
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
