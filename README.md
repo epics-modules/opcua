@@ -18,8 +18,13 @@ This module is under development.
 Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 :warning:
 
-The first (and - at this time - only) supported OPC UA client library is the
-commercially available Unified Automation C++ Based OPC UA Client SDK.
+There are two choices for the low-level OPC UA client library:
+
+1.  The commercially available Unified Automation C++ Based OPC UA Client SDK.
+    Original, full implementation.
+   
+2.  The open source client implementation of the open62541 project.
+    Currently experimental, no support for structured data yet.
 
 ## Prerequisites
 
@@ -28,22 +33,39 @@ commercially available Unified Automation C++ Based OPC UA Client SDK.
     g++ needs to be 4.6 or above.
 
 *   [EPICS Base](https://epics-controls.org/resources-and-support/base/)
-    3.15.5 (and up; EPICS 7 is supported).
+    3.15 (>= 3.15.7) or EPICS 7 (>= 7.0.4).
 
-*   The [gtest module](https://github.com/epics-modules/gtest) to compile and
-    run the Google Test based tests.
+*   The [gtest module](https://github.com/epics-modules/gtest) if you want
+    to compile and run the Google Test based unit tests.
 
 ### Using the Unified Automation Client SDK
 
 *   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk]
-    (1.5/1.6/1.7 are supported, as well as their evaluation bundles).
+    (1.5/1.6/1.7 are supported, as well as their evaluation bundles;
+    1.8 is having trouble).
 
 *   For OPC UA security support (authentication/encryption), you need
     openssl/libcrypto on your system - both when compiling the SDK and when
     generating any binaries (IOCs).
 
+*   In `CONFIG_SITE.local`, set `UASDK` to the path of the SDK installation.
+
 *   For more details, refer to the `README.md` in the
     [`devOpcuaSup/UaSdk`][uasdk.dir] directory.
+
+### Using the open62541 SDK
+
+*   The open62541 SDK is available at https://open62541.org/ \
+    Choose a recent release (1.2 and 1.3 are supported).
+
+*   For OPC UA security support (authentication/encryption), you need
+    openssl/libcrypto on your system - both when compiling the SDK and when
+    generating any binaries (IOCs).
+
+*   In `CONFIG_SITE.local`, set `OPEN62541` to the path of the SDK installation.
+
+*   For more details, refer to the `README.md` in the
+    [`devOpcuaSup/open62541`][open62541.dir] directory.
 
 ## Building the module
 
@@ -105,7 +127,9 @@ This module is based on extensive
 [prototype work](https://github.com/bkuner/opcUaUnifiedAutomation)
 by Bernhard Kuner (HZB/BESSY) and uses ideas and code snippets from
 Michael Davidsaver (Osprey DCS).
-Additional help from Carsten Winkler (HZB/BESSY).
+
+The support for the open62541 client was added by Dirk Zimoch (PSI) with
+additional help from Carsten Winkler (HZB/BESSY).
 
 ## License
 
@@ -121,5 +145,6 @@ in file LICENSE that is included with this distribution.
 [unified.sdk]: https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html
 
 [uasdk.dir]: https://github.com/epics-modules/opcua/tree/master/devOpcuaSup/UaSdk
+[open62541.dir]: https://github.com/epics-modules/opcua/tree/master/devOpcuaSup/open62541
 [requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
 [cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf

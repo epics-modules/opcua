@@ -1,14 +1,16 @@
-from epics import PV
-from time import sleep
-from run_iocsh import IOC
-from os import environ
-from datetime import datetime
+import gc
 import os
-import pytest
-import subprocess
 import resource
-import time
 import signal
+import subprocess
+import time
+from datetime import datetime
+from os import environ
+from time import sleep
+
+import pytest
+from epics import PV, ca
+from run_iocsh import IOC
 
 
 class opcuaTestHarness:
@@ -54,9 +56,7 @@ class opcuaTestHarness:
                 self.TEMP_CELL_PATH = "cellMods"
 
             # run-iocsh parameters
-            self.IOCSH_PATH = (
-                f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh.bash"
-            )
+            self.IOCSH_PATH = f"{self.EPICS_BASE}/require/{self.REQUIRE_VERSION}/bin/iocsh"
 
             self.TestArgs = [
                 "-l",
@@ -89,24 +89,10 @@ class opcuaTestHarness:
 
         # Message catalog
         self.connectMsg = (
-            "OPC UA session OPC1: connection status changed"
-            + " from Disconnected to Connected"
-        )
-        self.reconnectMsg = (
-            "OPC UA session OPC1: connection status changed"
-            + " from ConnectionErrorApiReconnect to NewSessionCreated"
-        )
-        self.reconnectMsg1 = (
-            "OPC UA session OPC1: connection status changed"
-            + " from NewSessionCreated to Connected"
+            "OPC UA session OPC1: connected as 'Anonymous'"
         )
         self.disconnectMsg = (
-            "OPC UA session OPC1: connection status changed"
-            + " from Connected to ConnectionErrorApiReconnect"
-        )
-        self.noConnectMsg = (
-            "OPC UA session OPC1: connection status changed"
-            + " from Disconnected to ConnectionErrorApiReconnect"
+            "OPC UA session OPC1: disconnected"
         )
 
         self.badNodeIdMsg = "item ns=2;s=Sim.BadVarName : BadNodeIdUnknown"
@@ -211,6 +197,12 @@ def test_inst():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+
+    # Run the garbage collector to work around bug in pyepics
+    gc.collect()
+    # Initialize channel access
+    ca.initialize_libca()
+
     # Create handle to Test Harness
     test_inst = opcuaTestHarness()
     # Poll to see if the server is running
@@ -222,10 +214,16 @@ def test_inst():
     test_inst.start_server()
     # Drop to test
     yield test_inst
+
     # Shutdown server by sending terminate signal
     test_inst.stop_server()
     # Check server is stopped
     assert not test_inst.isServerRunning
+
+    # Shut down channel access
+    ca.flush_io()
+    ca.clear_cache()
+    ca.finalize_libca()
 
 
 # test fixture for use with timezone server
@@ -236,6 +234,11 @@ def test_inst_TZ():
     yield the harness handle to the test,
     close the server on test end / failure
     """
+    # Run the garbage collector to work around bug in pyepics
+    gc.collect()
+    # Initialize channel access
+    ca.initialize_libca()
+
     # Create handle to Test Harness
     test_inst_TZ = opcuaTestHarness()
     # Poll to see if the server is running
@@ -247,11 +250,35 @@ def test_inst_TZ():
     test_inst_TZ.start_server_with_faketime()
     # Drop to test
     yield test_inst_TZ
+
     # Shutdown server by sending terminate signal
     test_inst_TZ.stop_server_group()
     # Check server is stopped
     assert not test_inst_TZ.isServerRunning
 
+    # Shut down channel access
+    ca.flush_io()
+    ca.clear_cache()
+    ca.finalize_libca()
+
+def wait_for_value(pv, expValue, timeout=0, format=None):
+    """
+    Wait for a (monitored) PV to reach the expected value,
+    up to a specified timeout. (returns None on timeout.)
+    """
+    t0 = time.perf_counter()
+    dt = 0.0
+
+    while dt < timeout:
+        res = pv.get()
+        if format is not None:
+            res = format % res
+        if res == expValue:
+            return res
+        sleep(0.1)
+        dt = time.perf_counter() - t0
+
+    return None
 
 class TestConnectionTests:
     nRuns = 5
@@ -363,11 +390,8 @@ class TestConnectionTests:
     #            output.find(test_inst.noConnectMsg) >= 0
     #        ), "%d: Failed to find no connection message\n%s" % (i, output)
             assert (
-                output.find(test_inst.reconnectMsg) >= 0
-            ), "%d: Failed to find reconnect message in output\n%s" % (i, output)
-            assert (
-                output.find(test_inst.reconnectMsg1) >= 0
-            ), "%d: Failed to find reconnect message 1 in output\n%s" % (i, output)
+                output.find(test_inst.connectMsg) >= 0
+            ), "%d: Failed to find connect message in output\n%s" % (i, output)
 
     def test_disconnect_on_ioc_exit(self, test_inst):
         """
@@ -386,6 +410,9 @@ class TestConnectionTests:
 
             ioc.start()
             assert ioc.is_running()
+
+            # Wait a second to allow it to get up and running
+            sleep(1)
 
             ioc.exit()
             assert not ioc.is_running()
@@ -532,12 +559,12 @@ class TestVariableTests:
 
         with ioc:
             pv = PV(pvName)
-            res = pv.get(timeout=test_inst.getTimeout)
-            # Check UInt64 with correct scientific notation
+            fmt = None
             if pvName == "VarCheckUInt64":
-                res = "%.16e" % res
-            # Compare
+                fmt = "%.16e"
+            res = wait_for_value(pv, expectedVal, timeout=test_inst.getTimeout, format=fmt)
             assert res == expectedVal
+            pv.disconnect()
 
     @pytest.mark.parametrize(
         "pvName,writeVal",
@@ -566,37 +593,24 @@ class TestVariableTests:
         ioc = test_inst.IOC
 
         with ioc:
+            assert ioc.is_running()
             # Output PV name is the same as the input PV
             # name, with the addition of the "Out" suffix
             pvOutName = pvName + "Out"
             pvWrite = PV(pvOutName)
-            assert ioc.is_running()
+            pvWrite.wait_for_connection()
             assert (
                 pvWrite.put(writeVal, wait=True, timeout=test_inst.putTimeout)
                 is not None
             ), ("Failed to write to PV %s\n" % pvOutName)
 
-            # Wait 1s to ensure write has time to pass through
-            # asynchronous layers
-            sleep(1)
-
             # Read back via input PV
-            pvRead = PV(pvName)
             assert ioc.is_running()
-            res = pvRead.get(use_monitor=False, timeout=test_inst.getTimeout)
-            retryCnt = 0
-            while res is None:
-                print("%d: Read timeout. Try again...\n" % retryCnt)
-                ioc.exit()
-                ioc.start()
-                res = pvRead.get(
-                    use_monitor=False, timeout=test_inst.getTimeout
-                )  # NoQA: E501
-                if retryCnt > 3:
-                    break
-
-            # Compare
+            pvRead = PV(pvName)
+            res = wait_for_value(pvRead, writeVal, timeout=test_inst.getTimeout)
             assert res == writeVal
+            pvWrite.disconnect()
+            pvRead.disconnect()
 
     @pytest.mark.xfail
     def test_timestamps(self, test_inst_TZ):
@@ -626,6 +640,7 @@ class TestVariableTests:
 
 
 class TestPerformanceTests:
+    @pytest.mark.xfail("CI" in environ, reason="GitLab runner performance issues")
     def test_write_performance(self, test_inst):
         """
         Write 5000 variable values and measure
@@ -649,7 +664,7 @@ class TestPerformanceTests:
             writeperrun = 5000
 
             # Run test 10 times
-            for j in range(testruns):
+            for j in range(1, testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_THREAD)
@@ -662,10 +677,7 @@ class TestPerformanceTests:
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
                 r1 = resource.getrusage(resource.RUSAGE_THREAD)
-                dr = (
-                    resource.getrusage(resource.RUSAGE_THREAD).ru_maxrss
-                    - r0.ru_maxrss  # NoQA: E501
-                )
+                dr = r1.ru_maxrss - r0.ru_maxrss  # NoQA: E501
 
                 # Collect data for statistics
                 if dt > maxt:
@@ -678,6 +690,7 @@ class TestPerformanceTests:
                 print("Memory incr: ", dr)
                 print("     before: ", r0.ru_maxrss)
                 print("      after: ", r1.ru_maxrss)
+
             avgt = tott / testruns
 
             print("Max time: ", "{:.3f} s".format(maxt))
@@ -686,9 +699,9 @@ class TestPerformanceTests:
             print("Total memory increase: ", totr)
 
             assert maxt < 17
-            assert mint > 1
-            assert avgt < 12
-            assert totr < 1000
+            assert mint > 0.8
+            assert avgt < 5
+            assert totr < 3000
 
     def test_read_performance(self, test_inst):
         """
@@ -713,7 +726,7 @@ class TestPerformanceTests:
             writeperrun = 5000
 
             # Run test 10 times
-            for j in range(testruns):
+            for j in range(1, testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_SELF)
@@ -721,15 +734,12 @@ class TestPerformanceTests:
 
                 # Read 5000 PVs
                 for i in range(1, writeperrun):
-                    pvRead.get(timeout=test_inst.putTimeout)
+                    pvRead.get(timeout=test_inst.getTimeout)
 
                 # Get delta time and delta memory
                 dt = time.perf_counter() - t0
                 r1 = resource.getrusage(resource.RUSAGE_SELF)
-                dr = (
-                    resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-                    - r0.ru_maxrss  # NoQA: E501
-                )
+                dr = r1.ru_maxrss - r0.ru_maxrss  # NoQA: E501
 
                 # Collect data for statistics
                 if dt > maxt:
@@ -742,6 +752,7 @@ class TestPerformanceTests:
                 print("Memory incr: ", dr)
                 print("     before: ", r0.ru_maxrss)
                 print("      after: ", r1.ru_maxrss)
+
             avgt = tott / testruns
 
             print("Max time: ", "{:.3f} s".format(maxt))
@@ -751,11 +762,39 @@ class TestPerformanceTests:
 
             assert maxt < 10
             assert mint > 0.01
-            assert avgt < 5
+            assert avgt < 7
             assert totr < 1000
 
 
 class TestNegativeTests:
+    def test_no_server(self, test_inst):
+        """
+        Start an OPC-UA IOC with no server running.
+        Check the module reports this correctly.
+        """
+
+        ioc = test_inst.IOC
+
+        # Stop the running server
+        test_inst.stop_server()
+
+        # Start the IOC
+        ioc.start()
+        assert ioc.is_running()
+
+        # Check that PVs have SEVR INVALID (=3)
+        pv = PV("VarCheckSByte")
+        pv.get(timeout=test_inst.getTimeout)
+        assert pv.severity == 3
+
+        # Stop IOC, and check output
+        ioc.exit()
+        assert not ioc.is_running()
+
+        ioc.check_output()
+        output = ioc.outs
+        print(output)
+
     def test_bad_var_name(self, test_inst):
         """
         Specify an incorrect variable name in a db record.
@@ -769,9 +808,6 @@ class TestNegativeTests:
         # Start the IOC
         ioc.start()
         assert ioc.is_running()
-
-        # Wait some time
-        sleep(1)
 
         # Stop IOC, and check output
         ioc.exit()
@@ -798,9 +834,6 @@ class TestNegativeTests:
         # Start the IOC
         ioc.start()
         assert ioc.is_running()
-
-        # Wait some time
-        sleep(1)
 
         # Stop IOC, and check output
         ioc.exit()

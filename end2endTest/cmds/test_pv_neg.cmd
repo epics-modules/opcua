@@ -16,4 +16,3 @@ iocshLoad("$(opcua_DIR)/opcua.iocsh", "P=OPC:,SESS=$(SESSION),SUBS=$(SUBSCRIPT),
 dbLoadRecords("test_pv_neg.db", "OPCSUB=$(SUBSCRIPT), NS=$(OPCNAMESPACE)")
 
 iocInit()
-

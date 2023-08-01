@@ -15,6 +15,10 @@
 #include <string>
 #include <map>
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+
 #include <uaclientsdk.h>
 #include <uasession.h>
 
@@ -66,7 +70,7 @@ void SubscriptionUaSdk::setOption(const std::string &name, const std::string &va
         if (ul > 255ul)
             errlogPrintf("option '%s' value out of range - ignored\n", name.c_str());
         else
-            subscriptionSettings.priority = requestedSettings.priority = ul;
+            subscriptionSettings.priority = requestedSettings.priority = static_cast<OpcUa_Byte>(ul);
     } else {
         errlogPrintf("unknown option '%s' - ignored\n", name.c_str());
     }

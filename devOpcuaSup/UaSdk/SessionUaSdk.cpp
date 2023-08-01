@@ -24,6 +24,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+
 #include <uaplatformlayer.h>
 #include <uaclientsdk.h>
 #include <uasession.h>
@@ -1103,15 +1107,10 @@ void SessionUaSdk::connectionStatusChanged (
 {
     OpcUa_ReferenceParameter(clientConnectionId);
     // Don't print Disconnected <-> ConnectionErrorApiReconnect unless in debug mode
-    if (!(((serverConnectionStatus == UaClient::ConnectionErrorApiReconnect
-            && serverStatus == UaClient::Disconnected)
-           || (serverConnectionStatus == UaClient::Disconnected
-               && serverStatus == UaClient::ConnectionErrorApiReconnect))
-          && debug == 0))
-        errlogPrintf("OPC UA session %s: connection status changed from %s to %s\n",
-                     name.c_str(),
-                     serverStatusString(serverConnectionStatus),
-                     serverStatusString(serverStatus));
+    if (debug)
+        std::cerr << "Session " << name.c_str() << ": connection status changed from "
+                  << serverStatusString(serverConnectionStatus) << " to "
+                  << serverStatusString(serverStatus) << std::endl;
 
     switch (serverStatus) {
 
@@ -1124,6 +1123,7 @@ void SessionUaSdk::connectionStatusChanged (
             markConnectionLoss();
         if (serverStatus == UaClient::ServerShutdown)
             registeredItemsNo = 0;
+        errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
         if (autoConnect)
             autoConnector.start();
         break;
@@ -1131,6 +1131,7 @@ void SessionUaSdk::connectionStatusChanged (
         // "The connection to the server is deactivated by the user of the client API."
     case UaClient::Disconnected:
         if (serverConnectionStatus == UaClient::Connected) {
+            errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
             markConnectionLoss();
             registeredItemsNo = 0;
         }
@@ -1364,7 +1365,7 @@ SessionUaSdk::initHook (initHookState state)
         for (auto &it : sessions) {
             it.second->markConnectionLoss();
             if (it.second->autoConnect)
-                it.second->connect();
+                it.second->connect(false);
         }
         epicsThreadOnce(&DevOpcua::session_uasdk_atexit_once, &DevOpcua::session_uasdk_atexit_register, nullptr);
         break;

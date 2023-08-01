@@ -21,7 +21,12 @@
 
 #include <limits.h>
 
-#include <osiSock.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <shareLib.h>
 #include <epicsThread.h>
 #include <epicsTimer.h>

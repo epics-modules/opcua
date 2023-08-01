@@ -12,9 +12,19 @@
 TOP=..
 
 include $(TOP)/configure/CONFIG
+
+ifdef T_A
+include CONFIG_OPCUA
+endif
+
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
+
+# Windows builds define NOMINMAX (macros min, max clash with numeric_limits<>)
+# and CALLBACK (clashes with EPICS callback.h)
+USR_CXXFLAGS_WIN32 += -DNOMINMAX
+USR_CXXFLAGS += -DEPICS_NO_CALLBACK
 
 OPCUA = $(TOP)/devOpcuaSup
 SRC_DIRS += $(OPCUA)
@@ -62,9 +72,25 @@ HTMLS += menuDefAction.html
 # are in separate directories, added by reading
 # Makefile fragments
 
+SUPPORTED_SDKS = UASDK OPEN62541
+
+ifneq ($(words $(foreach SDK,$(SUPPORTED_SDKS),$($(SDK)))),1)
+$(info ====== CONFIGURATION ERROR ======)
+$(info Set your OPC UA client library in CONFIG_SITE.local)
+$(info Define exactly one of these variables: $(SUPPORTED_SDKS))
+$(info Current settings:)
+$(foreach SDK,$(SUPPORTED_SDKS),$(info $(SDK) = $(firstword $($(SDK)) -nil-)))
+$(error ====== CONFIGURATION ERROR ======)
+endif
+
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
 include $(OPCUA)/UaSdk/Makefile.config
+endif
+
+# open62541 project
+ifdef OPEN62541
+include $(OPCUA)/open62541/Makefile.config
 endif
 
 # Module versioning
@@ -86,6 +112,11 @@ include $(TOP)/configure/RULES
 # Unified Automation C++ Based OPC UA Client SDK
 ifdef UASDK
 include $(OPCUA)/UaSdk/Makefile.rules
+endif
+
+# open62541 project
+ifdef OPEN62541
+include $(OPCUA)/open62541/Makefile.rules
 endif
 
 # Can't use EXPAND as generated headers must appear

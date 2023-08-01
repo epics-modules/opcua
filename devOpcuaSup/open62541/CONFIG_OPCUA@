@@ -1,0 +1,47 @@
+# OPC UA Configuration for user application
+#==================================================
+# Open62541 client libraries
+
+# include guard
+ifeq (,$(_CONFIG_OPCUA_INCLUDED))
+_CONFIG_OPCUA_INCLUDED := YES
+
+# Open62541 settings expanded to be the same as in the support module
+CLIENT = OPEN62541
+CLIENT_SUBDIR = open62541
+
+ifdef T_A
+
+# Path to the Open62541 C++ installation
+OPEN62541 = @OPEN62541@
+
+# How the Open62541 shared libraries are deployed
+#   SYSTEM = shared libs are in a system location
+#            (normally /usr/local/lib is a system location)
+#   PROVIDED = shared libs are in $(OPEN62541_SHRLIB_DIR)
+#   INSTALL = shared libs are installed (copied) into this module
+#   EMBED = link Open62541 code statically into libopcua,
+#           the Open62541 libraries are not required on target system
+OPEN62541_DEPLOY_MODE = @OPEN62541_DEPLOY_MODE@
+OPEN62541_LIB_DIR = @OPEN62541_LIB_DIR@
+OPEN62541_SHRLIB_DIR = @OPEN62541_SHRLIB_DIR@
+# How the Open62541 libraries were built
+OPEN62541_USE_CRYPTO = @OPEN62541_USE_CRYPTO@
+OPEN62541_USE_XMLPARSER = @OPEN62541_USE_XMLPARSER@
+
+OPEN62541_LIBS += open62541
+
+ifeq ($(OPEN62541_USE_CRYPTO),YES)
+OPCUA_SYS_LIBS_Linux += crypto
+endif
+ifeq ($(OPEN62541_USE_XMLPARSER),YES)
+OPCUA_SYS_LIBS_Linux += xml2
+endif
+
+ifeq ($(OPEN62541_DEPLOY_MODE),PROVIDED)
+open62541_DIR = $(OPEN62541_LIB_DIR)
+endif
+
+endif # T_A
+
+endif # _CONFIG_OPCUA_INCLUDED
