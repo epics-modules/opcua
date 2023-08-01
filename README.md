@@ -18,7 +18,7 @@ This module is under development.
 Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 :warning:
 
-There are two choices for the low-level OPC Ua client library:
+There are two choices for the low-level OPC UA client library:
 
 1.  The commercially available Unified Automation C++ Based OPC UA Client SDK.
     Original, full implementation.
@@ -35,13 +35,14 @@ There are two choices for the low-level OPC Ua client library:
 *   [EPICS Base](https://epics-controls.org/resources-and-support/base/)
     3.15 (>= 3.15.7) or EPICS 7 (>= 7.0.4).
 
-*   The [gtest module](https://github.com/epics-modules/gtest) to compile and
-    run the Google Test based tests.
+*   The [gtest module](https://github.com/epics-modules/gtest) if you want
+    to compile and run the Google Test based unit tests.
 
 ### Using the Unified Automation Client SDK
 
 *   Unified Automation C++ Based [OPC UA Client SDK][unified.sdk]
-    (1.5/1.6/1.7 are supported, as well as their evaluation bundles).
+    (1.5/1.6/1.7 are supported, as well as their evaluation bundles;
+    1.8 is having trouble).
 
 *   For OPC UA security support (authentication/encryption), you need
     openssl/libcrypto on your system - both when compiling the SDK and when
@@ -54,7 +55,8 @@ There are two choices for the low-level OPC Ua client library:
 
 ### Using the open62541 SDK
 
-*   The open62541 SDK is available at https://open62541.org/
+*   The open62541 SDK is available at https://open62541.org/ \
+    Choose a recent release (1.2 and 1.3 are supported).
 
 *   For OPC UA security support (authentication/encryption), you need
     openssl/libcrypto on your system - both when compiling the SDK and when
