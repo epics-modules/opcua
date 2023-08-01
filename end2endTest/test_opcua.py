@@ -547,6 +547,7 @@ class TestVariableTests:
                 res = "%.16e" % res
             # Compare
             assert res == expectedVal
+            pv.disconnect()
 
     @pytest.mark.parametrize(
         "pvName,writeVal",
@@ -575,11 +576,12 @@ class TestVariableTests:
         ioc = test_inst.IOC
 
         with ioc:
+            assert ioc.is_running()
             # Output PV name is the same as the input PV
             # name, with the addition of the "Out" suffix
             pvOutName = pvName + "Out"
             pvWrite = PV(pvOutName)
-            assert ioc.is_running()
+            pvWrite.wait_for_connection()
             assert (
                 pvWrite.put(writeVal, wait=True, timeout=test_inst.putTimeout)
                 is not None
@@ -606,6 +608,8 @@ class TestVariableTests:
 
             # Compare
             assert res == writeVal
+            pvWrite.disconnect()
+            pvRead.disconnect()
 
     @pytest.mark.xfail
     def test_timestamps(self, test_inst_TZ):
