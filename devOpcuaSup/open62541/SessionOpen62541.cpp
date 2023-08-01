@@ -2153,9 +2153,6 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                         continue;
                     }
                 }
-                std::cout << "Item " << item
-                          << "->setIncomingData()"
-                          << std::endl;
                 item->setIncomingData(response->results[i], reason);
             }
             i++;
