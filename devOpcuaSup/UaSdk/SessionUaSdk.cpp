@@ -1123,7 +1123,8 @@ void SessionUaSdk::connectionStatusChanged (
             markConnectionLoss();
         if (serverStatus == UaClient::ServerShutdown)
             registeredItemsNo = 0;
-        errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
+        if (serverConnectionStatus != UaClient::Disconnected)
+            errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
         if (autoConnect)
             autoConnector.start();
         break;
