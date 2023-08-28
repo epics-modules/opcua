@@ -336,8 +336,11 @@ DataElementUaSdk::getOutgoingData ()
                 }
 
             } else
-                errlogPrintf("Cannot get a structure definition for %s - check access to type dictionary\n",
-                             extensionObject.dataTypeId().toString().toUtf8());
+                errlogPrintf(
+                    "Cannot get a structure definition for extensionObject with dataTypeID %s "
+                    "/ encodingTypeID %s - check access to type dictionary\n",
+                    extensionObject.dataTypeId().toString().toUtf8(),
+                    extensionObject.encodingTypeId().toString().toUtf8());
         }
     }
     return outgoingData;
