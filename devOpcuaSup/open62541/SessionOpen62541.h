@@ -18,7 +18,7 @@
 #include <memory>
 #include <set>
 
-#include <open62541/client_config_default.h>
+#include <open62541/client.h>
 
 #include <epicsString.h>
 #include <epicsMutex.h>

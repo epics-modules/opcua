@@ -37,6 +37,7 @@
 #include <open62541/client.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/client_highlevel_async.h>
+#include <open62541/client_config_default.h>
 #include <open62541/plugin/pki_default.h>
 
 /* loadFile helper from open62541 examples */
