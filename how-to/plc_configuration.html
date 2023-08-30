@@ -1,0 +1,278 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuring the OPC UA Server on a Siemens S7-1500 Series PLC &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="EPICS Records for Single Scalar Variables" href="record_configuration_scalar.html" />
+    <link rel="prev" title="Debugging and Tracing" href="debugging.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/40_build_application.html">Building an IOC Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging and Tracing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#activate-opc-ua-server">Activate OPC UA Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configure-opc-ua-server-options">Configure OPC UA Server Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configure-opc-ua-server-security">Configure OPC UA Server Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configure-opc-ua-runtime-license">Configure OPC UA Runtime License</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#define-variables-in-plc-data-structures">Define Variables in PLC Data Structures</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-plc-data-types-and-epics-record-type-compatibility">Example PLC Data Types and EPICS Record Type Compatibility</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="record_configuration_structure.html">EPICS Records for Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security_configuration.html">Configuring OPC UA Security</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/iocsh_commands.html">iocShell Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/opcua_concepts.html">Basics, Terms and Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/how-to/plc_configuration.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="configuring-the-opc-ua-server-on-a-siemens-s7-1500-series-plc">
+<h1>Configuring the OPC UA Server on a Siemens S7-1500 Series PLC<a class="headerlink" href="#configuring-the-opc-ua-server-on-a-siemens-s7-1500-series-plc" title="Link to this heading"></a></h1>
+<p>This guide details the steps to configure a Siemens S7-1500 PLC
+as an OPC UA server using TIA Portal.</p>
+<section id="activate-opc-ua-server">
+<h2>Activate OPC UA Server<a class="headerlink" href="#activate-opc-ua-server" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>Open your project in TIA Portal.</p></li>
+<li><p>Navigate to your PLC’s properties (e.g., <code class="docutils literal notranslate"><span class="pre">PLC_1</span> <span class="pre">[CPU</span> <span class="pre">1518-4</span> <span class="pre">PN/DP]</span></code>).</p></li>
+<li><p>Go to <code class="docutils literal notranslate"><span class="pre">General</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">OPC</span> <span class="pre">UA</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">Server</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">General</span></code>.</p></li>
+<li><p>Check the <code class="docutils literal notranslate"><span class="pre">Activate</span> <span class="pre">OPC</span> <span class="pre">UA</span> <span class="pre">server</span></code> box.</p></li>
+<li><p>Ensure that one of the <code class="docutils literal notranslate"><span class="pre">Server</span> <span class="pre">addresses</span></code> (<code class="docutils literal notranslate"><span class="pre">opc.tcp://...</span></code>)
+matches the IP address of your PLC on the network.
+The default OPC UA port is 4840.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The OPC UA server must be accessible via one of the PLC’s IPs.
+It should not be accessed via a separate
+PLC Communications Processor (CP) module.</p>
+</div>
+</li>
+</ol>
+</section>
+<section id="configure-opc-ua-server-options">
+<h2>Configure OPC UA Server Options<a class="headerlink" href="#configure-opc-ua-server-options" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>In the PLC properties,
+navigate to <code class="docutils literal notranslate"><span class="pre">General</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">OPC</span> <span class="pre">UA</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">Server</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">Options</span></code>.</p></li>
+<li><p><strong>Port:</strong>
+Adjust the <code class="docutils literal notranslate"><span class="pre">Port</span></code> number
+if a different port than the default 4840 is required.</p></li>
+<li><p><strong>Minimum sampling interval:</strong>
+Defines the minimum rate (in ms)
+at which the server can check data sources for changes.</p></li>
+<li><p><strong>Minimum publishing interval:</strong>
+Defines the minimum rate (in ms)
+at which the server can send updated data to clients.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>For S7-1500 PLCs,
+especially small or mid-size ones (e.g., S7-1516),
+starting with 250ms intervals
+and grouping variables into structures
+is a good practice for improving performance.</p>
+</div>
+</li>
+</ol>
+</section>
+<section id="configure-opc-ua-server-security">
+<h2>Configure OPC UA Server Security<a class="headerlink" href="#configure-opc-ua-server-security" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>In the PLC properties,
+navigate to <code class="docutils literal notranslate"><span class="pre">General</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">OPC</span> <span class="pre">UA</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">Server</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">Security</span></code>.</p></li>
+<li><p><strong>Security Policies:</strong>
+Select the desired security policy.
+For basic testing and development,
+you might select <code class="docutils literal notranslate"><span class="pre">No</span> <span class="pre">security</span></code>.
+For production environments,
+stronger options like <code class="docutils literal notranslate"><span class="pre">Basic128Rsa15-Sign</span> <span class="pre">&amp;</span> <span class="pre">Encrypt</span></code> are recommended.</p></li>
+<li><p><strong>Guest Authentication:</strong>
+If no specific user authentication is required,
+check <code class="docutils literal notranslate"><span class="pre">Enable</span> <span class="pre">guest</span> <span class="pre">authentication</span></code>.</p>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>On the IOC, OPC UA Security is enabled by default.
+To connect to any OPC UA server <em>without</em> security,
+you must set the option <code class="docutils literal notranslate"><span class="pre">sec-mode=None</span></code>
+for the concerned session(s) in your EPICS IOC configuration.</p>
+</div>
+</li>
+</ol>
+</section>
+<section id="configure-opc-ua-runtime-license">
+<h2>Configure OPC UA Runtime License<a class="headerlink" href="#configure-opc-ua-runtime-license" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>In the PLC properties,
+navigate to <code class="docutils literal notranslate"><span class="pre">General</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">Runtime</span> <span class="pre">licenses</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">OPC</span> <span class="pre">UA</span></code>.</p></li>
+<li><p>Ensure the <code class="docutils literal notranslate"><span class="pre">Type</span> <span class="pre">of</span> <span class="pre">purchased</span> <span class="pre">license</span></code>
+is at least the same level as the <code class="docutils literal notranslate"><span class="pre">Type</span> <span class="pre">of</span> <span class="pre">required</span> <span class="pre">license</span></code>
+(e.g., <code class="docutils literal notranslate"><span class="pre">SIMATIC</span> <span class="pre">OPC</span> <span class="pre">UA</span> <span class="pre">S7-1500</span> <span class="pre">large</span></code>).</p></li>
+</ol>
+</section>
+<section id="define-variables-in-plc-data-structures">
+<h2>Define Variables in PLC Data Structures<a class="headerlink" href="#define-variables-in-plc-data-structures" title="Link to this heading"></a></h2>
+<p>Organize your PLC variables into data blocks
+that will be exposed as OPC UA nodes.</p>
+<ol class="arabic simple">
+<li><p><strong>Create Data Blocks:</strong>
+In TIA Portal,
+create new data blocks (e.g., <code class="docutils literal notranslate"><span class="pre">DB1</span></code>, <code class="docutils literal notranslate"><span class="pre">DB2</span></code>, <code class="docutils literal notranslate"><span class="pre">DB3</span></code>, <code class="docutils literal notranslate"><span class="pre">DB4</span></code>).</p></li>
+<li><p><strong>Define Variables:</strong>
+Inside each data block,
+define the variables you want to expose.
+You can use structured user-defined data types,
+which will appear as structured data on OPC UA.
+Structured data is very efficient when using subscriptions.
+For structures, the server on the S7 always creates
+a node for the structure
+and separate nodes for each of its elements.</p></li>
+</ol>
+<section id="example-plc-data-types-and-epics-record-type-compatibility">
+<h3>Example PLC Data Types and EPICS Record Type Compatibility<a class="headerlink" href="#example-plc-data-types-and-epics-record-type-compatibility" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>PLC data type</p></th>
+<th class="head text-left"><p>EPICS Record type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>REAL</p></td>
+<td class="text-left"><p>ai/ao</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>BOOL</p></td>
+<td class="text-left"><p>bi/bo</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>BYTE/WORD/DWORD/INT/DINT</p></td>
+<td class="text-left"><p>longin/longout, mbbi/mbbo, mbbiDirect/mbboDirect, ai/ao</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>STRING</p></td>
+<td class="text-left"><p>stringin/stringout, lsi/lso</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>STRUCT</p></td>
+<td class="text-left"><p>opcuaItem</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Structured items can only be handled
+using the <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record type.</p>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="debugging.html" class="btn btn-neutral float-left" title="Debugging and Tracing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="record_configuration_scalar.html" class="btn btn-neutral float-right" title="EPICS Records for Single Scalar Variables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

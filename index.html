@@ -1,0 +1,305 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EPICS OPC UA Device Support &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started" href="tutorials/10_getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/40_build_application.html">Building an IOC Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="how-to/debugging.html">Debugging and Tracing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/record_configuration_structure.html">EPICS Records for Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/security_configuration.html">Configuring OPC UA Security</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference/iocsh_commands.html">iocShell Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="explanation/opcua_concepts.html">Basics, Terms and Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="explanation/security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">EPICS OPC UA Device Support</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="epics-opc-ua-device-support">
+<h1>EPICS OPC UA Device Support<a class="headerlink" href="#epics-opc-ua-device-support" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://epics-controls.org%3E">EPICS</a> Device Support module
+for interfacing to controllers and servers
+using the
+<a class="reference external" href="https://opcfoundation.org/about/opc-technologies/opc-ua/">OPC UA</a> protocol.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/epics-modules/opcua">Source Code</a> -
+everything you might want to know</p></li>
+<li><p><a class="reference external" href="https://epics-modules.github.io/opcua">Documentation</a> -
+this</p></li>
+<li><p><a class="reference external" href="https://matrix.to/#/#opcua:epics-controls.org">OPC UA Room on EPICS Chat</a> -
+quick help and discussions</p></li>
+<li><p><a class="reference external" href="https://github.com/epics-modules/opcua/wiki">Usage / FAQ (Wiki)</a> -
+hints &amp; experiences with specific servers</p></li>
+<li><p><a class="reference external" href="https://github.com/epics-modules/opcua/issues%3E">Issue Tracker</a> -
+when things don’t work</p></li>
+</ul>
+<p>The Device Support sits on top of a low-level OPC UA client library.
+Two SDKs are supported - you need to choose and provide one of them:</p>
+<ul class="simple">
+<li><p>The freely available client library in the
+<a class="reference external" href="https://open62541.org/">SDK of the open62541 project</a></p></li>
+<li><p>The commercially available
+<a class="reference external" href="https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html">Unified Automation C++ Based OPC UA Client SDK</a>.</p></li>
+</ul>
+<p>Linux and Windows builds are supported for both client library options.</p>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>C++11 compliant compiler</p></li>
+<li><p><a class="reference external" href="https://epics-controls.org/resources-and-support/base/">EPICS Base</a>
+3.15 (&gt;= 3.15.7) or EPICS 7 (&gt;= 7.0.4)</p></li>
+<li><p>One of the two supported SDKs (see above)</p></li>
+<li><p><em>(Optional)</em> The <a class="reference external" href="https://github.com/epics-modules/gtest/">gtest module</a>
+if you want to compile and run the unit tests</p></li>
+</ul>
+<p>See <a class="reference internal" href="tutorials/30_build_devsup.html#building-devsup"><span class="std std-ref">building</span></a> for details.</p>
+</section>
+<section id="download">
+<h2>Download<a class="headerlink" href="#download" title="Link to this heading"></a></h2>
+<p>Releases are published
+on the <a class="reference external" href="https://github.com/epics-modules/opcua/releases/">GitHub release page</a></p>
+<p>This includes binary distribution tars,
+which allow using the commercial Unified Automation Client SDK libraries
+without any purchase or fee.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/10_getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/10_getting_started.html#prerequisites">Prerequisites</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/20_build_client_lib.html#option-a-open62541-client-sdk"><em>Option A:</em> open62541 Client SDK</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/20_build_client_lib.html#option-b-unified-automation-c-client-sdk"><em>Option B:</em> Unified Automation C++ Client SDK</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/40_build_application.html">Building an IOC Application</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/40_build_application.html#use-the-example-application">Use the Example Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/40_build_application.html#create-an-ioc-for-opc-ua-from-scratch">Create an IOC for OPC UA from Scratch</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/50_run_verify_ioc.html">Running and Verifying Your IOC</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/50_run_verify_ioc.html#use-a-gui-client">Use a GUI Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/50_run_verify_ioc.html#start-your-ioc">Start your IOC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/50_run_verify_ioc.html#enjoy-opc-ua">Enjoy OPC UA!</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="how-to/debugging.html">Debugging and Tracing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="how-to/debugging.html#ioc-shell-commands">IOC Shell Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/debugging.html#session-subscription-debugging">Session/Subscription Debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/debugging.html#epics-record-debugging">EPICS Record Debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/debugging.html#adaptive-concurrency-monitoring">Adaptive Concurrency Monitoring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/debugging.html#using-uaexpert-external-tool">Using UaExpert (External Tool)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="how-to/plc_configuration.html#activate-opc-ua-server">Activate OPC UA Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/plc_configuration.html#configure-opc-ua-server-options">Configure OPC UA Server Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/plc_configuration.html#configure-opc-ua-server-security">Configure OPC UA Server Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/plc_configuration.html#configure-opc-ua-runtime-license">Configure OPC UA Runtime License</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/plc_configuration.html#define-variables-in-plc-data-structures">Define Variables in PLC Data Structures</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="how-to/record_configuration_scalar.html#general-inp-out-link-field-format">General INP/OUT Link Field Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/record_configuration_scalar.html#available-options">Available Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/record_configuration_scalar.html#example-output-records-with-monitor-bidirectional-mode">Example: Output Records with Monitor (Bidirectional Mode)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/record_configuration_scalar.html#example-unmonitored-output-records">Example: Unmonitored Output Records</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/record_configuration_scalar.html#example-input-records-with-monitor">Example: Input Records with Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/record_configuration_scalar.html#example-unmonitored-input-records">Example: Unmonitored Input Records</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/record_configuration_structure.html">EPICS Records for Structured Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="how-to/record_configuration_structure.html#creating-the-root-opcuaitem">Creating the Root <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/record_configuration_structure.html#linking-element-records-to-opcuaitem">Linking Element Records to <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/security_configuration.html">Configuring OPC UA Security</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="how-to/security_configuration.html#certificate-store-setup">Certificate Store Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/security_configuration.html#client-certificate-client-authentication">Client Certificate (Client Authentication)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/security_configuration.html#session-security-setting">Session Security Setting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/security_configuration.html#identity-server-side-user-authentication">Identity (Server-Side User Authentication)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how-to/security_configuration.html#managing-certificates">Managing Certificates</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference/iocsh_commands.html">iocShell Command Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference/iocsh_commands.html#session-management">Session Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/iocsh_commands.html#subscription-management">Subscription Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/iocsh_commands.html#setting-options">Setting Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/iocsh_commands.html#opc-ua-security-management">OPC UA Security Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/iocsh_commands.html#inspection-and-debugging">Inspection and Debugging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference/record_types.html">Record Types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference/record_types.html#standard-record-types">Standard Record Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference/record_types.html#custom-record-types">Custom Record Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="explanation/opcua_concepts.html">Basics, Terms and Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="explanation/opcua_concepts.html#basics">Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explanation/opcua_concepts.html#opc-ua-terms-and-concepts">OPC UA Terms and Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explanation/opcua_concepts.html#the-opc-ua-device-support">The OPC UA Device Support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="explanation/security_concepts.html">OPC UA Security Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="explanation/security_concepts.html#self-signed-certificates">Self-signed Certificates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explanation/security_concepts.html#communication-security">Communication Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explanation/security_concepts.html#client-authentication-identity">Client Authentication (Identity)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explanation/security_concepts.html#endpoint-discovery">Endpoint Discovery</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="credits.html#authors">Authors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="credits.html#documentation">Documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+</div>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+<!-- Links -->
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tutorials/10_getting_started.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

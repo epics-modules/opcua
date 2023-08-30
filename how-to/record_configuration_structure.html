@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EPICS Records for Structured Data &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Configuring OPC UA Security" href="security_configuration.html" />
+    <link rel="prev" title="EPICS Records for Single Scalar Variables" href="record_configuration_scalar.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/40_build_application.html">Building an IOC Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging and Tracing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">EPICS Records for Structured Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#creating-the-root-opcuaitem">Creating the Root <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#inp-link-field-format-for-the-opcuaitem-record">INP Link Field Format for the <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> Record</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-options">Available Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#opcuaitem-record-configuration"><code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> Record Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#linking-element-records-to-opcuaitem">Linking Element Records to <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#inp-out-link-field-format-for-elements">INP/OUT Link Field Format for Elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Available Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-input-records-for-elements-of-p-foo-opcua-item">Example: Input Records for Elements of <code class="docutils literal notranslate"><span class="pre">$(P)FOO:OPCUA-ITEM</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="security_configuration.html">Configuring OPC UA Security</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/iocsh_commands.html">iocShell Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/opcua_concepts.html">Basics, Terms and Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">EPICS Records for Structured Data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/how-to/record_configuration_structure.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="epics-records-for-structured-data">
+<h1>EPICS Records for Structured Data<a class="headerlink" href="#epics-records-for-structured-data" title="Link to this heading"></a></h1>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 0.3: </span>The <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record type and support for structured data.</p>
+</div>
+<p>This guide shows how to configure EPICS records
+for accessing structured data on the OPC UA server.
+This is achieved using the <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record type
+in combination with regular EPICS records.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record connects to the Item
+that represents the structure.
+Leaf elements are accessed through regular EPICS records,
+one for each element that is interfaced.</p>
+<section id="creating-the-root-opcuaitem">
+<h2>Creating the Root <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code><a class="headerlink" href="#creating-the-root-opcuaitem" title="Link to this heading"></a></h2>
+<section id="inp-link-field-format-for-the-opcuaitem-record">
+<h3>INP Link Field Format for the <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> Record<a class="headerlink" href="#inp-link-field-format-for-the-opcuaitem-record" title="Link to this heading"></a></h3>
+<p>This format is the same as for the INP/OUT links
+of single scalar variables.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;&lt;session_name&gt;</span> <span class="pre">ns=&lt;namespace_index&gt;;&lt;identifier_type&gt;=&lt;identifier&gt;</span> <span class="pre">[&lt;option&gt;=&lt;value&gt;...]</span></code></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;session_name&gt;</span></code>:
+Name of the OPC UA Session.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;namespace_index&gt;</span></code>:
+Numerical namespace index.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;identifier_type&gt;</span></code>:
+<code class="docutils literal notranslate"><span class="pre">s</span></code> for string identifier, <code class="docutils literal notranslate"><span class="pre">i</span></code> for numerical identifier.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;identifier&gt;</span></code>:
+The string or numerical ID of the OPC UA Node.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Escape quotation marks</strong> (<code class="docutils literal notranslate"><span class="pre">\&quot;</span></code>)
+if the identifier string contains them
+(e.g., <code class="docutils literal notranslate"><span class="pre">&quot;dataBlock&quot;.&quot;myItem&quot;</span></code> becomes <code class="docutils literal notranslate"><span class="pre">\&quot;dataBlock\&quot;.\&quot;myItem\&quot;</span></code>).</p>
+</div>
+</li>
+</ul>
+</section>
+<section id="available-options">
+<h3>Available Options<a class="headerlink" href="#available-options" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sampling</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-1</span></code></p></td>
+<td><p>Sampling interval in ms [double; -1 = use publishing interval]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">qsize</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>Server-side queue size [int; 1 = no queueing]</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cqsize</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1.5</span> <span class="pre">*</span> <span class="pre">qsize</span></code></p></td>
+<td><p>Client-side queue size [int; minimum 3]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">discard</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">old</span></code></p></td>
+<td><p>Discard policy on queue overrun: [<code class="docutils literal notranslate"><span class="pre">old</span></code>/<code class="docutils literal notranslate"><span class="pre">new</span></code> (drop oldest/drop newest)]</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">register</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">n</span></code></p></td>
+<td><p>Register item with server for performance [<code class="docutils literal notranslate"><span class="pre">y</span></code>/<code class="docutils literal notranslate"><span class="pre">n</span></code>]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bini</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">read</span></code></p></td>
+<td><p>Behavior at init: <code class="docutils literal notranslate"><span class="pre">read</span></code>, <code class="docutils literal notranslate"><span class="pre">ignore</span></code>, <code class="docutils literal notranslate"><span class="pre">write</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">monitor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">y</span></code></p></td>
+<td><p>Enable monitoring. For outputs, enables readback</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">timestamp</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">server</span></code></p></td>
+<td><p>Source of timestamp: <code class="docutils literal notranslate"><span class="pre">server</span></code>/<code class="docutils literal notranslate"><span class="pre">source</span></code>/<code class="docutils literal notranslate"><span class="pre">&#64;&lt;top_element&gt;</span></code>
+[<code class="docutils literal notranslate"><span class="pre">top_element</span></code> points to source of timestamp]</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="opcuaitem-record-configuration">
+<h3><code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> Record Configuration<a class="headerlink" href="#opcuaitem-record-configuration" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record connects to a structured variable (Item)
+on the OPC UA server.
+It requires an OPC UA subscription.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record is bidirectional.
+Explicit <code class="docutils literal notranslate"><span class="pre">read</span></code> and <code class="docutils literal notranslate"><span class="pre">write</span></code> operations can be triggered
+by writing to the (pseudo) fields <code class="docutils literal notranslate"><span class="pre">READ</span></code> or <code class="docutils literal notranslate"><span class="pre">WRITE</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">opcuaItem</span><span class="p">,</span> <span class="s2">&quot;$(P)FOO:OPCUA-ITEM&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;OPCUA&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span> <span class="s2">&quot;@SLOW ns=3;s=</span><span class="se">\&quot;</span><span class="s2">DB1</span><span class="se">\&quot;</span><span class="s2">.</span><span class="se">\&quot;</span><span class="s2">FOO</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DEFACTN</span><span class="p">,</span> <span class="s2">&quot;read&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">WOC</span><span class="p">,</span> <span class="s2">&quot;immediate&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;SLOW</span></code>:
+The subscription name.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ns=3;s=\&quot;DB1\&quot;.\&quot;FOO\&quot;&quot;</span></code>:
+Points to the structured OPC UA Item.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SCAN,</span> <span class="pre">&quot;I/O</span> <span class="pre">Intr&quot;</span></code>:
+Ensures the record processes when the structured data changes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DEFACTN</span></code> specifies the default action
+when the record is processed: <code class="docutils literal notranslate"><span class="pre">read</span></code> or <code class="docutils literal notranslate"><span class="pre">write</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">WOC</span></code> controls the writing behavior
+when single elements of the structure are changed.
+<code class="docutils literal notranslate"><span class="pre">manual</span></code> (default)
+requires explicit processing of the record to write the structure.
+<code class="docutils literal notranslate"><span class="pre">immediate</span></code>
+processes the record (writes the structure)
+as soon as an element changes.
+This can be used to avoid writing inconsistent data
+while multiple elements of the structure are written in a transactional fashion,
+e.g., when restoring a snapshot or loading a configuration.</p></li>
+</ul>
+</section>
+</section>
+<section id="linking-element-records-to-opcuaitem">
+<h2>Linking Element Records to <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code><a class="headerlink" href="#linking-element-records-to-opcuaitem" title="Link to this heading"></a></h2>
+<p>Individual elements within the structured item
+are accessed by other regular input/output records.</p>
+<section id="inp-out-link-field-format-for-elements">
+<h3>INP/OUT Link Field Format for Elements<a class="headerlink" href="#inp-out-link-field-format-for-elements" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;&lt;opcuaItem_record_name&gt;</span> <span class="pre">[element=&lt;element_name&gt;]</span> <span class="pre">[&lt;option&gt;=&lt;value&gt;...]</span></code></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;opcuaItem_record_name&gt;</span></code>:
+The name of the <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record managing the structured data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">element=&lt;element_name&gt;</span></code>:
+The path to the specific element within the structure.
+Use <code class="docutils literal notranslate"><span class="pre">.</span></code> as a hierarchy separator.</p></li>
+</ul>
+</section>
+<section id="id1">
+<h3>Available Options<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">element</span></code></p></td>
+<td></td>
+<td><p>Path to element inside an <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> structure
+[<code class="docutils literal notranslate"><span class="pre">.</span></code> = hierarchy separator; <code class="docutils literal notranslate"><span class="pre">&lt;empty&gt;</span></code> = root element if no structure]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bini</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">read</span></code></p></td>
+<td><p>Behavior at init: <code class="docutils literal notranslate"><span class="pre">read</span></code>/<code class="docutils literal notranslate"><span class="pre">ignore</span></code>/<code class="docutils literal notranslate"><span class="pre">write</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">monitor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">y</span></code></p></td>
+<td><p>Enable monitoring. For outputs, enables readback</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">timestamp</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">server</span></code></p></td>
+<td><p>Source of timestamp: <code class="docutils literal notranslate"><span class="pre">server</span></code>/<code class="docutils literal notranslate"><span class="pre">source</span></code>/<code class="docutils literal notranslate"><span class="pre">data</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="example-input-records-for-elements-of-p-foo-opcua-item">
+<h3>Example: Input Records for Elements of <code class="docutils literal notranslate"><span class="pre">$(P)FOO:OPCUA-ITEM</span></code><a class="headerlink" href="#example-input-records-for-elements-of-p-foo-opcua-item" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Binary Input for a boolean element</span>
+<span class="n">record</span><span class="p">(</span><span class="n">bi</span><span class="p">,</span> <span class="s2">&quot;$(P)FOO:BOOL&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;OPCUA&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span> <span class="s2">&quot;@$(P)FOO:OPCUA-ITEM element=STRUCT.BOOL&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">ZNAM</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">ONAM</span><span class="p">,</span> <span class="s2">&quot;ON&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1"># Analog Input for a real element</span>
+<span class="n">record</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span> <span class="s2">&quot;$(P)FOO:REALA&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;OPCUA&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span> <span class="s2">&quot;@$(P)FOO:OPCUA-ITEM element=STRUCT.REAL&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">element=STRUCT.BOOL</span></code>:
+Refers to the <code class="docutils literal notranslate"><span class="pre">BOOL</span></code> sub-element inside the <code class="docutils literal notranslate"><span class="pre">STRUCT</span></code> element
+of the structure that the <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record points to.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="record_configuration_scalar.html" class="btn btn-neutral float-left" title="EPICS Records for Single Scalar Variables" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="security_configuration.html" class="btn btn-neutral float-right" title="Configuring OPC UA Security" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

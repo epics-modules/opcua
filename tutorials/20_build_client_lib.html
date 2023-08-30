@@ -1,0 +1,670 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Building the Low-Level OPC UA Client Library &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Building the Device Support Module" href="30_build_devsup.html" />
+    <link rel="prev" title="Getting Started" href="10_getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Building the Low-Level OPC UA Client Library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#option-a-open62541-client-sdk"><em>Option A:</em> open62541 Client SDK</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#status">Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-open62541">Building Open62541</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#on-linux">On Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#on-windows">On Windows</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#using-msys2-mingw">Using MSYS2/MinGW</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-msvc">Using MSVC</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#configure-the-device-support-module">Configure the Device Support Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#windows-specifics">Windows Specifics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#known-issues">Known issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#credits">Credits</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#option-b-unified-automation-c-client-sdk"><em>Option B:</em> Unified Automation C++ Client SDK</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">On Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">On Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#devsup-conf-uasdk">Configure the Device Support Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id6">Windows Specifics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Known issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Credits</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="40_build_application.html">Building an IOC Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/debugging.html">Debugging and Tracing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/record_configuration_structure.html">EPICS Records for Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/security_configuration.html">Configuring OPC UA Security</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/iocsh_commands.html">iocShell Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/opcua_concepts.html">Basics, Terms and Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Building the Low-Level OPC UA Client Library</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/20_build_client_lib.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="building-the-low-level-opc-ua-client-library">
+<h1>Building the Low-Level OPC UA Client Library<a class="headerlink" href="#building-the-low-level-opc-ua-client-library" title="Link to this heading"></a></h1>
+<p>Two options for the low-level client library are supported:</p>
+<ul class="simple">
+<li><p>the free open-source client of the
+<a class="reference external" href="https://open62541.org/">open62541 project SDK</a></p></li>
+<li><p>the commercially available
+<a class="reference external" href="https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html">Unified Automation C++ Based OPC UA Client SDK</a>.</p></li>
+</ul>
+<p>These options are alternative - you only need one.</p>
+<p>The choice is completely transparent on the IOC.
+Neither your databases nor the startup script need any change
+when you switch between the options.</p>
+<p>Choose your option, then follow the appropriate instructions
+that provide all the details:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#build-open62541"><span class="std std-ref"><strong>Building the open62541 client</strong></span></a></p></li>
+<li><p><a class="reference internal" href="#build-uasdk"><span class="std std-ref"><strong>Building the Unified Automation client</strong></span></a></p></li>
+</ul>
+<section id="option-a-open62541-client-sdk">
+<span id="build-open62541"></span><h2><em>Option A:</em> open62541 Client SDK<a class="headerlink" href="#option-a-open62541-client-sdk" title="Link to this heading"></a></h2>
+<p>The open62541 Client SDK option was added later, in 2024.
+The client library is not as complete and robust as the UASDK,
+we have seen the API change over recent years.</p>
+<p>However, as the open62541 project is getting more mature and stable,
+an increasing number of Device Support users have switched to this option.</p>
+<section id="status">
+<h3>Status<a class="headerlink" href="#status" title="Link to this heading"></a></h3>
+<p>Despite of being relatively new,
+this option is gaining popularity
+and getting more and more hours of production use.</p>
+<p>Please contact the authors
+<a class="reference external" href="mailto:dirk&#46;zimoch&#37;&#52;&#48;psi&#46;ch">Dirk Zimoch</a> and
+<a class="reference external" href="mailto:ralph&#46;lange&#37;&#52;&#48;gmx&#46;de">Ralph Lange</a> for details.</p>
+</section>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.open62541.org/">open62541</a> SDK / C library
+(v1.2 and v1.3 series have been tested;
+their system packages should also work.
+open62541 v1.4 changed the header file structure and does not work yet.)</p></li>
+<li><p>Cmake (3.x) if you’re building open62541 from sources.</p></li>
+<li><p>For OPC UA security support (authentication/encryption),
+we suggest using the openssl plugin for open62541.
+For that to work,
+you need openssl on your system -
+both when compiling the client library
+and when generating any binaries (IOCs).
+On Linux, the name of the package you have to install
+depends on the distribution:
+development packages are called <code class="docutils literal notranslate"><span class="pre">openssl-devel</span></code> on RedHat/CentOS/Fedora
+and <code class="docutils literal notranslate"><span class="pre">libssl-dev</span></code> on Debian/Ubuntu,
+runtime packages are called <code class="docutils literal notranslate"><span class="pre">openssl</span></code> on RedHat/CentOS/Fedora
+and <code class="docutils literal notranslate"><span class="pre">libssl</span></code> on Debian/Ubuntu, respectively.
+See below for Windows instructions.
+In your <code class="docutils literal notranslate"><span class="pre">CONFIG_SITE.local</span></code> file (see below),
+enable the OPC UA Security option.</p></li>
+</ul>
+</section>
+<section id="building-open62541">
+<h3>Building Open62541<a class="headerlink" href="#building-open62541" title="Link to this heading"></a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The open62541 project is focused on the server implementation of OPC UA.
+The client functionality is fully supported, complete and usable,
+but it does not get the attention that the server parts get.</p>
+</div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Do <em>not</em> use the download link on the open62541 web site.
+Use their GitHub Release Page instead.</p>
+</div>
+</section>
+<section id="on-linux">
+<h3>On Linux<a class="headerlink" href="#on-linux" title="Link to this heading"></a></h3>
+<ul>
+<li><p>Unpack the open62541 distribution.
+Create a build directory on the top level and <code class="docutils literal notranslate"><span class="pre">cd</span></code> into it.
+We’ll go with the usual convention of calling it <code class="docutils literal notranslate"><span class="pre">build</span></code> .</p></li>
+<li><p>The cmake build of Open62541 creates a static library by default.
+This type of library is needed
+for the EMBED type of Device Support build (see below).</p>
+<p>To create shared libraries, build the Open62541 library
+setting the cmake option <code class="docutils literal notranslate"><span class="pre">BUILD_SHARED_LIBS=ON</span></code>.</p>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>..<span class="w"> </span>-DBUILD_SHARED_LIBS<span class="o">=</span>ON<span class="w"> </span><span class="o">[</span>...<span class="o">]</span>
+</pre></div>
+</div>
+<p>You can create both types
+by running two builds with different configurations
+in the same build directory.
+Remove the CMakeCache between the builds to get clean configurations.</p>
+</li>
+<li><p>Open62541 supports multiple low-level libraries
+to implement OPC UA Security.
+The most widely used option
+(that also keeps things simple by staying in line with the UA SDK client)
+is based on openssl.
+We suggest to select that
+by setting the cmake option <code class="docutils literal notranslate"><span class="pre">UA_ENABLE_ENCRYPTION=OPENSSL</span></code>.</p></li>
+<li><p>Given all the above, for a Linux build,
+a reasonable option setting would be:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>..<span class="w"> </span>-DBUILD_SHARED_LIBS<span class="o">=</span>ON<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>RelWithDebInfo<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DUA_ENABLE_ENCRYPTION<span class="o">=</span>OPENSSL
+</pre></div>
+</div>
+<p>to create a shared library, and</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>..<span class="w"> </span>-DBUILD_SHARED_LIBS<span class="o">=</span>OFF<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>RelWithDebInfo<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DCMAKE_INTERPROCEDURAL_OPTIMIZATION<span class="o">=</span>OFF<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DUA_ENABLE_ENCRYPTION<span class="o">=</span>OPENSSL
+</pre></div>
+</div>
+<p>to create the static variant.</p>
+<p>There are a lot of other options available,
+but most of them affect only the server part
+and are not relevant for use of the client.</p>
+<p>For Open62541 version 1.2,
+set <code class="docutils literal notranslate"><span class="pre">UA_ENABLE_ENCRYPTION_OPENSSL=ON</span></code>
+instead of the OPENSSL setting shown above.
+You may also have to explicitly set the open62541 version string
+in file <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code>,
+as the auto-detection doesn’t work when you’re not working under git.</p>
+</li>
+<li><p>The default installation location is below <code class="docutils literal notranslate"><span class="pre">/usr/local</span></code>.
+Normally, this is a system location,
+so that the deploy mode setting (see below) would be <code class="docutils literal notranslate"><span class="pre">SYSTEM</span></code>.
+If you want to install into a different location,
+set the option <code class="docutils literal notranslate"><span class="pre">CMAKE_INSTALL_PREFIX=/other/location</span></code>.
+In that case,
+the deploy mode setting (see below) would be <code class="docutils literal notranslate"><span class="pre">PROVIDED</span></code>
+and the library location needs to be set.
+The same is true
+if you want to use the Open62541 library
+in its build location (not recommended).
+The library location (set in <code class="docutils literal notranslate"><span class="pre">CONFIG_SITE.local</span></code>)
+would be <code class="docutils literal notranslate"><span class="pre">$(OPEN62541)/build/bin</span></code> or <code class="docutils literal notranslate"><span class="pre">$(OPEN62541)/build/bin/Release</span></code>
+or something different,
+depending on your installation, OS and choice of build directory name.</p></li>
+<li><p>After running <code class="docutils literal notranslate"><span class="pre">cmake</span></code>, run <code class="docutils literal notranslate"><span class="pre">make</span></code> followed by <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">install</span></code>.
+Installation into a system location will need root permission.</p></li>
+</ul>
+</section>
+<section id="on-windows">
+<h3>On Windows<a class="headerlink" href="#on-windows" title="Link to this heading"></a></h3>
+<p>See the EPICS <a class="reference external" href="https://docs.epics-controls.org/en/latest/getting-started/installation-windows.html">Windows Installation How-To</a>
+for an overview and introduction to the different compilation options
+under Windows.</p>
+<section id="using-msys2-mingw">
+<h4>Using MSYS2/MinGW<a class="headerlink" href="#using-msys2-mingw" title="Link to this heading"></a></h4>
+<ul>
+<li><p>Install the necessary tools and dependencies
+using the <code class="docutils literal notranslate"><span class="pre">pacman</span></code> system package manager.
+You will need <code class="docutils literal notranslate"><span class="pre">mingw-w64-x86_64-cmake</span></code>,
+<code class="docutils literal notranslate"><span class="pre">mingw-w64-x86_64-libxml2</span></code>
+and <code class="docutils literal notranslate"><span class="pre">mingw-w64-x86_64-openssl</span></code>.</p></li>
+<li><p>Unpack the open62541 distribution.
+Create a build directory on the top level and <code class="docutils literal notranslate"><span class="pre">cd</span></code> into it.
+We’ll go with the usual convention of calling it <code class="docutils literal notranslate"><span class="pre">build</span></code> .</p></li>
+<li><p>A reasonable option setting for running <code class="docutils literal notranslate"><span class="pre">cmake</span></code>
+would look similar to the Linux variant:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>..<span class="w"> </span>-G<span class="w"> </span><span class="s2">&quot;MinGW Makefiles&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DBUILD_SHARED_LIBS<span class="o">=</span>ON<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>RelWithDebInfo<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DUA_ENABLE_ENCRYPTION<span class="o">=</span>OPENSSL
+</pre></div>
+</div>
+</li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">mingw32-make</span></code> followed by <code class="docutils literal notranslate"><span class="pre">mingw32-make</span> <span class="pre">install</span></code>.</p></li>
+</ul>
+</section>
+<section id="using-msvc">
+<h4>Using MSVC<a class="headerlink" href="#using-msvc" title="Link to this heading"></a></h4>
+<ul>
+<li><p>Get the necessary prerequisites and install them:
+Python version 3 can be found <a class="reference external" href="https://www.python.org/downloads/windows/">here</a>.
+<code class="docutils literal notranslate"><span class="pre">libml2</span></code> and <code class="docutils literal notranslate"><span class="pre">iconv</span></code> binaries for Windows
+can be found <a class="reference external" href="https://github.com/mhils/libxml2-win-binaries/releases">here</a>
+or <a class="reference external" href="http://xmlsoft.org/sources/win32/64bit/">here</a>.
+Install them in an appropriate location.
+You might have to rename <code class="docutils literal notranslate"><span class="pre">.dll.a</span></code> DLL export stubs
+to <code class="docutils literal notranslate"><span class="pre">.lib</span></code> to work properly with the EPICS build system.
+<code class="docutils literal notranslate"><span class="pre">openssl</span></code> can be found <a class="reference external" href="https://slproweb.com/products/Win32OpenSSL.html">here</a>.
+The installer makes sure
+that MSVC finds it (without explicit configuration).</p></li>
+<li><p>Unpack the open62541 distribution.
+Create a build directory on the top level and <code class="docutils literal notranslate"><span class="pre">cd</span></code> into it.
+We’ll go with the usual convention of calling it <code class="docutils literal notranslate"><span class="pre">build</span></code> .</p></li>
+<li><p>A reasonable option setting for running <code class="docutils literal notranslate"><span class="pre">cmake</span></code> would look like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>..<span class="w"> </span>-DBUILD_SHARED_LIBS<span class="o">=</span>ON<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>RelWithDebInfo<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>-DUA_ENABLE_ENCRYPTION<span class="o">=</span>OPENSSL
+</pre></div>
+</div>
+<p>plus <code class="docutils literal notranslate"><span class="pre">-DCMAKE_INSTALL_PREFIX=/other/location</span></code>
+if you want to select where things are installed.</p>
+<p>The cmake configuration seems to have a bug (seen on 1.3.6)
+that always selects <code class="docutils literal notranslate"><span class="pre">Release</span></code> for the path of the library to install.
+The easiest fix is to replace that string
+with the appropriate path (<code class="docutils literal notranslate"><span class="pre">Debug</span></code>)
+in two places in the block
+between lines 35 and 55 of the file <code class="docutils literal notranslate"><span class="pre">cmake_install.cmake</span></code>.</p>
+</li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--build</span> <span class="pre">.</span></code> followed by <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--install</span> <span class="pre">.</span></code>
+to build and install the library.</p></li>
+</ul>
+</section>
+</section>
+<section id="configure-the-device-support-module">
+<span id="devsup-conf-open62541"></span><h3>Configure the Device Support Module<a class="headerlink" href="#configure-the-device-support-module" title="Link to this heading"></a></h3>
+<p>Inside the <code class="docutils literal notranslate"><span class="pre">configure</span></code> subdirectory or one level above the TOP location,
+create a file <code class="docutils literal notranslate"><span class="pre">RELEASE.local</span></code>
+that sets <code class="docutils literal notranslate"><span class="pre">EPICS_BASE</span></code> to the absolute path of your EPICS installation.</p>
+<p>Inside the <code class="docutils literal notranslate"><span class="pre">configure</span></code> subdirectory or one level above the TOP location,
+create a file <code class="docutils literal notranslate"><span class="pre">CONFIG_SITE.local</span></code>
+that sets the absolute path of your Open62541 installation
+as well as its build and deploy features if necessary.
+You also need to configure the locations
+of the other dependencies that you installed.</p>
+<div class="highlight-Makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Path to the Open62541 C++ installation</span>
+<span class="nv">OPEN62541</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/other/location
+
+<span class="c"># How the Open62541 shared libraries are deployed</span>
+<span class="c">#   SYSTEM = shared libs are in a system location</span>
+<span class="c">#   PROVIDED = shared libs are in $(OPEN62541_SHRLIB_DIR)</span>
+<span class="c">#   INSTALL = shared libs are installed (copied) into this module</span>
+<span class="c">#   EMBED = link Open62541 code statically into libopcua,</span>
+<span class="c">#           the Open62541 libraries are not required on target system</span>
+<span class="nv">OPEN62541_DEPLOY_MODE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>PROVIDED
+<span class="nv">OPEN62541_LIB_DIR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>OPEN62541<span class="k">)</span>/lib
+<span class="nv">OPEN62541_SHRLIB_DIR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>OPEN62541_LIB_DIR<span class="k">)</span>
+<span class="c"># How the Open62541 libraries were built</span>
+<span class="nv">OPEN62541_USE_CRYPTO</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>YES
+<span class="nv">OPEN62541_USE_XMLPARSER</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>YES
+</pre></div>
+</div>
+<p>This open62541 related configuration
+is only needed in the Device Support module.
+During the build,
+it creates a <code class="docutils literal notranslate"><span class="pre">CONFIG_OPCUA</span></code> file that is automatically included
+by all downstream (IOC-generating) modules and applications.
+This ensures that the configuration is always consistent.</p>
+<section id="windows-specifics">
+<h4>Windows Specifics<a class="headerlink" href="#windows-specifics" title="Link to this heading"></a></h4>
+<p>All paths in EPICS build configuration files
+must use Windows “short names” where needed, e.g.</p>
+<div class="highlight-Makefile notranslate"><div class="highlight"><pre><span></span><span class="nv">OPEN62541</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>C:/PROGRA~2/open62541-1.3.6-MinGW/
+</pre></div>
+</div>
+<p>If you’re using MSYS2/MinGW64,
+you need to set the location of the MinGW64 installation
+in a CONFIG_SITE file, e.g.</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Location of MSYS2/MinGW64</span>
+<span class="nv">MSYSTEM_PREFIX</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>C:/msys64/mingw64
+</pre></div>
+</div>
+<p>When using MSVC,
+you need to add the settings for the dependencies
+that you installed in non-system locations:</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Prerequisites: libxml2 iconv</span>
+<span class="nv">LIBXML2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>C:/dependency/location/libxml2-2.9.3
+<span class="nv">ICONV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>C:/dependency/location/iconv-1.14
+</pre></div>
+</div>
+<p>As always on Windows,
+the build environment as well as the runtime environment (for any IOC)
+need to have the locations of all DLLs in the PATH
+to be able to run binaries (also applies to the unit tests).
+You will need to add the appropriate locations for EPICS Base,
+the opcua module, the open62541 library and all other dependencies you installed.
+Alternatively,
+you can put copies of all needed DLLs into the location of the binaries.
+(Remember that <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">distclean</span></code> will remove those copies.)</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Over time, Windows systems will have a large number
+of possibly different DLLs with the same names and/or versions
+being used concurrently on the system -
+a situation that is hard to maintain
+and known as <a class="reference external" href="https://en.wikipedia.org/wiki/DLL_Hell">DLL Hell</a>.</p>
+<p>If you want your IOC binaries to be deployable
+without depending on specific DLLs being present on the target system,
+consider linking your IOCs statically.
+(Note that static builds are not available when using the evaluation bundles.)</p>
+</div>
+</section>
+</section>
+<section id="known-issues">
+<h3>Known issues<a class="headerlink" href="#known-issues" title="Link to this heading"></a></h3>
+<p>n/a</p>
+</section>
+<section id="credits">
+<h3>Credits<a class="headerlink" href="#credits" title="Link to this heading"></a></h3>
+<p>The adaption of the open62541 client library
+has been done by Dirk Zimoch (PSI)
+with help from Carsten Winkler (HZB/BESSY II).
+Additional EPICS build system magic by Ralph Lange (ITER).</p>
+<!-- Links -->
+</section>
+</section>
+<section id="option-b-unified-automation-c-client-sdk">
+<span id="build-uasdk"></span><h2><em>Option B:</em> Unified Automation C++ Client SDK<a class="headerlink" href="#option-b-unified-automation-c-client-sdk" title="Link to this heading"></a></h2>
+<p>The Unified Automation SDK (UASDK) was the first and original low-level client
+used in the OPC UA Device Support.
+It is a very stable and complete “gold-standard” implementation.</p>
+<p>Unified Automation offers a freely available evaluation bundle (binary),
+which offers full functionality
+with a running time limited to one hour.</p>
+<section id="id1">
+<h3>Status<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>Support for this low-level client is stable,
+with some expected development still to be happening.</p>
+<p>Please contact the authors
+<a class="reference external" href="mailto:dirk&#46;zimoch&#37;&#52;&#48;psi&#46;ch">Dirk Zimoch</a> and
+<a class="reference external" href="mailto:ralph&#46;lange&#37;&#52;&#48;gmx&#46;de">Ralph Lange</a> for details.</p>
+</section>
+<section id="id2">
+<h3>Prerequisites<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Unified Automation C++ Based <a class="reference external" href="https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html">OPC UA Client SDK</a>
+(1.5/1.6/1.7 are supported, as well as their evaluation bundles).</p></li>
+<li><p>Windows and Linux builds are supported.</p></li>
+<li><p>The evaluation binary bundles by Unified Automation
+(free download) are supported.
+However, the EVAL bundle contains a shared library (DLL),
+namely the stack component, see below,
+so only shared builds of the Device Support will work.</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>On Linux<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ul>
+<li><p>For OPC UA security support (authentication/encryption),
+you need <code class="docutils literal notranslate"><span class="pre">libcrypto</span></code> on your system -
+both when compiling the SDK and when generating any binaries (IOCs).
+The name of the package you have to install
+depends on the Linux distribution:
+<code class="docutils literal notranslate"><span class="pre">openssl-devel</span></code> on RedHat/CentOS/Fedora,
+<code class="docutils literal notranslate"><span class="pre">libssl-dev</span></code> on Debian/Ubuntu.</p></li>
+<li><p>The UA Client SDK sets <code class="docutils literal notranslate"><span class="pre">BUILD_SHARED_LIBS=OFF</span></code> as default.
+To create shared SDK libraries, build the SDK using</p>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>./buildSdk.sh<span class="w"> </span>-s<span class="w"> </span>ON
+</pre></div>
+</div>
+<p>In many versions of the SDK,
+the <code class="docutils literal notranslate"><span class="pre">buildSdk.sh</span></code> build script does not apply the <code class="docutils literal notranslate"><span class="pre">-s</span> <span class="pre">ON</span></code> setting
+to the stack component.
+To fix this and create a complete shared library set of the SDK,
+apply the following patch (shown for 1.5.5):</p>
+<div class="highlight-Diff notranslate"><div class="highlight"><pre><span></span><span class="gd">--- buildSdk.sh</span>
+<span class="gi">+++ buildSdk.sh</span>
+<span class="gu">@@ -95,7 +95,7 @@</span>
+<span class="w"> </span>    cd $UASDKDIR/build$config || { echo &quot;cd $UASDKDIR/build$config failed.&quot;; exit 1; }
+<span class="w"> </span>    # create the Makefile using CMake
+<span class="w"> </span>    # Just create only the SDK Makefiles
+<span class="gd">-    cmake &quot;$TOOLCHAIN&quot; &quot;$OPTION&quot; -DBUILD_EXAMPLES=off -DBUILD_UACLIENTCPP_APP=off -DBUILD_UASERVERCPP_APP=off -DENABLE_GCC_FORTIFY_SOURCE=off -DCMAKE_BUILD_TYPE=$config -DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX $UASDKDIR</span>
+<span class="gi">+    cmake &quot;$TOOLCHAIN&quot; &quot;$OPTION&quot; -DBUILD_EXAMPLES=off -DBUILD_UACLIENTCPP_APP=off -DBUILD_UASERVERCPP_APP=off -DENABLE_GCC_FORTIFY_SOURCE=off -DCMAKE_BUILD_TYPE=$config -DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS -DBUILD_SHARED_STACK=$BUILD_SHARED_LIBS -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX $UASDKDIR</span>
+<span class="w"> </span>    # build
+<span class="w"> </span>    make &quot;$JOBS&quot; || { echo &quot;make failed.&quot;; exit 1; }
+<span class="w"> </span>    # install
+</pre></div>
+</div>
+<p>You can build the shared and the static versions of the SDK
+in the same location (there are no artifact conflicts).
+This allows full flexibility for the Device Support module
+and your IOC applications, i.e., static and shared builds.</p>
+</li>
+</ul>
+</section>
+<section id="id4">
+<h3>On Windows<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Extract the SDK to a known location,
+e.g., <code class="docutils literal notranslate"><span class="pre">/opt/unifiedautomation/UaSdkCppBundle</span></code>
+or <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\UnifiedAutomation\UaSdkCppBundle</span></code>.
+This is where the Makefile variable <code class="docutils literal notranslate"><span class="pre">UASDK</span></code>
+should point to (see below).</p></li>
+<li><p>Binary libraries (DLLs and headers) of matching versions
+for openssl and libxml2 are provided
+under the <code class="docutils literal notranslate"><span class="pre">third-party</span></code> directory of the SDK bundle.</p></li>
+</ul>
+</section>
+<section id="devsup-conf-uasdk">
+<span id="id5"></span><h3>Configure the Device Support Module<a class="headerlink" href="#devsup-conf-uasdk" title="Link to this heading"></a></h3>
+<p>Inside the <code class="docutils literal notranslate"><span class="pre">configure</span></code> subdirectory or one level above the TOP location,
+create a file <code class="docutils literal notranslate"><span class="pre">RELEASE.local</span></code>
+that sets <code class="docutils literal notranslate"><span class="pre">EPICS_BASE</span></code> to the absolute path of your EPICS installation.</p>
+<p>Inside the <code class="docutils literal notranslate"><span class="pre">configure</span></code> subdirectory or one level above the TOP location,
+create a file <code class="docutils literal notranslate"><span class="pre">CONFIG_SITE.local</span></code>
+that sets the absolute path of your SDK installation
+as well as the SDK build and deploy features if necessary.</p>
+<div class="highlight-Makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Path to the Unified Automation OPC UA C++ SDK</span>
+<span class="nv">UASDK</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/usr/local/opcua/uasdkcppclient-v1.5.3-346/sdk
+
+<span class="c"># How the Unified Automation SDK shared libraries are deployed</span>
+<span class="c">#   SYSTEM = shared libs are in a system location</span>
+<span class="c">#   PROVIDED = shared libs are in $(UASDK_SHRLIB_DIR)</span>
+<span class="c">#   INSTALL = shared libs are installed (copied) into this module</span>
+<span class="c">#   EMBED = link SDK code statically into libopcua,</span>
+<span class="c">#           SDK libraries are not required on target system</span>
+<span class="nv">UASDK_DEPLOY_MODE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>PROVIDED
+<span class="nv">UASDK_LIB_DIR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>UASDK<span class="k">)</span>/lib
+<span class="nv">UASDK_SHRLIB_DIR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>UASDK_LIB_DIR<span class="k">)</span>
+<span class="c"># How the Unified Automation SDK libraries were built</span>
+<span class="nv">UASDK_USE_CRYPTO</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>YES
+<span class="nv">UASDK_USE_XMLPARSER</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>YES
+</pre></div>
+</div>
+<p>This SDK related configuration is only needed in the Device Support module.
+During the build,
+it creates a <code class="docutils literal notranslate"><span class="pre">CONFIG_OPCUA</span></code> file that is automatically included
+by all downstream (IOC-generating) modules and applications.
+This ensures that the configuration is always consistent.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>When using the evaluation bundle of the SDK,
+only regular (shared) builds are supported.
+Do not set <code class="docutils literal notranslate"><span class="pre">STATIC_BUILD</span> <span class="pre">=</span> <span class="pre">YES</span></code> in your configuration.</p>
+</div>
+<section id="id6">
+<h4>Windows Specifics<a class="headerlink" href="#id6" title="Link to this heading"></a></h4>
+<p>Windows builds should use <code class="docutils literal notranslate"><span class="pre">UASDK_DEPLOY_MODE</span> <span class="pre">=</span> <span class="pre">PROVIDED</span></code>
+and set <code class="docutils literal notranslate"><span class="pre">UASDK</span></code> to the location of the Unified Automation bundle.</p>
+<p>All paths in EPICS build configuration files
+must use Windows “short names” where needed, e.g.</p>
+<div class="highlight-Makefile notranslate"><div class="highlight"><pre><span></span><span class="nv">UASDK</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>C:/PROGRA~2/UnifiedAutomation/UaSdkCppBundleEval
+</pre></div>
+</div>
+<p>In your <code class="docutils literal notranslate"><span class="pre">CONFIG_SITE.local</span></code>,
+you also need to define the locations
+of the supplied third-party dependencies.</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Prerequisites: libxml2 openssl</span>
+<span class="nv">LIBXML2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>UASDK<span class="k">)</span>/third-party/win64/vs2015/libxml2
+<span class="nv">OPENSSL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>UASDK<span class="k">)</span>/third-party/win64/vs2015/openssl
+</pre></div>
+</div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Different versions of the Unified Automation bundle
+have these libraries in different folders, under different names.
+Check <code class="docutils literal notranslate"><span class="pre">configure/CONFIG_SITE.Common.win32-x86</span></code>
+and adapt the settings to your situation.</p>
+</div>
+<p>If you do not have Administrator rights
+or if you want to unpack multiple versions of the UA SDK bundle,
+<a class="reference external" href="https://github.com/Bioruebe/UniExtract2">UniExtract2</a> is your friend.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>The evaluation bundle only contains binary libraries
+to be used with the MSVC compilers.
+MinGW can not be used with the libraries from the bundle,
+as the C++ name mangling is different.</p>
+</div>
+<p>As always on Windows,
+the build environment as well as the runtime environment (for any IOC)
+need to have the locations of all DLLs in the PATH
+to be able to run binaries (also applies to the unit tests).
+You will need to add the appropriate locations for EPICS Base,
+the opcua module, the UASDK library and all other dependencies you installed.
+Alternatively,
+you can put copies of all needed DLLs into the location of the binaries.
+(Remember that <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">distclean</span></code> will remove those copies.)</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Over time, Windows systems will have a large number
+of possibly different DLLs with the same names and/or versions
+being used concurrently on the system -
+a situation that is hard to maintain
+and known as <a class="reference external" href="https://en.wikipedia.org/wiki/DLL_Hell">DLL Hell</a>.</p>
+<p>If you want your IOC binaries to be deployable
+without depending on specific DLLs being present on the target system,
+consider linking your IOCs statically.
+(Note that static builds are not available when using the evaluation bundles.)</p>
+</div>
+<p>On newer Windows systems,
+the Windows system version of the openssl DLLs
+are not compatible with the UA SDK bundled versions (see below).
+Copy the vendor-supplied DLLs
+next to the binaries to avoid a mismatch.</p>
+</section>
+</section>
+<section id="id7">
+<h3>Known issues<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>Reported by Shi Li (ASIPP):
+The C++ SDK version 1.7.1 has a bug
+that shows as monitored items not getting updates anymore
+after the server has disconnected and reconnected.
+A reboot of the IOC restores good behavior
+until the server disconnects again.
+Updating the C++ SDK to version 1.7.2 resolves the issue.</p>
+</section>
+<section id="id8">
+<h3>Credits<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>This option is based
+on extensive <a class="reference external" href="https://github.com/bkuner/opcUaUnifiedAutomation">prototype work</a>
+by Bernhard Kuner (HZB/BESSY).
+Support for Windows builds with help from Carsten Winkler (HZB/BESSY).</p>
+<!-- Links -->
+<!-- Links -->
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="10_getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="30_build_devsup.html" class="btn btn-neutral float-right" title="Building the Device Support Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

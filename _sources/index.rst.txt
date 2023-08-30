@@ -1,0 +1,68 @@
+.. OPC UA Device Support documentation master file
+
+OPC UA Device Support
+=====================
+
+`EPICS <https://epics-controls.org>`_
+Device Support module for interfacing to controllers and servers using the
+`OPC UA <https://opcfoundation.org/about/opc-technologies/opc-ua/>`_ protocol.
+
+- Sources: https://github.com/epics-modules/opcua
+- Documentation: https://epics-modules.github.io/opcua
+- Usage / FAQ (Wiki): https://github.com/epics-modules/opcua/wiki
+- `Issues <https://github.com/epics-modules/opcua/issues>`_ (see :ref:`reportbug`)
+- :ref:`contrib`
+
+The Device Support sits on top of a low-level OPC UA client library.
+Two SDKs are supported - you need to choose and provide one of them:
+
+* The commercially available Unified Automation C++ Based
+  `OPC UA Client SDK <https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html>`_
+
+* The freely available client SDK of the
+  `open62541 project <https://open62541.org/>`_
+
+Linux and Windows builds are supported for both client library options.
+
+Dependencies
+------------
+
+* A C++11 compliant compiler
+
+ * GCC >= 4.6
+ * Visual Studio >= 2015 / 12.0
+
+* `EPICS Base <https://epics-controls.org/resources-and-support/base/>`_
+  >= 3.15.7 or EPICS 7 >= 7.0.4
+* One of the two supported SDKs (see above)
+* (optional) The `gtest module <https://github.com/epics-modules/gtest>`_
+  if you want to compile and run the unit tests
+
+See :ref:`building` for details.
+
+Download
+--------
+
+Releases are published at https://github.com/epics-modules/opcua/releases.
+
+This includes binary distribution tars,
+which allow using the commercial Unified Automation Client SDK libraries
+without any purchase or fee.
+
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
+
+   overview
+   building
+   usage
+   security
+   credits
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

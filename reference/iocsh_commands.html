@@ -1,0 +1,439 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iocShell Command Reference &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Record Types" href="record_types.html" />
+    <link rel="prev" title="Configuring OPC UA Security" href="../how-to/security_configuration.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/40_build_application.html">Building an IOC Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/debugging.html">Debugging and Tracing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/record_configuration_structure.html">EPICS Records for Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/security_configuration.html">Configuring OPC UA Security</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">iocShell Command Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#session-management">Session Management</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuasession">Command <code class="docutils literal notranslate"><span class="pre">opcuaSession</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#commands-opcuaconnect-opcuadisconnect">Commands <code class="docutils literal notranslate"><span class="pre">opcuaConnect</span></code> / <code class="docutils literal notranslate"><span class="pre">opcuaDisconnect</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuamapnamespace">Command <code class="docutils literal notranslate"><span class="pre">opcuaMapNamespace</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#subscription-management">Subscription Management</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuasubscription">Command <code class="docutils literal notranslate"><span class="pre">opcuaSubscription</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#setting-options">Setting Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuaoptions">Command <code class="docutils literal notranslate"><span class="pre">opcuaOptions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#table-of-session-options">Table of Session Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#table-of-subscription-options">Table of Subscription Options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#opc-ua-security-management">OPC UA Security Management</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuaclientcertificate">Command <code class="docutils literal notranslate"><span class="pre">opcuaClientCertificate</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuasetuppki">Command <code class="docutils literal notranslate"><span class="pre">opcuaSetupPKI</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuasaverejected">Command <code class="docutils literal notranslate"><span class="pre">opcuaSaveRejected</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuashowsecurity">Command <code class="docutils literal notranslate"><span class="pre">opcuaShowSecurity</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#inspection-and-debugging">Inspection and Debugging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-opcuashow">Command <code class="docutils literal notranslate"><span class="pre">opcuaShow</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/opcua_concepts.html">Basics, Terms and Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">iocShell Command Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/iocsh_commands.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="iocshell-command-reference">
+<span id="iocsh-command-reference"></span><h1>iocShell Command Reference<a class="headerlink" href="#iocshell-command-reference" title="Link to this heading"></a></h1>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 0.9: </span>The unified <code class="docutils literal notranslate"><span class="pre">opcuaSession</span></code>, <code class="docutils literal notranslate"><span class="pre">opcuaSubscription</span></code>, and <code class="docutils literal notranslate"><span class="pre">opcuaOptions</span></code> commands
+are replacing the older <code class="docutils literal notranslate"><span class="pre">opcuaCreate...</span></code> commands.</p>
+</div>
+<section id="session-management">
+<h2>Session Management<a class="headerlink" href="#session-management" title="Link to this heading"></a></h2>
+<section id="command-opcuasession">
+<span id="iocsh-opcuasession"></span><h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaSession</span></code><a class="headerlink" href="#command-opcuasession" title="Link to this heading"></a></h3>
+<p>Configures a new OPC UA session.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaSession</span> <span class="o">&lt;</span><span class="n">name</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">serverURL</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">options</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>:
+Unique name for the session.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">serverURL</span></code>:
+Server endpoint (e.g., <code class="docutils literal notranslate"><span class="pre">opc.tcp://localhost:4840</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">options</span></code>:
+Key-value pairs (e.g., <code class="docutils literal notranslate"><span class="pre">autoconnect=n</span></code> or <code class="docutils literal notranslate"><span class="pre">debug=1</span></code>).</p></li>
+</ul>
+</section>
+<section id="commands-opcuaconnect-opcuadisconnect">
+<h3>Commands <code class="docutils literal notranslate"><span class="pre">opcuaConnect</span></code> / <code class="docutils literal notranslate"><span class="pre">opcuaDisconnect</span></code><a class="headerlink" href="#commands-opcuaconnect-opcuadisconnect" title="Link to this heading"></a></h3>
+<p>Manually connect or disconnect sessions matching a glob pattern.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaConnect</span> <span class="o">&lt;</span><span class="n">pattern</span><span class="o">&gt;</span>
+<span class="n">opcuaDisconnect</span> <span class="o">&lt;</span><span class="n">pattern</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pattern</span></code>:
+Session name glob pattern.</p></li>
+</ul>
+<p>For sessions using the option <code class="docutils literal notranslate"><span class="pre">autoconnect=y</span></code>,
+these commands will also switch the feature accordingly.</p>
+</section>
+<section id="command-opcuamapnamespace">
+<h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaMapNamespace</span></code><a class="headerlink" href="#command-opcuamapnamespace" title="Link to this heading"></a></h3>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 0.8: </span>Maps a numerical namespace index used in the database to a URI on the server.</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaMapNamespace</span> <span class="o">&lt;</span><span class="n">session</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">index</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">URI</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">session</span></code>:
+Name of the session.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">index</span></code>:
+Namespace index locally used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">URI</span></code>:
+URI in the server’s namespace table to map <code class="docutils literal notranslate"><span class="pre">index</span></code> to.</p></li>
+</ul>
+<p>On the wire, namespaces are always integers.
+A few are reserved well-known namespaces for OPC UA or the server itself.
+The other namespaces are assigned by the server.
+Every namespace has a unique URI, which the server adds to a “namespace array”.
+The number of a namespace (used on the wire)
+is the index of its URI in the server’s namespace array.</p>
+<p>If a server assigns numbers dynamically, the <code class="docutils literal notranslate"><span class="pre">opcuaMapNamespace</span></code> command
+allows to map a namespace number used in the IOC’s databases
+to its URI on the server.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>In your session <code class="docutils literal notranslate"><span class="pre">OPC1</span></code>,
+you want to connect to a device
+that is dynamically mapped in the OPC UA server.
+You know that the namespace URI is “urn:MyCompany:UaServer:node3”.</p>
+<p>To connect, use an arbitrary namespace index in your databases, e.g. <code class="docutils literal notranslate"><span class="pre">42</span></code>.
+Then call</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaMapNamespace</span> <span class="n">OPC1</span> <span class="mi">42</span> <span class="n">urn</span><span class="p">:</span><span class="n">MyCompany</span><span class="p">:</span><span class="n">UaServer</span><span class="p">:</span><span class="n">node3</span>
+</pre></div>
+</div>
+<p>The IOC will download the server’s namespace array
+and replace namespace index <code class="docutils literal notranslate"><span class="pre">42</span></code> in your records
+with the correct index for the specified URI.</p>
+</div>
+</section>
+</section>
+<section id="subscription-management">
+<h2>Subscription Management<a class="headerlink" href="#subscription-management" title="Link to this heading"></a></h2>
+<section id="command-opcuasubscription">
+<span id="iocsh-opcuasubscription"></span><h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaSubscription</span></code><a class="headerlink" href="#command-opcuasubscription" title="Link to this heading"></a></h3>
+<p>Configures a new subscription and binds it to an existing session.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaSubscription</span> <span class="o">&lt;</span><span class="n">name</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">session</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">publishing_interval</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">options</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>:
+Unique name for the subscription.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">session</span></code>:
+Name of the session that this subscription is added to.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">publishing_interval</span></code>:
+Publishing interval for the subscription [ms].</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">options</span></code>:
+Key-value pairs (e.g., <code class="docutils literal notranslate"><span class="pre">priority=50</span></code> or <code class="docutils literal notranslate"><span class="pre">debug=1</span></code>).</p></li>
+</ul>
+</section>
+</section>
+<section id="setting-options">
+<h2>Setting Options<a class="headerlink" href="#setting-options" title="Link to this heading"></a></h2>
+<section id="command-opcuaoptions">
+<h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaOptions</span></code><a class="headerlink" href="#command-opcuaoptions" title="Link to this heading"></a></h3>
+<p>Sets options for existing sessions or subscriptions matching a pattern.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaOptions</span> <span class="o">&lt;</span><span class="n">pattern</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">options</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pattern</span></code>:
+Session or Subscription name glob pattern.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">options</span></code>:
+Key-value pairs (e.g., <code class="docutils literal notranslate"><span class="pre">autoconnect=n</span></code> or <code class="docutils literal notranslate"><span class="pre">debug=1</span></code>).</p></li>
+</ul>
+</section>
+<section id="table-of-session-options">
+<h3>Table of Session Options<a class="headerlink" href="#table-of-session-options" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Function</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><em>General</em></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">debug</span></code></p></td>
+<td><p>Verbosity level of debugging [default: <code class="docutils literal notranslate"><span class="pre">0</span></code> = off]</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">autoconnect</span></code></p></td>
+<td><p>Automatically connect/reconnect to server [<code class="docutils literal notranslate"><span class="pre">y</span></code>/<code class="docutils literal notranslate"><span class="pre">n</span></code>; default: <code class="docutils literal notranslate"><span class="pre">y</span></code>]</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>Batch and Throttle</em></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">nodes-max</span></code></p></td>
+<td><p>Maximum number of nodes used in any low-level service call<br>
+(client will split larger requests into multiple batches)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">read-nodes-max</span></code></p></td>
+<td><p>Maximum number of nodes per read service call<br>
+(client will split larger read requests into multiple batches)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">read-timeout-min</span></code></p></td>
+<td><p>Timeout (holdoff period) after read service call [ms]<br>
+(used for minimal one node request if read-timeout-max is set)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">read-timeout-max</span></code></p></td>
+<td><p>Timeout (holdoff period) after read service call<br>
+with maximum number of nodes [ms]</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">write-nodes-max</span></code></p></td>
+<td><p>Maximum number of nodes per write service call<br>
+(client will split larger write requests into multiple batches)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">write-timeout-min</span></code></p></td>
+<td><p>Timeout (holdoff period) after write service call [ms]<br>
+(used for minimal one node request if write-timeout-max is set)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">write-timeout-max</span></code></p></td>
+<td><p>Timeout (holdoff period) after write service call<br>
+with maximum number of nodes [ms]</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>Security</em></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sec-mode</span></code></p></td>
+<td><p>Requested security mode [<code class="docutils literal notranslate"><span class="pre">Best</span></code>/<code class="docutils literal notranslate"><span class="pre">None</span></code>/<code class="docutils literal notranslate"><span class="pre">Sign</span></code>/<code class="docutils literal notranslate"><span class="pre">SignAndEncrypt</span></code>;<br>
+default: <code class="docutils literal notranslate"><span class="pre">Best</span></code>; must use <code class="docutils literal notranslate"><span class="pre">None</span></code> for running with no security]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sec-policy</span></code></p></td>
+<td><p>Requested security policy [default: use best available]</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sec-id</span></code></p></td>
+<td><p>Set file to read identity credentials from</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="table-of-subscription-options">
+<h3>Table of Subscription Options<a class="headerlink" href="#table-of-subscription-options" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Function</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">debug</span></code></p></td>
+<td><p>Verbosity level of debugging [default: 0 = off]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">priority</span></code></p></td>
+<td><p>Priority of the subscription [0..255; default: 0 = lowest]</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="opc-ua-security-management">
+<h2>OPC UA Security Management<a class="headerlink" href="#opc-ua-security-management" title="Link to this heading"></a></h2>
+<section id="command-opcuaclientcertificate">
+<h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaClientCertificate</span></code><a class="headerlink" href="#command-opcuaclientcertificate" title="Link to this heading"></a></h3>
+<p>Sets the client’s own certificate and private key.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaClientCertificate</span> <span class="o">&lt;</span><span class="n">public_key</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">private_key</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">public_key</span></code>:
+Path to the file containing the certificate (public key).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">private_key</span></code>:
+Path to the file containing the private key.</p></li>
+</ul>
+</section>
+<section id="command-opcuasetuppki">
+<h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaSetupPKI</span></code><a class="headerlink" href="#command-opcuasetuppki" title="Link to this heading"></a></h3>
+<p>Sets the location of the PKI certificate store,
+where certificates and revocation lists are stored.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaSetupPKI</span> <span class="o">&lt;</span><span class="n">PKI_location</span><span class="o">&gt;</span>
+<span class="n">opcuaSetupPKI</span> <span class="o">&lt;</span><span class="n">server_certs</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">server_revocation_lists</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">issuer_certs</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">issuer_revocation_lists</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PKI</span> <span class="pre">location</span></code>:
+Path to the standard PKI directory structure.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">server_certs</span></code>:
+Path to the location of trusted server certificates.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">server_revocation_lists</span></code>:
+Path to the location of server revocation lists.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">issuer_certs</span></code>:
+Path to the location of trusted issuer certificates.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">issuer_revocation_lists</span></code>:
+Path to the location of issuer revocation lists.</p></li>
+</ul>
+</section>
+<section id="command-opcuasaverejected">
+<h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaSaveRejected</span></code><a class="headerlink" href="#command-opcuasaverejected" title="Link to this heading"></a></h3>
+<p>Sets the location where rejected server certificates are saved.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaSaveRejected</span> <span class="o">&lt;</span><span class="n">rejected_cert_location</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rejected_cert_location</span></code>:
+Path to the location for saving rejected server certificates.</p></li>
+</ul>
+</section>
+<section id="command-opcuashowsecurity">
+<h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaShowSecurity</span></code><a class="headerlink" href="#command-opcuashowsecurity" title="Link to this heading"></a></h3>
+<p>Shows discovered endpoints and security details for a session
+or (without argument) show security related information for the IOC.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaShowSecurity</span> <span class="o">&lt;</span><span class="n">session</span><span class="o">&gt;</span>
+<span class="n">opcuaShowSecurity</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">session</span></code>:
+Name of the session to show security info for.</p></li>
+</ul>
+</section>
+</section>
+<section id="inspection-and-debugging">
+<h2>Inspection and Debugging<a class="headerlink" href="#inspection-and-debugging" title="Link to this heading"></a></h2>
+<section id="command-opcuashow">
+<h3>Command <code class="docutils literal notranslate"><span class="pre">opcuaShow</span></code><a class="headerlink" href="#command-opcuashow" title="Link to this heading"></a></h3>
+<p>Shows details for sessions, subscriptions, or records.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaShow</span> <span class="o">&lt;</span><span class="n">pattern</span><span class="o">&gt;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">verbosity</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pattern</span></code>:
+Session or Subscription name glob pattern.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">verbosity</span></code>:
+Sets amount of printed information.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../how-to/security_configuration.html" class="btn btn-neutral float-left" title="Configuring OPC UA Security" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="record_types.html" class="btn btn-neutral float-right" title="Record Types" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

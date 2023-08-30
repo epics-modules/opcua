@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Debugging and Tracing &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Configuring the OPC UA Server on a Siemens S7-1500 Series PLC" href="plc_configuration.html" />
+    <link rel="prev" title="Running and Verifying Your IOC" href="../tutorials/50_run_verify_ioc.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/40_build_application.html">Building an IOC Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Debugging and Tracing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ioc-shell-commands">IOC Shell Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#session-subscription-debugging">Session/Subscription Debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#epics-record-debugging">EPICS Record Debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adaptive-concurrency-monitoring">Adaptive Concurrency Monitoring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-uaexpert-external-tool">Using UaExpert (External Tool)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="record_configuration_structure.html">EPICS Records for Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security_configuration.html">Configuring OPC UA Security</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/iocsh_commands.html">iocShell Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/opcua_concepts.html">Basics, Terms and Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Debugging and Tracing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/how-to/debugging.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="debugging-and-tracing">
+<h1>Debugging and Tracing<a class="headerlink" href="#debugging-and-tracing" title="Link to this heading"></a></h1>
+<p>The OPC UA Device Support module provides
+several tools for debugging and tracing.</p>
+<section id="ioc-shell-commands">
+<h2>IOC Shell Commands<a class="headerlink" href="#ioc-shell-commands" title="Link to this heading"></a></h2>
+<p>Several commands are available for inspecting the state of the module:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">opcuaShow</span></code>:
+Prints information about
+sessions, subscriptions, items, and data elements.
+Supports glob patterns.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">opcuaShowSecurity</span></code>:
+Prints information about the IOCś security setup
+and discovered endpoints on the remote server.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">opcuaConnect</span></code> / <code class="docutils literal notranslate"><span class="pre">opcuaDisconnect</span></code>:
+Manually manage session connections.</p></li>
+</ul>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaShow</span> <span class="n">OPC</span><span class="o">*</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</section>
+<section id="session-subscription-debugging">
+<h2>Session/Subscription Debugging<a class="headerlink" href="#session-subscription-debugging" title="Link to this heading"></a></h2>
+<p>Sessions and Subscriptions have a <code class="docutils literal notranslate"><span class="pre">debug</span></code> option.
+Setting it to <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">1</span></code> (verbosity level)
+will enable printing debug information
+when the client handles things related to it.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaOption</span> <span class="n">OPC1</span> <span class="n">debug</span><span class="o">=</span><span class="mi">5</span>
+</pre></div>
+</div>
+<p>This option can be changed at runtime.
+To see debug messages from initial connection handling,
+enable it before <code class="docutils literal notranslate"><span class="pre">iocInit</span></code>.</p>
+</section>
+<section id="epics-record-debugging">
+<h2>EPICS Record Debugging<a class="headerlink" href="#epics-record-debugging" title="Link to this heading"></a></h2>
+<p>You can enable tracing and debugging for specific EPICS records
+by setting the <code class="docutils literal notranslate"><span class="pre">TPRO</span></code> field to a value <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">1</span></code>.</p>
+<ul class="simple">
+<li><p>In <code class="docutils literal notranslate"><span class="pre">.db</span></code> file:
+<code class="docutils literal notranslate"><span class="pre">field(TPRO,</span> <span class="pre">&quot;1&quot;)</span></code></p></li>
+<li><p>On the IOC:
+<code class="docutils literal notranslate"><span class="pre">dbpf</span> <span class="pre">&lt;RECORD_NAME&gt;.TPRO</span> <span class="pre">1</span></code></p></li>
+<li><p>In a shell:
+<code class="docutils literal notranslate"><span class="pre">caput</span> <span class="pre">&lt;RECORD_NAME&gt;.TPRO</span> <span class="pre">1</span></code></p></li>
+</ul>
+</section>
+<section id="adaptive-concurrency-monitoring">
+<h2>Adaptive Concurrency Monitoring<a class="headerlink" href="#adaptive-concurrency-monitoring" title="Link to this heading"></a></h2>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 0.11: </span>Adaptive concurrency automatically throttles requests
+based on server response times.
+This allows the IOC to gracefully handle slow and fast servers,
+adapting automatically to the available bandwidth.</p>
+<p>If adaptive concurrency is enabled,
+you can monitor its state using <code class="docutils literal notranslate"><span class="pre">opcuaShow</span></code>.
+It will display current limits and performance metrics.</p>
+</div>
+</section>
+<section id="using-uaexpert-external-tool">
+<h2>Using UaExpert (External Tool)<a class="headerlink" href="#using-uaexpert-external-tool" title="Link to this heading"></a></h2>
+<p>UaExpert is a powerful free graphical OPC UA client tool
+from Unified Automation (it uses the same UA SDK)
+that can be used to:</p>
+<ol class="arabic simple">
+<li><p>Test connection to the OPC UA server.</p></li>
+<li><p>Browse the address space.</p></li>
+<li><p>Identify <code class="docutils literal notranslate"><span class="pre">NamespaceIndex</span></code> and <code class="docutils literal notranslate"><span class="pre">Identifier</span></code> (NodeID)
+for EPICS record configuration.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../tutorials/50_run_verify_ioc.html" class="btn btn-neutral float-left" title="Running and Verifying Your IOC" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plc_configuration.html" class="btn btn-neutral float-right" title="Configuring the OPC UA Server on a Siemens S7-1500 Series PLC" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

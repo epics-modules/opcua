@@ -1,0 +1,193 @@
+# Overview
+
+## Basics
+
+### What is EPICS?
+
+[https://docs.epics-controls.org/en/latest/guides/EPICS_Intro.html][epics-intro]
+
+[https://epics-controls.org/][epics-web]
+
+
+### What is OPC UA?
+
+OPC Unified Architecture (OPC UA) is a cross-platform,
+open-source,
+IEC62541 standard for data exchange from sensors to cloud applications
+developed by the [OPC Foundation][opc-foundation].
+
+The OPC UA protocol has become increasingly popular
+with vendors of controllers (like PLCs) and sensors
+as a very powerful integration tool.
+It allows connecting almost any device to almost any SCADA client,
+across vendors, with a certification mechanism that ensures compatibility.
+
+OPC UA integrates all functionality of the individual specifications
+of the former OPC Classic protocol into one extensible framework,
+providing:
+
+*   _Functional equivalence_: 
+    all COM OPC Classic specifications are mapped to UA
+
+*   _Platform independence_:
+    from embedded to cloud-based infrastructure
+
+*   _Security_:
+    encryption, authentication, and auditing
+
+*   _Extensibility_:
+    ability to add new features without affecting existing applications
+
+*   _Information modelling_:
+    for defining complex information
+
+OPC UA is designed for exchanging information in an object-oriented manner,
+rather than as isolated data points.
+This increases the accessibility of plant floor data
+by allowing to re-use information stored in a common object.
+
+The [Wikipedia page on OPC UA][opcua-wiki] has a good overview
+of its characteristics, history and specification.
+
+The complete [OPC UA specification][opcua-spec] is freely available
+on the OPC Foundation web site.
+
+
+## OPC UA Terms and Concepts
+
+### Node
+
+A _Node_ is a uniquely identified piece of information on the server.
+The OPC information model is a mesh network based on nodes.
+These nodes are objects holding process data or any kind of meta information,
+such as attributes, references, methods, types, ...
+
+### NodeID
+
+A _NodeID_ is an identifier for a node, e.g., for a particular OPC UA item.
+A Node ID consists of:
+*   a namespace index number
+*   an identifier type
+*   an identifier
+
+The identifier can be either a string identifier, consisting of a name string,
+or a numerical identifier, consisting of an integer.
+Whenever a client requests to either read or write data to an OPC UA item,
+it identifies the node by means of its NodeID.
+
+### Item
+
+Within the Data Access part of OPC UA,
+an _Item_ is any piece of accessible process data on a server.
+It can represent a single data point or a block of structured data.
+Elements of structured data can be simple data points
+or other structured items.
+
+### Data Element
+
+In the context of this Device Support only
+(i.e., not part of the OPC UA specification),
+a _Data Element_ is a unique data point belonging to a server-side item.
+If that item is of basic or array type, the data element corresponds
+to the value of the item.
+If the item is of a structured type, the data element corresponds
+to one element of the item's structure.
+
+### Namespace
+
+A _Namespace_ is one of multiple server-side scopes for node identifiers,
+which the server uses to avoid name clashes.
+
+A namespace is uniquely defined by an URI.
+To improve performance, the server keeps a table of the URIs
+and the index in that table is used between client and server.
+Some namespaces (and their index numbers)
+are reserved by the OPC UA specification for the protocol and the server.
+
+### Channel
+
+In OPC UA, a _Channel_ is the low-level transport connection
+between a client and a server.
+(The OPC UA Device Support module only supports the TCP transport.)
+A channel can be secured by running it through SSL to be encrypted,
+and/or by signing all messages that are sent through it.
+
+### Session
+
+A _Session_ is a named connection
+between an OPC UA client and an OPC UA server,
+using the transport provided by the channel.
+Typically, there is one session between each client and each server.
+While it is possible to have multiple sessions
+between a single client/server pair,
+this increases resource usage on both ends and is generally not recommended
+unless there is a particular justifying reason
+(such as making use of parallel processing).
+
+### Subscription
+
+A _Subscription_ is a mechanism within a session
+that the client uses to retrieve value updates from a server
+without the need to poll regularly.
+A client establishes a subscription within a session and adds items to it,
+requesting that the server notify the client
+whenever data of the _Monitored Items_ within that subscription changes.
+
+When defining a subscription,
+the client can specify a _publishing interval_ for the server,
+telling it how often it would like to receive updated data.
+For each monitored item that is part of a subscription,
+the client can also specify its _sampling interval_,
+which defines the rate at which the server checks the data source for changes.
+If the OPC UA server supports server-side queueing of data samples,
+the client can also specify for each monitored item the size of that queue.
+
+## The OPC UA Device Support
+
+EPICS applications run processes called IOCs,
+which interface device data to the EPICS Process Database,
+which provides it to the control system through the EPICS network protocols,
+Channel Access and pvAccess.
+
+The Device Support layer enables records in the EPICS Process Database
+to communicate with different device types.
+The OPC UA Device Support is a client of the OPC UA protocol,
+which can read, write and monitor variables residing on an OPC UA server.
+(The relevant part of the OPC UA specification is called "Data Access".)
+
+If your IOC is built correctly (see {ref}`Building an IOC <building-an-ioc>`),
+the OPC UA Device Support is ready to be used.
+You can set up OPC UA sessions and subscriptions from the IOC startup script
+through commands in the IOCshell
+and link EPICS database records to remote OPC UA variables
+through the configuration of your EPICS records.
+
+To support commissioning and troubleshooting, additional IOCshell commands
+allow introspection of the Device Support's internal data structures.
+The regular EPICS trace and debug modes can be used to investigate
+the OPC UA operations at run time.
+
+### Addressing Basic/Array and Structured Types
+
+If an OPC UA item is of basic or array type,
+a single EPICS data record connects to it.
+That record is configured with the session or subscription to be used,
+the nodeID of the item and options that apply to the item level.
+
+If an OPC UA item is of a structured type, a single instance
+of the special opcuaItemRecord type represents the complete structure.
+Many EPICS data records each connect to a single structure element.
+The opcuaItemRecord is configured with all item level configuration.
+The single element data records refer to the opcuaItemRecord
+and specify the address of the strcuture element they connect to
+as well as data element level options.
+
+
+% external links
+
+[epics-intro]: https://docs.epics-controls.org/en/latest/guides/EPICS_Intro.html
+[epics-web]: https://epics-controls.org/
+
+[opc-foundation]: https://opcfoundation.org/
+[opcua-wiki]: https://en.wikipedia.org/wiki/OPC_Unified_Architecture
+[opcua-spec]: https://opcfoundation.org/developer-tools/documents/?type=Specification

@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basics, Terms and Concepts &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OPC UA Security Concepts" href="security_concepts.html" />
+    <link rel="prev" title="Requirements Specification" href="../reference/requirements_spec.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/40_build_application.html">Building an IOC Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/debugging.html">Debugging and Tracing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/record_configuration_structure.html">EPICS Records for Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/security_configuration.html">Configuring OPC UA Security</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/iocsh_commands.html">iocShell Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Basics, Terms and Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basics">Basics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-epics">What is EPICS?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-opc-ua">What is OPC UA?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#opc-ua-terms-and-concepts">OPC UA Terms and Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#node">Node</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nodeid">NodeID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#item">Item</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-element">Data Element</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#namespace">Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#channel">Channel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#session">Session</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#subscription">Subscription</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-opc-ua-device-support">The OPC UA Device Support</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#addressing-basic-array-and-structured-types">Addressing Basic/Array and Structured Types</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Basics, Terms and Concepts</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/explanation/opcua_concepts.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="basics-terms-and-concepts">
+<h1>Basics, Terms and Concepts<a class="headerlink" href="#basics-terms-and-concepts" title="Link to this heading"></a></h1>
+<section id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Link to this heading"></a></h2>
+<section id="what-is-epics">
+<h3>What is EPICS?<a class="headerlink" href="#what-is-epics" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://docs.epics-controls.org/en/latest/guides/EPICS_Intro.html">https://docs.epics-controls.org/en/latest/guides/EPICS_Intro.html</a></p>
+<p><a class="reference external" href="https://epics-controls.org/">https://epics-controls.org/</a></p>
+</section>
+<section id="what-is-opc-ua">
+<h3>What is OPC UA?<a class="headerlink" href="#what-is-opc-ua" title="Link to this heading"></a></h3>
+<p>OPC Unified Architecture (OPC UA) is a cross-platform,
+open-source,
+IEC62541 standard for data exchange from sensors to cloud applications
+developed by the <a class="reference external" href="https://opcfoundation.org/">OPC Foundation</a>.</p>
+<p>The OPC UA protocol has become increasingly popular
+with vendors of controllers (like PLCs) and sensors
+as a very powerful integration tool.
+It allows connecting almost any device to almost any SCADA client,
+across vendors, with a certification mechanism that ensures compatibility.</p>
+<p>OPC UA integrates all functionality of the individual specifications
+of the former OPC Classic protocol into one extensible framework,
+providing:</p>
+<ul class="simple">
+<li><p><em>Functional equivalence</em>:
+all COM OPC Classic specifications are mapped to UA</p></li>
+<li><p><em>Platform independence</em>:
+from embedded to cloud-based infrastructure</p></li>
+<li><p><em>Security</em>:
+encryption, authentication, and auditing</p></li>
+<li><p><em>Extensibility</em>:
+ability to add new features without affecting existing applications</p></li>
+<li><p><em>Information modelling</em>:
+for defining complex information</p></li>
+</ul>
+<p>OPC UA is designed for exchanging information in an object-oriented manner,
+rather than as isolated data points.
+This increases the accessibility of plant floor data
+by allowing to re-use information stored in a common object.</p>
+<p>The <a class="reference external" href="https://en.wikipedia.org/wiki/OPC_Unified_Architecture">Wikipedia page on OPC UA</a> has a good overview
+of its characteristics, history and specification.</p>
+<p>The complete <a class="reference external" href="https://opcfoundation.org/developer-tools/documents/?type=Specification">OPC UA specification</a> is freely available
+on the OPC Foundation web site.</p>
+</section>
+</section>
+<section id="opc-ua-terms-and-concepts">
+<h2>OPC UA Terms and Concepts<a class="headerlink" href="#opc-ua-terms-and-concepts" title="Link to this heading"></a></h2>
+<section id="node">
+<h3>Node<a class="headerlink" href="#node" title="Link to this heading"></a></h3>
+<p>A <em>Node</em> is a uniquely identified piece of information on the server.
+The OPC information model is a mesh network based on nodes.
+These nodes are objects holding process data or any kind of meta information,
+such as attributes, references, methods, types, …</p>
+</section>
+<section id="nodeid">
+<h3>NodeID<a class="headerlink" href="#nodeid" title="Link to this heading"></a></h3>
+<p>A <em>NodeID</em> is an identifier for a node, e.g., for a particular OPC UA item.
+A Node ID consists of:</p>
+<ul class="simple">
+<li><p>a namespace index number</p></li>
+<li><p>an identifier type</p></li>
+<li><p>an identifier</p></li>
+</ul>
+<p>The identifier can be either a string identifier, consisting of a name string,
+or a numerical identifier, consisting of an integer.
+Whenever a client requests to either read or write data to an OPC UA item,
+it identifies the node by means of its NodeID.</p>
+</section>
+<section id="item">
+<h3>Item<a class="headerlink" href="#item" title="Link to this heading"></a></h3>
+<p>Within the Data Access part of OPC UA,
+an <em>Item</em> is any piece of accessible process data on a server.
+It can represent a single data point or a block of structured data.
+Elements of structured data can be simple data points
+or other structured items.</p>
+</section>
+<section id="data-element">
+<h3>Data Element<a class="headerlink" href="#data-element" title="Link to this heading"></a></h3>
+<p>In the context of this Device Support only
+(i.e., not part of the OPC UA specification),
+a <em>Data Element</em> is a unique data point belonging to a server-side item.
+If that item is of basic or array type, the data element corresponds
+to the value of the item.
+If the item is of a structured type, the data element corresponds
+to one element of the item’s structure.</p>
+</section>
+<section id="namespace">
+<h3>Namespace<a class="headerlink" href="#namespace" title="Link to this heading"></a></h3>
+<p>A <em>Namespace</em> is one of multiple server-side scopes for node identifiers,
+which the server uses to avoid name clashes.</p>
+<p>A namespace is uniquely defined by an URI.
+To improve performance, the server keeps a table of the URIs
+and the index in that table is used between client and server.
+Some namespaces (and their index numbers)
+are reserved by the OPC UA specification for the protocol and the server.</p>
+</section>
+<section id="channel">
+<h3>Channel<a class="headerlink" href="#channel" title="Link to this heading"></a></h3>
+<p>In OPC UA, a <em>Channel</em> is the low-level transport connection
+between a client and a server.
+(The OPC UA Device Support module only supports the TCP transport.)
+A channel can be secured by running it through SSL to be encrypted,
+and/or by signing all messages that are sent through it.</p>
+</section>
+<section id="session">
+<h3>Session<a class="headerlink" href="#session" title="Link to this heading"></a></h3>
+<p>A <em>Session</em> is a named connection
+between an OPC UA client and an OPC UA server,
+using the transport provided by the channel.
+Typically, there is one session between each client and each server.
+While it is possible to have multiple sessions
+between a single client/server pair,
+this increases resource usage on both ends and is generally not recommended
+unless there is a particular justifying reason
+(such as making use of parallel processing).</p>
+</section>
+<section id="subscription">
+<h3>Subscription<a class="headerlink" href="#subscription" title="Link to this heading"></a></h3>
+<p>A <em>Subscription</em> is a mechanism within a session
+that the client uses to retrieve value updates from a server
+without the need to poll regularly.
+A client establishes a subscription within a session and adds items to it,
+requesting that the server notify the client
+whenever data of the <em>Monitored Items</em> within that subscription changes.</p>
+<p>When defining a subscription,
+the client can specify a <em>publishing interval</em> for the server,
+telling it how often it would like to receive updated data.
+For each monitored item that is part of a subscription,
+the client can also specify its <em>sampling interval</em>,
+which defines the rate at which the server checks the data source for changes.
+If the OPC UA server supports server-side queueing of data samples,
+the client can also specify for each monitored item the size of that queue.</p>
+</section>
+</section>
+<section id="the-opc-ua-device-support">
+<h2>The OPC UA Device Support<a class="headerlink" href="#the-opc-ua-device-support" title="Link to this heading"></a></h2>
+<p>EPICS applications run processes called IOCs,
+which interface device data to the EPICS Process Database,
+which provides it to the control system through the EPICS network protocols,
+Channel Access and pvAccess.</p>
+<p>The Device Support layer enables records in the EPICS Process Database
+to communicate with different device types.
+The OPC UA Device Support is a client of the OPC UA protocol,
+which can read, write and monitor variables residing on an OPC UA server.
+(The relevant part of the OPC UA specification is called “Data Access”.)</p>
+<p>If your IOC is built correctly (see <a class="reference internal" href="../tutorials/40_build_application.html#building-an-ioc"><span class="std std-ref">Building an IOC</span></a>),
+the OPC UA Device Support is ready to be used.
+You can set up OPC UA sessions and subscriptions from the IOC startup script
+through commands in the IOCshell
+and link EPICS database records to remote OPC UA variables
+through the configuration of your EPICS records.</p>
+<p>To support commissioning and troubleshooting, additional IOCshell commands
+allow introspection of the Device Support’s internal data structures.
+The regular EPICS trace and debug modes can be used to investigate
+the OPC UA operations at run time.</p>
+<section id="addressing-basic-array-and-structured-types">
+<h3>Addressing Basic/Array and Structured Types<a class="headerlink" href="#addressing-basic-array-and-structured-types" title="Link to this heading"></a></h3>
+<p>If an OPC UA item is of basic or array type,
+a single EPICS data record connects to it.
+That record is configured with the session or subscription to be used,
+the nodeID of the item and options that apply to the item level.</p>
+<p>If an OPC UA item is of a structured type, a single instance
+of the special opcuaItemRecord type represents the complete structure.
+Many EPICS data records each connect to a single structure element.
+The opcuaItemRecord is configured with all item level configuration.
+The single element data records refer to the opcuaItemRecord
+and specify the address of the strcuture element they connect to
+as well as data element level options.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../reference/requirements_spec.html" class="btn btn-neutral float-left" title="Requirements Specification" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="security_concepts.html" class="btn btn-neutral float-right" title="OPC UA Security Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

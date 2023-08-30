@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Building an IOC Application &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Running and Verifying Your IOC" href="50_run_verify_ioc.html" />
+    <link rel="prev" title="Building the Device Support Module" href="30_build_devsup.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Building an IOC Application</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#use-the-example-application">Use the Example Application</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#structure-of-the-example-application">Structure of the Example Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#start-up-command-file-st-cmd">Start Up Command File <code class="docutils literal notranslate"><span class="pre">st.cmd</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#input-records">Input Records</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-records-bidirectional">Output Records (Bidirectional)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#records-linking-to-structured-data">Records Linking to Structured Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#create-an-ioc-for-opc-ua-from-scratch">Create an IOC for OPC UA from Scratch</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/debugging.html">Debugging and Tracing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/record_configuration_structure.html">EPICS Records for Structured Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/security_configuration.html">Configuring OPC UA Security</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/iocsh_commands.html">iocShell Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/opcua_concepts.html">Basics, Terms and Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Building an IOC Application</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/40_build_application.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="building-an-ioc-application">
+<span id="building-an-ioc"></span><h1>Building an IOC Application<a class="headerlink" href="#building-an-ioc-application" title="Link to this heading"></a></h1>
+<p>This section provides instructions
+how to build and configure an EPICS IOC
+to communicate with an OPC UA server.</p>
+<p>It also explains how to use the example application
+that is part of the Device Support module.</p>
+<section id="use-the-example-application">
+<h2>Use the Example Application<a class="headerlink" href="#use-the-example-application" title="Link to this heading"></a></h2>
+<p>The Device support module contains an example application
+that builds an IOC binary and creates two IOC instances,
+for connecting to a Siemens S7-1500 series PLC and
+for connecting to the Unified Automation C++ demo server.</p>
+<section id="structure-of-the-example-application">
+<h3>Structure of the Example Application<a class="headerlink" href="#structure-of-the-example-application" title="Link to this heading"></a></h3>
+<p>Under <code class="docutils literal notranslate"><span class="pre">.../exampleTop</span></code>, you will find</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">templateDbSup</span></code> - contains useful template databases</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">opcuaIocApp</span></code> - builds the OPC UA IOC binary</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DeviceDbApp</span></code> - creates the databases for the two IOCs</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iocBoot</span></code> - contains the startup directories for the two IOCs</p></li>
+</ul>
+<p>The IOC for the demo server provides a number of records
+that connect to variables in the demo server.
+It shows scalars of different types,
+arrays of scalars,
+“dynamic” variables (updated by the demo server),
+“static” variables (can be read and written by the IOC)
+and the “WorkOrder” as an example for structured data.</p>
+<p>The IOC for the S7-1500 contains some example records
+for an imaginary “DB1” on the PLC.
+As the names are completely determined by the application code on the PLC,
+the example application cannot show more details.</p>
+<p>Both IOCs contain “server” records.
+These are connecting to server variables in namespace 0,
+which are part of the OPC UA specification and mandatory:
+every OPC UA server must provide them.</p>
+</section>
+<section id="start-up-command-file-st-cmd">
+<h3>Start Up Command File <code class="docutils literal notranslate"><span class="pre">st.cmd</span></code><a class="headerlink" href="#start-up-command-file-st-cmd" title="Link to this heading"></a></h3>
+<p>Sessions and subscriptions are set up
+in your IOC’s startup script (e.g., <code class="docutils literal notranslate"><span class="pre">st.cmd</span></code>).</p>
+<p>See also: <a class="reference internal" href="../reference/iocsh_commands.html#iocsh-command-reference"><span class="std std-ref">iocShell Command Reference</span></a></p>
+<p>Looking at the <code class="docutils literal notranslate"><span class="pre">st.cmd</span></code> of the Demo Server IOC…</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaSession</span> <span class="n">OPC1</span> <span class="n">opc</span><span class="o">.</span><span class="n">tcp</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">48010</span> <span class="n">sec</span><span class="o">-</span><span class="n">mode</span><span class="o">=</span><span class="kc">None</span>
+<span class="n">opcuaSubscription</span> <span class="n">SUB1</span> <span class="n">OPC1</span> <span class="mi">200</span>
+</pre></div>
+</div>
+<p>This creates a Session named <code class="docutils literal notranslate"><span class="pre">OPC1</span></code> (without security)
+connecting to the Demo Server running on the same host.
+A single subscription <code class="docutils literal notranslate"><span class="pre">SUB1</span></code> is added to that session,
+with a publishing interval of 200ms.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opcuaMapNamespace</span> <span class="n">OPC1</span> <span class="mi">2</span> <span class="s2">&quot;http://www.unifiedautomation.com/DemoServer/&quot;</span>
+</pre></div>
+</div>
+<p>This maps the namespace <code class="docutils literal notranslate"><span class="pre">ns=2</span></code> for links on this Session
+to whatever number the server uses
+for the namespace identified by the specified URL.</p>
+<p>(This is necessary, because starting from some version
+Unified Automation changed the namespace used by the Demo Server.
+Using the mapping ensures that <code class="docutils literal notranslate"><span class="pre">ns=2</span></code> always works.)</p>
+<p>In the databases for the Demo Server IOC,
+you find records like the following examples.</p>
+</section>
+<section id="input-records">
+<h3>Input Records<a class="headerlink" href="#input-records" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">longin</span><span class="p">,</span> <span class="s2">&quot;$(P)$(R)liuint16&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;OPCUA&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span>  <span class="s2">&quot;@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.UInt16&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">TSE</span><span class="p">,</span>  <span class="s2">&quot;-2&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">TPRO</span><span class="p">,</span> <span class="s2">&quot;$(DEBUG=0)&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Which is an <code class="docutils literal notranslate"><span class="pre">longin</span></code> input record,
+monitoring an OPC UA variable of type UInt16
+from the “Dynamic” set that gets updated by the server code.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">$(P)$(R)liuint16</span></code>:
+The record name.
+<code class="docutils literal notranslate"><span class="pre">$(P)</span></code> and <code class="docutils literal notranslate"><span class="pre">$(R)</span></code> are prefixes defined in your <code class="docutils literal notranslate"><span class="pre">st.cmd</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DTYP,</span> <span class="pre">&quot;OPCUA&quot;</span></code>:
+Specifies that this record uses the OPC UA Device Support.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">INP,</span> <span class="pre">&quot;&#64;$(SUBS)</span> <span class="pre">ns=2;s=Demo.Dynamic.Scalar.UInt16&quot;</span></code>:
+This is the crucial link field.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;$(SUBS)</span></code>:
+The name of the OPC UA subscription to use,
+set through a macro.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ns=2</span></code>:
+The namespace index of the OPC UA item.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">s=Demo.Dynamic.Scalar.UInt16</span></code>:
+The string identifier of the OPC UA item.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SCAN,</span> <span class="pre">&quot;I/O</span> <span class="pre">Intr&quot;</span></code>:
+Configures the record to process upon reception
+of new data from the OPC UA server,
+which is efficient for subscriptions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TSE,</span> <span class="pre">&quot;-2&quot;</span></code>:
+Use OPC UA timestamps as EPICS record timestamp.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TPRO,</span> <span class="pre">&quot;$(DEBUG=0)</span></code>:
+Set debug level through a macro.</p></li>
+</ul>
+</section>
+<section id="output-records-bidirectional">
+<h3>Output Records (Bidirectional)<a class="headerlink" href="#output-records-bidirectional" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">aao</span><span class="p">,</span> <span class="s2">&quot;$(P)$(R)aaobool&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;OPCUA&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">OUT</span><span class="p">,</span>  <span class="s2">&quot;@$(SUBS) ns=2;s=Demo.Static.Arrays.Boolean&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">FTVL</span><span class="p">,</span> <span class="s2">&quot;UCHAR&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">NELM</span><span class="p">,</span> <span class="s2">&quot;10&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">TSE</span><span class="p">,</span>  <span class="s2">&quot;-2&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">TPRO</span><span class="p">,</span> <span class="s2">&quot;$(DEBUG=0)&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Which is an array output record of type <code class="docutils literal notranslate"><span class="pre">UCHAR</span></code>,
+linked to an OPC UA variable that is an Array of Boolean
+from the “Static” set that gets you can read and write.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">$(P)$(R)aaobool</span></code>:
+The record name.
+<code class="docutils literal notranslate"><span class="pre">$(P)</span></code> and <code class="docutils literal notranslate"><span class="pre">$(R)</span></code> are prefixes defined in your <code class="docutils literal notranslate"><span class="pre">st.cmd</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DTYP,</span> <span class="pre">&quot;OPCUA&quot;</span></code>:
+Specifies that this record uses the OPC UA Device Support.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OUT,</span> <span class="pre">&quot;&#64;$(SUBS)</span> <span class="pre">ns=2;s=Demo.Static.Arrays.Boolean&quot;</span></code>:
+This is the crucial link field.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;$(SUBS)</span></code>:
+The name of the OPC UA subscription to use,
+set through a macro.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ns=2</span></code>:
+The namespace index of the OPC UA item.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">s=Demo.Static.Arrays.Boolean</span></code>:
+The string identifier of the OPC UA item.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FTVL,</span> <span class="pre">&quot;UCHAR&quot;</span></code>:
+Type of the EPICS array.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NELM,</span> <span class="pre">&quot;10&quot;</span></code>:
+Capacity of the EPICS array.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TSE,</span> <span class="pre">&quot;-2&quot;</span></code>:
+Use OPC UA timestamps as EPICS record timestamp.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TPRO,</span> <span class="pre">&quot;$(DEBUG=0)</span></code>:
+Set debug level through a macro.</p></li>
+</ul>
+</section>
+<section id="records-linking-to-structured-data">
+<h3>Records Linking to Structured Data<a class="headerlink" href="#records-linking-to-structured-data" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">opcuaItem</span><span class="p">,</span> <span class="s2">&quot;$(P)$(R)itemRBK&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;OPCUA&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span>  <span class="s2">&quot;@$(SUBS) ns=2;s=$(WO_NODEID)&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">TSE</span><span class="p">,</span>  <span class="s2">&quot;-2&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">record</span><span class="p">(</span><span class="n">stringin</span><span class="p">,</span> <span class="s2">&quot;$(P)$(R)assetidRBK&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;OPCUA&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span>  <span class="s2">&quot;@$(P)$(R)itemRBK element=AssetID&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">TSE</span><span class="p">,</span>  <span class="s2">&quot;-2&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">record</span><span class="p">(</span><span class="n">stringin</span><span class="p">,</span> <span class="s2">&quot;$(P)$(R)starttimeRBK&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;OPCUA&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span>  <span class="s2">&quot;@$(P)$(R)itemRBK element=StartTime&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">TSE</span><span class="p">,</span>  <span class="s2">&quot;-2&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>An <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record representing the Item (structure).
+It is configured “normally”,
+addressing the OPC UA Item (like the earlier examples),
+with the string identifier supplied through a macro.</p>
+<p>Two <code class="docutils literal notranslate"><span class="pre">stringin</span></code> records are pointing to structure elements.
+In their <code class="docutils literal notranslate"><span class="pre">INP</span></code> links,
+<code class="docutils literal notranslate"><span class="pre">&#64;$(P)$(R)itemRBK</span></code> is pointing to the <code class="docutils literal notranslate"><span class="pre">opcuaItem</span></code> record
+that represents the structured item,
+and the <code class="docutils literal notranslate"><span class="pre">element=AssetID</span></code> and <code class="docutils literal notranslate"><span class="pre">element=StartTime</span></code> parts
+link them to specific elements.</p>
+</section>
+</section>
+<section id="create-an-ioc-for-opc-ua-from-scratch">
+<h2>Create an IOC for OPC UA from Scratch<a class="headerlink" href="#create-an-ioc-for-opc-ua-from-scratch" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p><strong>Create a new EPICS application:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>&lt;your_epics_area&gt;
+/path/to/epics/base/bin/&lt;arch&gt;/makeBaseApp.pl<span class="w"> </span>-t<span class="w"> </span>ioc<span class="w"> </span>MyExampleIOC
+/path/to/epics/base/bin/&lt;arch&gt;/makeBaseApp.pl<span class="w"> </span>-i<span class="w"> </span>-t<span class="w"> </span>ioc<span class="w"> </span>MyExampleIOC
+</pre></div>
+</div>
+</li>
+<li><p><strong>Add the OPC UA Device Support:</strong>
+Add an entry setting <code class="docutils literal notranslate"><span class="pre">OPCUA</span> <span class="pre">=</span> <span class="pre">&lt;path_to_the_opcua_module&gt;</span></code>
+to your <code class="docutils literal notranslate"><span class="pre">RELEASE.local</span></code> file.</p></li>
+<li><p><strong>Add <code class="docutils literal notranslate"><span class="pre">opcua</span></code> to your <code class="docutils literal notranslate"><span class="pre">Makefile</span></code>:</strong>
+Edit <code class="docutils literal notranslate"><span class="pre">MyExampleIOCApp/src/Makefile</span></code>
+and add <code class="docutils literal notranslate"><span class="pre">opcua</span></code> to the list of libraries to link against
+and to the list of DBD files to use.</p>
+<div class="highlight-makefile notranslate"><div class="highlight"><pre><span></span><span class="c"># Include dbd files from all support applications:</span>
+<span class="nv">MyExampleIOC_DBD</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span>opcua.dbd
+<span class="c"># ...</span>
+<span class="c"># Add all the support libraries needed by this IOC</span>
+<span class="nv">MyExampleIOC_LIBS</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span>opcua
+</pre></div>
+</div>
+</li>
+<li><p><strong>Build the application:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make
+</pre></div>
+</div>
+</li>
+<li><p><strong>Finish your Application:</strong>
+Add databases.
+Load the databases
+and create the necessary OPC UA Sessions/Subscriptions<br />
+in your <code class="docutils literal notranslate"><span class="pre">st.cmd</span></code> script.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="30_build_devsup.html" class="btn btn-neutral float-left" title="Building the Device Support Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="50_run_verify_ioc.html" class="btn btn-neutral float-right" title="Running and Verifying Your IOC" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

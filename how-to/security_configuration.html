@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuring OPC UA Security &mdash; EPICS OPC UA Device Support  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="iocShell Command Reference" href="../reference/iocsh_commands.html" />
+    <link rel="prev" title="EPICS Records for Structured Data" href="record_configuration_structure.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            EPICS OPC UA Device Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/10_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/20_build_client_lib.html">Building the Low-Level OPC UA Client Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/30_build_devsup.html">Building the Device Support Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/40_build_application.html">Building an IOC Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/50_run_verify_ioc.html">Running and Verifying Your IOC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to Guides</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging and Tracing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plc_configuration.html">Configuring the OPC UA Server on a Siemens S7-1500 Series PLC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="record_configuration_scalar.html">EPICS Records for Single Scalar Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="record_configuration_structure.html">EPICS Records for Structured Data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Configuring OPC UA Security</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#certificate-store-setup">Certificate Store Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#client-certificate-client-authentication">Client Certificate (Client Authentication)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#session-security-setting">Session Security Setting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#identity-server-side-user-authentication">Identity (Server-Side User Authentication)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#username-identity-token">Username Identity Token</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#certificate-identity-token">Certificate Identity Token</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#managing-certificates">Managing Certificates</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#trusting-a-server-certificate">Trusting a Server Certificate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-application-instance-certificates">Creating Application Instance Certificates</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/iocsh_commands.html">iocShell Command Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/record_types.html">Record Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/requirements_spec.html">Requirements Specification</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/opcua_concepts.html">Basics, Terms and Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/security_concepts.html">OPC UA Security Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Miscellanea</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EPICS OPC UA Device Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Configuring OPC UA Security</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/how-to/security_configuration.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="configuring-opc-ua-security">
+<h1>Configuring OPC UA Security<a class="headerlink" href="#configuring-opc-ua-security" title="Link to this heading"></a></h1>
+<p>An IOC using the OPC UA Device Support
+is considered to be a production system.
+As such, it has to be fully configured and supplied with the certificates
+needed to connect to the configured OPC UA servers.</p>
+<section id="certificate-store-setup">
+<h2>Certificate Store Setup<a class="headerlink" href="#certificate-store-setup" title="Link to this heading"></a></h2>
+<p>The iocShell command <code class="docutils literal notranslate"><span class="pre">opcuaSetupPKI</span></code>
+sets the location(s) for the certificate store.
+The IOC needs to have read access to all files in the PKI store,
+further access should not be granted as this might compromise security.</p>
+<p>In its simple form,
+the single argument defines the location of the PKI certificate store,
+using default subdirectories:</p>
+<ul class="simple">
+<li><p>Trusted peer and CA certificates: <code class="docutils literal notranslate"><span class="pre">trusted/certs</span></code></p></li>
+<li><p>CA certificate revocation lists: <code class="docutils literal notranslate"><span class="pre">trusted/crl</span></code></p></li>
+<li><p>Intermediate issuer certificates: <code class="docutils literal notranslate"><span class="pre">issuers/certs</span></code></p></li>
+<li><p>Issuer certificate revocation lists: <code class="docutils literal notranslate"><span class="pre">issuers/crl</span></code></p></li>
+</ul>
+<p>In the fully detailed form (using four arguments),
+the four locations are specified separately.</p>
+</section>
+<section id="client-certificate-client-authentication">
+<h2>Client Certificate (Client Authentication)<a class="headerlink" href="#client-certificate-client-authentication" title="Link to this heading"></a></h2>
+<p>The iocShell command <code class="docutils literal notranslate"><span class="pre">opcuaClientCertificate</span></code>
+sets the locations for the client certificate (PEM or DER format)
+and the matching private key (PEM format).</p>
+</section>
+<section id="session-security-setting">
+<h2>Session Security Setting<a class="headerlink" href="#session-security-setting" title="Link to this heading"></a></h2>
+<p>Two security-related session options are used
+to configure the security features for a given OPC UA session,
+by calling <code class="docutils literal notranslate"><span class="pre">opcuaSession</span></code> or <code class="docutils literal notranslate"><span class="pre">opcuaOptions</span></code> in the iocShell.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sec-mode</span></code>:
+selects the specified message security mode
+for the connection (<code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">Sign</span></code>, <code class="docutils literal notranslate"><span class="pre">SignAndEncrypt</span></code>).
+The special keyword <code class="docutils literal notranslate"><span class="pre">best</span></code> (default) will have the IOC choose the best mode,
+based on the server-supplied security level.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sec-policy</span></code>:
+selects a specific policy by its short name (e.g., <code class="docutils literal notranslate"><span class="pre">Basic256Sha256</span></code>).</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To connect without security, you have to explicitly set <code class="docutils literal notranslate"><span class="pre">sec-mode=None</span></code>.</p>
+</div>
+</section>
+<section id="identity-server-side-user-authentication">
+<h2>Identity (Server-Side User Authentication)<a class="headerlink" href="#identity-server-side-user-authentication" title="Link to this heading"></a></h2>
+<p>Without configuration, an Anonymous Identity Token will be used.</p>
+<p>To use a Username Identity or a Certificate Identity Token,
+prepare an identity file
+and configure the filename through the session option <code class="docutils literal notranslate"><span class="pre">sec-id</span></code>.</p>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>If this file contains a (clear text) password,
+its access right settings are crucial.
+It needs to be on a local disk
+and only readable by the user running the IOC.</p>
+</div>
+<section id="username-identity-token">
+<h3>Username Identity Token<a class="headerlink" href="#username-identity-token" title="Link to this heading"></a></h3>
+<p>In the identity file, set:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">user</span><span class="o">=&lt;</span><span class="n">username</span><span class="o">&gt;</span>
+<span class="k">pass</span><span class="o">=&lt;</span><span class="n">password</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="certificate-identity-token">
+<h3>Certificate Identity Token<a class="headerlink" href="#certificate-identity-token" title="Link to this heading"></a></h3>
+<p>In the identity file, set:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cert</span><span class="o">=&lt;</span><span class="n">certificate</span> <span class="n">file</span><span class="o">&gt;</span>
+<span class="n">key</span><span class="o">=&lt;</span><span class="n">private</span> <span class="n">key</span> <span class="n">file</span><span class="o">&gt;</span>
+<span class="k">pass</span><span class="o">=&lt;</span><span class="n">password</span><span class="o">&gt;</span> <span class="p">(</span><span class="n">optional</span><span class="p">,</span> <span class="k">if</span> <span class="n">private</span> <span class="n">key</span> <span class="ow">is</span> <span class="n">protected</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="managing-certificates">
+<h2>Managing Certificates<a class="headerlink" href="#managing-certificates" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">openssl</span></code> command line utility can be used
+to convert certificates between formats.</p>
+<p><strong>DER to PEM:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>openssl<span class="w"> </span>x509<span class="w"> </span>-inform<span class="w"> </span>der<span class="w"> </span>-in<span class="w"> </span>&lt;cert&gt;.der<span class="w"> </span>-out<span class="w"> </span>&lt;cert&gt;.pem
+</pre></div>
+</div>
+<p><strong>PEM to DER:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>openssl<span class="w"> </span>x509<span class="w"> </span>-in<span class="w"> </span>&lt;cert&gt;.pem<span class="w"> </span>-outform<span class="w"> </span>der<span class="w"> </span>-out<span class="w"> </span>&lt;cert&gt;.der
+</pre></div>
+</div>
+<p><em>Note:</em>
+DER format requires <code class="docutils literal notranslate"><span class="pre">.der</span></code> (certificates) or <code class="docutils literal notranslate"><span class="pre">.crl</span></code> (revocation lists) extensions.
+PEM format requires <code class="docutils literal notranslate"><span class="pre">.pem</span></code> extension.</p>
+<section id="trusting-a-server-certificate">
+<h3>Trusting a Server Certificate<a class="headerlink" href="#trusting-a-server-certificate" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">opcuaSaveRejected</span></code> to configure where to save rejected certificates.</p></li>
+<li><p>Attempt a connection.
+The server certificate will be saved to the specified location.</p></li>
+<li><p>Copy the certificate file to the IOC’s certificate store
+under <code class="docutils literal notranslate"><span class="pre">trusted/certs</span></code> to explicitly trust it.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Always verify the certificate’s thumbprint before trusting it.</p>
+</div>
+</li>
+</ol>
+</section>
+<section id="creating-application-instance-certificates">
+<h3>Creating Application Instance Certificates<a class="headerlink" href="#creating-application-instance-certificates" title="Link to this heading"></a></h3>
+<p>Creating a self-signed certificate for OPC UA use is pretty straight-forward.
+Follow the documented procedure,
+giving your certificate/key pair the following properties:</p>
+<ul class="simple">
+<li><p>Choose the issuer information to match your situation.</p></li>
+<li><p>Sign using <code class="docutils literal notranslate"><span class="pre">SHA</span> <span class="pre">256</span></code> (i.e., <code class="docutils literal notranslate"><span class="pre">sha256WithRSAEncryption</span></code>).</p></li>
+<li><p>X509v3 Basic Constraints: <strong>critical</strong>, <code class="docutils literal notranslate"><span class="pre">CA:FALSE</span></code>.</p></li>
+<li><p>X509v3 Key Usage: <strong>critical</strong>, <code class="docutils literal notranslate"><span class="pre">Digital</span> <span class="pre">Signature</span></code>, <code class="docutils literal notranslate"><span class="pre">Non</span> <span class="pre">Repudiation</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Key</span> <span class="pre">Encipherment</span></code>, <code class="docutils literal notranslate"><span class="pre">Data</span> <span class="pre">Encipherment</span></code>, <code class="docutils literal notranslate"><span class="pre">Certificate</span> <span class="pre">Sign</span></code>.</p></li>
+<li><p>X509v3 Extended Key Usage: <strong>critical</strong>, <code class="docutils literal notranslate"><span class="pre">TLS</span> <span class="pre">Web</span> <span class="pre">Server</span> <span class="pre">Authentication</span></code>,
+<code class="docutils literal notranslate"><span class="pre">TLS</span> <span class="pre">Web</span> <span class="pre">Client</span> <span class="pre">Authentication</span></code>.</p></li>
+<li><p>X509v3 Subject Alternative Name: <code class="docutils literal notranslate"><span class="pre">URI:urn:&lt;ioc&gt;&#64;&lt;host&gt;:EPICS:IOC</span></code>,
+<code class="docutils literal notranslate"><span class="pre">DNS:&lt;host&gt;</span></code>
+with <code class="docutils literal notranslate"><span class="pre">&lt;ioc&gt;</span></code> being the IOC name and <code class="docutils literal notranslate"><span class="pre">&lt;host&gt;</span></code> being the hostname
+(i.e., the result of a <code class="docutils literal notranslate"><span class="pre">gethostname()</span></code> call) of the machine that runs the IOC.
+The URI tag <em>must</em> match
+what the Device Support module sets as its application URI.
+Alternatively, a numerical <code class="docutils literal notranslate"><span class="pre">IP</span> <span class="pre">Address</span></code> tag can be used instead of <code class="docutils literal notranslate"><span class="pre">DNS</span></code>.</p></li>
+</ul>
+<p>A simple client certificate/key pair can also be created
+using the <code class="docutils literal notranslate"><span class="pre">openssl</span></code> command line utility, e.g.:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>openssl<span class="w"> </span>req<span class="w"> </span>-x509<span class="w"> </span>-newkey<span class="w"> </span>rsa:2048<span class="w"> </span>-keyout<span class="w"> </span>private_key.pem<span class="w"> </span>-out<span class="w"> </span>cert.pem<span class="w"> </span>-sha256<span class="w"> </span>-days<span class="w"> </span><span class="m">365</span><span class="w"> </span>-nodes<span class="w"> </span>-addext<span class="w"> </span><span class="s2">&quot;subjectAltName=URI:urn:&lt;IOC&gt;@&lt;HOST&gt;:EPICS:IOC,IP:&lt;IP&gt;&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="record_configuration_structure.html" class="btn btn-neutral float-left" title="EPICS Records for Structured Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../reference/iocsh_commands.html" class="btn btn-neutral float-right" title="iocShell Command Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ralph Lange.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
