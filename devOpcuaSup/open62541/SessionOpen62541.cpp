@@ -131,7 +131,15 @@ operator << (std::ostream& os, const UA_Variant &ua_variant)
     if (ua_variant.type == nullptr) return os << "NO_TYPE";
     UA_String s = UA_STRING_NULL;
     if (UA_Variant_isScalar(&ua_variant)) {
-        UA_print(ua_variant.data, ua_variant.type, &s);
+        if (ua_variant.type == &UA_TYPES[UA_TYPES_DATETIME]) {
+            // UA_print does not correct printed time for time zone
+            UA_Int64 tOffset = UA_DateTime_localTimeUtcOffset();
+            UA_DateTime dt = *static_cast<UA_DateTime*>(ua_variant.data);
+            dt += tOffset;
+            UA_print(&dt, ua_variant.type, &s);
+        } else {
+            UA_print(ua_variant.data, ua_variant.type, &s);
+        }
         os << s << " (" << ua_variant.type->typeName << ')';
     } else {
         os << s << '{';
