@@ -536,7 +536,13 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                     strncpy(value, reinterpret_cast<char*>(datastring->data), n);
                 } else {
                     UA_String datastring = UA_STRING_NULL;
-                    if (data.type)
+                    if (typeKindOf(data) == UA_TYPES_DATETIME) {
+                        // UA_print does not correct printed time for time zone
+                        UA_Int64 tOffset = UA_DateTime_localTimeUtcOffset();
+                        UA_DateTime dt = *static_cast<UA_DateTime*>(data.data);
+                        dt += tOffset;
+                        UA_print(&dt, data.type, &datastring); // Not terminated!
+                    } else if (data.type)
                         UA_print(data.data, data.type, &datastring); // Not terminated!
                     if (n > datastring.length)
                         n = datastring.length;

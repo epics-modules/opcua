@@ -231,10 +231,10 @@ SubscriptionOpen62541::dataChange (UA_UInt32 monitorId, ItemOpen62541 &item, UA_
         std::cout << "** Subscription " << name
                   << "@" << session.getName()
                   << ": (dataChange) getting data for item " << monitorId
-                  << " (" << item.getNodeId();
+                  << " " << item.getNodeId();
         if (item.isRegistered() && ! item.linkinfo.identifierIsNumeric)
             std::cout << "/" << item.linkinfo.identifierString;
-        std::cout << ")" << std::endl;
+        std::cout << " = " << value->value << std::endl;
     }
     item.setIncomingData(*value, ProcessReason::incomingData);
 }
