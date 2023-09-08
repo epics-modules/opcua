@@ -13,18 +13,19 @@
 #ifndef DEVOPCUA_SUBSCRIPTIONOPEN62541_H
 #define DEVOPCUA_SUBSCRIPTIONOPEN62541_H
 
-#include <vector>
-#include <set>
-
-#include <epicsString.h>
-#include <epicsTypes.h>
-#include <shareLib.h>
-
-#include "SessionOpen62541.h"
 #include "Subscription.h"
 #include "Registry.h"
 
+#include <open62541/client.h>
+
+#include <string>
+#include <set>
+#include <vector>
+
 namespace DevOpcua {
+
+class SessionOpen62541;
+class ItemOpen62541;
 
 /**
  * @brief The SubscriptionOpen62541 implementation of an OPC UA Subscription.

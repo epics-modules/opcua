@@ -11,18 +11,12 @@
  *  and the custom type prototype by Carsten Winkler <carsten.winkler@helmholtz-berlin.de>
  */
 
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <map>
-#include <algorithm>
-#include <utility>
-#include <limits>
-#include <functional>
-
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
+#define epicsExportSharedSymbols
+#include "SessionOpen62541.h"
+#include "SubscriptionOpen62541.h"
+#include "DataElementOpen62541.h"
+#include "ItemOpen62541.h"
+#include "linkParser.h"
 
 #include <epicsExit.h>
 #include <epicsThread.h>
@@ -37,11 +31,23 @@
 #include <open62541/client_config_default.h>
 #include <open62541/plugin/pki_default.h>
 
-/* loadFile helper from open62541 examples */
+#ifndef UA_BUILTIN_TYPES_COUNT
+// Newer open62541 since version 1.3 uses type pointer
+#define UA_DATATYPES_USE_POINTER
+// Older open62541 uses type index
+#endif
+
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <map>
+#include <algorithm>
+#include <utility>
+#include <limits>
+#include <functional>
 #include <cstdio>
 
-#include <open62541/types.h>
-#include <open62541/types_generated_handling.h>
+/* loadFile helper from open62541 examples */
 
 /* loadFile parses the certificate file.
  *
@@ -76,27 +82,6 @@ loadFile(const char *const path) {
 }
 /* end of included loadFile helper code */
 
-#ifndef UA_BUILTIN_TYPES_COUNT
-// Newer open62541 since version 1.3 uses type pointer
-#define UA_DATATYPES_USE_POINTER
-// Older open62541 uses type index
-#endif
-
-#ifdef HAS_SECURITY
-extern const UA_String username_policy;
-extern const UA_String certificate_policy;
-#endif
-
-#define epicsExportSharedSymbols
-#include "Session.h"
-#include "RecordConnector.h"
-#include "linkParser.h"
-#include "RequestQueueBatcher.h"
-#include "SessionOpen62541.h"
-#include "SubscriptionOpen62541.h"
-#include "DataElementOpen62541.h"
-#include "ItemOpen62541.h"
-
 namespace DevOpcua {
 
 // print some UA types
@@ -107,16 +92,6 @@ operator << (std::ostream& os, const UA_NodeId& ua_nodeId)
     UA_String s = UA_STRING_NULL;
     UA_NodeId_print(&ua_nodeId, &s);
     os << s;
-    UA_String_clear(&s);
-    return os;
-}
-
-std::ostream&
-operator << (std::ostream& os, const UA_ExtensionObject &ua_extensionObject)
-{
-    UA_String s = UA_STRING_NULL;
-    UA_print(&ua_extensionObject, &UA_TYPES[UA_TYPES_EXTENSIONOBJECT], &s);
-    os << "EO:{" << s << '}';
     UA_String_clear(&s);
     return os;
 }
@@ -155,7 +130,7 @@ operator << (std::ostream& os, const UA_Variant &ua_variant)
     return os;
 }
 
-inline std::ostream&
+inline static std::ostream&
 operator << (std::ostream& os, UA_SecureChannelState channelState)
 {
     switch (channelState) {
@@ -1350,9 +1325,8 @@ SessionOpen62541::setupIdentity()
                 return;
             }
             securityUserName = "Certificate user";
-            // TODO: get name from certificate
+            // TODO: get user name from certificate
             identityToken->certificateData = cert;
-            // needed? UA_String_copy(&certificate_policy, &identityToken->policyId);
             securityInfo.userIdentityToken.encoding = UA_EXTENSIONOBJECT_DECODED;
             securityInfo.userIdentityToken.content.decoded.type = &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN];
             securityInfo.userIdentityToken.content.decoded.data = identityToken;

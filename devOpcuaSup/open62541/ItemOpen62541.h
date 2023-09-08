@@ -13,23 +13,13 @@
 #ifndef DEVOPCUA_ITEMOPEN62541_H
 #define DEVOPCUA_ITEMOPEN62541_H
 
-#include <memory>
-
-#include <open62541/client.h>
-
-#include <epicsTime.h>
-
 #include "Item.h"
-#include "opcuaItemRecord.h"
-#include "devOpcua.h"
 #include "ElementTree.h"
 #include "SessionOpen62541.h"
 
 namespace DevOpcua {
 
-class SubscriptionOpen62541;
 class DataElementOpen62541;
-struct linkInfo;
 
 /**
  * @brief The ItemOpen62541 inplementation of an OPC UA item.
