@@ -10,20 +10,21 @@
  *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
-#include <iostream>
-#include <string>
-#include <map>
-
-#include <open62541/client_subscriptions.h>
+#define epicsExportSharedSymbols
+#include "SubscriptionOpen62541.h"
+#include "DataElementOpen62541.h"
+#include "ItemOpen62541.h"
+#include "Registry.h"
+#include "devOpcua.h"
 
 #include <errlog.h>
 
-#define epicsExportSharedSymbols
-#include "SubscriptionOpen62541.h"
-#include "ItemOpen62541.h"
-#include "DataElementOpen62541.h"
-#include "Registry.h"
-#include "devOpcua.h"
+#include <open62541/client_subscriptions.h>
+
+#include <iostream>
+#include <string>
+#include <map>
+#include <algorithm>
 
 // Note: No guard needed for UA_Client_* functions calls because SubscriptionOpen62541 methods
 // are either called by UA_Client_run_iterate via SessionOpen62541::connectionStatusChanged

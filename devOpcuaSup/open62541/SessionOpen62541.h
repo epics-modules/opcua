@@ -13,26 +13,27 @@
 #ifndef DEVOPCUA_SESSIONOPEN62541_H
 #define DEVOPCUA_SESSIONOPEN62541_H
 
-#include <algorithm>
-#include <vector>
-#include <memory>
-#include <set>
+#include "Session.h"
+#include "Registry.h"
+#include "RequestQueueBatcher.h"
 
-#include <open62541/client.h>
-
-#include <epicsString.h>
 #include <epicsMutex.h>
 #include <epicsTypes.h>
 #include <epicsThread.h>
 #include <initHooks.h>
 
+#include <open62541/client.h>
+
 #ifdef HAS_XMLPARSER
 #include <libxml/tree.h>
 #endif
 
-#include "RequestQueueBatcher.h"
-#include "Session.h"
-#include "Registry.h"
+#include <string>
+#include <ostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <memory>
 
 namespace DevOpcua {
 

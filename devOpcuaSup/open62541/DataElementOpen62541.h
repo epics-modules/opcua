@@ -13,11 +13,18 @@
 #ifndef DEVOPCUA_DATAELEMENTOPEN62541_H
 #define DEVOPCUA_DATAELEMENTOPEN62541_H
 
-#include <unordered_map>
-#include <limits>
+#include "DataElement.h"
+#include "RecordConnector.h"
+#include "Update.h"
+#include "UpdateQueue.h"
+#include "ItemOpen62541.h"
+
+#include <errlog.h>
+#include <recGbl.h>
+#include <alarm.h>
+#include <epicsTypes.h>
 
 #include <open62541/client.h>
-
 #ifndef UA_STATUSCODE_BAD  // Not yet defined in open62541 version 1.2
 #define UA_STATUSCODE_BAD 0x80000000
 #endif
@@ -28,18 +35,12 @@
 #endif
 #define UA_STATUS_IS_UNCERTAIN(status) (((status)&UA_STATUSCODE_UNCERTAIN)!=0)
 
-#include <errlog.h>
-
-#include "DataElement.h"
-#include "devOpcua.h"
-#include "RecordConnector.h"
-#include "Update.h"
-#include "UpdateQueue.h"
-#include "ItemOpen62541.h"
+#include <string>
+#include <unordered_map>
+#include <limits>
+#include <cstdlib>
 
 namespace DevOpcua {
-
-class ItemOpen62541;
 
 typedef Update<UA_Variant, UA_StatusCode> UpdateOpen62541;
 
