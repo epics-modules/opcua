@@ -19,6 +19,7 @@ opcuaSubscription SUB1 OPC1 200
 opcuaOptions OPC1 sec-mode=None
 
 # Load the databases for the UaServerCpp demo server
+# (you can set DEBUG=<n>) to set default values in all TPRO fields)
 
 dbLoadRecords "db/UaDemoServer-server.db", "P=OPC:,R=,SESS=OPC1,SUBS=SUB1"
 dbLoadRecords "db/Demo.Dynamic.Arrays.db", "P=OPC:,R=DDA:,SESS=OPC1,SUBS=SUB1"

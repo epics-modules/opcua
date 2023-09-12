@@ -14,12 +14,14 @@ record(int64in, "$(P)$(R)int64in") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.Int64")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(int64out, "$(P)$(R)int64out") {
     field(DTYP, "OPCUA")
     field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.Int64")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 # lsi/lso  -  String
@@ -29,10 +31,12 @@ record(lsi, "$(P)$(R)lsistring") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.String")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(lso, "$(P)$(R)lsostring") {
     field(DTYP, "OPCUA")
     field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.String")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }

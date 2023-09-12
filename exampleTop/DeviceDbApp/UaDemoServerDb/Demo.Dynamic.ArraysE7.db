@@ -14,6 +14,7 @@ record(waveform, "$(P)$(R)wfint64") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wfuint64") {
@@ -23,4 +24,5 @@ record(waveform, "$(P)$(R)wfuint64") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }

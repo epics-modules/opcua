@@ -15,6 +15,7 @@ record(bi, "$(P)$(R)bibool") {
     field(ONAM, "true")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(bo, "$(P)$(R)bobool") {
@@ -23,6 +24,7 @@ record(bo, "$(P)$(R)bobool") {
     field(ZNAM, "false")
     field(ONAM, "true")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(bi, "$(P)$(R)biboolx") {
@@ -32,6 +34,7 @@ record(bi, "$(P)$(R)biboolx") {
     field(ONAM, "true")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(bo, "$(P)$(R)boboolx") {
@@ -40,6 +43,7 @@ record(bo, "$(P)$(R)boboolx") {
     field(ZNAM, "false")
     field(ONAM, "true")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 # mbbi/mbbo  -  Byte
@@ -59,6 +63,7 @@ record(mbbi, "$(P)$(R)mbbibyte") {
     field(NIST, "nine")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(mbbo, "$(P)$(R)mbbobyte") {
@@ -75,6 +80,7 @@ record(mbbo, "$(P)$(R)mbbobyte") {
     field(EIST, "eight")
     field(NIST, "nine")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(longin, "$(P)$(R)libyte") {
@@ -82,6 +88,7 @@ record(longin, "$(P)$(R)libyte") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.Byte")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 # mbbiDirect/mbboDirect  -  UInt32
@@ -91,12 +98,14 @@ record(mbbiDirect, "$(P)$(R)mbbiduint32") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.UInt32")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(mbboDirect, "$(P)$(R)mbboduint32") {
     field(DTYP, "OPCUA")
     field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.UInt32")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 # ai/ao  -  Double
@@ -106,12 +115,14 @@ record(ai, "$(P)$(R)aidouble") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.Double")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(ao, "$(P)$(R)aodouble") {
     field(DTYP, "OPCUA")
     field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.Double")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 # ai/ao  -  int32 (using linear conversion)
@@ -124,6 +135,7 @@ record(ai, "$(P)$(R)aiint32") {
     field(EGUF, "1e3")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(ao, "$(P)$(R)aoint32") {
@@ -133,6 +145,7 @@ record(ao, "$(P)$(R)aoint32") {
     field(EGUL, "-1e3")
     field(EGUF, "1e3")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 # si/so  -  String
@@ -142,10 +155,12 @@ record(stringin, "$(P)$(R)sistring") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.String")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(stringout, "$(P)$(R)sostring") {
     field(DTYP, "OPCUA")
     field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.String")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
