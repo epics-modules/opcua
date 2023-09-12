@@ -26,13 +26,13 @@ record(int64out, "$(P)$(R)int64out") {
 
 record(lsi, "$(P)$(R)lsistring") {
     field(DTYP, "OPCUA")
-    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.String")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
 }
 
 record(lso, "$(P)$(R)lsostring") {
     field(DTYP, "OPCUA")
-    field(OUT,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.String")
     field(TSE,  "-2")
 }

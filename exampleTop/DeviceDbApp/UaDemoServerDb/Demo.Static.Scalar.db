@@ -139,13 +139,13 @@ record(ao, "$(P)$(R)aoint32") {
 
 record(stringin, "$(P)$(R)sistring") {
     field(DTYP, "OPCUA")
-    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.String")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
 }
 
 record(stringout, "$(P)$(R)sostring") {
     field(DTYP, "OPCUA")
-    field(OUT,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Scalar.String")
     field(TSE,  "-2")
 }
