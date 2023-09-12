@@ -624,7 +624,7 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
 
     ProcessReason nReason;
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
-    dbgReadArray(upd.get(), num, epicsTypeString(*value));
+    dbgReadArray(upd.get(), num, epicsTypeString(value));
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -653,7 +653,7 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
                     ret = 1;
                 } else if (data.type != expectedType) {
                     errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data), epicsTypeString(*value));
+                                 prec->name, variantTypeString(data), epicsTypeString(value));
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
                 } else {
@@ -1048,7 +1048,7 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
                      prec->name,
                      variantTypeString(incomingData),
                      variantTypeString(targetType),
-                     epicsTypeString(**value));
+                     epicsTypeString(*value));
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     } else {
@@ -1084,7 +1084,7 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
                 ret = 1;
             } else {
-                dbgWriteArray(num, epicsTypeString(**value));
+                dbgWriteArray(num, epicsTypeString(*value));
             }
         }
     }

@@ -45,7 +45,7 @@ inline const char *epicsTypeString (const epicsInt64 &) { return "epicsInt64"; }
 inline const char *epicsTypeString (const epicsUInt64 &) { return "epicsUInt64"; }
 inline const char *epicsTypeString (const epicsFloat32 &) { return "epicsFloat32"; }
 inline const char *epicsTypeString (const epicsFloat64 &) { return "epicsFloat64"; }
-inline const char *epicsTypeString (const char* &) { return "epicsString"; }
+inline const char *epicsTypeString (const char*) { return "epicsString"; }
 
 inline const char *
 variantTypeString (const OpcUa_BuiltInType type)
