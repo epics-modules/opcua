@@ -288,6 +288,8 @@ public:
     UA_UInt32 getTransactionId();
 
     // Open62541 session callbacks
+    void connectionInactive();
+
     void connectionStatusChanged(
             UA_SecureChannelState channelState,
             UA_SessionState sessionState,

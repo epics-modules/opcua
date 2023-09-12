@@ -416,7 +416,8 @@ SessionOpen62541::connect (bool manual)
         return 0;
     }
 
-    disconnect(); // Do a proper disconnection before attempting to reconnect
+    if (client)
+        disconnect(); // Do a proper disconnection before attempting to reconnect
 
     setupClientSecurityInfo(securityInfo, &name, debug);
 
@@ -475,6 +476,14 @@ SessionOpen62541::connect (bool manual)
             autoConnector.start();
         return -1;
     }
+
+    /* connect inactivity callbacks */
+    config->inactivityCallback = [] (UA_Client *client)
+        {
+            static_cast<SessionOpen62541*>(UA_Client_getContext(client))->
+                connectionInactive();
+        };
+    config->connectivityCheckInterval = 1000; // 1 sec
 
     /* connect status change callback */
     config->stateCallback = [] (UA_Client *client,
@@ -1970,6 +1979,15 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 #endif // HAS_XMLPARSER
 
 // callbacks
+void
+SessionOpen62541::connectionInactive()
+{
+    if (debug)
+        std::cout << "Session " << name
+                  << " inactive" << std::endl;
+    markConnectionLoss();
+    return;
+}
 
 void
 SessionOpen62541::connectionStatusChanged (
