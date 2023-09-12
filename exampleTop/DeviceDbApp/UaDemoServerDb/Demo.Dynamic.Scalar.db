@@ -10,6 +10,7 @@ record(longin, "$(P)$(R)lichar") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.SByte")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(longin, "$(P)$(R)liint16") {
@@ -17,6 +18,7 @@ record(longin, "$(P)$(R)liint16") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Int16")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(longin, "$(P)$(R)liint32") {
@@ -24,6 +26,7 @@ record(longin, "$(P)$(R)liint32") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Int32")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(longin, "$(P)$(R)liuchar") {
@@ -31,6 +34,7 @@ record(longin, "$(P)$(R)liuchar") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Byte")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(longin, "$(P)$(R)liuint16") {
@@ -38,6 +42,7 @@ record(longin, "$(P)$(R)liuint16") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.UInt16")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(longin, "$(P)$(R)liuint32") {
@@ -45,6 +50,7 @@ record(longin, "$(P)$(R)liuint32") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.UInt32")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(ai, "$(P)$(R)aifloat") {
@@ -52,6 +58,7 @@ record(ai, "$(P)$(R)aifloat") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Float")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(ai, "$(P)$(R)aidouble") {
@@ -59,6 +66,7 @@ record(ai, "$(P)$(R)aidouble") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Double")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(ai, "$(P)$(R)aiint32") {
@@ -69,6 +77,7 @@ record(ai, "$(P)$(R)aiint32") {
     field(PREC, "1")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(stringin, "$(P)$(R)sistring") {
@@ -76,4 +85,5 @@ record(stringin, "$(P)$(R)sistring") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.String")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }

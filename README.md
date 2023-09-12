@@ -1,5 +1,4 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
-<a target="_blank" href="https://app.travis-ci.com/github/epics-modules/opcua">![Travis status][badge.travis]</a>
 <a target="_blank" href="https://github.com/epics-modules/opcua/actions/workflows/ci-build.yml">![GitHub Actions status][badge.gha]</a>
 <a target="_blank" href="https://www.codacy.com/gh/epics-modules/opcua/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=epics-modules/opcua&amp;utm_campaign=Badge_Grade">![Codacy grade][badge.codacy]</a>
 
@@ -138,7 +137,6 @@ in file LICENSE that is included with this distribution.
 
 <!-- Links -->
 [badge.version]: https://img.shields.io/github/v/release/epics-modules/opcua?sort=semver
-[badge.travis]: https://app.travis-ci.com/epics-modules/opcua.svg?branch=master
 [badge.codacy]: https://app.codacy.com/project/badge/Grade/ec0d53f8285249d394b3af067acf2ad4
 [badge.gha]: https://github.com/epics-modules/opcua/actions/workflows/ci-build.yml/badge.svg
 

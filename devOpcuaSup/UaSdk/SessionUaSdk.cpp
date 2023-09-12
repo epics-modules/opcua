@@ -1119,11 +1119,13 @@ void SessionUaSdk::connectionStatusChanged (
     case UaClient::ConnectionErrorApiReconnect:
         // "The server sent a shut-down event and the client API tries a reconnect."
     case UaClient::ServerShutdown:
-        if (serverConnectionStatus == UaClient::Connected)
+        if (serverConnectionStatus == UaClient::Connected
+            || serverConnectionStatus == UaClient::ConnectionWarningWatchdogTimeout)
             markConnectionLoss();
         if (serverStatus == UaClient::ServerShutdown)
             registeredItemsNo = 0;
-        errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
+        if (serverConnectionStatus != UaClient::Disconnected)
+            errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
         if (autoConnect)
             autoConnector.start();
         break;

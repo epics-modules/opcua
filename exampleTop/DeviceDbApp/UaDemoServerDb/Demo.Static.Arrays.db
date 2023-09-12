@@ -12,6 +12,7 @@ record(aai, "$(P)$(R)aaichar") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaochar") {
@@ -20,6 +21,7 @@ record(aao, "$(P)$(R)aaochar") {
     field(FTVL, "CHAR")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aai, "$(P)$(R)aaiint16") {
@@ -29,6 +31,7 @@ record(aai, "$(P)$(R)aaiint16") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaoint16") {
@@ -37,6 +40,7 @@ record(aao, "$(P)$(R)aaoint16") {
     field(FTVL, "SHORT")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aai, "$(P)$(R)aaiint32") {
@@ -46,6 +50,7 @@ record(aai, "$(P)$(R)aaiint32") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaoint32") {
@@ -54,6 +59,7 @@ record(aao, "$(P)$(R)aaoint32") {
     field(FTVL, "LONG")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aai, "$(P)$(R)aaiuchar") {
@@ -63,6 +69,7 @@ record(aai, "$(P)$(R)aaiuchar") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaouchar") {
@@ -71,6 +78,7 @@ record(aao, "$(P)$(R)aaouchar") {
     field(FTVL, "UCHAR")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aai, "$(P)$(R)aaiuint32") {
@@ -80,6 +88,7 @@ record(aai, "$(P)$(R)aaiuint32") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaouint32") {
@@ -88,6 +97,7 @@ record(aao, "$(P)$(R)aaouint32") {
     field(FTVL, "ULONG")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aai, "$(P)$(R)aaifloat") {
@@ -97,6 +107,7 @@ record(aai, "$(P)$(R)aaifloat") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaofloat") {
@@ -105,6 +116,7 @@ record(aao, "$(P)$(R)aaofloat") {
     field(FTVL, "FLOAT")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aai, "$(P)$(R)aaidouble") {
@@ -114,6 +126,7 @@ record(aai, "$(P)$(R)aaidouble") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaodouble") {
@@ -122,6 +135,7 @@ record(aao, "$(P)$(R)aaodouble") {
     field(FTVL, "DOUBLE")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aai, "$(P)$(R)aaistring") {
@@ -131,6 +145,7 @@ record(aai, "$(P)$(R)aaistring") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaostring") {
@@ -139,4 +154,5 @@ record(aao, "$(P)$(R)aaostring") {
     field(FTVL, "STRING")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }

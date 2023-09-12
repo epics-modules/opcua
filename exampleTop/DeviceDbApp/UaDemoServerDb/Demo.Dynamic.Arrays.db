@@ -12,6 +12,7 @@ record(waveform, "$(P)$(R)wfchar") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wfint16") {
@@ -21,6 +22,7 @@ record(waveform, "$(P)$(R)wfint16") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wfint32") {
@@ -30,6 +32,7 @@ record(waveform, "$(P)$(R)wfint32") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wfuchar") {
@@ -39,6 +42,7 @@ record(waveform, "$(P)$(R)wfuchar") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wfuint16") {
@@ -48,6 +52,7 @@ record(waveform, "$(P)$(R)wfuint16") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wfuint32") {
@@ -57,6 +62,7 @@ record(waveform, "$(P)$(R)wfuint32") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wffloat") {
@@ -66,6 +72,7 @@ record(waveform, "$(P)$(R)wffloat") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wfdouble") {
@@ -75,6 +82,7 @@ record(waveform, "$(P)$(R)wfdouble") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(waveform, "$(P)$(R)wfstring") {
@@ -84,4 +92,5 @@ record(waveform, "$(P)$(R)wfstring") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }

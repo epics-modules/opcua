@@ -12,6 +12,7 @@ record(int64in, "$(P)$(R)int64in") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.Int64")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(int64in, "$(P)$(R)uint64in") {
@@ -19,4 +20,5 @@ record(int64in, "$(P)$(R)uint64in") {
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Scalar.UInt64")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }

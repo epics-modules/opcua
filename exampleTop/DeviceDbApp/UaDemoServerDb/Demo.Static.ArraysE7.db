@@ -14,6 +14,7 @@ record(aai, "$(P)$(R)aaiint64") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaoint64") {
@@ -22,6 +23,7 @@ record(aao, "$(P)$(R)aaoint64") {
     field(FTVL, "INT64")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aai, "$(P)$(R)aaiuint64") {
@@ -31,6 +33,7 @@ record(aai, "$(P)$(R)aaiuint64") {
     field(NELM, "10")
     field(SCAN, "I/O Intr")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }
 
 record(aao, "$(P)$(R)aaouint64") {
@@ -39,4 +42,5 @@ record(aao, "$(P)$(R)aaouint64") {
     field(FTVL, "UINT64")
     field(NELM, "10")
     field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
 }

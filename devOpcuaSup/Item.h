@@ -13,10 +13,10 @@
 #ifndef DEVOPCUA_ITEM_H
 #define DEVOPCUA_ITEM_H
 
-namespace DevOpcua {
-
 #include <epicsTypes.h>
 #include <epicsTime.h>
+
+namespace DevOpcua {
 
 /**
  * @brief Enum for the EPICS related state of an OPC UA item
