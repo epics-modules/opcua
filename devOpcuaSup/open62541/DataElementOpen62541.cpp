@@ -258,7 +258,9 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                 type = extensionObject.content.decoded.type;
                 container = static_cast<char*>(extensionObject.content.decoded.data);
             } else {
-                std::cerr << "Item " << pitem << " is not decoded" << std::endl;
+                std::cerr << "Cannot get a structure definition for item " << pitem
+                          << " because binaryEncodingId " << extensionObject.content.encoded.typeId
+                          << " is not in the type dictionary." << std::endl;
                 return;
             }
         }
@@ -382,7 +384,9 @@ DataElementOpen62541::getOutgoingData ()
                 type = extensionObject.content.decoded.type;
                 container = extensionObject.content.decoded.data;
             } else {
-                std::cerr << "Item " << pitem << " is not decoded" << std::endl;
+                std::cerr << "Cannot get a structure definition for item " << pitem
+                          << " because binaryEncodingId " << extensionObject.content.encoded.typeId
+                          << " is not in the type dictionary." << std::endl;
                 return outgoingData;
             }
         }
