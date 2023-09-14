@@ -483,7 +483,6 @@ SessionOpen62541::connect (bool manual)
             static_cast<SessionOpen62541*>(UA_Client_getContext(client))->
                 connectionInactive();
         };
-    config->connectivityCheckInterval = 1000; // 1 sec
 
     /* connect status change callback */
     config->stateCallback = [] (UA_Client *client,
@@ -2015,9 +2014,8 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 void
 SessionOpen62541::connectionInactive()
 {
-    if (debug)
-        std::cout << "Session " << name
-                  << " inactive" << std::endl;
+    UA_Client_getConfig(client)->connectivityCheckInterval = 0;
+    errlogPrintf("OPC UA Session %s: server inactive\n", name.c_str());
     markConnectionLoss();
     return;
 }
@@ -2081,6 +2079,8 @@ SessionOpen62541::connectionStatusChanged (
             case UA_SESSIONSTATE_ACTIVATED:
             {
                 UA_ClientConfig *config = UA_Client_getConfig(client);
+                config->connectivityCheckInterval = 1000; // 1 sec
+
                 std::string token;
                 auto type = config->userIdentityToken.content.decoded.type;
                 if (type == &UA_TYPES[UA_TYPES_USERNAMEIDENTITYTOKEN])
