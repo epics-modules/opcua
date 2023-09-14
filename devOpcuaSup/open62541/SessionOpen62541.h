@@ -63,7 +63,9 @@ inline std::ostream& operator << (std::ostream& os, const UA_LocalizedText& ua_l
 
 inline std::ostream& operator << (std::ostream& os, const UA_QualifiedName& ua_qualifiedName)
 {
-    return os << "ns" << ua_qualifiedName.namespaceIndex << ":\"" << ua_qualifiedName.name << '"';
+    if (ua_qualifiedName.namespaceIndex)
+        os << "ns" << ua_qualifiedName.namespaceIndex << ':';
+    return os << '"' << ua_qualifiedName.name << '"';
 }
 
 std::ostream& operator << (std::ostream& os, const UA_NodeId& ua_nodeId);
