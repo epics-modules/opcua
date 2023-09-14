@@ -30,6 +30,7 @@
 #include <open62541/client_highlevel_async.h>
 #include <open62541/client_config_default.h>
 #include <open62541/plugin/pki_default.h>
+#include <open62541/plugin/log_stdout.h>
 
 #ifndef UA_BUILTIN_TYPES_COUNT
 // Newer open62541 since version 1.3 uses type pointer
@@ -344,6 +345,15 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     } else if (name == "debug") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         debug = ul;
+        UA_ClientConfig *config = UA_Client_getConfig(client);
+        if (config) {
+            // Loglevels:  0:trace, 1:debug, 2:info, 3:warning, 4:error, 5:fatal (and higher)
+            // Our debug=0 shall only print fatal errors.
+            // After that, the higher debug the lower UA_LogLevel, down to 0.
+            if (config->logger.clear)
+                config->logger.clear(config->logger.context); // Use context as opaque handle only!
+            config->logger = UA_Log_Stdout_withLevel(static_cast<UA_LogLevel>(std::max(0, 5-debug)));
+        }
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -431,6 +441,11 @@ SessionOpen62541::connect (bool manual)
         }
     }
     UA_ClientConfig *config = UA_Client_getConfig(client);
+    if (debug < 5) {
+        if (config->logger.clear)
+            config->logger.clear(config->logger.context);
+        config->logger = UA_Log_Stdout_withLevel(static_cast<UA_LogLevel>(std::max(0, 5-debug)));
+    }
 #ifdef HAS_SECURITY
     // We need the client certificate before UA_ClientConfig_setDefaultEncryption
     UA_ClientConfig_setDefaultEncryption(config,
