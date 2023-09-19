@@ -1634,9 +1634,13 @@ SessionOpen62541::typeIteratorCallback(const UA_NodeId& childId, const UA_NodeId
                       << ": user type " << typeName
                       << " has binary nodeId " << childId
                       << std::endl;
+
+        // Need copy because content of non-numeric (e.g. string) childId is freed after this function returns
+        UA_NodeId binaryEncodingId = UA_NODEID_NULL;
+        UA_NodeId_copy(&childId, &binaryEncodingId);
         binaryTypeIds.emplace(
             std::string(reinterpret_cast<const char*>(typeName.name.data), typeName.name.length),
-            childId);
+            binaryEncodingId);
     }
     return UA_STATUSCODE_GOOD;
 }
