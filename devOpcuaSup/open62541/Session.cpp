@@ -151,7 +151,7 @@ Session::showClientSecurity()
 const char Session::optionUsage[]
     = "Sets options for existing OPC UA sessions or subscriptions.\n\n"
       "pattern    pattern for session or subscription names (* and ? supported)\n"
-      "[options]  colon separated list of options in 'key=value' format\n\n"
+      "[options]  list of options in 'key=value' format\n\n"
       "Valid session options are:\n"
       "debug              debug level [default 0 = no debug]\n"
       "autoconnect        automatically connect sessions [default y]\n"
