@@ -98,7 +98,7 @@ replaceEnvVars(const char *path)
 
 static const iocshArg opcuaSessionArg0 = {"name", iocshArgString};
 static const iocshArg opcuaSessionArg1 = {"URL", iocshArgString};
-static const iocshArg opcuaSessionArg2 = {"[options]", iocshArgString};
+static const iocshArg opcuaSessionArg2 = {"[options]", iocshArgArgv};
 
 static const iocshArg *const opcuaSessionArg[3] = {&opcuaSessionArg0,
                                                    &opcuaSessionArg1,
@@ -109,7 +109,7 @@ const char opcuaSessionUsage[]
       "of the OPC UA server.\nMust be called before iocInit.\n\n"
       "name       session name (no spaces)\n"
       "URL        URL of the OPC UA server (e.g. opc.tcp://192.168.1.23:4840)\n"
-      "[options]  colon separated list of options in 'key=value' format\n"
+      "[options]  list of options in 'key=value' format\n"
       "           (see 'help opcuaOptions' for a list of valid options)\n";
 
 static const iocshFuncDef opcuaSessionFuncDef = {"opcuaSession",
@@ -146,9 +146,10 @@ opcuaSessionCallFunc(const iocshArgBuf *args)
         }
 
         std::list<std::pair<std::string, std::string>> setopts;
-        if (args[2].sval) {
-            auto options = splitString(args[2].sval, ':');
+        for (int i = 1; i < args[2].aval.ac; i++) {
+            auto options = splitString(args[2].aval.av[i], ':');
             for (auto &opt : options) {
+                if (opt.empty()) continue;
                 auto keyval = splitString(opt, '=');
                 if (keyval.size() != 2) {
                     errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
@@ -183,7 +184,7 @@ opcuaSessionCallFunc(const iocshArgBuf *args)
 static const iocshArg opcuaSubscriptionArg0 = {"name", iocshArgString};
 static const iocshArg opcuaSubscriptionArg1 = {"session", iocshArgString};
 static const iocshArg opcuaSubscriptionArg2 = {"publishing interval [ms]", iocshArgDouble};
-static const iocshArg opcuaSubscriptionArg3 = {"[options]", iocshArgString};
+static const iocshArg opcuaSubscriptionArg3 = {"[options]", iocshArgArgv};
 
 static const iocshArg *const opcuaSubscriptionArg[4] = {&opcuaSubscriptionArg0,
                                                         &opcuaSubscriptionArg1,
@@ -196,7 +197,7 @@ const char opcuaSubscriptionUsage[]
       "name                 subscription name (no spaces)\n"
       "session              name of the existing OPC UA session for the new subscription\n"
       "publishing interval  publishing interval for the new subscription (in ms)\n"
-      "[options]            colon separated list of options in 'key=value' format\n"
+      "[options]            list of options in 'key=value' format\n"
       "                     (see 'help opcuaOptions' for a list of valid options)\n";
 
 static const iocshFuncDef opcuaSubscriptionFuncDef = {"opcuaSubscription",
@@ -250,9 +251,10 @@ static
         }
 
         std::list<std::pair<std::string, std::string>> setopts;
-        if (args[3].sval) {
-            auto options = splitString(args[3].sval, ':');
+        for (int i = 1; i < args[3].aval.ac; i++) {
+            auto options = splitString(args[3].aval.av[i], ':');
             for (auto &opt : options) {
+                if (opt.empty()) continue;
                 auto keyval = splitString(opt, '=');
                 if (keyval.size() != 2) {
                     errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
@@ -285,7 +287,7 @@ static
 }
 
 static const iocshArg opcuaOptionsArg0 = {"pattern", iocshArgString};
-static const iocshArg opcuaOptionsArg1 = {"[options]", iocshArgString};
+static const iocshArg opcuaOptionsArg1 = {"[options]", iocshArgArgv};
 
 static const iocshArg *const opcuaOptionsArg[2] = {&opcuaOptionsArg0, &opcuaOptionsArg1};
 
@@ -309,22 +311,26 @@ opcuaOptionsCallFunc(const iocshArgBuf *args)
         } else if (strcmp(args[0].sval, "help") == 0) {
             std::cout << opcuaOptionsUsage.c_str() << std::endl;
         } else {
-            if (!args[1].sval) {
+            std::cerr << args[1].aval.ac << " options: " << args[1].aval.av[0] << std::endl;
+            if (args[1].aval.ac <= 1) {
                 errlogPrintf("missing argument #2 (options)\n");
             } else {
                 bool foundSomething = false;
                 std::set<Session *> sessions = Session::glob(args[0].sval);
                 if (sessions.size()) {
                     foundSomething = true;
-                    auto options = splitString(args[1].sval, ':');
-                    for (auto &opt : options) {
-                        auto keyval = splitString(opt, '=');
-                        if (keyval.size() != 2) {
-                            errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
-                                         opt.c_str());
-                        } else {
-                            for (auto &s : sessions)
-                                s->setOption(keyval.front(), keyval.back());
+                    for (int i = 1; i < args[1].aval.ac; i++) {
+                        auto options = splitString(args[1].aval.av[i], ':');
+                        for (auto &opt : options) {
+                            if (opt.empty()) continue;
+                            auto keyval = splitString(opt, '=');
+                            if (keyval.size() != 2) {
+                                errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
+                                             opt.c_str());
+                            } else {
+                                for (auto &s : sessions)
+                                    s->setOption(keyval.front(), keyval.back());
+                            }
                         }
                     }
                 }
@@ -332,16 +338,19 @@ opcuaOptionsCallFunc(const iocshArgBuf *args)
                     std::set<Subscription *> subscriptions = Subscription::glob(args[0].sval);
                     if (subscriptions.size()) {
                         foundSomething = true;
-                        auto options = splitString(args[1].sval, ':');
-                        for (auto &opt : options) {
-                            auto keyval = splitString(opt, '=');
-                            if (keyval.size() != 2) {
-                                errlogPrintf(
-                                    "option '%s' must follow 'key=value' format - ignored\n",
-                                    opt.c_str());
-                            } else {
-                                for (auto &s : subscriptions)
-                                    s->setOption(keyval.front(), keyval.back());
+                        for (int i = 1; i < args[1].aval.ac; i++) {
+                            auto options = splitString(args[1].aval.av[i], ':');
+                            for (auto &opt : options) {
+                                if (opt.empty()) continue;
+                                auto keyval = splitString(opt, '=');
+                                if (keyval.size() != 2) {
+                                    errlogPrintf(
+                                        "option '%s' must follow 'key=value' format - ignored\n",
+                                        opt.c_str());
+                                } else {
+                                    for (auto &s : subscriptions)
+                                        s->setOption(keyval.front(), keyval.back());
+                                }
                             }
                         }
                     }
@@ -742,7 +751,7 @@ opcuaCreateSessionCallFunc(const iocshArgBuf *args)
 {
     std::cerr
         << "DEPRECATION WARNING: opcuaCreateSession is obsolete; use the improved opcuaSession "
-           "command instead (that supports a generic option string)."
+           "command instead (that supports a generic option list)."
         << std::endl;
 
     try {
@@ -871,7 +880,7 @@ static
     void opcuaCreateSubscriptionCallFunc (const iocshArgBuf *args)
 {
     std::cerr << "DEPRECATION WARNING: opcuaCreateSubscription is obsolete; use the improved "
-                 "opcuaSubscription command instead (that supports a generic option string)."
+                 "opcuaSubscription command instead (that supports a generic option list)."
               << std::endl;
 
     try {
