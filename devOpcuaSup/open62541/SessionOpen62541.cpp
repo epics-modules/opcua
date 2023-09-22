@@ -556,7 +556,8 @@ SessionOpen62541::disconnect ()
     {
         Guard G(clientlock);
         if(!client) return 0;
-        UA_Client_delete(client); // this also deletes all open62541 subscriptions
+        clearCustomTypeDictionaries();
+        UA_Client_delete(client); // This also deletes all open62541 subscriptions
         client = nullptr;
     }
     // Worker thread terminates when client was destroyed
@@ -1420,7 +1421,7 @@ SessionOpen62541::run ()
 #ifndef HAS_XMLPARSER
 // Without XML parser, we cannot read the custom type dictionary
 #define readCustomTypeDictionaries()
-
+#define clearCustomTypeDictionaries()
 #else 
 
 #ifndef UA_ENABLE_TYPEDESCRIPTION
@@ -1477,14 +1478,8 @@ SessionOpen62541::getTypeIndexByName(UA_UInt16 nsIndex, const char* typeName)
 void
 SessionOpen62541::readCustomTypeDictionaries()
 {
+    clearCustomTypeDictionaries();
     UA_ClientConfig *config = UA_Client_getConfig(client);
-
-    // clear existing custom types (from last connect)
-    free((void*)config->customDataTypes);
-    config->customDataTypes = nullptr;
-    customTypes.clear();
-    binaryTypeIds.clear();
-
     if (debug)
         std::cout << "Session " << name
                   << ": reading type dictionaries"
@@ -1511,9 +1506,19 @@ SessionOpen62541::readCustomTypeDictionaries()
     }
 #endif
 
+    Guard G(clientlock);
+    if (!client) return;
+
     // Add collected types to client
     UA_DataTypeArray *customTypesArray = static_cast<UA_DataTypeArray*>(malloc(sizeof(UA_DataTypeArray)));
-    customTypesArray->next = nullptr; // in principle a linked list, but we only use one array
+    if (!customTypesArray) {
+        errlogPrintf(
+            "OPC UA Session %s: (readCustomTypeDictionaries) out of memory\n",
+            name.c_str());
+        return;
+    }
+
+    customTypesArray->next = config->customDataTypes; // Put our types in front of linked list (probably empty)
     *const_cast<size_t*>(&customTypesArray->typesSize) = customTypes.size();
     customTypesArray->types = customTypes.data(); // zero-copy: direct access to vector data
     config->customDataTypes = customTypesArray;
@@ -1559,6 +1564,21 @@ SessionOpen62541::readCustomTypeDictionaries()
         std::cout << "Session " << name
                   << ": found " << config->customDataTypes->typesSize
                   << " custom data types" << std::endl;
+}
+
+void
+SessionOpen62541::clearCustomTypeDictionaries()
+{
+    Guard G(clientlock);
+    if (!client) return;
+    UA_ClientConfig *config = UA_Client_getConfig(client);
+    UA_DataTypeArray *customTypesArray = const_cast<UA_DataTypeArray *>(config->customDataTypes);
+    if (customTypesArray) {
+        config->customDataTypes = customTypesArray->next;
+        free(customTypesArray);
+    }
+    customTypes.clear();
+    binaryTypeIds.clear();
 }
 
 UA_StatusCode
@@ -2004,6 +2024,12 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
             // Move collected members into customDataType.
             customDataType.membersSize = members.size();
             customDataType.members = static_cast<UA_DataTypeMember*>(malloc(customDataType.membersSize * sizeof(UA_DataTypeMember)));
+            if (!customDataType.members) {
+                errlogPrintf(
+                    "OPC UA Session %s: (parseCustomDataTypes) out of memory\n",
+                    name.c_str());
+                return;
+            }
             memcpy(customDataType.members, members.data(), customDataType.membersSize * sizeof(UA_DataTypeMember));
         }
 
@@ -2071,6 +2097,7 @@ SessionOpen62541::connectionInactive()
     UA_Client_getConfig(client)->connectivityCheckInterval = 0;
     errlogPrintf("OPC UA Session %s: server inactive\n", name.c_str());
     markConnectionLoss();
+    clearCustomTypeDictionaries();
     return;
 }
 
@@ -2224,6 +2251,7 @@ SessionOpen62541::connectionStatusChanged (
             case UA_SESSIONSTATE_CREATED: {
                 if (sessionState == UA_SESSIONSTATE_ACTIVATED)
                     errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
+                clearCustomTypeDictionaries();
                 break;
             }
 
