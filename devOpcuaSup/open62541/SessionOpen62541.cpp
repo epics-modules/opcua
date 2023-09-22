@@ -2235,11 +2235,6 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                 ProcessReason reason = ProcessReason::readComplete;
                 if (UA_STATUS_IS_BAD(response->results[i].status))
                     reason = ProcessReason::readFailure;
-                if (response->results[i].value.type &&
-                    response->results[i].value.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
-                    UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(response->results[i].value.data);
-                    std::cout << "Item " << item << " UA_ExtensionObject encoding: " << extensionObject.encoding << std::endl;
-                }
                 item->setIncomingData(response->results[i], reason);
             }
             i++;
