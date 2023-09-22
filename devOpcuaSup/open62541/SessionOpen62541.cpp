@@ -1439,8 +1439,6 @@ getProp(xmlNode* node, const char* name)
     return reinterpret_cast<const char*>(xmlGetProp(node, reinterpret_cast<const xmlChar*>(name)));
 }
 
-std::vector<UA_DataType> userTypes;
-
 // Pseudo-index for unknown type
 const UA_UInt16 UnknownType = static_cast<UA_UInt16>(~0);
 
