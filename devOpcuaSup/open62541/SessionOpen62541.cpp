@@ -1496,12 +1496,6 @@ SessionOpen62541::getTypeDictionaries()
             return static_cast<SessionOpen62541*>(handle)->
                 typeSystemIteratorCallback(childNodeId);
         }, this);
-    if (debug)
-        std::cout << "Session " << name
-                  << ": found " << binaryTypeIds.size()
-                  << " user types"
-                  << std::endl;
-
 #ifdef UA_DATATYPES_USE_POINTER
     // Resolve all pointers to user types
     for (auto type: userTypes) {
@@ -1519,11 +1513,54 @@ SessionOpen62541::getTypeDictionaries()
 #endif
 
     // Add collected types to client
-    UA_DataTypeArray *customTypes = static_cast<UA_DataTypeArray*>(malloc(sizeof(UA_DataTypeArray)));
-    customTypes->next = nullptr; // in principle a linked list, but we only use one array
-    *const_cast<size_t*>(&customTypes->typesSize) = userTypes.size();
-    customTypes->types = userTypes.data(); // zero-copy: direct access to vector data
-    config->customDataTypes = customTypes;
+    UA_DataTypeArray *customTypesArray = static_cast<UA_DataTypeArray*>(malloc(sizeof(UA_DataTypeArray)));
+    customTypesArray->next = nullptr; // in principle a linked list, but we only use one array
+    *const_cast<size_t*>(&customTypesArray->typesSize) = userTypes.size();
+    customTypesArray->types = userTypes.data(); // zero-copy: direct access to vector data
+    config->customDataTypes = customTypesArray;
+
+    if (debug >= 2) {
+        for (size_t i = 0; i < config->customDataTypes->typesSize; i++) {
+            const UA_DataType &userDataType = config->customDataTypes->types[i];
+            std::cerr << "- " << (userDataType.typeKind == UA_DATATYPEKIND_ENUM ? "enum" :
+                                 userDataType.typeKind == UA_DATATYPEKIND_UNION ? "union" :
+                                 userDataType.typeKind == UA_DATATYPEKIND_STRUCTURE ? "struct" :
+                                 userDataType.typeKind == UA_DATATYPEKIND_OPTSTRUCT ? "optstruct" :
+                                 "???")
+                      << " " << userDataType.typeName
+                      << " size:" << userDataType.memSize
+                      << " typeId:" << userDataType.typeId;
+            if (!UA_NodeId_isNull(&userDataType.binaryEncodingId))
+                std::cerr << " binaryEncodingId:" << userDataType.binaryEncodingId;
+            if (debug >= 3 && userDataType.membersSize) {
+                std::cerr << "\n  " << userDataType.membersSize << " Members:";
+                for (size_t j = 0; j < userDataType.membersSize; j++) {
+                    UA_DataTypeMember &member = userDataType.members[j];
+                    const UA_DataType& memberType =
+#ifdef UA_DATATYPES_USE_POINTER
+                        *member.memberType;
+#else
+                        (member.namespaceZero ? UA_TYPES : customTypesArray->types)[member.memberTypeIndex];
+#endif
+                    std::cerr << "\n    " << memberType.typeName
+                              << " " << member.memberName;
+                    if (member.isArray)
+                        std::cerr << "[]";
+                    if (member.isOptional)
+                        std::cerr << " (optional)";
+                    std::cerr << " typeId:" << memberType.typeId;
+                    if (!UA_NodeId_isNull(&memberType.binaryEncodingId))
+                        std::cerr << " binaryEncodingId:" << memberType.binaryEncodingId;
+                }
+            }
+            std::cerr << std::endl;
+        }
+    }
+
+    if (debug)
+        std::cout << "Session " << name
+                  << ": found " << config->customDataTypes->typesSize
+                  << " custom data types" << std::endl;
 }
 
 UA_StatusCode
@@ -1627,10 +1664,10 @@ SessionOpen62541::typeIteratorCallback(const UA_NodeId& childId, const UA_NodeId
                           << std::endl;
             return UA_STATUSCODE_BADUNEXPECTEDERROR;
         }
-        if (debug >= 2)
+        if (debug >= 4)
             std::cout << "Session " << name
                       << ": user type " << typeName
-                      << " has binary nodeId " << childId
+                      << " has binaryEncodingId " << childId
                       << std::endl;
 
         // Need copy because content of non-numeric (e.g. string) childId is freed after this function returns
@@ -1662,7 +1699,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
         const char* nodeKind = nodeName(node);
 
         if (strcmp(nodeKind, "TypeDictionary") == 0) {
-            if (debug >= 3)
+            if (debug >= 4)
                 std::cout << "\n# namespace " << nsIndex
                           << " " << getProp(node, "TargetNamespace")
                           << std::endl;
@@ -1693,7 +1730,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
             if (baseType && strcmp(baseType, "ua:Union") == 0)
                 userDataType.typeKind = UA_DATATYPEKIND_UNION;
 
-            if (debug >= 3)
+            if (debug >= 4)
                 std::cout << "\n" << (userDataType.typeKind == UA_DATATYPEKIND_UNION ? "union" : "struct")
                           <<  " " << typeName
                           <<  " { # binaryEncodingId: " << userDataType.binaryEncodingId
@@ -1704,27 +1741,27 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     continue;
                 if (strcmp(nodeName(field), "Documentation") == 0) {
                     for (xmlNode* doc = field->children; doc; doc = doc->next) {
-                        if (debug >= 3 && doc->content)
+                        if (debug >= 4 && doc->content)
                             std::cout << "# " << doc->content << std::endl;
                     }
                     continue;
                 }
                 if (strcmp(nodeName(field), "Field") != 0) {
-                    if (debug >= 3)
+                    if (debug >= 4)
                         std::cerr << "# unexpected node " <<  nodeName(field) << std::endl;
                     continue;
                 }
 
                 const char* fieldName = getProp(field, "Name");
                 if (!fieldName) {
-                    if (debug >= 3)
+                    if (debug >= 4)
                         std::cerr << "# unexpected Field node without field name" << std::endl;
                     continue;
                 }
 
                 const char* fieldTypeName = getProp(field, "TypeName");
                 if (!fieldName) {
-                    if (debug >= 3)
+                    if (debug >= 4)
                         std::cerr << "# unexpected field " << fieldName << " without type name" << std::endl;
                     continue;
                 }
@@ -1737,7 +1774,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     // They are not stored explicitly.
                     userDataType.typeKind = UA_DATATYPEKIND_OPTSTRUCT;
                     const char* length = getProp(field, "Length");
-                    if (debug >= 3) {
+                    if (debug >= 4) {
                         std::cout << "  # " << fieldTypeName
                                   << " " << fieldName;
                         if (length)
@@ -1751,21 +1788,21 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                 size_t memberTypeIndex = getTypeIndexByName(nsIndex, fieldTypeName);
                 if (memberTypeIndex == UnknownType) {
                     // Member type not read yet, will boably be defined later...
-                    if (debug >= 3)
-                        std::cout << " # unresolved member type " << fieldTypeName
-                                << "\n #------------------------"
-                                   "\n # read the other types first ..."
-                                << std::endl;
+                    if (debug >= 4)
+                        std::cout << "# unresolved member type " << fieldTypeName
+                                  << "\n#------------------------"
+                                     "\n# reading the other types first ..."
+                                  << std::endl;
                     // read the other types first
                     addUserDataTypes(node->next, nsIndex);
-                    if (debug >= 3)
-                        std::cout << " #------------------------"
-                                   "\n # returning to " << typeName
-                                << "\n # fixing unresolved member type " << fieldTypeName
-                                << std::endl;
+                    if (debug >= 4)
+                        std::cout << "\n#------------------------"
+                                     "\n# returning to " << typeName
+                                  << "\n# fixing unresolved member type " << fieldTypeName
+                                  << std::endl;
                     memberTypeIndex = getTypeIndexByName(nsIndex, fieldTypeName);
                     if (memberTypeIndex == UnknownType) {
-                        if (debug >= 3)
+                        if (debug >= 4)
                             std::cerr << "Session " << name
                                       << ": member type " << fieldTypeName
                                       << " of " << typeName << '.' << fieldName
@@ -1810,7 +1847,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     // First field of a union must be UInt32 switch field,
                     if (memberTypeIndex != UA_TYPES_UINT32)
                     {
-                        if (debug >= 3)
+                        if (debug >= 4)
                             std::cerr << "Session " << name
                                       << ": union " << typeName
                                       << " has switch field of unexpected type "
@@ -1821,7 +1858,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     }
                     // It is not added to members but included in padding.
                     userDataType.memSize = sizeof(UA_UInt32);
-                    if (debug >= 3)
+                    if (debug >= 4)
                         std::cout << "  # " << memberType->typeName
                                   << " " << fieldName
                                   << "; # in padding"
@@ -1843,7 +1880,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                         UA_DataTypeMember& lengthField = members.back();
                         if (members.empty() || strcmp(lengthField.memberName, lengthFieldName) != 0) {
                             // previous field was not the length field!
-                            if (debug >= 3)
+                            if (debug >= 4)
                                 std::cerr << "Session " << name
                                           << ": struct " << typeName
                                           << " has array field " << fieldName
@@ -1853,7 +1890,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                             break;
                         }
                         if (memberTypeOf(lengthField) != &UA_TYPES[UA_TYPES_INT32]) {
-                            if (debug >= 3)
+                            if (debug >= 4)
                                 std::cerr << "Session " << name
                                           << ": struct " << typeName
                                           << " has array " << fieldName
@@ -1867,7 +1904,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                         }
                         userDataType.memSize -= lengthField.padding +
                             lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize;
-                        if (debug >= 3)
+                        if (debug >= 4)
                             std::cout << "  # removed array length field " << memberTypeOf(lengthField)->typeName
                                       << " " << lengthField.memberName
                                       << " memberSize=" << (lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize)
@@ -1884,7 +1921,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     member.isArray = true;
                     if (switchFieldName && userDataType.typeKind != UA_DATATYPEKIND_UNION)
                         member.isOptional = true;
-                    if (debug >= 3)
+                    if (debug >= 4)
                         std::cout << "  size_t " << fieldName << "_Size;\n  "
                                   << memberType->typeName << "* " << fieldName
                                   << "; # " << (member.isOptional ? "optional" : "mandatory")
@@ -1897,7 +1934,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     userDataType.pointerFree = false;
                     memberSize = sizeof(void*);
                     member.isOptional = true;
-                    if (debug >= 3)
+                    if (debug >= 4)
                         std::cout << "  " << memberType->typeName << "* " << fieldName
                                   << "; # optional " << fieldTypeName
                                   << std::endl;
@@ -1906,7 +1943,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     // scalars are stored in-place
                     memberSize = memberType->memSize;
                     userDataType.pointerFree = userDataType.pointerFree && memberType->pointerFree;
-                    if (debug >= 3)
+                    if (debug >= 4)
                         std::cout << "  " << memberType->typeName
                                   << " " << fieldName
                                   << " # mandatory " << fieldTypeName
@@ -1932,7 +1969,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                 // Align structure to largest member alignment.
                 if (memberAlignment > structureAlignment)
                     structureAlignment = memberAlignment;
-                if (debug >= 3)
+                if (debug >= 4)
                     std::cout << "  # memberSize=" << memberSize
                               << " alignment=" << memberAlignment+1
                               << " padding=" << static_cast<unsigned int>(member.padding)
@@ -1943,7 +1980,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
             }
 
             if (members.size() > 255) {
-                if (debug >= 3)
+                if (debug >= 4)
                     std::cerr << "Session " << name
                               << ": type " << typeName
                               << " has too many members" << std::endl;
@@ -1960,7 +1997,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 
             // Pad structure to align with its largest primitive.
             userDataType.memSize += (structureAlignment & ~(userDataType.memSize-1));
-            if (debug >= 3)
+            if (debug >= 4)
                 std::cout << "}; # alignment=" << structureAlignment+1
                           << " memSize=" << userDataType.memSize
                           << " " << members.size() << " members"
@@ -1977,7 +2014,7 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
             const char* enumSizeStr = getProp(node, "LengthInBits");
             unsigned int enumSize = enumSizeStr ? atoi(enumSizeStr) : 0;
             if (enumSize != 32) {
-                if (debug >= 3)
+                if (debug >= 4)
                     std::cerr << "Session " << name
                               << ": enum " << typeName
                               << " has unexpected size of " << enumSize
@@ -1990,32 +2027,31 @@ SessionOpen62541::addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex)
             userDataType.memSize = sizeof(UA_UInt32);
             userDataType.overlayable = UA_BINARY_OVERLAYABLE_INTEGER;
 
-            if (debug >= 3)
+            if (debug >= 4)
                 std::cout << "\nenum " << typeName << " {"
-                          <<  " # tns:" << userTypes.size()
                           << std::endl;
             for (xmlNode* choice = node->children; choice; choice = choice->next) {
                 if (choice->type != XML_ELEMENT_NODE)
                     continue;
                 if (strcmp(nodeName(choice), "Documentation") == 0) {
                     for (xmlNode* doc = choice->children; doc; doc = doc->next) {
-                        if (debug >= 3 && doc->content)
+                        if (debug >= 4 && doc->content)
                             std::cout << "# " << doc->content << std::endl;
                     }
                     continue;
                 }
                 if (strcmp(nodeName(choice), "EnumeratedValue") != 0) {
-                    if (debug >= 3)
+                    if (debug >= 4)
                         std::cerr << "# unexpected node " << nodeName(choice) << std::endl;
                     continue;
                 }
                 const char* choiceName = getProp(choice, "Name");
                 const char* choiceValue = getProp(choice, "Value");
-                if (debug >= 3)
+                if (debug >= 4)
                     std::cout << "  " << choiceName << " = " << choiceValue << ';' << std::endl;
                 // TODO: Maybe do something with the enum strings?
             }
-            if (debug >= 3)
+            if (debug >= 4)
                 std::cout << "};" << std::endl;
         }
 
