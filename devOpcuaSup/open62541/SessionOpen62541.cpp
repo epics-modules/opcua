@@ -1444,7 +1444,7 @@ getProp(xmlNode* node, const char* name)
 }
 
 // Pseudo-index for unknown type
-const UA_UInt16 UnknownType = static_cast<UA_UInt16>(~0);
+static const UA_UInt16 UnknownType = static_cast<UA_UInt16>(~0);
 
 size_t
 SessionOpen62541::getTypeIndexByName(UA_UInt16 nsIndex, const char* typeName)
@@ -1698,12 +1698,18 @@ SessionOpen62541::typeIteratorCallback(const UA_NodeId& childId, const UA_NodeId
     return UA_STATUSCODE_GOOD;
 }
 
+static inline bool typeAlreadyKnown(const std::vector<UA_DataType>& knownTypes, const char* name)
+{
+    for (auto known: knownTypes)
+        if (strcmp(name, known.typeName) == 0)
+            return true;
+    return false;
+}
+
 void
 SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 {
-    bool cont = true;
-
-    for (;node && cont; node = node->next) {
+    for (;node; node = node->next) {
         if (node->type != XML_ELEMENT_NODE)
             continue; // in particular ignore all text elements (mainly whitespace)
 
@@ -1730,6 +1736,12 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
         if (!typeName) {
              // All nodeKinds we are inderested in (StructuredType, EnumeratedType) have names.
              continue;
+        }
+
+        if (typeAlreadyKnown(customTypes, typeName)) {
+            if (debug >= 4)
+                std::cout << "# Type " << typeName << " already known" << std::endl;
+            break;
         }
 
         if (strcmp(nodeKind, "StructuredType") == 0) {
@@ -1824,15 +1836,10 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                             std::cerr << "Session " << name
                                       << ": member type " << fieldTypeName
                                       << " of " << typeName << '.' << fieldName
-                                      << " not found." << std::endl;
-                        for (auto it: members)
-                            free(const_cast<char*>(it.memberName));
-                        members.clear();
+                                      << " still not found." << std::endl;
+                        customDataType.memSize = 0;
                         break;
                     }
-                    // Continue with remaining members but no need to do more types
-                    // as we have done tham already in the recursion.
-                    cont = false;
                 }
                 const UA_DataType *memberType = memberTypeIndex < UA_TYPES_COUNT ?
                     &UA_TYPES[memberTypeIndex] : &customTypes[memberTypeIndex - UA_TYPES_COUNT];
@@ -2007,9 +2014,15 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 
             if (!customDataType.memSize && members.size()) // Error bail out: Clean up and ignore invalid types.
             {
-                for (auto it: members)
-                    free(const_cast<char*>(it.memberName));
+                if (debug >= 5)
+                    std::cerr << "# cleaning up invalid type " << typeName << std::endl;
+                for (auto member: members) {
+                    if (debug >= 5)
+                        std::cerr << "#  cleaning up member " << member.memberName << std::endl;
+                    free(const_cast<char*>(member.memberName));
+                }
                 members.clear();
+                UA_NodeId_clear(&customDataType.binaryEncodingId);
                 continue;
             }
 
@@ -2081,6 +2094,8 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 
         // Update customTypes array for searching type names
         if (typeName) {
+            if (debug >= 5)
+                std::cout << "# adding type " << typeName << " to known types" << std::endl;
             customDataType.typeId = UA_NODEID_STRING(nsIndex, const_cast<char*>(typeName));
             customDataType.typeName = strdup(typeName);
             customTypes.push_back(customDataType);
