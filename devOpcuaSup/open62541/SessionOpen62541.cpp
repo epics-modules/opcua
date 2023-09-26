@@ -1685,6 +1685,17 @@ SessionOpen62541::typeIteratorCallback(const UA_NodeId& childId, const UA_NodeId
                       << " has binaryEncodingId " << childId
                       << std::endl;
 
+#if UA_OPEN62541_VER_MAJOR*100+UA_OPEN62541_VER_MINOR < 103
+        // open62541 v1.2 crashes with non-numeric binaryEncodingIds
+        if (childId.identifierType != UA_NODEIDTYPE_NUMERIC) {
+            std::cerr << "Session " << name
+                      << ": (readCustomTypeDictionaries) Can't use type " << typeName
+                      << " because open62541 v1.2 can't handle non-numeric binaryEncodingId "
+                      << childId << std::endl;
+            return UA_STATUSCODE_BADUNEXPECTEDERROR;
+        }
+#endif
+
         // Need copy because content of non-numeric (e.g. string) childId is freed after this function returns
         UA_NodeId binaryEncodingId = UA_NODEID_NULL;
         UA_NodeId_copy(&childId, &binaryEncodingId);
@@ -1748,7 +1759,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
             auto binaryType = binaryTypeIds.find(typeName);
             if (binaryType == binaryTypeIds.end()) {
                 std::cerr << "Session " << name
-                          << ": unknown type name " << typeName << std::endl;
+                          << ": (parseCustomDataTypes) Unknown type name " << typeName << std::endl;
                 continue;
             }
             UA_NodeId_copy(&binaryType->second, &customDataType.binaryEncodingId);
