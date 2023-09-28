@@ -1722,7 +1722,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 {
     for (;node; node = node->next) {
         if (node->type != XML_ELEMENT_NODE)
-            continue; // in particular ignore all text elements (mainly whitespace)
+            continue; // In particular ignore all text elements (mainly whitespace)
 
         UA_DataType customDataType = {};
         customDataType.typeKind = UA_DATATYPEKIND_STRUCTURE; // until proven otherwise
@@ -1745,7 +1745,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 
         const char* typeName = getProp(node, "Name");
         if (!typeName) {
-             // All nodeKinds we are inderested in (StructuredType, EnumeratedType) have names.
+             // All nodeKinds we are interested in (StructuredType, EnumeratedType) have names.
              continue;
         }
 
@@ -1761,8 +1761,10 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
 
             auto binaryType = binaryTypeIds.find(typeName);
             if (binaryType == binaryTypeIds.end()) {
-                std::cerr << "Session " << name
-                          << ": (parseCustomDataTypes) Unknown type name " << typeName << std::endl;
+                if (debug)
+                    std::cerr << "Session " << name
+                              << ": Ignoring type " << typeName
+                              << " which has no binaryEncodingId" << std::endl;
                 continue;
             }
             UA_NodeId_copy(&binaryType->second, &customDataType.binaryEncodingId);
@@ -1976,7 +1978,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                                   << std::endl;
                 }
                 else {
-                    // scalars are stored in-place
+                    // Scalars are stored in-place.
                     memberSize = memberType->memSize;
                     customDataType.pointerFree = customDataType.pointerFree && memberType->pointerFree;
                     if (debug >= 4)
@@ -2058,7 +2060,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
         }
 
         if (strcmp(nodeKind, "EnumeratedType") == 0) {
-            // Enums are stored as UInt32 index
+            // Enums are stored as UInt32 index.
             const char* enumSizeStr = getProp(node, "LengthInBits");
             unsigned int enumSize = enumSizeStr ? atoi(enumSizeStr) : 0;
             if (enumSize != 32) {
@@ -2103,7 +2105,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                 std::cout << "};" << std::endl;
         }
 
-        // Update customTypes array for searching type names
+        // Update customTypes array for searching type names.
         if (typeName) {
             if (debug >= 5)
                 std::cout << "# adding type " << typeName << " to known types" << std::endl;
