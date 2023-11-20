@@ -24,6 +24,8 @@
 #include <winsock2.h>
 #endif
 
+#include <libxml/parser.h>
+
 #include <epicsExit.h>
 #include <epicsThread.h>
 #include <epicsAtomic.h>
