@@ -25,6 +25,7 @@
 #endif
 
 #include <libxml/parser.h>
+#include <libxml/tree.h>
 
 #include <epicsExit.h>
 #include <epicsThread.h>
@@ -86,10 +87,6 @@ loadFile(const char *const path) {
 #ifdef HAS_SECURITY
 extern const UA_String username_policy;
 extern const UA_String certificate_policy;
-#endif
-
-#ifdef HAS_XMLPARSER
-#include <libxml/tree.h>
 #endif
 
 #define epicsExportSharedSymbols
