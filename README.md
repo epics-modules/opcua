@@ -1,6 +1,6 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
 <a target="_blank" href="https://github.com/epics-modules/opcua/actions/workflows/ci-build.yml">![GitHub Actions status][badge.gha]</a>
-<a target="_blank" href="https://www.codacy.com/gh/epics-modules/opcua/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=epics-modules/opcua&amp;utm_campaign=Badge_Grade">![Codacy grade][badge.codacy]</a>
+<a target="_blank" href="https://app.codacy.com/gh/epics-modules/opcua/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade">![Codacy grade][badge.codacy]</a>
 
 # opcua - EPICS Device Support for OPC UA
 
@@ -19,10 +19,10 @@ Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 
 There are two choices for the low-level OPC UA client library:
 
-1.  The commercially available Unified Automation C++ Based OPC UA Client SDK.
+1.  The commercially available Unified Automation C++ Based OPC UA Client SDK. \
     This is the original, full implementation.
    
-2.  The open source client implementation of the open62541 project.
+2.  The open source client implementation of the open62541 project. \
     This integration is still experimental and does not support structured data yet.
 
 ## Prerequisites
