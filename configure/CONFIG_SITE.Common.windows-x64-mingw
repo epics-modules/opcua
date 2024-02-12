@@ -1,0 +1,18 @@
+# Second-level dependencies of the client library
+
+ifeq ($($(CLIENT)_USE_CRYPTO),YES)
+USR_SYS_LIBS += crypto
+endif
+
+# if OPEN62541 or USE_XMLPARSER
+ifneq ($(or $(strip $(filter OPEN62541,$(CLIENT))),$(strip $(filter YES,$($(CLIENT)_USE_XMLPARSER)))),)
+USR_SYS_LIBS += xml2
+endif
+
+# Workaround for the EPICS Base build system
+# https://github.com/epics-base/epics-base/issues/441
+
+# Linker flags for static & shared-library builds
+STATIC_LDFLAGS_YES= -Wl,-Bstatic
+STATIC_LDFLAGS_NO=
+STATIC_LDLIBS_YES= -Wl,-Bdynamic

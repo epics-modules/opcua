@@ -35,10 +35,16 @@ CHECK_RELEASE = YES
 #HOST_OPT = NO
 #CROSS_OPT = NO
 
-# Path to the Unified Automation OPC UA C++ SDK
-#UASDK = $(TOP)/../../uasdkcppclient-v1.5.3-346/sdk
+# ------ The following block should be copied to a
+#        file called CONFIG_SITE.local and edited/adapted there
 
-# How the Unified Automation SDK shared libraries are deployed
+# Uncomment and configure *one* of the client library choices
+
+
+# Path to the Unified Automation OPC UA C++ SDK installation
+#UASDK = /opt/opcua/uasdkcppclient-v1.5.3-346/sdk
+
+# How the Unified Automation SDK shared libraries will be deployed
 #   SYSTEM = shared libs are in a system location
 #   PROVIDED = shared libs are in $(UASDK_SHRLIB_DIR)
 #   INSTALL = shared libs are installed (copied) into this module
@@ -50,6 +56,36 @@ UASDK_SHRLIB_DIR = $(UASDK_LIB_DIR)
 # How the Unified Automation SDK libraries were built
 UASDK_USE_CRYPTO = YES
 UASDK_USE_XMLPARSER = YES
+
+
+# Path to the Open62541 installation
+#OPEN62541 = /opt/opcua/open62541-1.3.8-debian11
+
+# How the Unified Automation SDK shared libraries will be deployed
+#   SYSTEM = shared libs are in a system location
+#   PROVIDED = shared libs are in $(UASDK_SHRLIB_DIR)
+#   INSTALL = shared libs are installed (copied) into this module
+#   EMBED = link SDK code statically into libopcua,
+#           SDK libraries are not required on target system
+OPEN62541_DEPLOY_MODE = EMBED
+OPEN62541_LIB_DIR = $(OPEN62541)/lib
+OPEN62541_SHRLIB_DIR = $(OPEN62541)/bin
+# How the Open62541 libraries were built
+OPEN62541_USE_CRYPTO = YES
+
+
+# Windows/MSVC only
+# Prerequisites: libxml2 iconv openssl
+#LIBXML2 = $(UASDK)/third-party/win64/vs2015/libxml2
+#OPENSSL = $(UASDK)/third-party/win64/vs2015/openssl
+#LIBXML2 = C:/Users/langer/opcua/libxml2-2.9.3
+#ICONV = C:/Users/langer/opcua/iconv-1.14
+
+# Windows/MinGW only
+# Location of MSYS2/MinGW64
+#MSYSTEM_PREFIX = C:/Users/langer/msys64/mingw64
+
+# ------ End of CONFIG_SITE.local block
 
 # This is preferably done in EPICS Base = global
 #USR_CXXFLAGS_Linux += -std=c++11

@@ -138,7 +138,6 @@ OPEN62541_LIB_DIR = $(OPEN62541)/lib
 OPEN62541_SHRLIB_DIR = $(OPEN62541_LIB_DIR)
 # How the Open62541 libraries were built
 OPEN62541_USE_CRYPTO = YES
-OPEN62541_USE_XMLPARSER = YES
 ```
 
 The Open62541 related configuration only has to be done in this module, which creates a `CONFIG_OPCUA` file that is automatically included by all downstream modules (those creating IOCs), so that the configuration is always consistent.

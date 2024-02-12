@@ -1,6 +1,6 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
 <a target="_blank" href="https://github.com/epics-modules/opcua/actions/workflows/ci-build.yml">![GitHub Actions status][badge.gha]</a>
-<a target="_blank" href="https://www.codacy.com/gh/epics-modules/opcua/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=epics-modules/opcua&amp;utm_campaign=Badge_Grade">![Codacy grade][badge.codacy]</a>
+<a target="_blank" href="https://app.codacy.com/gh/epics-modules/opcua/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade">![Codacy grade][badge.codacy]</a>
 
 # opcua - EPICS Device Support for OPC UA
 
@@ -19,11 +19,11 @@ Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 
 There are two choices for the low-level OPC UA client library:
 
-1.  The commercially available Unified Automation C++ Based OPC UA Client SDK.
-    Original, full implementation.
+1.  The commercially available Unified Automation C++ Based OPC UA Client SDK. \
+    This is the original, full implementation.
    
-2.  The open source client implementation of the open62541 project.
-    Currently experimental, no support for structured data yet.
+2.  The open source client implementation of the open62541 project. \
+    This integration is still experimental and does not support structured data yet.
 
 ## Prerequisites
 
@@ -98,7 +98,7 @@ IOC applications that use the module need to
 
 ## Documentation
 
-Sparse.
+Sparse, but getting better.
 
 The documentation folder of the Device Support module contains the
 [Requirements Specification (SRS)][requirements.pdf] giving an introduction
@@ -108,12 +108,21 @@ features.
 The [Cheat Sheet][cheatsheet.pdf] explains the configuration in the startup
 script and the database links.
 
-## Binaries
+## Binary Distribution
 
-Please look at the "Assets" sections of specific releases on the
-[release page](https://github.com/epics-modules/opcua/releases) for binaries.
-These are fully functional and contain the Unified Automation Client SDK. They
-can be used without limitations and without any fees.
+Please look at the "Assets" sections of specific releases
+on the [release page](https://github.com/epics-modules/opcua/releases)
+for the binary distribution tars.
+These tars contain an EPICS module with a binary Linux shared library (`libopcua.so.<version>`)
+that contains (embeds) the Unified Automation low-level client.
+In your build setup, the module from the binary distribution
+can be used like a support module built from source.
+The binary device support is fully functional
+and can be used without limitations or any fees.
+
+You need to download the binary distribution tar that matches
+your Linux distribution and the exact EPICS Base version,
+else you will not be able to create IOCs.
 
 ## Feedback / Reporting issues
 
@@ -127,8 +136,11 @@ This module is based on extensive
 by Bernhard Kuner (HZB/BESSY) and uses ideas and code snippets from
 Michael Davidsaver (Osprey DCS).
 
-The support for the open62541 client was added by Dirk Zimoch (PSI) with
-additional help from Carsten Winkler (HZB/BESSY).
+Support for the open62541 client library was added by Dirk Zimoch (PSI)
+with additional help from Carsten Winkler (HZB/BESSY).
+
+The end-to-end test suite is a reduced clone of the test application
+that has been developed at the ESS by Ross Elliot and Karl Vestin.
 
 ## License
 

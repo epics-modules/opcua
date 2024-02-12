@@ -31,11 +31,12 @@ OPEN62541_USE_XMLPARSER = @OPEN62541_USE_XMLPARSER@
 
 OPEN62541_LIBS += open62541
 
+# if (Linux or MinGW)
+ifneq ($(or $(strip $(filter Linux,$(OS_CLASS))),$(strip $(filter -D_MINGW,$(OP_SYS_CPPFLAGS)))),)
 ifeq ($(OPEN62541_USE_CRYPTO),YES)
-OPCUA_SYS_LIBS_Linux += crypto
+USR_SYS_LIBS += crypto
 endif
-ifeq ($(OPEN62541_USE_XMLPARSER),YES)
-OPCUA_SYS_LIBS_Linux += xml2
+USR_SYS_LIBS += xml2
 endif
 
 ifeq ($(OPEN62541_DEPLOY_MODE),PROVIDED)
