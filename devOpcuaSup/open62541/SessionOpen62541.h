@@ -24,6 +24,12 @@
 
 #include <open62541/client.h>
 
+#ifndef UA_BUILTIN_TYPES_COUNT
+// Newer open62541 since version 1.3 uses type pointer
+#define UA_DATATYPES_USE_POINTER
+// Older open62541 uses type index
+#endif
+
 #ifdef HAS_XMLPARSER
 #include <libxml/tree.h>
 #endif
@@ -71,6 +77,8 @@ inline std::ostream& operator << (std::ostream& os, const UA_QualifiedName& ua_q
 std::ostream& operator << (std::ostream& os, const UA_NodeId& ua_nodeId);
 
 std::ostream& operator << (std::ostream& os, const UA_Variant &ua_variant);
+
+const char* typeKindName(UA_UInt32 typeKind);
 
 // Open62541 has no ClientSecurityInfo structure
 // Make our own for convenience
@@ -412,6 +420,7 @@ private:
     /** open62541 type dictionary handling */
     std::vector<UA_DataType> customTypes;                         /**< descriptions of custom (non-standard) OPC-UA types */
     std::map<std::string, UA_NodeId> binaryTypeIds;               /**< server defined binary ids of custom types */
+    std::map<std::string, std::vector<std::pair<int64_t,std::string>>> enumTypes;
     void readCustomTypeDictionaries();                            /**< read custom types from the server */
     void clearCustomTypeDictionaries();                           /**< clear old custom types */
     void parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex);  /**< parse XML representation of custom types */
@@ -419,6 +428,7 @@ private:
     UA_StatusCode typeSystemIteratorCallback(const UA_NodeId& dictNodeId);
     UA_StatusCode dictIteratorCallback(const UA_NodeId& childId, const UA_NodeId& referenceTypeId);
     UA_StatusCode typeIteratorCallback(const UA_NodeId& childId, const UA_NodeId& referenceTypeId, const UA_QualifiedName& typeName);
+    void showCustomDataTypes(int level) const;
 #endif
 };
 
