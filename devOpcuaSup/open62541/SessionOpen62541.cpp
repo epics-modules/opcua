@@ -1577,6 +1577,13 @@ SessionOpen62541::clearCustomTypeDictionaries()
         config->customDataTypes = customTypesArray->next;
         free(customTypesArray);
     }
+    for (auto type: customTypes) {
+        for (int i = 0; i < type.membersSize; i++)
+        {
+            free(const_cast<char*>(type.members[i].memberName));
+        }
+        free(type.members);
+    }
     customTypes.clear();
     binaryTypeIds.clear();
 }
