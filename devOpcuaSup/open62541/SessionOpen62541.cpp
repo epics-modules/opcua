@@ -35,12 +35,6 @@
 #include <open62541/plugin/pki_default.h>
 #include <open62541/plugin/log_stdout.h>
 
-#ifndef UA_BUILTIN_TYPES_COUNT
-// Newer open62541 since version 1.3 uses type pointer
-#define UA_DATATYPES_USE_POINTER
-// Older open62541 uses type index
-#endif
-
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -225,6 +219,47 @@ operator += (std::string& str, const UA_String& ua_string)
 {
     return str.append(reinterpret_cast<const char*>(ua_string.data), ua_string.length);
 }
+
+const char* typeKindName(UA_UInt32 typeKind)
+{
+    static const char* typeKindNames[] = {
+        "Boolean",
+        "SByte",
+        "Byte",
+        "Int16",
+        "UInt16",
+        "Int32",
+        "UInt32",
+        "Int64",
+        "UInt64",
+        "Float",
+        "Double",
+        "String",
+        "DateTime",
+        "Guid",
+        "ByteString",
+        "XmlElement",
+        "NodeId",
+        "ExpandedNodeId",
+        "StatusCode",
+        "QualifiedName",
+        "LocalizedText",
+        "ExtensionObject",
+        "DataValue",
+        "Variant",
+        "DiagnosticInfo",
+        "Decimal",
+        "Enum",
+        "Structure",
+        "OptStruct",
+        "Union",
+        "BitfieldCluster",
+        "???"
+    };
+    if (typeKind > 31) typeKind = 31;
+    return typeKindNames[typeKind];
+}
+
 
 static epicsThreadOnceId session_open62541_ihooks_once = EPICS_THREAD_ONCE_INIT;
 static epicsThreadOnceId session_open62541_atexit_once = EPICS_THREAD_ONCE_INIT;
@@ -1217,6 +1252,18 @@ SessionOpen62541::show (const int level) const
             }
         }
     }
+#ifdef HAS_XMLPARSER
+    if (level >= 3 && customTypes.size()) {
+        if (customTypes.size() == 0) {
+            std::cout << "No custom data types" << std::endl;
+        } else {
+            std::cout << "Custom data types:" << std::endl;
+            showCustomDataTypes(level-3);
+        }
+    }
+#else
+    std::cout << "No custom data type support" << std::endl;
+#endif
 }
 
 void
@@ -1526,11 +1573,7 @@ SessionOpen62541::readCustomTypeDictionaries()
     if (debug >= 2) {
         for (size_t i = 0; i < config->customDataTypes->typesSize; i++) {
             const UA_DataType &customDataType = config->customDataTypes->types[i];
-            std::cerr << "- " << (customDataType.typeKind == UA_DATATYPEKIND_ENUM ? "enum" :
-                                  customDataType.typeKind == UA_DATATYPEKIND_UNION ? "union" :
-                                  customDataType.typeKind == UA_DATATYPEKIND_STRUCTURE ? "struct" :
-                                  customDataType.typeKind == UA_DATATYPEKIND_OPTSTRUCT ? "optstruct" :
-                                  "???")
+            std::cerr << "- " << typeKindName(customDataType.typeKind)
                       << " " << customDataType.typeName
                       << " size:" << customDataType.memSize;
             if (!UA_NodeId_isNull(&customDataType.binaryEncodingId))
@@ -1586,6 +1629,7 @@ SessionOpen62541::clearCustomTypeDictionaries()
     }
     customTypes.clear();
     binaryTypeIds.clear();
+    enumTypes.clear();
 }
 
 UA_StatusCode
@@ -1781,7 +1825,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                 customDataType.typeKind = UA_DATATYPEKIND_UNION;
 
             if (debug >= 4)
-                std::cout << "\n" << (customDataType.typeKind == UA_DATATYPEKIND_UNION ? "union" : "struct")
+                std::cout << "\n" << typeKindName(customDataType.typeKind)
                           <<  " " << typeName
                           <<  " { # binaryEncodingId: " << customDataType.binaryEncodingId
                           << std::endl;
@@ -2087,6 +2131,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
             if (debug >= 4)
                 std::cout << "\nenum " << typeName << " {"
                           << std::endl;
+            std::vector<std::pair<int64_t,std::string>> choices;
             for (xmlNode* choice = node->children; choice; choice = choice->next) {
                 if (choice->type != XML_ELEMENT_NODE)
                     continue;
@@ -2106,8 +2151,9 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                 const char* choiceValue = getProp(choice, "Value");
                 if (debug >= 4)
                     std::cout << "  " << choiceName << " = " << choiceValue << ';' << std::endl;
-                // TODO: Maybe do something with the enum strings?
+                choices.emplace_back(static_cast<int64_t>(atoll(choiceValue)), choiceName);
             }
+            enumTypes.emplace(typeName, std::move(choices));
             if (debug >= 4)
                 std::cout << "};" << std::endl;
         }
@@ -2123,6 +2169,41 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
     }
 }
 
+void
+SessionOpen62541::showCustomDataTypes(int level) const
+{
+    for (auto type: customTypes)
+    {
+        std::cout << "  " << type.typeName
+                  << " : " << typeKindName(type.typeKind);
+        if (level >= 1) {
+            std::cout << " {";
+            if (type.typeKind == UA_DATATYPEKIND_ENUM)
+            {
+                for (auto choice: enumTypes.find(type.typeName)->second)
+                {
+                    std::cout << "\n    " << choice.second << " = " << choice.first;
+                }
+            } else
+            for (size_t i = 0; i < type.membersSize; i++) {
+                UA_DataTypeMember member = type.members[i];
+                const UA_DataType& memberType =
+#ifdef UA_DATATYPES_USE_POINTER
+                    *member.memberType;
+#else
+                    (member.namespaceZero ? UA_TYPES :customTypes.data())[member.memberTypeIndex];
+#endif
+                std::cout << "\n    " << member.memberName << " : " << memberType.typeName;
+                if (member.isArray)
+                    std::cout << "[]";
+                if (member.isOptional)
+                    std::cout << " (optional)";
+            }
+            std::cout << "\n  }";
+        }
+        std::cout << std::endl;
+    }
+}
 #endif // HAS_XMLPARSER
 
 // callbacks
