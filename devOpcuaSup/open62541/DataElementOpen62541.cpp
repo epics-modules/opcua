@@ -102,6 +102,57 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
     }
 }
 
+#ifndef UA_ENABLE_TYPEDESCRIPTION
+// Without type description, we cannot get struct members
+#error Set UA_ENABLE_TYPEDESCRIPTION in open62541
+#endif
+
+#ifndef UA_DATATYPES_USE_POINTER
+// Older open62541 version 1.2 has no UA_DataType_getStructMember
+// Code from open62541 version 1.3.7 modified for compatibility with version 1.2
+UA_Boolean
+UA_DataType_getStructMember(const UA_DataType *type, const char *memberName,
+                            size_t *outOffset, const UA_DataType **outMemberType,
+                            UA_Boolean *outIsArray) {
+    if(type->typeKind != UA_DATATYPEKIND_STRUCTURE &&
+       type->typeKind != UA_DATATYPEKIND_OPTSTRUCT)
+        return false;
+
+    size_t offset = 0;
+    const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+    for(size_t i = 0; i < type->membersSize; ++i) {
+        const UA_DataTypeMember *m = &type->members[i];
+        const UA_DataType *mt = &typelists[!m->namespaceZero][m->memberTypeIndex];
+        offset += m->padding;
+
+        if(strcmp(memberName, m->memberName) == 0) {
+            *outOffset = offset;
+            *outMemberType = mt;
+            *outIsArray = m->isArray;
+            return true;
+        }
+
+        if(!m->isOptional) {
+            if(!m->isArray) {
+                offset += mt->memSize;
+            } else {
+                offset += sizeof(size_t);
+                offset += sizeof(void*);
+            }
+        } else { /* field is optional */
+            if(!m->isArray) {
+                offset += sizeof(void *);
+            } else {
+                offset += sizeof(size_t);
+                offset += sizeof(void *);
+            }
+        }
+    }
+
+    return false;
+}
+#endif
+
 bool
 DataElementOpen62541::createMap (const UA_DataType *type,
                                  const std::string *timefrom)
@@ -112,55 +163,45 @@ DataElementOpen62541::createMap (const UA_DataType *type,
         if (debug() >= 5)
             std::cout << " ** creating index-to-element map for child elements" << std::endl;
 
-        // Walk the structure and for each member cache
-        // offset, array size (0 for scalars), and type
-        // See copyStructure() in open62541 src/ua_types.c
-        ptrdiff_t memberOffs = 0;
-        for (unsigned int i = 0; i < type->membersSize; ++i) {
-            const UA_DataTypeMember *member = &type->members[i];
-#ifdef UA_BUILTIN_TYPES_COUNT
-// Older open62541 before version 1.3 uses type index
-            const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
-            const UA_DataType *memberType = &typelists[!member->namespaceZero][member->memberTypeIndex];
-#else
-// Newer open62541 uses pointer
-            const UA_DataType *memberType = member->memberType;
-#endif
-            memberOffs += member->padding;
-            if (member->isArray) {
-                memberOffs += sizeof(size_t); // array length
-                elementDesc.push_back({memberOffs, memberType});
-                memberOffs += sizeof(void*);  // array data pointer
-            } else {
-                if (timefrom) {
-#ifdef UA_ENABLE_TYPEDESCRIPTION
-                    if (*timefrom == member->memberName) {
-                        timesrc = static_cast<int>(memberOffs);
-                    }
-#endif
+        if (timefrom) {
+            const UA_DataType *timeMemberType;
+            UA_Boolean timeIsArray;
+            size_t timeOffset;
+
+            if (UA_DataType_getStructMember(type, timefrom->c_str(),
+                            &timeOffset,
+                            &timeMemberType,
+                            &timeIsArray)) {
+                if (typeKindOf(timeMemberType) != UA_TYPES_DATETIME || timeIsArray) {
+                    errlogPrintf("%s: timestamp element %s has invalid type %s%s - using "
+                                 "source timestamp\n",
+                                 pitem->recConnector->getRecordName(),
+                                 timefrom->c_str(),
+                                 typeKindName(typeKindOf(timeMemberType)),
+                                 timeIsArray ? "[]" : "");
                 }
-                elementDesc.push_back({memberOffs, memberType});
-                memberOffs += memberType->memSize;
+                timesrc = timeOffset;
+            } else {
+                errlogPrintf(
+                    "%s: timestamp element %s not found - using source timestamp\n",
+                    pitem->recConnector->getRecordName(),
+                    timefrom->c_str());
             }
-        }
-        if (timefrom && timesrc == -1) {
-            errlogPrintf(
-                "%s: timestamp element %s not found - using source timestamp\n",
-                pitem->recConnector->getRecordName(),
-                timefrom->c_str());
         }
 
-        // Map member names to index
         for (auto &it : elements) {
             auto pelem = it.lock();
-            unsigned int i;
-            for (i = 0; i < type->membersSize; i++) {
-                if (pelem->name == type->members[i].memberName) {
-                    elementMap.insert({i, it});
-                    break;
-                }
-            }
-            if (i == type->membersSize) {
+            if (UA_DataType_getStructMember(type, pelem->name.c_str(),
+                            &pelem->offset,
+                            &pelem->memberType,
+                            &pelem->isArray)) {
+                std::cerr << "Item " << pitem
+                          << variantTypeString(type)
+                          << " element " << pelem->name
+                          << " is " << (pelem->isArray ? "array" : "scalar")
+                          << " offset " << pelem->offset
+                          << std::endl;
+            } else {
                 std::cerr << "Item " << pitem
                           << ": element " << pelem->name
                           << " not found in " << variantTypeString(type)
@@ -168,7 +209,7 @@ DataElementOpen62541::createMap (const UA_DataType *type,
             }
         }
         if (debug() >= 5)
-            std::cout << " ** " << elementMap.size() << "/" << elements.size()
+            std::cout << " ** " << elements.size()
                       << " child elements mapped to a "
                       << "structure of " << type->membersSize << " elements" << std::endl;
         break;
@@ -243,24 +284,32 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                 return;
             }
         }
-        if (!mapped) {
+
+        if (!mapped)
             createMap(type, timefrom);
+
+        if (timefrom) {
+            if (timesrc >= 0)
+                pitem->tsData = ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(container + timesrc), 0);
+            else
+                pitem->tsData = pitem->tsSource;
         }
-        for (auto &it : elementMap) {
-            auto pelem = it.second.lock();
-            int index = it.first;
-            const ElementDesc& ed = elementDesc[index];
-            void* memberData = container + ed.offs;
-            UA_Variant value;
-            if (ed.type->members && ed.type->members[index].isArray)
+
+        for (auto &it : elements) {
+            auto pelem = it.lock();
+            char* memberData = container + pelem->offset;
+            const UA_DataType* memberType = pelem->memberType;
+            UA_Variant memberValue;
+            if (pelem->isArray)
             {
-                size_t arrayLength = static_cast<size_t*>(memberData)[-1];
-                if (arrayLength == 0) memberData = UA_EMPTY_ARRAY_SENTINEL;
-                UA_Variant_setArray(&value, memberData, arrayLength, ed.type);
+                size_t arrayLength = *reinterpret_cast<size_t*>(memberData);
+                memberData = *reinterpret_cast<char**>(memberData + sizeof(size_t));
+                if (arrayLength == 0) memberData = reinterpret_cast<char*>(UA_EMPTY_ARRAY_SENTINEL);
+                UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
             } else {
-                UA_Variant_setScalar(&value, memberData, ed.type);
+                UA_Variant_setScalar(&memberValue, memberData, memberType);
             }
-            pelem->setIncomingData(value, reason);
+            pelem->setIncomingData(memberValue, reason);
         }
     }
 }
@@ -294,22 +343,22 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
 // Helper to update one data structure element from pointer to child
 bool
 DataElementOpen62541::updateDataInStruct (void* container,
-                                          const int index,
                                           std::shared_ptr<DataElementOpen62541> pelem)
 {
     bool updated = false;
     { // Scope of Guard G
         Guard G(pelem->outgoingLock);
         if (pelem->isDirty()) {
-            const ElementDesc& ed = elementDesc[index];
-            void* memberData = static_cast<char*>(container) + ed.offs;
+            void* memberData = static_cast<char*>(container) + pelem->offset;
             const UA_Variant& data = pelem->getOutgoingData();
-            assert(ed.type == data.type);
-            if (ed.type->members && ed.type->members[index].isArray)
+            const UA_DataType* memberType = pelem->memberType;
+            assert(memberType == data.type);
+            if (pelem->isArray)
             {
-                size_t &arrayLength = static_cast<size_t*>(memberData)[-1];
-                UA_Array_delete(memberData, arrayLength, ed.type);
-                UA_StatusCode status = UA_Array_copy(data.data, data.arrayLength, &memberData, ed.type);
+                size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
+                void*& arrayData = *reinterpret_cast<void**>(static_cast<char*>(memberData) + sizeof(size_t));
+                UA_Array_delete(arrayData, arrayLength, memberType);
+                UA_StatusCode status = UA_Array_copy(data.data, data.arrayLength, &arrayData, memberType);
                 if (status == UA_STATUSCODE_GOOD) {
                     arrayLength = data.arrayLength;
                 } else {
@@ -321,7 +370,7 @@ DataElementOpen62541::updateDataInStruct (void* container,
                     return false;
                 }
             } else {
-                UA_copy(data.data, memberData, ed.type);
+                UA_copy(data.data, memberData, memberType);
             }
             pelem->isdirty = false;
             updated = true;
@@ -369,12 +418,13 @@ DataElementOpen62541::getOutgoingData ()
                 return outgoingData;
             }
         }
-        if (!mapped) {
+
+        if (!mapped)
             createMap(type, nullptr);
-        }
-        for (auto &it : elementMap) {
-            auto pelem = it.second.lock();
-            if (updateDataInStruct(container, it.first, pelem))
+
+        for (auto &it : elements) {
+            auto pelem = it.lock();
+            if (updateDataInStruct(container, pelem))
                isdirty = true;
         }
         if (isdirty) {
