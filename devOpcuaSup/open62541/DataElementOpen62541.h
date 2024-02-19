@@ -739,9 +739,7 @@ private:
                       const std::string &targetTypeName) const;
     void checkWriteArray(const UA_DataType *expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
-    bool updateDataInStruct(void* container,
-                            const int index,
-                            std::shared_ptr<DataElementOpen62541> pelem);
+    bool updateDataInStruct(void* container, std::shared_ptr<DataElementOpen62541> pelem);
 
     bool createMap(const UA_DataType *type, const std::string* timefrom);
 
@@ -752,16 +750,6 @@ private:
     {
         isdirty = true;
         pitem->markAsDirty();
-    }
-
-     // Convert the time stamp from a data element
-    epicsTime
-    epicsTimeFromUaVariant(const UA_Variant &data) const
-    {
-        if (UA_Variant_hasScalarType(&data, &UA_TYPES[UA_TYPES_DATETIME])) {
-            return ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(data.data), 0);
-        }
-        return pitem->tsSource;
     }
 
    // Get the time stamp from the incoming object
@@ -1271,9 +1259,9 @@ private:
     std::unordered_map<int, std::weak_ptr<DataElementOpen62541>> elementMap;
     int timesrc;
 
-    typedef struct {ptrdiff_t offs; const UA_DataType *type;} ElementDesc;
-    std::vector<ElementDesc> elementDesc;
-
+    const UA_DataType *memberType;           /**< type of this element */
+    UA_Boolean isArray;                      /**< is this element an array? */
+    size_t offset;                           /**< data offset of this element in parent structure */
     bool mapped;                             /**< child name to index mapping done */
     UpdateQueue<UpdateOpen62541> incomingQueue;  /**< queue of incoming values */
     UA_Variant incomingData;                 /**< cache of latest incoming value */
