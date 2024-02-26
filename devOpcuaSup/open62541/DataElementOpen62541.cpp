@@ -251,7 +251,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
 
         const UA_DataType *type = value.type;
         char* container = static_cast<char*>(value.data);
-        if (type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+        if (type->typeKind == UA_DATATYPEKIND_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content of decoded extension objects
@@ -377,7 +377,7 @@ DataElementOpen62541::getOutgoingData ()
         isdirty = false;
         const UA_DataType *type = outgoingData.type;
         void* container = outgoingData.data;
-        if (type && type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
+        if (type && type->typeKind == UA_DATATYPEKIND_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content decoded extension objects
@@ -532,14 +532,14 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 }
                 UA_Variant &data = upd->getData();
                 size_t n = num-1;
-                if (typeKindOf(data) == UA_TYPES_STRING) {
+                if (typeKindOf(data) == UA_DATATYPEKIND_STRING) {
                     UA_String *datastring = static_cast<UA_String *>(data.data); // Not terminated!
                     if (n > datastring->length)
                         n = datastring->length;
                     strncpy(value, reinterpret_cast<char*>(datastring->data), n);
                 } else {
                     UA_String datastring = UA_STRING_NULL;
-                    if (typeKindOf(data) == UA_TYPES_DATETIME) {
+                    if (typeKindOf(data) == UA_DATATYPEKIND_DATETIME) {
                         // UA_print does not correct printed time for time zone
                         UA_Int64 tOffset = UA_DateTime_localTimeUtcOffset();
                         UA_DateTime dt = *static_cast<UA_DateTime*>(data.data);
@@ -867,7 +867,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     double d;
 
     switch (typeKindOf(incomingData)) {
-    case UA_TYPES_STRING:
+    case UA_DATATYPEKIND_STRING:
     {
         UA_String val;
         val.length = strlen(value);
@@ -879,7 +879,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         }
         break;
     }
-    case UA_TYPES_BOOLEAN:
+    case UA_DATATYPEKIND_BOOLEAN:
     { // Scope of Guard G
         Guard G(outgoingLock);
         UA_Boolean val = strchr("YyTt1", *value) != NULL;
@@ -887,7 +887,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         markAsDirty();
         break;
     }
-    case UA_TYPES_BYTE:
+    case UA_DATATYPEKIND_BYTE:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_Byte>(ul)) {
             Guard G(outgoingLock);
@@ -899,7 +899,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_SBYTE:
+    case UA_DATATYPEKIND_SBYTE:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_SByte>(l)) {
             Guard G(outgoingLock);
@@ -911,7 +911,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_UINT16:
+    case UA_DATATYPEKIND_UINT16:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt16>(ul)) {
             Guard G(outgoingLock);
@@ -923,7 +923,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_INT16:
+    case UA_DATATYPEKIND_INT16:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int16>(l)) {
             Guard G(outgoingLock);
@@ -935,7 +935,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_UINT32:
+    case UA_DATATYPEKIND_UINT32:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt32>(ul)) {
             Guard G(outgoingLock);
@@ -947,7 +947,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_INT32:
+    case UA_DATATYPEKIND_INT32:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int32>(l)) {
             Guard G(outgoingLock);
@@ -959,7 +959,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_UINT64:
+    case UA_DATATYPEKIND_UINT64:
         ul = strtoul(value, nullptr, 0);
         if (isWithinRange<UA_UInt64>(ul)) {
             Guard G(outgoingLock);
@@ -971,7 +971,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_INT64:
+    case UA_DATATYPEKIND_INT64:
         l = strtol(value, nullptr, 0);
         if (isWithinRange<UA_Int64>(l)) {
             Guard G(outgoingLock);
@@ -983,7 +983,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_FLOAT:
+    case UA_DATATYPEKIND_FLOAT:
         d = strtod(value, nullptr);
         if (isWithinRange<UA_Float>(d)) {
             Guard G(outgoingLock);
@@ -995,7 +995,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             ret = 1;
         }
         break;
-    case UA_TYPES_DOUBLE:
+    case UA_DATATYPEKIND_DOUBLE:
     {
         d = strtod(value, nullptr);
         Guard G(outgoingLock);
