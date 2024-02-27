@@ -355,6 +355,8 @@ protected:
     bool autoConnect;                      /**< auto (re)connect flag */
     std::string securityIdentityFile;      /**< full path to file with Identity token settings */
     std::string securityUserName;          /**< user name set in Username token */
+
+    const int no_of_properties_read = 2;   /* always read type and value */
 };
 
 

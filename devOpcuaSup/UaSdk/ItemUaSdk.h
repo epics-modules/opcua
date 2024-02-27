@@ -168,8 +168,9 @@ public:
      *
      * @param value  new value for this data element
      * @param reason  reason for this value update
+     * @param typeId  data type id of the item
      */
-    void setIncomingData(const OpcUa_DataValue &value, ProcessReason reason);
+    void setIncomingData(const OpcUa_DataValue &value, ProcessReason reason, const UaNodeId *typeId = nullptr);
 
     /**
      * @brief Push an incoming event down the root element.
