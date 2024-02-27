@@ -895,8 +895,15 @@ private:
                             break;
                         case UA_DATATYPEKIND_STRING:
                         {
-                            UA_String* s = static_cast<UA_String*>(data.data); // Not terminated!
+                            UA_String* s = static_cast<UA_String*>(data.data);
                             if (!string_to(std::string(reinterpret_cast<const char*>(s->data), s->length), *value))
+                                ret = 1;
+                            break;
+                        }
+                        case UA_DATATYPEKIND_LOCALIZEDTEXT:
+                        {
+                            UA_LocalizedText* lt = static_cast<UA_LocalizedText*>(data.data);
+                            if (!string_to(std::string(reinterpret_cast<const char*>(lt->text.data), lt->text.length), *value))
                                 ret = 1;
                             break;
                         }
@@ -906,10 +913,12 @@ private:
                     if (ret == 1) {
                         UA_String datastring = UA_STRING_NULL;
                         if (data.type)
-                            UA_print(&data, data.type, &datastring); // Not terminated!
-                        errlogPrintf("%s : incoming data (%.*s) out-of-bounds\n",
+                            UA_print(data.data, data.type, &datastring);
+                        errlogPrintf("%s : incoming data (%s %.*s) out-of-bounds for %s\n",
                                      prec->name,
-                                     static_cast<int>(datastring.length), datastring.data);
+                                     variantTypeString(data),
+                                     static_cast<int>(datastring.length), datastring.data,
+                                     epicsTypeString(*value));
                         UA_String_clear(&datastring);
                         (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     } else {
@@ -1171,6 +1180,20 @@ private:
             { // Scope of Guard G
                 Guard G(outgoingLock);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
+                markAsDirty();
+            }
+            break;
+        }
+        case UA_DATATYPEKIND_LOCALIZEDTEXT:
+        {
+            std::string strval = std::to_string(value);
+            UA_LocalizedText val;
+            val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
+            val.text.length = strval.length();
+            val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(strval.c_str()));
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
                 markAsDirty();
             }
             break;

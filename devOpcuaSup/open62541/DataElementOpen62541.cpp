@@ -173,27 +173,6 @@ DataElementOpen62541::createMap (const UA_DataType *type,
                       << "structure of " << type->membersSize << " elements" << std::endl;
         break;
     }
-    case UA_TYPES_LOCALIZEDTEXT:
-    {
-        elementDesc = {
-            {0, &UA_TYPES[UA_TYPES_STRING]},                 // Locale
-            {sizeof(UA_String), &UA_TYPES[UA_TYPES_STRING]}  // Text
-        };
-        for (auto &it : elements) {
-            auto pelem = it.lock();
-            if (pelem->name == "Locale" || pelem->name == "locale") {
-                elementMap.insert({0, it});
-            } else if (pelem->name == "Text" || pelem->name == "text") {
-                elementMap.insert({1, it});
-            } else {
-                 std::cerr << "Item " << pitem
-                           << ": element " << pelem->name
-                           << " not found in " << variantTypeString(type)
-                           << std::endl;
-            }
-        }
-        break;
-    }
     default:
         std::cerr << "Item " << pitem
                   << " has unimplemented type " << variantTypeString(type)
@@ -532,27 +511,37 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 }
                 UA_Variant &data = upd->getData();
                 size_t n = num-1;
-                if (typeKindOf(data) == UA_DATATYPEKIND_STRING) {
-                    UA_String *datastring = static_cast<UA_String *>(data.data); // Not terminated!
-                    if (n > datastring->length)
-                        n = datastring->length;
-                    strncpy(value, reinterpret_cast<char*>(datastring->data), n);
-                } else {
-                    UA_String datastring = UA_STRING_NULL;
-                    if (typeKindOf(data) == UA_DATATYPEKIND_DATETIME) {
-                        // UA_print does not correct printed time for time zone
-                        UA_Int64 tOffset = UA_DateTime_localTimeUtcOffset();
-                        UA_DateTime dt = *static_cast<UA_DateTime*>(data.data);
-                        dt += tOffset;
-                        UA_print(&dt, data.type, &datastring); // Not terminated!
-                    } else if (data.type)
-                        UA_print(data.data, data.type, &datastring); // Not terminated!
-                    if (n > datastring.length)
-                        n = datastring.length;
-                    strncpy(value, reinterpret_cast<char*>(datastring.data), n);
-                    UA_String_clear(&datastring);
+                UA_String buffer = UA_STRING_NULL;
+                UA_String *datastring = &buffer;
+                switch (typeKindOf(data)) {
+                case UA_DATATYPEKIND_STRING:
+                {
+                    datastring = static_cast<UA_String *>(data.data);
+                    break;
                 }
+                case UA_DATATYPEKIND_LOCALIZEDTEXT:
+                {
+                    datastring = &static_cast<UA_LocalizedText *>(data.data)->text;
+                    break;
+                }
+                case UA_DATATYPEKIND_DATETIME:
+                {
+                    // UA_print does not correct printed time for time zone
+                    UA_Int64 tOffset = UA_DateTime_localTimeUtcOffset();
+                    UA_DateTime dt = *static_cast<UA_DateTime*>(data.data);
+                    dt += tOffset;
+                    UA_print(&dt, data.type, &buffer);
+                    break;
+                }
+                default:
+                    if (data.type)
+                        UA_print(data.data, data.type, &buffer);
+                }
+                if (n > datastring->length)
+                    n = datastring->length;
+                strncpy(value, reinterpret_cast<char*>(datastring->data), n);
                 value[n] = '\0';
+                UA_String_clear(&buffer);
                 prec->udf = false;
                 UA_Variant_clear(&data);
             }
@@ -875,6 +864,19 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         { // Scope of Guard G
             Guard G(outgoingLock);
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
+            markAsDirty();
+        }
+        break;
+    }
+    case UA_DATATYPEKIND_LOCALIZEDTEXT:
+    {
+        UA_LocalizedText val;
+        val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
+        val.text.length = strlen(value);
+        val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+        { // Scope of Guard G
+            Guard G(outgoingLock);
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
             markAsDirty();
         }
         break;
