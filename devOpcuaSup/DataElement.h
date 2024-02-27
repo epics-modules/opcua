@@ -13,6 +13,7 @@
 #ifndef DEVOPCUA_DATAELEMENT_H
 #define DEVOPCUA_DATAELEMENT_H
 
+#include <map>
 #include <vector>
 #include <memory>
 #include <cstring>
@@ -23,6 +24,8 @@
 #include "devOpcua.h"
 
 namespace DevOpcua {
+
+typedef std::map<epicsUInt32, std::string> EnumChoices;
 
 class RecordConnector;
 
@@ -795,6 +798,7 @@ public:
     virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
     const std::string name;                     /**< element name */
+    const EnumChoices* enumChoices = nullptr;   /**< enum definition if this element is an enum */
 
 protected:
     /**

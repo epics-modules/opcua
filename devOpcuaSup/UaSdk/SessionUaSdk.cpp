@@ -33,6 +33,7 @@
 #include <uasession.h>
 #include <uadiscovery.h>
 #include <uadir.h>
+#include <uaenumdefinition.h>
 
 #ifdef HAS_SECURITY
 #include <uapkicertificate.h>
@@ -405,9 +406,12 @@ SessionUaSdk::processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch)
     ServiceSettings serviceSettings;
     OpcUa_UInt32 id = getTransactionId();
 
-    nodesToRead.create(static_cast<OpcUa_UInt32>(batch.size()));
+    nodesToRead.create(static_cast<OpcUa_UInt32>(batch.size() * no_of_properties_read));
     OpcUa_UInt32 i = 0;
     for (auto c : batch) {
+        c->item->getNodeId().copyTo(&nodesToRead[i].NodeId);
+        nodesToRead[i].AttributeId = OpcUa_Attributes_DataType;
+        i++;
         c->item->getNodeId().copyTo(&nodesToRead[i].NodeId);
         nodesToRead[i].AttributeId = OpcUa_Attributes_Value;
         itemsToRead->push_back(c->item);
@@ -1211,6 +1215,19 @@ void SessionUaSdk::connectionStatusChanged (
     serverConnectionStatus = serverStatus;
 }
 
+const EnumChoices*
+SessionUaSdk::getEnumChoices(const UaEnumDefinition& enumDefinition) const
+{
+    if (!enumDefinition.childrenCount())
+        return nullptr;
+    auto enumChoices = new EnumChoices;
+    for (int i = 0; i < enumDefinition.childrenCount(); i++) {
+        const UaEnumValue& choice = enumDefinition.child(i);
+        enumChoices->emplace(choice.value(), choice.name().toUtf8());
+    }
+    return enumChoices;
+}
+
 void
 SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                             const UaStatus &result,
@@ -1229,7 +1246,7 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                       << ": (readComplete) getting data for read service"
                       << " (transaction id " << transactionId
                       << "; data for " << values.length() << " items)" << std::endl;
-        if ((*it->second).size() != values.length())
+        if ((*it->second).size() * no_of_properties_read != values.length())
             errlogPrintf("OPC UA session %s: (readComplete) received a callback "
                          "with %u values for a request containing %lu items\n",
                          name.c_str(), values.length(), (*it->second).size());
@@ -1238,6 +1255,11 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
             if (i >= values.length()) {
                 item->setIncomingEvent(ProcessReason::readFailure);
             } else {
+                UaNodeId typeId;
+                if (OpcUa_IsGood(values[i].StatusCode)) {
+                    UaVariant(values[i].Value).toNodeId(typeId);
+                }
+                i++;
                 if (debug >= 5) {
                     std::cout << "** Session " << name.c_str()
                               << ": (readComplete) getting data for item "
@@ -1246,9 +1268,9 @@ SessionUaSdk::readComplete (OpcUa_UInt32 transactionId,
                 ProcessReason reason = ProcessReason::readComplete;
                 if (OpcUa_IsNotGood(values[i].StatusCode))
                     reason = ProcessReason::readFailure;
-                item->setIncomingData(values[i], reason);
+                item->setIncomingData(values[i], reason, &typeId);
+                i++;
             }
-            i++;
         }
         outstandingOps.erase(it);
     } else {

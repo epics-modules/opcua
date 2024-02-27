@@ -21,6 +21,7 @@
 #include <uaarraytemplates.h>
 #include <opcua_builtintypes.h>
 #include <statuscode.h>
+#include <uaenumdefinition.h>
 
 #include <errlog.h>
 #include <epicsTime.h>
@@ -110,12 +111,17 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
 void
 DataElementUaSdk::setIncomingData(const UaVariant &value,
                                   ProcessReason reason,
-                                  const std::string *timefrom)
+                                  const std::string *timefrom,
+                                  const UaNodeId *typeId)
 {
     // Make a copy of this element and cache it
     incomingData = value;
 
     if (isLeaf()) {
+        if (typeId && pconnector->state() == ConnectionStatus::initialRead) {
+            delete enumChoices;
+            enumChoices = pitem->session->getEnumChoices(typeId);
+        }
         if ((pconnector->state() == ConnectionStatus::initialRead
              && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
             || (pconnector->state() == ConnectionStatus::up)) {
@@ -183,6 +189,8 @@ DataElementUaSdk::setIncomingData(const UaVariant &value,
                             for (int i = 0; i < definition.childrenCount(); i++) {
                                 if (pelem->name == definition.child(i).name().toUtf8()) {
                                     elementMap.insert({i, it});
+                                    delete pelem->enumChoices;
+                                    pelem->enumChoices = pitem->session->getEnumChoices(definition.child(i).enumDefinition());
                                     pelem->setIncomingData(genericValue.value(i), reason);
                                 }
                             }
@@ -486,7 +494,19 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
                 if (OpcUa_IsUncertain(stat)) {
                     (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                 }
-                strncpy(value, upd->getData().toString().toUtf8(), num);
+                UaVariant& data = upd->getData();
+                if (enumChoices) {
+                    OpcUa_Int32 enumIndex;
+                    data.toInt32(enumIndex);
+                    auto it = enumChoices->find(enumIndex);
+                    if (it != enumChoices->end() && !it->second.empty()) {
+                        strncpy(value, it->second.c_str(), num);
+                    } else {
+                        strncpy(value, data.toString().toUtf8(), num);
+                    }
+                } else {
+                    strncpy(value, data.toString().toUtf8(), num);
+                }
                 value[num-1] = '\0';
                 prec->udf = false;
             }
@@ -896,10 +916,11 @@ DataElementUaSdk::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 long
 DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
 {
-    long ret = 0;
+    long ret = 1;
     long l;
     unsigned long ul;
     double d;
+    char* end = nullptr;
 
     switch (incomingData.type()) {
     case OpcUaType_String:
@@ -907,6 +928,7 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         Guard G(outgoingLock);
         outgoingData.setString(static_cast<UaString>(value));
         markAsDirty();
+        ret = 0;
         break;
     }
     case OpcUaType_LocalizedText:
@@ -917,6 +939,7 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         localizedText.setText(static_cast<UaString>(value)); // keep the Locale
         outgoingData.setLocalizedText(localizedText);
         markAsDirty();
+        ret = 0;
         break;
     }
     case OpcUaType_Boolean:
@@ -927,122 +950,133 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         else
             outgoingData.setBoolean(false);
         markAsDirty();
+        ret = 0;
         break;
     }
     case OpcUaType_Byte:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<OpcUa_Byte>(ul)) {
+        ul = strtoul(value, &end, 0);
+        if (end != value && isWithinRange<OpcUa_Byte>(ul)) {
             Guard G(outgoingLock);
             outgoingData.setByte(static_cast<OpcUa_Byte>(ul));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_SByte:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<OpcUa_SByte>(l)) {
+        l = strtol(value, &end, 0);
+        if (end != value && isWithinRange<OpcUa_SByte>(l)) {
             Guard G(outgoingLock);
             outgoingData.setSByte(static_cast<OpcUa_SByte>(l));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_UInt16:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<OpcUa_UInt16>(ul)) {
+        ul = strtoul(value, &end, 0);
+        if (end != value && isWithinRange<OpcUa_UInt16>(ul)) {
             Guard G(outgoingLock);
             outgoingData.setUInt16(static_cast<OpcUa_UInt16>(ul));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_Int16:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<OpcUa_Int16>(l)) {
+        l = strtol(value, &end, 0);
+        if (end != value && isWithinRange<OpcUa_Int16>(l)) {
             Guard G(outgoingLock);
             outgoingData.setInt16(static_cast<OpcUa_Int16>(l));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_UInt32:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<OpcUa_UInt32>(ul)) {
+        ul = strtoul(value, &end, 0);
+        if (end != value && isWithinRange<OpcUa_UInt32>(ul)) {
             Guard G(outgoingLock);
             outgoingData.setUInt32(static_cast<OpcUa_UInt32>(ul));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_Int32:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<OpcUa_Int32>(l)) {
+        l = strtol(value, &end, 0);
+        if (enumChoices) {
+            // first test enum strings then numeric values
+            // in case a string starts with a number but means a different value
+            for (auto it: *enumChoices)
+                if (it.second == value) {
+                    l = static_cast<long>(it.first);
+                    ret = 0;
+                    end = nullptr;
+                    break;
+                }
+            if (ret != 0 && end != value)
+                for (auto it: *enumChoices)
+                    if (l == it.first) {
+                        ret = 0;
+                        break;
+                    }
+            if (ret != 0)
+                break;
+        }
+        if (end != value && isWithinRange<OpcUa_Int32>(l)) {
             Guard G(outgoingLock);
             outgoingData.setInt32(static_cast<OpcUa_Int32>(l));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_UInt64:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<OpcUa_UInt64>(ul)) {
+        ul = strtoul(value, &end, 0);
+        if (end != value && isWithinRange<OpcUa_UInt64>(ul)) {
             Guard G(outgoingLock);
             outgoingData.setUInt64(static_cast<OpcUa_UInt64>(ul));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_Int64:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<OpcUa_Int64>(l)) {
+        l = strtol(value, &end, 0);
+        if (end != value && isWithinRange<OpcUa_Int64>(l)) {
             Guard G(outgoingLock);
             outgoingData.setInt64(static_cast<OpcUa_Int64>(l));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_Float:
-        d = strtod(value, nullptr);
-        if (isWithinRange<OpcUa_Float>(d)) {
+        d = strtod(value, &end);
+        if (end != value && isWithinRange<OpcUa_Float>(d)) {
             Guard G(outgoingLock);
             outgoingData.setFloat(static_cast<OpcUa_Float>(d));
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
         }
         break;
     case OpcUaType_Double:
     {
-        d = strtod(value, nullptr);
-        Guard G(outgoingLock);
-        outgoingData.setDouble(static_cast<OpcUa_Double>(d));
-        markAsDirty();
+        d = strtod(value, &end);
+        if (end != value) {
+            Guard G(outgoingLock);
+            outgoingData.setDouble(static_cast<OpcUa_Double>(d));
+            markAsDirty();
+            ret = 0;
+        }
         break;
     }
     default:
-        errlogPrintf("%s : unsupported conversion for outgoing data\n",
-                     prec->name);
+        errlogPrintf("%s : unsupported conversion from string to %s for outgoing data\n",
+                     prec->name, variantTypeString(incomingData.type()));
+        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+        return -1;
+    }
+    if (ret != 0) {
+        errlogPrintf("%s : value \"%s\" out of range\n",
+                     prec->name, value);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
     }
-
-    dbgWriteScalar();
+    if (ret == 0)
+        dbgWriteScalar();
     return ret;
 }
 

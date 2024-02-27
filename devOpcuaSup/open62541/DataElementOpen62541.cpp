@@ -195,6 +195,9 @@ DataElementOpen62541::createMap (const UA_DataType *type,
                             &pelem->offset,
                             &pelem->memberType,
                             &pelem->isArray)) {
+                if (typeKindOf(pelem->memberType) == UA_DATATYPEKIND_ENUM) {
+                    pelem->enumChoices = pitem->session->getEnumChoices(&pelem->memberType->typeId);
+                }
             } else {
                 std::cerr << "Item " << pitem
                           << ": element " << pelem->name
@@ -230,6 +233,9 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
     UA_Variant_copy(&value, &incomingData);
 
     if (isLeaf()) {
+        if (pconnector->state() == ConnectionStatus::initialRead && typeKindOf(value) == UA_DATATYPEKIND_ENUM) {
+            enumChoices = pitem->session->getEnumChoices(&value.type->typeId);
+        }
         if ((pconnector->state() == ConnectionStatus::initialRead
              && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
             || (pconnector->state() == ConnectionStatus::up)) {
@@ -313,6 +319,8 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
 {
     if (isLeaf()) {
         Guard(pconnector->lock);
+        if (reason == ProcessReason::connectionLoss && enumChoices)
+            enumChoices = nullptr;
         bool wasFirst = false;
         // Put the event on the queue
         UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
@@ -360,7 +368,9 @@ DataElementOpen62541::updateDataInStruct (void* container,
             void* memberData = static_cast<char*>(container) + pelem->offset;
             const UA_Variant& data = pelem->getOutgoingData();
             const UA_DataType* memberType = pelem->memberType;
-            assert(memberType == data.type);
+            assert(memberType == data.type ||
+                (typeKindOf(memberType) == UA_DATATYPEKIND_ENUM &&
+                 typeKindOf(data.type) == UA_DATATYPEKIND_INT32));
             if (pelem->isArray)
             {
                 size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
@@ -590,6 +600,18 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                     dt += tOffset;
                     UA_print(&dt, data.type, &buffer);
                     break;
+                }
+                case UA_DATATYPEKIND_ENUM:
+                case UA_DATATYPEKIND_INT32:
+                {
+                    if (enumChoices) {
+                        auto it = enumChoices->find(*static_cast<UA_UInt32*>(data.data));
+                        if (it != enumChoices->end()) {
+                            buffer = UA_String_fromChars(it->second.c_str());
+                            break;
+                        }
+                    }
+                    // no enum or index not found: fall through
                 }
                 default:
                     if (data.type)
@@ -993,11 +1015,12 @@ DataElementOpen62541::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 long
 DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
 {
-    long ret = 0;
+    long ret = 1;
     UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
     long l;
     unsigned long ul;
     double d;
+    char* end = nullptr;
 
     { // Scope of Guard G
         Guard G(outgoingLock);
@@ -1010,6 +1033,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
             markAsDirty();
+            ret = 0;
             break;
         }
         case UA_DATATYPEKIND_LOCALIZEDTEXT:
@@ -1020,6 +1044,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
             markAsDirty();
+            ret = 0;
             break;
         }
         case UA_DATATYPEKIND_BOOLEAN:
@@ -1027,120 +1052,131 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             UA_Boolean val = strchr("YyTt1", *value) != NULL;
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
             markAsDirty();
+            ret = 0;
             break;
         }
         case UA_DATATYPEKIND_BYTE:
-            ul = strtoul(value, nullptr, 0);
-            if (isWithinRange<UA_Byte>(ul)) {
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_Byte>(ul)) {
                 UA_Byte val = static_cast<UA_Byte>(ul);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_SBYTE:
-            l = strtol(value, nullptr, 0);
-            if (isWithinRange<UA_SByte>(l)) {
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_SByte>(l)) {
                 UA_SByte val = static_cast<UA_Byte>(l);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_UINT16:
-            ul = strtoul(value, nullptr, 0);
-            if (isWithinRange<UA_UInt16>(ul)) {
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt16>(ul)) {
                 UA_UInt16 val = static_cast<UA_UInt16>(ul);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_INT16:
-            l = strtol(value, nullptr, 0);
-            if (isWithinRange<UA_Int16>(l)) {
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_Int16>(l)) {
                 UA_Int16 val = static_cast<UA_Int16>(l);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_UINT32:
-            ul = strtoul(value, nullptr, 0);
-            if (isWithinRange<UA_UInt32>(ul)) {
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt32>(ul)) {
                 UA_UInt32 val = static_cast<UA_UInt32>(ul);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
+        case UA_DATATYPEKIND_ENUM:
         case UA_DATATYPEKIND_INT32:
-            l = strtol(value, nullptr, 0);
-            if (isWithinRange<UA_Int32>(l)) {
+            l = strtol(value, &end, 0);
+            if (enumChoices) {
+                // first test enum strings then numeric values
+                // in case a string starts with a number but means a different value
+                for (auto it: *enumChoices)
+                    if (it.second == value) {
+                        l = static_cast<long>(it.first);
+                        ret = 0;
+                        end = nullptr;
+                        break;
+                    }
+                if (ret != 0 && end != value)
+                    for (auto it: *enumChoices)
+                        if (l == it.first) {
+                            ret = 0;
+                            break;
+                        }
+                if (ret != 0)
+                    break;
+            }
+            if (end != value && isWithinRange<UA_Int32>(l)) {
                 UA_Int32 val = static_cast<UA_Int32>(l);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_UINT64:
-            ul = strtoul(value, nullptr, 0);
-            if (isWithinRange<UA_UInt64>(ul)) {
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt64>(ul)) {
                 UA_UInt64 val = static_cast<UA_UInt64>(ul);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_INT64:
-            l = strtol(value, nullptr, 0);
-            if (isWithinRange<UA_Int64>(l)) {
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_Int64>(l)) {
                 UA_Int64 val = static_cast<UA_Int64>(l);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_FLOAT:
-            d = strtod(value, nullptr);
-            if (isWithinRange<UA_Float>(d)) {
+            d = strtod(value, &end);
+            if (end != value && isWithinRange<UA_Float>(d)) {
                 UA_Float val = static_cast<UA_Float>(d);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_DOUBLE:
         {
-            d = strtod(value, nullptr);
-            UA_Double val = static_cast<UA_Double>(d);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
-            markAsDirty();
+            d = strtod(value, &end);
+            if (end != value) {
+                UA_Double val = static_cast<UA_Double>(d);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
+                markAsDirty();
+                ret = 0;
+            }
             break;
         }
         default:
-            errlogPrintf("%s : unsupported conversion for outgoing data\n",
-                         prec->name);
+            errlogPrintf("%s : unsupported conversion from string to %s for outgoing data\n",
+                         prec->name, variantTypeString(incomingData));
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         }
+    }
+    if (ret != 0) {
+        errlogPrintf("%s : value \"%s\" out of range\n",
+                     prec->name, value);
+        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
     }
     if (ret == 0 && UA_STATUS_IS_BAD(status)) {
         errlogPrintf("%s : scalar copy failed: %s\n",
@@ -1148,7 +1184,8 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     }
-    dbgWriteScalar();
+    if (ret == 0)
+        dbgWriteScalar();
     return ret;
 }
 

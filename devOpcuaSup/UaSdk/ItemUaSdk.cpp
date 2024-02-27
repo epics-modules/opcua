@@ -150,7 +150,7 @@ ItemUaSdk::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 }
 
 void
-ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
+ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason, const UaNodeId* typeId)
 {
     tsClient = epicsTime::getCurrent();
     if (OpcUa_IsNotBad(value.StatusCode)) {
@@ -177,7 +177,7 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
         const std::string *timefrom = nullptr;
         if (linkinfo.timestamp == LinkOptionTimestamp::data && linkinfo.timestampElement.length())
             timefrom = &linkinfo.timestampElement;
-        pd->setIncomingData(value.Value, reason, timefrom);
+        pd->setIncomingData(value.Value, reason, timefrom, typeId);
     }
 
     if (linkinfo.isItemRecord) {
