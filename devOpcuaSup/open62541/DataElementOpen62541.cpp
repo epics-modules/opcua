@@ -107,28 +107,35 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
 #error Set UA_ENABLE_TYPEDESCRIPTION in open62541
 #endif
 
-#ifndef UA_DATATYPES_USE_POINTER
 // Older open62541 version 1.2 has no UA_DataType_getStructMember
 // Code from open62541 version 1.3.7 modified for compatibility with version 1.2
+// and extended to return isOptional flag
 UA_Boolean
-UA_DataType_getStructMember(const UA_DataType *type, const char *memberName,
+UA_DataType_getStructMemberExt(const UA_DataType *type, const char *memberName,
                             size_t *outOffset, const UA_DataType **outMemberType,
-                            UA_Boolean *outIsArray) {
+                            UA_Boolean *outIsArray, UA_Boolean *outIsOptional) {
     if(type->typeKind != UA_DATATYPEKIND_STRUCTURE &&
        type->typeKind != UA_DATATYPEKIND_OPTSTRUCT)
         return false;
 
     size_t offset = 0;
+#ifndef UA_DATATYPES_USE_POINTER
     const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+#endif
     for(size_t i = 0; i < type->membersSize; ++i) {
         const UA_DataTypeMember *m = &type->members[i];
+#ifndef UA_DATATYPES_USE_POINTER
         const UA_DataType *mt = &typelists[!m->namespaceZero][m->memberTypeIndex];
+#else
+        const UA_DataType *mt = m->memberType;
+#endif
         offset += m->padding;
 
         if(strcmp(memberName, m->memberName) == 0) {
             *outOffset = offset;
             *outMemberType = mt;
             *outIsArray = m->isArray;
+            *outIsOptional = m->isOptional;
             return true;
         }
 
@@ -151,27 +158,28 @@ UA_DataType_getStructMember(const UA_DataType *type, const char *memberName,
 
     return false;
 }
-#endif
 
-bool
+void
 DataElementOpen62541::createMap (const UA_DataType *type,
                                  const std::string *timefrom)
 {
     switch (typeKindOf(type)) {
     case UA_DATATYPEKIND_STRUCTURE:
-    {
+    case UA_DATATYPEKIND_OPTSTRUCT: {
         if (debug() >= 5)
             std::cout << " ** creating index-to-element map for child elements" << std::endl;
 
         if (timefrom) {
             const UA_DataType *timeMemberType;
             UA_Boolean timeIsArray;
+            UA_Boolean timeIsOptional;
             size_t timeOffset;
 
-            if (UA_DataType_getStructMember(type, timefrom->c_str(),
+            if (UA_DataType_getStructMemberExt(type, timefrom->c_str(),
                             &timeOffset,
                             &timeMemberType,
-                            &timeIsArray)) {
+                            &timeIsArray,
+                            &timeIsOptional)) {
                 if (typeKindOf(timeMemberType) != UA_TYPES_DATETIME || timeIsArray) {
                     errlogPrintf("%s: timestamp element %s has invalid type %s%s - using "
                                  "source timestamp\n",
@@ -191,10 +199,14 @@ DataElementOpen62541::createMap (const UA_DataType *type,
 
         for (auto &it : elements) {
             auto pelem = it.lock();
-            if (UA_DataType_getStructMember(type, pelem->name.c_str(),
+            if (UA_DataType_getStructMemberExt(type, pelem->name.c_str(),
                             &pelem->offset,
                             &pelem->memberType,
-                            &pelem->isArray)) {
+                            &pelem->isArray,
+                            &pelem->isOptional)) {
+                if (typeKindOf(pelem->memberType) == UA_DATATYPEKIND_ENUM) {
+                    pelem->enumChoices = pitem->session->getEnumChoices(&pelem->memberType->typeId);
+                }
             } else {
                 std::cerr << "Item " << pitem
                           << ": element " << pelem->name
@@ -204,18 +216,17 @@ DataElementOpen62541::createMap (const UA_DataType *type,
         }
         if (debug() >= 5)
             std::cout << " ** " << elements.size()
-                      << " child elements mapped to a "
-                      << "structure of " << type->membersSize << " elements" << std::endl;
+                      << " child elements mapped to "
+                      << variantTypeString(type)
+                      << " of " << type->membersSize << " elements" << std::endl;
         break;
     }
     default:
-        std::cerr << "Item " << pitem
-                  << " has unimplemented type " << variantTypeString(type)
+        std::cerr << "Error: " << this
+                  << " is not a structure or an optstruct but a " << typeKindName(typeKindOf(type))
                   << std::endl;
-        return false;
     }
     mapped = true;
-    return true;
 }
 
 // Getting the timestamp and status information from the Item assumes that only one thread
@@ -230,6 +241,9 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
     UA_Variant_copy(&value, &incomingData);
 
     if (isLeaf()) {
+        if (pconnector->state() == ConnectionStatus::initialRead && typeKindOf(value) == UA_DATATYPEKIND_ENUM) {
+            enumChoices = pitem->session->getEnumChoices(&value.type->typeId);
+        }
         if ((pconnector->state() == ConnectionStatus::initialRead
              && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
             || (pconnector->state() == ConnectionStatus::up)) {
@@ -265,7 +279,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
 
         const UA_DataType *type = value.type;
         char* container = static_cast<char*>(value.data);
-        if (type->typeKind == UA_DATATYPEKIND_EXTENSIONOBJECT) {
+        if (typeKindOf(type) == UA_DATATYPEKIND_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content of decoded extension objects
@@ -282,28 +296,32 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
         if (!mapped)
             createMap(type, timefrom);
 
-        if (timefrom) {
-            if (timesrc >= 0)
-                pitem->tsData = ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(container + timesrc), 0);
-            else
-                pitem->tsData = pitem->tsSource;
-        }
+        if (timesrc >= 0)
+            pitem->tsData = ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(container + timesrc), 0);
+        else
+            pitem->tsData = pitem->tsSource;
 
         for (auto &it : elements) {
             auto pelem = it.lock();
-            char* memberData = container + pelem->offset;
             const UA_DataType* memberType = pelem->memberType;
+            char* memberData = container + pelem->offset;
             UA_Variant memberValue;
-            if (pelem->isArray)
-            {
-                size_t arrayLength = *reinterpret_cast<size_t*>(memberData);
+            size_t arrayLength = 0; // default to scalar
+            if (pelem->isArray) {
+                arrayLength = *reinterpret_cast<size_t*>(memberData);
                 memberData = *reinterpret_cast<char**>(memberData + sizeof(size_t));
-                if (arrayLength == 0) memberData = reinterpret_cast<char*>(UA_EMPTY_ARRAY_SENTINEL);
-                UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
-            } else {
-                UA_Variant_setScalar(&memberValue, memberData, memberType);
+            } else if (pelem->isOptional) {
+                /* optional scalar stored through pointer like an array */
+                memberData = *reinterpret_cast<char**>(memberData);
             }
-            pelem->setIncomingData(memberValue, reason);
+            UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
+            if (debug() && !memberData && pelem->isOptional) {
+                std::cerr << pelem << " absent optional " << variantTypeString(memberType)
+                          << (pelem->isArray ? " array" : " scalar" )
+                          << std::endl;
+            }
+            pelem->setIncomingData(memberValue,
+                pelem->isOptional && !memberData ? ProcessReason::readFailure : reason);
         }
     }
 }
@@ -313,6 +331,8 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
 {
     if (isLeaf()) {
         Guard(pconnector->lock);
+        if (reason == ProcessReason::connectionLoss && enumChoices)
+            enumChoices = nullptr;
         bool wasFirst = false;
         // Put the event on the queue
         UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
@@ -350,35 +370,39 @@ DataElementOpen62541::setState(const ConnectionStatus state)
 
 // Helper to update one data structure element from pointer to child
 bool
-DataElementOpen62541::updateDataInStruct (void* container,
-                                          std::shared_ptr<DataElementOpen62541> pelem)
+DataElementOpen62541::updateDataInStruct(void* container,
+                                         std::shared_ptr<DataElementOpen62541> pelem)
 {
     bool updated = false;
     { // Scope of Guard G
         Guard G(pelem->outgoingLock);
         if (pelem->isDirty()) {
-            void* memberData = static_cast<char*>(container) + pelem->offset;
-            const UA_Variant& data = pelem->getOutgoingData();
+            char* memberData = static_cast<char*>(container) + pelem->offset;
+            const UA_Variant& elementData = pelem->getOutgoingData();
             const UA_DataType* memberType = pelem->memberType;
-            assert(memberType == data.type);
-            if (pelem->isArray)
-            {
-                size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
-                void*& arrayData = *reinterpret_cast<void**>(static_cast<char*>(memberData) + sizeof(size_t));
-                UA_Array_delete(arrayData, arrayLength, memberType);
-                UA_StatusCode status = UA_Array_copy(data.data, data.arrayLength, &arrayData, memberType);
-                if (status == UA_STATUSCODE_GOOD) {
-                    arrayLength = data.arrayLength;
-                } else {
-                    arrayLength = 0;
-                    std::cerr << "Item " << pitem
-                              << ": inserting data from from child element" << pelem->name
-                              << " failed (" << UA_StatusCode_name(status) << ')'
-                              << std::endl;
-                    return false;
-                }
+            assert(memberType == elementData.type ||
+                (typeKindOf(memberType) == UA_DATATYPEKIND_ENUM &&
+                 typeKindOf(elementData.type) == UA_DATATYPEKIND_INT32));
+            if (!pelem->isArray && !pelem->isOptional) {
+                // mandatory scalar: shallow copy
+                UA_clear(memberData, memberType);
+                void* data = pelem->moveOutgoingData();
+                memcpy(memberData, data, memberType->memSize);
+                UA_free(data);
             } else {
-                UA_copy(data.data, memberData, memberType);
+                // array or optional scalar: move content
+                void **memberDataPtr;
+                if (pelem->isArray) /* mandatory or optional array stored as length and pointer */ {
+                    size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
+                    memberDataPtr = reinterpret_cast<void**>(memberData + sizeof(size_t));
+                    UA_Array_delete(*memberDataPtr, arrayLength, memberType);
+                    arrayLength = elementData.arrayLength;
+                } else /* optional scalar stored through pointer */ {
+                    memberDataPtr = reinterpret_cast<void**>(memberData);
+                    if (*memberDataPtr) /* absent optional has nullptr here */
+                        UA_Array_delete(*memberDataPtr, 1, memberType);
+                }
+                *memberDataPtr = pelem->moveOutgoingData();
             }
             pelem->isdirty = false;
             updated = true;
@@ -543,6 +567,7 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
     ProcessReason nReason;
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
     dbgReadScalar(upd.get(), "CString", num);
+    prec->udf = false;
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -591,6 +616,18 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                     UA_print(&dt, data.type, &buffer);
                     break;
                 }
+                case UA_DATATYPEKIND_ENUM:
+                case UA_DATATYPEKIND_INT32:
+                {
+                    if (enumChoices) {
+                        auto it = enumChoices->find(*static_cast<UA_UInt32*>(data.data));
+                        if (it != enumChoices->end()) {
+                            buffer = UA_String_fromChars(it->second.c_str());
+                            break;
+                        }
+                    }
+                    // no enum or index not found: fall through
+                }
                 default:
                     if (data.type)
                         UA_print(data.data, data.type, &buffer);
@@ -600,7 +637,6 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 strncpy(value, reinterpret_cast<char*>(datastring->data), n);
                 value[n] = '\0';
                 UA_String_clear(&buffer);
-                prec->udf = false;
                 UA_Variant_clear(&data);
             }
             if (statusCode) *statusCode = stat;
@@ -673,6 +709,7 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
     ProcessReason nReason;
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
     dbgReadArray(upd.get(), num, epicsTypeString(value));
+    prec->udf = false;
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -713,7 +750,6 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
                         strncpy(value + i * len, reinterpret_cast<char*>(static_cast<UA_String *>(data.data)[i].data), len);
                         (value + i * len)[len - 1] = '\0';
                     }
-                    prec->udf = false;
                 }
                 UA_Variant_clear(&data);
             }
@@ -907,11 +943,12 @@ DataElementOpen62541::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 long
 DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
 {
-    long ret = 0;
+    long ret = 1;
     UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
     long l;
     unsigned long ul;
     double d;
+    char* end = nullptr;
 
     { // Scope of Guard G
         Guard G(outgoingLock);
@@ -924,6 +961,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
             markAsDirty();
+            ret = 0;
             break;
         }
         case UA_DATATYPEKIND_LOCALIZEDTEXT:
@@ -934,6 +972,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
             markAsDirty();
+            ret = 0;
             break;
         }
         case UA_DATATYPEKIND_BOOLEAN:
@@ -941,120 +980,131 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             UA_Boolean val = strchr("YyTt1", *value) != NULL;
             status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
             markAsDirty();
+            ret = 0;
             break;
         }
         case UA_DATATYPEKIND_BYTE:
-            ul = strtoul(value, nullptr, 0);
-            if (isWithinRange<UA_Byte>(ul)) {
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_Byte>(ul)) {
                 UA_Byte val = static_cast<UA_Byte>(ul);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_SBYTE:
-            l = strtol(value, nullptr, 0);
-            if (isWithinRange<UA_SByte>(l)) {
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_SByte>(l)) {
                 UA_SByte val = static_cast<UA_Byte>(l);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_UINT16:
-            ul = strtoul(value, nullptr, 0);
-            if (isWithinRange<UA_UInt16>(ul)) {
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt16>(ul)) {
                 UA_UInt16 val = static_cast<UA_UInt16>(ul);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_INT16:
-            l = strtol(value, nullptr, 0);
-            if (isWithinRange<UA_Int16>(l)) {
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_Int16>(l)) {
                 UA_Int16 val = static_cast<UA_Int16>(l);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_UINT32:
-            ul = strtoul(value, nullptr, 0);
-            if (isWithinRange<UA_UInt32>(ul)) {
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt32>(ul)) {
                 UA_UInt32 val = static_cast<UA_UInt32>(ul);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
+        case UA_DATATYPEKIND_ENUM:
         case UA_DATATYPEKIND_INT32:
-            l = strtol(value, nullptr, 0);
-            if (isWithinRange<UA_Int32>(l)) {
+            l = strtol(value, &end, 0);
+            if (enumChoices) {
+                // first test enum strings then numeric values
+                // in case a string starts with a number but means a different value
+                for (auto it: *enumChoices)
+                    if (it.second == value) {
+                        l = static_cast<long>(it.first);
+                        ret = 0;
+                        end = nullptr;
+                        break;
+                    }
+                if (ret != 0 && end != value)
+                    for (auto it: *enumChoices)
+                        if (l == it.first) {
+                            ret = 0;
+                            break;
+                        }
+                if (ret != 0)
+                    break;
+            }
+            if (end != value && isWithinRange<UA_Int32>(l)) {
                 UA_Int32 val = static_cast<UA_Int32>(l);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_UINT64:
-            ul = strtoul(value, nullptr, 0);
-            if (isWithinRange<UA_UInt64>(ul)) {
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt64>(ul)) {
                 UA_UInt64 val = static_cast<UA_UInt64>(ul);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_INT64:
-            l = strtol(value, nullptr, 0);
-            if (isWithinRange<UA_Int64>(l)) {
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_Int64>(l)) {
                 UA_Int64 val = static_cast<UA_Int64>(l);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_FLOAT:
-            d = strtod(value, nullptr);
-            if (isWithinRange<UA_Float>(d)) {
+            d = strtod(value, &end);
+            if (end != value && isWithinRange<UA_Float>(d)) {
                 UA_Float val = static_cast<UA_Float>(d);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case UA_DATATYPEKIND_DOUBLE:
         {
-            d = strtod(value, nullptr);
-            UA_Double val = static_cast<UA_Double>(d);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
-            markAsDirty();
+            d = strtod(value, &end);
+            if (end != value) {
+                UA_Double val = static_cast<UA_Double>(d);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
+                markAsDirty();
+                ret = 0;
+            }
             break;
         }
         default:
-            errlogPrintf("%s : unsupported conversion for outgoing data\n",
-                         prec->name);
+            errlogPrintf("%s : unsupported conversion from string to %s for outgoing data\n",
+                         prec->name, variantTypeString(incomingData));
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         }
+    }
+    if (ret != 0) {
+        errlogPrintf("%s : value \"%s\" out of range\n",
+                     prec->name, value);
+        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
     }
     if (ret == 0 && UA_STATUS_IS_BAD(status)) {
         errlogPrintf("%s : scalar copy failed: %s\n",
@@ -1062,7 +1112,8 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     }
-    dbgWriteScalar();
+    if (ret == 0)
+        dbgWriteScalar();
     return ret;
 }
 

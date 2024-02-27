@@ -153,6 +153,7 @@ public:
      *
      * @param value  new value for this data element
      * @param reason  reason for this value update
+     * @param typeId  data type id of the item
      */
     void setIncomingData(const UA_DataValue &value, ProcessReason reason);
 

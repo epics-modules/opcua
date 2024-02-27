@@ -788,7 +788,7 @@ private:
                 char *statusText,
                 const epicsUInt32 statusTextLen)
     {
-        long ret = 0;
+        long ret = 1;
 
         if (incomingQueue.empty()) {
             errlogPrintf("%s: incoming data queue empty\n", prec->name);
@@ -804,11 +804,9 @@ private:
         switch (upd->getType()) {
         case ProcessReason::readFailure:
             (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-            ret = 1;
             break;
         case ProcessReason::connectionLoss:
             (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
-            ret = 1;
             break;
         case ProcessReason::incomingData:
         case ProcessReason::readComplete:
@@ -818,90 +816,99 @@ private:
                 if (UA_STATUS_IS_BAD(stat)) {
                     // No valid OPC UA value
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-                    ret = 1;
                 } else {
                     // Valid OPC UA value, so try to convert
                     UA_Variant &data = upd->getData();
                     switch(typeKindOf(data)) {
                         case UA_DATATYPEKIND_BOOLEAN:
                             *value = (*static_cast<UA_Boolean*>(data.data) != 0);
+                            ret = 0;
                             break;
                         case UA_DATATYPEKIND_BYTE:
-                            if (isWithinRange<ET, UA_Byte>(*static_cast<UA_Byte*>(data.data)))
+                            if (isWithinRange<ET, UA_Byte>(*static_cast<UA_Byte*>(data.data))) {
                                 *value = *static_cast<UA_Byte*>(data.data);
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_SBYTE:
-                            if (isWithinRange<ET, UA_SByte>(*static_cast<UA_SByte*>(data.data)))
+                            if (isWithinRange<ET, UA_SByte>(*static_cast<UA_SByte*>(data.data))) {
                                 *value = *static_cast<UA_SByte*>(data.data);
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_INT16:
-                            if (isWithinRange<ET, UA_Int16>(*static_cast<UA_Int16*>(data.data)))
+                            if (isWithinRange<ET, UA_Int16>(*static_cast<UA_Int16*>(data.data))) {
                                 *value = static_cast<ET>(*static_cast<UA_Int16*>(data.data));
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_UINT16:
-                            if (isWithinRange<ET, UA_UInt16>(*static_cast<UA_UInt16*>(data.data)))
+                            if (isWithinRange<ET, UA_UInt16>(*static_cast<UA_UInt16*>(data.data))) {
                                 *value = static_cast<ET>(*static_cast<UA_UInt16*>(data.data));
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_INT32:
-                            if (isWithinRange<ET, UA_Int32>(*static_cast<UA_Int32*>(data.data)))
+                            if (isWithinRange<ET, UA_Int32>(*static_cast<UA_Int32*>(data.data))) {
                                 *value = static_cast<ET>(*static_cast<UA_Int32*>(data.data));
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_UINT32:
-                            if (isWithinRange<ET, UA_UInt32>(*static_cast<UA_UInt32*>(data.data)))
+                            if (isWithinRange<ET, UA_UInt32>(*static_cast<UA_UInt32*>(data.data))) {
                                 *value = static_cast<ET>(*static_cast<UA_UInt32*>(data.data));
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_INT64:
-                            if (isWithinRange<ET, UA_Int64>(*static_cast<UA_Int64*>(data.data)))
+                            if (isWithinRange<ET, UA_Int64>(*static_cast<UA_Int64*>(data.data))) {
                                 *value = static_cast<ET>(*static_cast<UA_Int64*>(data.data));
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_UINT64:
-                            if (isWithinRange<ET, UA_UInt64>(*static_cast<UA_UInt64*>(data.data)))
+                            if (isWithinRange<ET, UA_UInt64>(*static_cast<UA_UInt64*>(data.data))) {
                                 *value = static_cast<ET>(*static_cast<UA_UInt64*>(data.data));
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_FLOAT:
-                            if (isWithinRange<ET, UA_Float>(*static_cast<UA_Float*>(data.data)))
+                            if (isWithinRange<ET, UA_Float>(*static_cast<UA_Float*>(data.data))) {
                                 *value = static_cast<ET>(*static_cast<UA_Float*>(data.data));
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_DOUBLE:
-                            if (isWithinRange<ET, UA_Double>(*static_cast<UA_Double*>(data.data)))
+                            if (isWithinRange<ET, UA_Double>(*static_cast<UA_Double*>(data.data))) {
                                 *value = static_cast<ET>(*static_cast<UA_Double*>(data.data));
-                            else
-                                ret = 1;
+                                ret = 0;
+                            }
+                            break;
+                        case UA_DATATYPEKIND_ENUM:
+                            if (isWithinRange<ET, UA_Int32>(*static_cast<UA_Int32*>(data.data))) {
+                                *value = static_cast<ET>(*static_cast<UA_Int32*>(data.data));
+                                if (!enumChoices || enumChoices->find(static_cast<UA_UInt32>(*value)) != enumChoices->end())
+                                    ret = 0;
+                            }
                             break;
                         case UA_DATATYPEKIND_STRING:
                         {
                             UA_String* s = static_cast<UA_String*>(data.data);
-                            if (!string_to(std::string(reinterpret_cast<const char*>(s->data), s->length), *value))
-                                ret = 1;
+                            if (string_to(std::string(reinterpret_cast<const char*>(s->data), s->length), *value))
+                                ret = 0;
                             break;
                         }
                         case UA_DATATYPEKIND_LOCALIZEDTEXT:
                         {
                             UA_LocalizedText* lt = static_cast<UA_LocalizedText*>(data.data);
-                            if (!string_to(std::string(reinterpret_cast<const char*>(lt->text.data), lt->text.length), *value))
-                                ret = 1;
+                            if (string_to(std::string(reinterpret_cast<const char*>(lt->text.data), lt->text.length), *value))
+                                ret = 0;
                             break;
                         }
                         default:
-                            ret = 1;
+                            errlogPrintf("%s : unsupported type kind %s for incoming data\n",
+                                         prec->name, typeKindName(typeKindOf(data)));
+                            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     }
                     if (ret == 1) {
                         UA_String datastring = UA_STRING_NULL;
@@ -1042,7 +1049,7 @@ private:
     writeScalar (const ET &value,
                  dbCommon *prec)
     {
-        long ret = 0;
+        long ret = 1;
         UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
 
         { // Scope of Guard G
@@ -1054,6 +1061,7 @@ private:
                 UA_Boolean val = (value != 0);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
                 markAsDirty();
+                ret = 0;
                 break;
             }
             case UA_DATATYPEKIND_BYTE:
@@ -1061,9 +1069,7 @@ private:
                     UA_Byte val = static_cast<UA_Byte>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_SBYTE:
@@ -1071,9 +1077,7 @@ private:
                     UA_SByte val = static_cast<UA_Byte>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_UINT16:
@@ -1081,9 +1085,7 @@ private:
                     UA_UInt16 val = static_cast<UA_UInt16>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_INT16:
@@ -1091,9 +1093,7 @@ private:
                     UA_Int16 val = static_cast<UA_Int16>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_UINT32:
@@ -1101,19 +1101,18 @@ private:
                     UA_UInt32 val = static_cast<UA_UInt32>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
+            case UA_DATATYPEKIND_ENUM:
             case UA_DATATYPEKIND_INT32:
-                if (isWithinRange<UA_Int32>(value)) {
+                if (isWithinRange<UA_Int32>(value) &&
+                    (!enumChoices ||
+                        enumChoices->find(static_cast<UA_UInt32>(value)) != enumChoices->end())) {
                     UA_Int32 val = static_cast<UA_Int32>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_UINT64:
@@ -1121,9 +1120,7 @@ private:
                     UA_UInt64 val = static_cast<UA_UInt64>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_INT64:
@@ -1131,9 +1128,7 @@ private:
                     UA_Int64 val = static_cast<UA_Int64>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_FLOAT:
@@ -1141,9 +1136,7 @@ private:
                     UA_Float val = static_cast<UA_Float>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_DOUBLE:
@@ -1151,9 +1144,7 @@ private:
                     UA_Double val = static_cast<UA_Double>(value);
                     status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
                     markAsDirty();
-                } else {
-                    (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                    ret = 1;
+                    ret = 0;
                 }
                 break;
             case UA_DATATYPEKIND_STRING:
@@ -1164,6 +1155,7 @@ private:
                 val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(strval.c_str()));
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
                 markAsDirty();
+                ret = 0;
                 break;
             }
             case UA_DATATYPEKIND_LOCALIZEDTEXT:
@@ -1175,14 +1167,19 @@ private:
                 val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(strval.c_str()));
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
                 markAsDirty();
+                ret = 0;
                 break;
             }
             default:
-                ret = 1;
-                errlogPrintf("%s : unsupported conversion for outgoing data\n",
-                             prec->name);
+                errlogPrintf("%s : unsupported conversion from %s to %s for outgoing data\n",
+                             prec->name, epicsTypeString(value), variantTypeString(incomingData));
                 (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             }
+        }
+        if (ret != 0) {
+            errlogPrintf("%s : value out of range\n",
+                         prec->name);
+            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         }
         if (ret == 0 && UA_STATUS_IS_BAD(status)) {
             errlogPrintf("%s : scalar copy failed: %s\n",
@@ -1191,7 +1188,8 @@ private:
             ret = 1;
 
         }
-        dbgWriteScalar();
+        if (ret == 0)
+            dbgWriteScalar();
         return ret;
     }
 

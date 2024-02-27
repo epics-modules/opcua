@@ -699,7 +699,64 @@ opcua_write_analog (REC *prec)
     return ret;
 }
 
-// enum output
+// enum
+
+template<typename REC>
+inline void updateEnumInfos (REC *prec, RecordConnector *pcon)
+{
+    if (pcon->pdataelement->enumChoices &&
+        pcon->state() == ConnectionStatus::initialRead &&
+        (!prec->sdef || prec->sdef & 0x10))
+    { // no strings/value defined by user (but maybe by OPC-UA server)
+        prec->sdef = 0x1f; // mark strings/values as defined by OPC-UA
+        const EnumChoices &enumChoices = *pcon->pdataelement->enumChoices;
+        auto pvl = &prec->zrvl;
+        auto pst = &prec->zrst;
+        size_t i = 0;
+        for (auto it: enumChoices) {
+            pvl[i] = it.first;
+            strncpy(pst[i], it.second.c_str(), sizeof(pst[i])-1);
+            if (++i >= 16) break;
+        }
+        while (i < 16) {
+            // clear possible other old strings/values
+            pvl[i] = ~0; // as invalid as possible
+            memset(pst[i], 0, sizeof(pst[i]));
+            i++;
+        }
+        db_post_events(prec, &prec->val, DBE_PROPERTY);
+    }
+}
+
+
+template<typename REC>
+long
+opcua_read_enum (REC *prec)
+{
+    long ret = 0;
+    TRY {
+        Guard G(pcon->lock);
+        ProcessReason nextReason = ProcessReason::none;
+
+        if (pcon->reason == ProcessReason::none || pcon->reason == ProcessReason::readRequest) {
+            if (pcon->state() == ConnectionStatus::up) {
+                prec->pact = true;
+                pcon->requestOpcuaRead();
+            } else {
+                (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+            }
+        } else {
+            epicsUInt32 *value = useReadValue(pcon) ? &prec->rval : nullptr;
+            ret = pcon->readScalar(value, &nextReason);
+            updateEnumInfos (prec, pcon);
+            traceReadPrint(pdbc, pcon, ret, !!value, prec->rval, "RVAL");
+            manageStateAndBiniProcessing(pcon);
+        }
+        if (nextReason)
+            pcon->requestRecordProcessing(nextReason);
+    } CATCH()
+    return ret;
+}
 
 template<typename REC>
 long
@@ -726,6 +783,7 @@ opcua_write_enum (REC *prec)
         } else {
             epicsUInt32 *rval = useReadValue(pcon) ? &prec->rval : nullptr;
             ret = pcon->readScalar(rval, &nextReason);
+            updateEnumInfos (prec, pcon);
             if (ret == 0 && rval) {
                 *rval &= prec->mask;
                 if (prec->shft)
@@ -736,13 +794,14 @@ opcua_write_enum (REC *prec)
                     for (epicsUInt16 i = 0; i < 16; i++) {
                         if (*pstate_values == *rval) {
                             prec->val = i;
+                            recGblResetAlarms(prec);
                             break;
                         }
                         pstate_values++;
                     }
                 } else {
-                    // no defined states
-                    prec->val = static_cast<epicsUInt16>(*rval);
+                   // no defined states
+                   prec->val = static_cast<epicsUInt16>(*rval);
                 }
             }
             traceReadPrint(pdbc, pcon, ret, !!rval, prec->val, prec->rval);
@@ -1007,6 +1066,11 @@ opcua_read_array (REC *prec)
                                      &prec->nord, &nextReason);
                 break;
             case menuFtypeCHAR:
+                if (pcon->pdataelement->enumChoices) {
+                    ret = pcon->readScalar(static_cast<char *>(bptr), prec->nelm, &nextReason);
+                    if (bptr) prec->nord = static_cast<epicsUInt32>(strlen(static_cast<char *>(bptr)));
+                    break;
+                }
                 ret = pcon->readArray(static_cast<epicsInt8 *>(bptr), prec->nelm,
                                      &prec->nord, &nextReason);
                 break;
@@ -1054,7 +1118,7 @@ opcua_read_array (REC *prec)
                 break;
             }
             if (nord != prec->nord)
-                db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);            
+                db_post_events(prec, &prec->nord, DBE_VALUE | DBE_LOG);
             traceReadArrayPrint(pdbc, pcon, ret, !!bptr, prec->nord);
             manageStateAndBiniProcessing(pcon);
         }
@@ -1067,7 +1131,7 @@ opcua_read_array (REC *prec)
 template<typename REC>
 long
 opcua_write_array (REC *prec)
-{    
+{
     long ret = 0;
     TRY {
         Guard G(pcon->lock);
@@ -1084,6 +1148,10 @@ opcua_write_array (REC *prec)
                     ret = pcon->writeArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nord);
                     break;
                 case menuFtypeCHAR:
+                    if (pcon->pdataelement->enumChoices) {
+                        ret = pcon->writeScalar(static_cast<char *>(prec->bptr), prec->nord);
+                        break;
+                    }
                     ret = pcon->writeArray(static_cast<epicsInt8 *>(prec->bptr), prec->nord);
                     break;
                 case menuFtypeUCHAR:
@@ -1134,6 +1202,11 @@ opcua_write_array (REC *prec)
                                      &prec->nord, &nextReason);
                 break;
             case menuFtypeCHAR:
+                if (pcon->pdataelement->enumChoices) {
+                    ret = pcon->readScalar(static_cast<char *>(bptr), prec->nelm, &nextReason);
+                    if (bptr) prec->nord = static_cast<epicsUInt32>(strlen(static_cast<char *>(bptr)));
+                    break;
+                }
                 ret = pcon->readArray(static_cast<epicsInt8 *>(bptr), prec->nelm,
                                      &prec->nord, &nextReason);
                 break;
@@ -1271,7 +1344,7 @@ SUP (devLiOpcua,             longin,   int32_val, read)
 SUP (devLoOpcua,            longout,   int32_val, write)
 SUP (devBiOpcua,                 bi, uint32_rval, read)
 SUP (devBoOpcua,                 bo,          bo, write)
-SUPM(devMbbiOpcua,             mbbi, uint32_rval, read)
+SUPM(devMbbiOpcua,             mbbi,        enum, read)
 SUPM(devMbboOpcua,             mbbo,        enum, write)
 SUPM(devMbbiDirectOpcua, mbbiDirect, uint32_rval, read)
 SUPM(devMbboDirectOpcua, mbboDirect,       mbbod, write)

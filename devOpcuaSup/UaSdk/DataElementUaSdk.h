@@ -190,6 +190,8 @@ public:
     DataElementUaSdk(const std::string &name,
                      ItemUaSdk *item);
 
+    ~DataElementUaSdk() { delete enumChoices; }
+
     /**
      * @brief Create a DataElement and add it to the item's dataTree.
      *
@@ -238,10 +240,12 @@ public:
      * @param value  new value for this data element
      * @param reason  reason for this value update
      * @param timefrom  name of element to read item timestamp from
+     * @param typeId  data type of the data element
      */
     void setIncomingData(const UaVariant &value,
                          ProcessReason reason,
-                         const std::string *timefrom = nullptr);
+                         const std::string *timefrom = nullptr,
+                         const UaNodeId *typeId = nullptr);
 
     /**
      * @brief Push an incoming event into the DataElement.
@@ -776,6 +780,7 @@ private:
         ProcessReason nReason;
         std::shared_ptr<UpdateUaSdk> upd = incomingQueue.popUpdate(&nReason);
         dbgReadScalar(upd.get(), epicsTypeString(*value));
+        prec->udf = false;
 
         switch (upd->getType()) {
         case ProcessReason::readFailure:
@@ -808,7 +813,6 @@ private:
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
                         *value = v;
-                        prec->udf = false;
                     }
                 }
                 if (statusCode) *statusCode = stat;
@@ -854,6 +858,7 @@ private:
         ProcessReason nReason;
         std::shared_ptr<UpdateUaSdk> upd = incomingQueue.popUpdate(&nReason);
         dbgReadArray(upd.get(), num, epicsTypeString(*value));
+        prec->udf = false;
 
         switch (upd->getType()) {
         case ProcessReason::readFailure:
@@ -893,7 +898,6 @@ private:
                         UaVariant_to(upd->getData(), arr);
                         elemsWritten = num < arr.length() ? num : arr.length();
                         memcpy(value, arr.rawData(), sizeof(ET) * elemsWritten);
-                        prec->udf = false;
                     }
                 }
                 if (statusCode) *statusCode = stat;
@@ -933,17 +937,15 @@ private:
     writeScalar (const ET &value,
                  dbCommon *prec)
     {
-        long ret = 0;
+        long ret = 1;
 
         switch (incomingData.type()) {
         case OpcUaType_Boolean:
         { // Scope of Guard G
             Guard G(outgoingLock);
-            if (value == 0)
-                outgoingData.setBoolean(false);
-            else
-                outgoingData.setBoolean(true);
+            outgoingData.setBoolean(value != 0);
             markAsDirty();
+            ret = 0;
             break;
         }
         case OpcUaType_Byte:
@@ -951,9 +953,7 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setByte(static_cast<OpcUa_Byte>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_SByte:
@@ -961,9 +961,7 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setSByte(static_cast<OpcUa_SByte>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_UInt16:
@@ -971,9 +969,7 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setUInt16(static_cast<OpcUa_UInt16>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_Int16:
@@ -981,9 +977,7 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setInt16(static_cast<OpcUa_Int16>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_UInt32:
@@ -991,19 +985,17 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setUInt32(static_cast<OpcUa_UInt32>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
-        case OpcUaType_Int32:
-            if (isWithinRange<OpcUa_Int32>(value)) {
+        case OpcUaType_Int32: // may be an enum
+            if (isWithinRange<OpcUa_Int32>(value) &&
+                (!enumChoices ||
+                    enumChoices->find(static_cast<OpcUa_Int32>(value)) != enumChoices->end())) {
                 Guard G(outgoingLock);
                 outgoingData.setInt32(static_cast<OpcUa_Int32>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_UInt64:
@@ -1011,9 +1003,7 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setUInt64(static_cast<OpcUa_UInt64>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_Int64:
@@ -1021,9 +1011,7 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setInt64(static_cast<OpcUa_Int64>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_Float:
@@ -1031,9 +1019,7 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setFloat(static_cast<OpcUa_Float>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_Double:
@@ -1041,9 +1027,7 @@ private:
                 Guard G(outgoingLock);
                 outgoingData.setDouble(static_cast<OpcUa_Double>(value));
                 markAsDirty();
-            } else {
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
+                ret = 0;
             }
             break;
         case OpcUaType_String:
@@ -1054,12 +1038,18 @@ private:
             break;
         }
         default:
-            errlogPrintf("%s : unsupported conversion for outgoing data\n",
+            errlogPrintf("%s : unsupported conversion from %s to %s for outgoing data\n",
+                         prec->name, epicsTypeString(value), variantTypeString(incomingData.type()));
+            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+        }
+        if (ret != 0) {
+            errlogPrintf("%s : value out of range\n",
                          prec->name);
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         }
 
-        dbgWriteScalar();
+        if (ret == 0)
+            dbgWriteScalar();
         return ret;
     }
 
