@@ -195,12 +195,6 @@ DataElementOpen62541::createMap (const UA_DataType *type,
                             &pelem->offset,
                             &pelem->memberType,
                             &pelem->isArray)) {
-                std::cerr << "Item " << pitem
-                          << variantTypeString(type)
-                          << " element " << pelem->name
-                          << " is " << (pelem->isArray ? "array" : "scalar")
-                          << " offset " << pelem->offset
-                          << std::endl;
             } else {
                 std::cerr << "Item " << pitem
                           << ": element " << pelem->name
