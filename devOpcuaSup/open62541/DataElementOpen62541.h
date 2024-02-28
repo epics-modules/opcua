@@ -1257,7 +1257,7 @@ private:
     std::shared_ptr<DataElementOpen62541> parent;               /**< parent */
 
     std::unordered_map<int, std::weak_ptr<DataElementOpen62541>> elementMap;
-    int timesrc;
+    ptrdiff_t timesrc;
 
     const UA_DataType *memberType;           /**< type of this element */
     UA_Boolean isArray;                      /**< is this element an array? */
