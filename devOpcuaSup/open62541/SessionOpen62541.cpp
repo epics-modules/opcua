@@ -1621,7 +1621,7 @@ SessionOpen62541::clearCustomTypeDictionaries()
         free(customTypesArray);
     }
     for (auto type: customTypes) {
-        for (int i = 0; i < type.membersSize; i++)
+        for (UA_UInt32 i = 0; i < type.membersSize; i++)
         {
             free(const_cast<char*>(type.members[i].memberName));
         }
