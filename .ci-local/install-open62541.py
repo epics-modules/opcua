@@ -86,9 +86,6 @@ OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
     if cue.ci['static']:
         build_shared = 'OFF'
 
-    if ver[0] == '1' and ver[1] == '3':
-        sp.check_call(['patch', '-p1', '-i', os.path.join(curdir, '.ci-local', 'open62541-1.3.patch')], cwd=sdkdir)
-
     sp.check_call(['cmake', '..',
                    '-G', generator,
                    '-DBUILD_SHARED_LIBS={0}'.format(build_shared),
