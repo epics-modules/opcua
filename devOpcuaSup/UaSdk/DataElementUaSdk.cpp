@@ -149,6 +149,8 @@ DataElementUaSdk::setIncomingData(const UaVariant &value,
                 if (!definition.isUnion()) {
                     // ExtensionObject is a structure
                     // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
+                    if (extensionObject.encoding() == UaExtensionObject::EncodeableObject)
+                        extensionObject.changeEncoding(UaExtensionObject::Binary);
                     UaGenericStructureValue genericValue;
                     genericValue.setGenericValue(extensionObject, definition);
 
@@ -287,6 +289,8 @@ DataElementUaSdk::getOutgoingData ()
         if (outgoingData.type() == OpcUaType_ExtensionObject) {
             UaExtensionObject extensionObject;
             outgoingData.toExtensionObject(extensionObject);
+            if (extensionObject.encoding() == UaExtensionObject::EncodeableObject)
+                extensionObject.changeEncoding(UaExtensionObject::Binary);
 
             // Try to get the structure definition from the dictionary
             UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
