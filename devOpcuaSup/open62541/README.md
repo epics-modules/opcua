@@ -12,8 +12,9 @@ Please contact the authors [Dirk Zimoch](mailto:dirk.zimoch@psi.ch) and [Ralph L
 
 ## Prerequisites
 
-*   [Open62541](https://www.open62541.org/) C library
-    (1.2 and 1.3 have been tested; system packages should also work).
+*   [Open62541](https://www.open62541.org/) SDK / C library
+    (v1.2 and v1.3 series have been tested; their system packages should also work.
+    open62541 v1.4 changed the header file structure and does not work yet.)
     
 *   Cmake (3.x) if you're building Open62541 from sources.
 
