@@ -112,7 +112,12 @@ To use a Certificate Identity Token, set `cert=<certificate file>` and `key=<pri
 
 The underlying OpenSSL library provides a command line utility.
 
-For managing a larger number of certificates, [Xca](https://hohnstaedt.de/xca/) is a powerful and popular GUI for X.509 certificate and key management, including certificate authority (CA) functionality, which is the most efficient way to manage the certificates for a larger installation.
+For creating and managing a larger number of certificates,
+[Xca](https://hohnstaedt.de/xca/) is a powerful and popular GUI
+for X.509 certificate and key handling,
+including certificate authority (CA) functionality,
+which is the most efficient way
+to manage the certificates for a larger installation.
 
 The `openssl` command line utility can be used to convert certificates (and keys) between formats. To convert certificate `<cert>`  from DER to PEM format, use:
 
