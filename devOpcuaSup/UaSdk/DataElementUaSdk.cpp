@@ -887,6 +887,16 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
         markAsDirty();
         break;
     }
+    case OpcUaType_LocalizedText:
+    { // Scope of Guard G
+        Guard G(outgoingLock);
+        UaLocalizedText localizedText;
+        incomingData.toLocalizedText(localizedText);
+        localizedText.setText(static_cast<UaString>(value)); // keep the Locale
+        outgoingData.setLocalizedText(localizedText);
+        markAsDirty();
+        break;
+    }
     case OpcUaType_Boolean:
     { // Scope of Guard G
         Guard G(outgoingLock);
