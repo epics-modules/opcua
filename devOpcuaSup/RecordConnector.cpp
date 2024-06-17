@@ -33,6 +33,7 @@
 #include <dbStaticLib.h>
 #include <errlog.h>
 #include <alarm.h>
+#include <epicsVersion.h>
 
 #define epicsExportSharedSymbols
 #include "RecordConnector.h"
@@ -76,6 +77,16 @@ long reProcess (dbCommon *prec)
     return status;
 }
 
+#if EPICS_VERSION_INT >= VERSION_INT(3,16,0,1)
+#define SAVE_FLNK(prec) struct lset *lset = prec->flnk.lset
+#define DISABLE_FLNK(prec) prec->flnk.lset = NULL
+#define RESTORE_FLNK(prec) prec->flnk.lset = lset
+#else
+#define SAVE_FLNK(prec) short type = prec->flnk.type
+#define DISABLE_FLNK(prec) prec->flnk.type = 0
+#define RESTORE_FLNK(prec) prec->flnk.type = type
+#endif
+
 void processCallback (epicsCallback *pcallback, const ProcessReason reason)
 {
     void *pUsr;
@@ -89,10 +100,17 @@ void processCallback (epicsCallback *pcallback, const ProcessReason reason)
     dbScanLock(prec);
     ProcessReason oldreason = pvt->reason;
     pvt->reason = reason;
+
+    // Do not process FLNK on updates if not "I/O Intr"
+    SAVE_FLNK(prec);
+    if (reason != writeComplete && prec->scan != menuScanI_O_Intr)
+        DISABLE_FLNK(prec);
     if (prec->pact)
         reProcess(prec);
     else
         dbProcess(prec);
+    RESTORE_FLNK(prec);
+
     pvt->reason = oldreason;
     dbScanUnlock(prec);
 }
