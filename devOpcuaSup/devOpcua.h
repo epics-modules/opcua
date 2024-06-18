@@ -101,6 +101,7 @@ typedef struct linkInfo {
     epicsUInt32 queueSize;
     epicsUInt32 clientQueueSize;
     bool discardOldest = true;
+    double deadband = 0;
 
     std::string element;
     std::list<std::string> elementPath;
