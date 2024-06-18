@@ -148,6 +148,7 @@ SubscriptionOpen62541::addMonitoredItems ()
     UA_UInt32 i;
     UA_MonitoredItemCreateRequest monitoredItemCreateRequest;
     UA_MonitoredItemCreateResult monitoredItemCreateResult;
+    UA_DataChangeFilter dataChangeFilter;
 
     if (items.size()) {
         monitoredItemCreateResult.statusCode = UA_STATUSCODE_GOOD; // suppress compiler warning
@@ -161,6 +162,16 @@ SubscriptionOpen62541::addMonitoredItems ()
             monitoredItemCreateRequest.requestedParameters.samplingInterval = it->linkinfo.samplingInterval;
             monitoredItemCreateRequest.requestedParameters.queueSize = it->linkinfo.queueSize;
             monitoredItemCreateRequest.requestedParameters.discardOldest = it->linkinfo.discardOldest;
+            if (it->linkinfo.deadband > 0.0) {
+                UA_DataChangeFilter_init(&dataChangeFilter);
+                dataChangeFilter.deadbandType = UA_DEADBANDTYPE_ABSOLUTE;
+                dataChangeFilter.deadbandValue = it->linkinfo.deadband;
+                dataChangeFilter.trigger = UA_DATACHANGETRIGGER_STATUSVALUE;
+                UA_ExtensionObject *filter = &monitoredItemCreateRequest.requestedParameters.filter;
+                filter->content.decoded.data = &dataChangeFilter;
+                filter->content.decoded.type = &UA_TYPES[UA_TYPES_DATACHANGEFILTER];
+                filter->encoding = UA_EXTENSIONOBJECT_DECODED;
+            }
             monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
                 session.client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
                 monitoredItemCreateRequest, it, [] (UA_Client *client, UA_UInt32 subId, void *subContext,
