@@ -23,6 +23,7 @@
 
 #include <uaclientsdk.h>
 #include <uasession.h>
+#include <opcua_types.h>
 
 #include <errlog.h>
 #include <epicsThread.h>
@@ -178,6 +179,26 @@ SubscriptionUaSdk::addMonitoredItems ()
             monitoredItemCreateRequests[i].RequestedParameters.SamplingInterval = it->linkinfo.samplingInterval;
             monitoredItemCreateRequests[i].RequestedParameters.QueueSize = it->linkinfo.queueSize;
             monitoredItemCreateRequests[i].RequestedParameters.DiscardOldest = it->linkinfo.discardOldest;
+            if (it->linkinfo.deadband > 0.0) {
+#ifdef _WIN32
+                errlogPrintf("OPC UA subscription %s@%s: deadband not implemented for UA SDK on Windows\n",
+                    name.c_str(), psessionuasdk->getName().c_str());
+#else
+                OpcUa_DataChangeFilter* pDataChangeFilter = NULL;
+                status = OpcUa_EncodeableObject_CreateExtension(
+                    &OpcUa_DataChangeFilter_EncodeableType,
+                    &monitoredItemCreateRequests[i].RequestedParameters.Filter,
+                    (OpcUa_Void**)&pDataChangeFilter);
+                if (status.isBad()) {
+                    errlogPrintf("OPC UA subscription %s@%s: cannot create deadband filter: %s\n",
+                    name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
+                } else {
+                    pDataChangeFilter->DeadbandType = OpcUa_DeadbandType_Absolute;
+                    pDataChangeFilter->DeadbandValue = it->linkinfo.deadband;
+                    pDataChangeFilter->Trigger = OpcUa_DataChangeTrigger_StatusValue;
+                }
+#endif
+            }
             i++;
         }
 
