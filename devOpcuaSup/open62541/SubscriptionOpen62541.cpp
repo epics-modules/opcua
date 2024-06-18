@@ -163,27 +163,26 @@ SubscriptionOpen62541::addMonitoredItems ()
             monitoredItemCreateRequest.requestedParameters.discardOldest = it->linkinfo.discardOldest;
             monitoredItemCreateResult = UA_Client_MonitoredItems_createDataChange(
                 session.client, subscriptionSettings.subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
-                monitoredItemCreateRequest, items[i], [] (UA_Client *client, UA_UInt32 subId, void *subContext,
+                monitoredItemCreateRequest, it, [] (UA_Client *client, UA_UInt32 subId, void *subContext,
                          UA_UInt32 monId, void *monContext, UA_DataValue *value) {
                             static_cast<SubscriptionOpen62541*>(subContext)->
                                 dataChange(monId, *static_cast<ItemOpen62541*>(monContext), value);
                          }, nullptr /* deleteCallback */);
             if (monitoredItemCreateResult.statusCode == UA_STATUSCODE_GOOD) {
-                items[i]->setRevisedSamplingInterval(monitoredItemCreateResult.revisedSamplingInterval);
-                items[i]->setRevisedQueueSize(monitoredItemCreateResult.revisedQueueSize);
-            }
-            if (debug >= 5) {
-                if (monitoredItemCreateResult.statusCode == UA_STATUSCODE_GOOD)
+                it->setRevisedSamplingInterval(monitoredItemCreateResult.revisedSamplingInterval);
+                it->setRevisedQueueSize(monitoredItemCreateResult.revisedQueueSize);
+                if (debug >= 5) {
                     std::cout << "** Monitored item " << monitoredItemCreateRequest.itemToMonitor.nodeId
                               << " succeeded with id " << monitoredItemCreateResult.monitoredItemId
                               << " revised sampling interval " << monitoredItemCreateResult.revisedSamplingInterval
                               << " revised queue size " << monitoredItemCreateResult.revisedQueueSize
                               << std::endl;
-                else
-                    std::cout << "** Monitored item " << monitoredItemCreateRequest.itemToMonitor.nodeId
-                              << " failed with error "
-                              << UA_StatusCode_name(monitoredItemCreateResult.statusCode)
-                              << std::endl;
+                }
+            } else {
+                std::cerr << "OPC UA record " << it->recConnector->getRecordName()
+                          << " monitored item " << monitoredItemCreateRequest.itemToMonitor.nodeId
+                          << " failed with error " << UA_StatusCode_name(monitoredItemCreateResult.statusCode)
+                          << std::endl;
             }
             i++;
         }
