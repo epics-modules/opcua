@@ -210,20 +210,19 @@ SubscriptionUaSdk::addMonitoredItems ()
                 std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
                           << ": created " << items.size() << " monitored items ("
                           << status.toString().toUtf8() << ")" << std::endl;
-            if (debug >= 5) {
-                for (i = 0; i < items.size(); i++) {
-                    UaNodeId node(monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
-                    if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode))
-                        std::cout << "** Monitored item " << node.toXmlString().toUtf8()
+            for (i = 0; i < items.size(); i++) {
+                if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode)) {
+                    if (debug >= 5)
+                        std::cout << "** Monitored item " << UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8()
                                   << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
                                   << " revised sampling interval " << monitoredItemCreateResults[i].RevisedSamplingInterval
                                   << " revised queue size " << monitoredItemCreateResults[i].RevisedQueueSize
                                   << std::endl;
-                    else
-                        std::cout << "** Monitored item " << node.toXmlString().toUtf8()
-                                  << " failed with error "
-                                  << UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8()
-                                  << std::endl;
+                } else {
+                    errlogPrintf("OPC UA record %s monitored item %s failed with error %s\n",
+                        items[i]->recConnector->getRecordName(),
+                        UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8(),
+                        UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8());
                 }
             }
         }
