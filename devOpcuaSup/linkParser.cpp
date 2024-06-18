@@ -275,6 +275,9 @@ parseLink (dbCommon *prec, const DBEntry &ent)
         } else if (pinfo->linkedToItem && optname == "sampling") {
             if (epicsParseDouble(optval.c_str(), &pinfo->samplingInterval, nullptr))
                 throw std::runtime_error(SB() << "error converting '" << optval << "' to Double");
+        } else if (pinfo->linkedToItem && optname == "deadband") {
+            if (epicsParseDouble(optval.c_str(), &pinfo->deadband, nullptr))
+                throw std::runtime_error(SB() << "error converting '" << optval << "' to Double");
         } else if (pinfo->linkedToItem && optname == "qsize") {
             if (epicsParseUInt32(optval.c_str(), &pinfo->queueSize, 0, nullptr))
                 throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
@@ -352,6 +355,7 @@ parseLink (dbCommon *prec, const DBEntry &ent)
             else
                 std::cout << " id(s)=" << pinfo->identifierString;
             std::cout << " sampling=" << pinfo->samplingInterval
+                      << " deadband=" << pinfo->deadband
                       << " qsize=" << pinfo->queueSize
                       << " cqsize=" << pinfo->clientQueueSize
                       << " discard=" << (pinfo->discardOldest ? "old" : "new")
