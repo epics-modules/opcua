@@ -105,6 +105,7 @@ ItemUaSdk::show (int level) const
               << " dataDirty=" << (dataTreeDirty ? "y" : "n")
               << " context=" << linkinfo.subscription << "@" << session->getName()
               << " sampling=" << revisedSamplingInterval << "(" << linkinfo.samplingInterval << ")"
+              << " deadband=" << linkinfo.deadband
               << " qsize=" << revisedQueueSize << "(" << linkinfo.queueSize << ")"
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
