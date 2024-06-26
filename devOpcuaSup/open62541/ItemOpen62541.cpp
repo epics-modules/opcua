@@ -10,15 +10,20 @@
  *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
-#include <memory>
-#include <cstring>
-
-#include "RecordConnector.h"
-#include "opcuaItemRecord.h"
+#define epicsExportSharedSymbols
 #include "ItemOpen62541.h"
 #include "SubscriptionOpen62541.h"
 #include "SessionOpen62541.h"
 #include "DataElementOpen62541.h"
+
+#include <errlog.h>
+#include <epicsTypes.h>
+#include <epicsTime.h>
+
+#include <open62541/client.h>
+
+#include <string>
+#include <iostream>
 
 namespace DevOpcua {
 
