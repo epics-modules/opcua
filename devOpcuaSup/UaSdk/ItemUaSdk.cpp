@@ -48,7 +48,6 @@ ItemUaSdk::ItemUaSdk(const linkInfo &info)
     , dataTreeDirty(false)
     , lastStatus(OpcUa_BadServerNotConnected)
     , lastReason(ProcessReason::connectionLoss)
-    , connState(ConnectionStatus::down)
 {
     if (linkinfo.subscription != "" && linkinfo.monitor) {
         subscription = SubscriptionUaSdk::find(linkinfo.subscription);
@@ -100,7 +99,7 @@ ItemUaSdk::show (int level) const
     else
         std::cout << ";s=" << linkinfo.identifierString;
     std::cout << " record=" << recConnector->getRecordName()
-              << " state=" << connectionStatusString(connState)
+              << " state=" << connectionStatusString(recConnector->state())
               << " status=" << UaStatus(lastStatus).toString().toUtf8()
               << " dataDirty=" << (dataTreeDirty ? "y" : "n")
               << " context=" << linkinfo.subscription << "@" << session->getName()
@@ -182,10 +181,10 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
     }
 
     if (linkinfo.isItemRecord) {
-        if (state() == ConnectionStatus::initialRead
+        if (recConnector->state() == ConnectionStatus::initialRead
                 && reason == ProcessReason::readComplete
                 && recConnector->bini() == LinkOptionBini::write) {
-            setState(ConnectionStatus::initialWrite);
+            recConnector->setState(ConnectionStatus::initialWrite);
             recConnector->requestRecordProcessing(ProcessReason::writeRequest);
         } else {
             recConnector->requestRecordProcessing(reason);
@@ -212,6 +211,14 @@ ItemUaSdk::setIncomingEvent(const ProcessReason reason)
 
     if (linkinfo.isItemRecord)
         recConnector->requestRecordProcessing(reason);
+}
+
+void
+ItemUaSdk::setState(const ConnectionStatus state)
+{
+    if (auto pd = dataTree.root().lock()) {
+        pd->setState(state);
+    }
 }
 
 void

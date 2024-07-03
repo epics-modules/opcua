@@ -94,17 +94,12 @@ public:
                            char *text = nullptr,
                            const epicsUInt32 len = 0,
                            epicsTimeStamp *ts = nullptr) override;
-    /**
-     * @brief Get the EPICS-related state of the item.
-     * See DevOpcua::Item::state
-     */
-    virtual ConnectionStatus state() const override { return connState; }
 
     /**
      * @brief Set the EPICS-related state of the item.
      * See DevOpcua::Item::setState
      */
-    virtual void setState(const ConnectionStatus state) override { connState = state; }
+    virtual void setState(const ConnectionStatus state) override;
 
     /**
      * @brief Return registered status.
@@ -231,7 +226,6 @@ private:
     bool dataTreeDirty;                    /**< true if any element has been modified */
     UaStatusCode lastStatus;               /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
-    ConnectionStatus connState;            /**< Connection state of the item */
     epicsTime tsClient;                    /**< client (local) time stamp */
     epicsTime tsServer;                    /**< server time stamp */
     epicsTime tsSource;                    /**< source time stamp */

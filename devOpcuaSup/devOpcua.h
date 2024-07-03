@@ -137,6 +137,22 @@ processReasonString (const ProcessReason type)
     return "Illegal Value";
 }
 
+/**
+ * @brief Enum for the per-record connection state
+ */
+enum ConnectionStatus { down, initialRead, initialWrite, up };
+
+inline const char *
+connectionStatusString (const ConnectionStatus status) {
+    switch(status) {
+    case down:         return "down";
+    case initialRead:  return "initialRead";
+    case initialWrite: return "initialWrite";
+    case up:           return "up";
+    }
+    return "Illegal Value";
+}
+
 template<typename R>
 struct dset6 {
     long N;
