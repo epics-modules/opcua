@@ -230,9 +230,9 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
     UA_Variant_copy(&value, &incomingData);
 
     if (isLeaf()) {
-        if ((pitem->state() == ConnectionStatus::initialRead
+        if ((pconnector->state() == ConnectionStatus::initialRead
              && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
-            || (pitem->state() == ConnectionStatus::up)) {
+            || (pconnector->state() == ConnectionStatus::up)) {
 
             Guard(pconnector->lock);
             bool wasFirst = false;
@@ -330,6 +330,20 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
         for (auto &it : elements) {
             auto pelem = it.lock();
             pelem->setIncomingEvent(reason);
+        }
+    }
+}
+
+void
+DataElementOpen62541::setState(const ConnectionStatus state)
+{
+    if (isLeaf()) {
+        Guard(pconnector->lock);
+        pconnector->setState(state);
+    } else {
+        for (auto &it : elements) {
+            auto pelem = it.lock();
+            pelem->setState(state);
         }
     }
 }

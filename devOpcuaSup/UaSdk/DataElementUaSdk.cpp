@@ -116,9 +116,9 @@ DataElementUaSdk::setIncomingData(const UaVariant &value,
     incomingData = value;
 
     if (isLeaf()) {
-        if ((pitem->state() == ConnectionStatus::initialRead
+        if ((pconnector->state() == ConnectionStatus::initialRead
              && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
-            || (pitem->state() == ConnectionStatus::up)) {
+            || (pconnector->state() == ConnectionStatus::up)) {
             Guard(pconnector->lock);
             bool wasFirst = false;
             // Make a copy of the value for this element and put it on the queue
@@ -244,6 +244,20 @@ DataElementUaSdk::setIncomingEvent (ProcessReason reason)
             elementMap.clear();
             timesrc = -1;
             mapped = false;
+        }
+    }
+}
+
+void
+DataElementUaSdk::setState(const ConnectionStatus state)
+{
+    if (isLeaf()) {
+        Guard(pconnector->lock);
+        pconnector->setState(state);
+    } else {
+        for (auto &it : elements) {
+            auto pelem = it.lock();
+            pelem->setState(state);
         }
     }
 }
