@@ -40,7 +40,6 @@ ItemOpen62541::ItemOpen62541(const linkInfo &info)
     , dataTreeDirty(false)
     , lastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED)
     , lastReason(ProcessReason::connectionLoss)
-    , connState(ConnectionStatus::down)
 {
     UA_NodeId_init(&nodeid);
     if (linkinfo.subscription != "" && linkinfo.monitor) {
@@ -95,7 +94,7 @@ ItemOpen62541::show (int level) const
     else
         std::cout << ";s=" << linkinfo.identifierString;
     std::cout << " record=" << recConnector->getRecordName()
-              << " state=" << connectionStatusString(connState)
+              << " state=" << connectionStatusString(recConnector->state())
               << " status=" << UA_StatusCode_name(lastStatus)
               << " dataDirty=" << (dataTreeDirty ? "y" : "n")
               << " context=" << linkinfo.subscription << "@" << session->getName()
@@ -181,10 +180,10 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
     }
 
     if (linkinfo.isItemRecord) {
-        if (state() == ConnectionStatus::initialRead
+        if (recConnector->state() == ConnectionStatus::initialRead
                 && reason == ProcessReason::readComplete
                 && recConnector->bini() == LinkOptionBini::write) {
-            setState(ConnectionStatus::initialWrite);
+            recConnector->setState(ConnectionStatus::initialWrite);
             recConnector->requestRecordProcessing(ProcessReason::writeRequest);
         } else {
             recConnector->requestRecordProcessing(reason);
@@ -211,6 +210,16 @@ ItemOpen62541::setIncomingEvent(const ProcessReason reason)
 
     if (linkinfo.isItemRecord)
         recConnector->requestRecordProcessing(reason);
+}
+
+void
+ItemOpen62541::setState(const ConnectionStatus state)
+{
+    if (auto pd = dataTree.root().lock()) {
+        pd->setState(state);
+    }
+    if (linkinfo.isItemRecord)
+        recConnector->setState(state);
 }
 
 void

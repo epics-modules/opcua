@@ -318,6 +318,11 @@ public:
     void setIncomingEvent(ProcessReason reason);
 
     /**
+     * @brief Set the EPICS-related state of the element and all sub-elements.
+     */
+    void setState(const ConnectionStatus state);
+
+    /**
      * @brief Get the outgoing data value from the DataElement.
      *
      * Called from the OPC UA client worker thread when data is being

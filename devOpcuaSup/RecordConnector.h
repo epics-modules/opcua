@@ -85,8 +85,8 @@ public:
         return pdataelement->writeArray(val, len, num, prec);
     }
 
-    ConnectionStatus state() const { return pitem->state(); }
-    void setState(ConnectionStatus state) { pitem->setState(state); }
+    ConnectionStatus state() const { return connState; }
+    void setState(ConnectionStatus state) { connState = state; }
 
     void
     getStatus(epicsUInt32 *code, char *text, const epicsUInt32 len, epicsTimeStamp *ts = nullptr)
@@ -145,6 +145,7 @@ public:
     std::shared_ptr<DataElement> pdataelement;
     IOSCANPVT ioscanpvt;
     ProcessReason reason;
+    ConnectionStatus connState = ConnectionStatus::down;
 
 private:
     dbCommon *prec;
