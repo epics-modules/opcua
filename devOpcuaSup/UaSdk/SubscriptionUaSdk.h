@@ -14,8 +14,9 @@
 #ifndef DEVOPCUA_SUBSCRIPTIONUASDK_H
 #define DEVOPCUA_SUBSCRIPTIONUASDK_H
 
-#include <vector>
 #include <set>
+#include <string>
+#include <vector>
 
 #include <uabase.h>
 #include <uaclientsdk.h>

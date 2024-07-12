@@ -11,9 +11,11 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+#include <algorithm>
+#include <cstdlib>
 #include <iostream>
-#include <string>
 #include <map>
+#include <string>
 
 #if defined(_WIN32)
 #include <winsock2.h>

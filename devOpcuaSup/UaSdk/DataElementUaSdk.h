@@ -14,8 +14,12 @@
 #ifndef DEVOPCUA_DATAELEMENTUASDK_H
 #define DEVOPCUA_DATAELEMENTUASDK_H
 
-#include <unordered_map>
 #include <limits>
+#include <list>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <uadatavalue.h>
 #include <statuscode.h>

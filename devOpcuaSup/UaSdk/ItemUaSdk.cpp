@@ -11,8 +11,8 @@
  *  and example code from the Unified Automation C++ Based OPC UA Client SDK
  */
 
+#include <iostream>
 #include <memory>
-#include <cstring>
 
 #include <uaclientsdk.h>
 #include <uanodeid.h>

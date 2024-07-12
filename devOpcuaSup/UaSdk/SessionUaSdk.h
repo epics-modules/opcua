@@ -14,10 +14,11 @@
 #ifndef DEVOPCUA_SESSIONUASDK_H
 #define DEVOPCUA_SESSIONUASDK_H
 
-#include <algorithm>
-#include <vector>
+#include <map>
 #include <memory>
 #include <set>
+#include <string>
+#include <vector>
 
 #include <uabase.h>
 #include <uaclientsdk.h>

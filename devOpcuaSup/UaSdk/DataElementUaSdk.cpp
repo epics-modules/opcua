@@ -12,10 +12,9 @@
  */
 
 #include <iostream>
+#include <list>
 #include <memory>
 #include <string>
-#include <cstring>
-#include <cstdlib>
 
 #include <uadatetime.h>
 #include <uaextensionobject.h>
