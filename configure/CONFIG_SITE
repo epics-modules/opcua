@@ -72,7 +72,8 @@ OPEN62541_LIB_DIR = $(OPEN62541)/lib
 OPEN62541_SHRLIB_DIR = $(OPEN62541)/bin
 # How the Open62541 libraries were built
 OPEN62541_USE_CRYPTO = YES
-
+# Required for structure support
+OPEN62541_USE_XMLPARSER = YES
 
 # Windows/MSVC only
 # Prerequisites: libxml2 iconv openssl

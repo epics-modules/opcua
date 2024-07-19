@@ -10,13 +10,21 @@
  *  based on the UaSdk implementation by Ralph Lange <ralph.lange@gmx.de>
  */
 
-#include <iostream>
-#include <epicsThread.h>
-
 #define epicsExportSharedSymbols
-#include "Session.h"
 #include "SessionOpen62541.h"
+#include "Session.h"
 #include "Registry.h"
+#include "devOpcua.h"
+
+#include <epicsThread.h>
+#include <epicsTimer.h>
+#include <errlog.h>
+
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <set>
+#include <string>
 
 namespace DevOpcua {
 
