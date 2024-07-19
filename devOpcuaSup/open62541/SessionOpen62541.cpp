@@ -18,8 +18,14 @@
 #include "ItemOpen62541.h"
 #include "linkParser.h"
 
+#ifdef HAS_XMLPARSER
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+// Without XML parser, we cannot read the custom type dictionary
+#else
+#define readCustomTypeDictionaries()
+#define clearCustomTypeDictionaries()
+#endif
 
 #include <epicsExit.h>
 #include <epicsThread.h>
@@ -1465,11 +1471,7 @@ SessionOpen62541::run ()
     disconnect();
 }
 
-#ifndef HAS_XMLPARSER
-// Without XML parser, we cannot read the custom type dictionary
-#define readCustomTypeDictionaries()
-#define clearCustomTypeDictionaries()
-#else 
+#ifdef HAS_XMLPARSER
 
 #ifndef UA_ENABLE_TYPEDESCRIPTION
 // Without type description, we cannot resolve type names
