@@ -33,10 +33,10 @@ if 'OPEN62541' in os.environ:
         f.write('''
 OPEN62541 = {0}
 OPEN62541_DEPLOY_MODE = PROVIDED
-OPEN62541_LIB_DIR = $(OPEN62541)/lib
-OPEN62541_SHRLIB_DIR = $(OPEN62541)/bin
+OPEN62541_LIB_DIR = $(OPEN62541){1}lib
+OPEN62541_SHRLIB_DIR = $(OPEN62541){1}bin
 OPEN62541_USE_CRYPTO = YES
-OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
+OPEN62541_USE_XMLPARSER = YES'''.format(installdir, os.sep))
 
     try:
         os.makedirs(sourcedir)
