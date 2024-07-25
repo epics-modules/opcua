@@ -17,16 +17,16 @@ import cue
 cue.detect_context()
 
 cachedir = cue.ci['cachedir']
-# Special case: MSYS2 shell
-if cue.ci['os'] == 'windows' and os.sep == '/':
+# With Make/perl, it's safer to use forward slashes (they don't disappear)
+if cue.ci['os'] == 'windows':
     cachedir = cachedir.replace('\\', '/')
 
 libxml2 = 'libxml2-2.9.3'
 iconv = 'iconv-1.14'
 
 dirs = {}
-dirs[libxml2] = os.path.join(cachedir, libxml2)
-dirs[iconv] = os.path.join(cachedir, iconv)
+dirs[libxml2] = cachedir + '/' + libxml2
+dirs[iconv] = cachedir + '/' + iconv
 
 if 'OPEN62541' in os.environ:
     with open(os.path.join(curdir, 'configure', 'CONFIG_SITE.local'), 'a') as f:

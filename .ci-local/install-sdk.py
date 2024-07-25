@@ -18,10 +18,18 @@ cue.detect_context()
 sourcedir = os.path.join(cue.homedir, '.source')
 sdkdir = os.path.join(sourcedir, 'sdk')
 
+# With Make/perl, it's safer to use forward slashes (they don't disappear)
+if cue.ci['os'] == 'windows':
+    sourcedir = sourcedir.replace('\\', '/')
+    sdkdir = sdkdir.replace('\\', '/')
+
 if 'UASDK' in os.environ:
     with open(os.path.join(curdir, 'configure', 'CONFIG_SITE.local'), 'a') as f:
         f.write('''
 UASDK = {0}
+UASDK_DEPLOY_MODE = PROVIDED
+UASDK_LIB_DIR = $(UASDK)/lib
+UASDK_SHRLIB_DIR = $(UASDK)/bin
 UASDK_USE_CRYPTO = YES
 UASDK_USE_XMLPARSER = YES'''.format(sdkdir))
 

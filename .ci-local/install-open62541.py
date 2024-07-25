@@ -18,25 +18,27 @@ cue.detect_context()
 
 version = os.environ['OPEN62541']
 
-cachedir = cue.ci['cachedir']
-# Special case: MSYS2 shell
-if cue.ci['os'] == 'windows' and os.sep == '/':
-    cachedir = cachedir.replace('\\', '/')
-
 sourcedir = os.path.join(cue.homedir, '.source')
 sdkdir = os.path.join(sourcedir, 'open62541-{0}'.format(version))
 builddir = os.path.join(sdkdir, 'build')
-installdir = os.path.join(cachedir, 'open62541')
+installdir = os.path.join(cue.ci['cachedir'], 'open62541')
+
+# With Make/perl, it's safer to use forward slashes (they don't disappear)
+if cue.ci['os'] == 'windows':
+    sourcedir = sourcedir.replace('\\', '/')
+    sdkdir = sdkdir.replace('\\', '/')
+    builddir = builddir.replace('\\', '/')
+    installdir = installdir.replace('\\', '/')
 
 if 'OPEN62541' in os.environ:
     with open(os.path.join(curdir, 'configure', 'CONFIG_SITE.local'), 'a') as f:
         f.write('''
 OPEN62541 = {0}
 OPEN62541_DEPLOY_MODE = PROVIDED
-OPEN62541_LIB_DIR = $(OPEN62541){1}lib
-OPEN62541_SHRLIB_DIR = $(OPEN62541){1}bin
+OPEN62541_LIB_DIR = $(OPEN62541)/lib
+OPEN62541_SHRLIB_DIR = $(OPEN62541)/bin
 OPEN62541_USE_CRYPTO = YES
-OPEN62541_USE_XMLPARSER = YES'''.format(installdir, os.sep))
+OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
 
     try:
         os.makedirs(sourcedir)
