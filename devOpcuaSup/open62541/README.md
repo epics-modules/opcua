@@ -7,8 +7,10 @@ This module is under development and still experimental.
 
 **Structured OPC UA data types are not supported at this time.**
 
-Please contact the authors [Dirk Zimoch](mailto:dirk.zimoch@psi.ch) and [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 :warning:
+Please contact the authors
+[Dirk Zimoch](mailto:dirk.zimoch@psi.ch) and
+[Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 
 ## Prerequisites
 
@@ -68,7 +70,13 @@ Note: The Open62541 project is focused on the server implementation of OPC UA. T
 
 *   The default installation location is below `/usr/local`. Normally, this is a system location, so that the deploy mode setting (see below) would be `SYSTEM`.
     If you want to install into another location, set the option `CMAKE_INSTALL_PREFIX=/other/location`. In that case, the deploy mode setting (see below) would be `PROVIDED` and the library location needs to be set.
-The same is true if you want to use the Open62541 library in its build location. The library location (set in `CONFIG_SITE.local`) will be `$(OPEN62541)/build/bin` or `$(OPEN62541)/build/bin/Release` or something different, depending on your installation, OS and choice of build directory name.
+    The same is true
+    if you want to use the Open62541 library
+    in its build location (not recommended).
+    The library location (set in `CONFIG_SITE.local`)
+    will be `$(OPEN62541)/build/bin` or `$(OPEN62541)/build/bin/Release`
+    or something different,
+    depending on your installation, OS and choice of build directory name.
     
 *   After running `cmake`, run `make` followed by `make install`. Installation into a system location will need root permission.
 
@@ -174,8 +182,9 @@ Alternatively, you can put copies of all needed DLLs into the location of the bi
 
 Be aware that over time, Windows systems will have a large number of possibly different DLLs with the same names and/or versions being used concurrently on the system - a situation that is hard to maintain and known as [DLL Hell](https://en.wikipedia.org/wiki/DLL_Hell).
 
-If you want your IOC binaries to be deployable without depending on specific DLLs being present on the target system, consider linking your IOCs statically. (As stated above, static builds are not available when
-using the evaluation bundles.)
+If you want your IOC binaries to be deployable
+without depending on specific DLLs being present on the target system,
+consider linking your IOCs statically.
 
 ## Feedback / Reporting issues
 
