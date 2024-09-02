@@ -47,15 +47,15 @@ jobs:
             cmp: vs2019
             configuration: default
             base: "3.15"
-            open62541: "1.3.11"
-            name: "3.15 Win2019 v1.3.11 VS2019 DLL"
+            open62541: "1.3.12"
+            name: "3.15 Win2019 v1.3.12 VS2019 DLL"
 
           - os: windows-2019
             cmp: vs2019
             configuration: default
             base: "7.0"
-            open62541: "1.3.11"
-            name: "7.0 Win2019 v1.3.11 VS2019 DLL"
+            open62541: "1.3.12"
+            name: "7.0 Win2019 v1.3.12 VS2019 DLL"
 
     steps:
     - uses: actions/checkout@v4
@@ -98,14 +98,14 @@ jobs:
           - os: windows-2019
             configuration: default
             base: "3.15"
-            open62541: "1.3.11"
-            name: "3.15 Win2019 v1.3.11 MinGW DLL"
+            open62541: "1.3.12"
+            name: "3.15 Win2019 v1.3.12 MinGW DLL"
 
           - os: windows-2019
             configuration: default
             base: "7.0"
-            open62541: "1.3.11"
-            name: "7.0 Win2019 v1.3.11 MinGW DLL"
+            open62541: "1.3.12"
+            name: "7.0 Win2019 v1.3.12 MinGW DLL"
 
     steps:
     - uses: msys2/setup-msys2@v2
