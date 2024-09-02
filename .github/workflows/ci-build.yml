@@ -153,7 +153,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install libfaketime faketime
-        sudo pip3 install pytest opcua pyepics
+        sudo pip3 install pytest opcua pyepics==3.5.6
         sudo pip3 install run-iocsh -i https://artifactory.esss.lu.se/artifactory/api/pypi/pypi-virtual/simple
     - name: Run end2end tests
       run: |
