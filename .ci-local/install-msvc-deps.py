@@ -10,6 +10,9 @@ import fileinput
 import subprocess as sp
 import re
 
+gendef = 'C:/msys64/mingw64/bin/gendef'
+lib = 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/lib.exe'
+
 curdir = os.getcwd()
 
 sys.path.append(os.path.join(curdir, '.ci'))
@@ -56,3 +59,11 @@ ICONV = {1}
                      'http://xmlsoft.org/sources/win32/64bit/{0}'.format(tar)],
                     cwd=cue.toolsdir)
       sp.check_call(['7z', 'x', '-aoa', '-bd', os.path.join(cue.toolsdir, tar)], cwd=dir)
+
+    libdir = os.path.join(dirs[libxml2], 'lib')
+    sp.check_call([gendef, '../bin/libxml2-2.dll'], cwd=libdir)
+    sp.check_call([lib, '/def:libxml2-2.def', '/machine:x64', '/out:libxml2.lib'], cwd=libdir)
+
+    libdir = os.path.join(dirs[iconv], 'lib')
+    sp.check_call([gendef, '../bin/libiconv-2.dll'], cwd=libdir)
+    sp.check_call([lib, '/def:libiconv-2.def', '/machine:x64', '/out:libiconv.lib'], cwd=libdir)
