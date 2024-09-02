@@ -68,6 +68,9 @@ OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
             'set(OPEN62541_VER_PATCH 7)\n'
             'set(OPEN62541_VER_LABEL -undefined)'.format(ver[0], ver[1], ver[2])), end='')
 
+    if ver[0] == '1' and ver[1] == '3':
+        sp.check_call(['patch', '-p1', '-i', os.path.join(curdir, '.ci-local', 'open62541-1.3.patch')], cwd=sdkdir)
+
     sp.check_call(['cmake', '..',
                    '-DBUILD_SHARED_LIBS=ON',
                    '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
