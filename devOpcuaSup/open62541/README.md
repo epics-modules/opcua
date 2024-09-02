@@ -27,7 +27,32 @@ Please contact the authors
 
 ## Building Open62541
 
-Note: The Open62541 project is focused on the server implementation of OPC UA. The client functionality is certainly present, complete and usable, but it does not get the attention that the server parts get.
+Note:
+The Open62541 project is focused on the server implementation of OPC UA.
+The client functionality is fully supported, complete and usable,
+but it does not get the attention that the server parts get.
+
+Do *not* use the download link on the open62541 web site.
+Use their GitHub Release Page instead.
+
+### Bugfix for Shared Build
+
+The 1.3 release series need the following fix to be applied
+when building shared libraries:
+
+```Diff
+--- src/ua_types.c.orig 2024-09-02 11:31:15.514006029 +0200
++++ src/ua_types.c      2024-09-02 11:31:29.499010032 +0200
+@@ -1882,7 +1882,7 @@
+ }
+ 
+ #ifdef UA_ENABLE_TYPEDESCRIPTION
+-UA_Boolean
++UA_Boolean UA_EXPORT
+ UA_DataType_getStructMember(const UA_DataType *type, const char *memberName,
+                             size_t *outOffset, const UA_DataType **outMemberType,
+                             UA_Boolean *outIsArray) {
+```
 
 ### On Linux
 
