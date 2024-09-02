@@ -903,7 +903,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     case UA_DATATYPEKIND_STRING:
     {
         UA_String val;
-        val.length = strlen(value);
+        val.length = strnlen(value, len);
         val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
         { // Scope of Guard G
             Guard G(outgoingLock);
@@ -916,7 +916,7 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     {
         UA_LocalizedText val;
         val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
-        val.text.length = strlen(value);
+        val.text.length = strnlen(value, len);
         val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
         { // Scope of Guard G
             Guard G(outgoingLock);

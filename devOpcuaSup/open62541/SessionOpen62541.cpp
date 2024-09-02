@@ -1259,7 +1259,7 @@ SessionOpen62541::show (const int level) const
         }
     }
 #ifdef HAS_XMLPARSER
-    if (level >= 3 && customTypes.size()) {
+    if (level >= 3) {
         if (customTypes.size() == 0) {
             std::cout << "No custom data types" << std::endl;
         } else {
