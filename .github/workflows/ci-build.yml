@@ -129,7 +129,7 @@ jobs:
             name: "3.15 Ub-20 open62541-1.2.7"
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: Download and compile UASDK client
