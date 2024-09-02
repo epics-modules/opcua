@@ -11,21 +11,21 @@
  *  and the custom type prototype by Carsten Winkler <carsten.winkler@helmholtz-berlin.de>
  */
 
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <map>
-#include <algorithm>
-#include <utility>
-#include <vector>
-#include <limits>
+#define epicsExportSharedSymbols
+#include "SessionOpen62541.h"
+#include "SubscriptionOpen62541.h"
+#include "DataElementOpen62541.h"
+#include "ItemOpen62541.h"
+#include "linkParser.h"
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#endif
-
+#ifdef HAS_XMLPARSER
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+// Without XML parser, we cannot read the custom type dictionary
+#else
+#define readCustomTypeDictionaries()
+#define clearCustomTypeDictionaries()
+#endif
 
 #include <epicsExit.h>
 #include <epicsThread.h>
@@ -37,13 +37,21 @@
 #include <open62541/client.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/client_highlevel_async.h>
+#include <open62541/client_config_default.h>
 #include <open62541/plugin/pki_default.h>
+#include <open62541/plugin/log_stdout.h>
 
-/* loadFile helper from open62541 examples */
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <map>
+#include <algorithm>
+#include <utility>
+#include <limits>
+#include <functional>
 #include <cstdio>
 
-#include <open62541/types.h>
-#include <open62541/types_generated_handling.h>
+/* loadFile helper from open62541 examples */
 
 /* loadFile parses the certificate file.
  *
@@ -78,27 +86,6 @@ loadFile(const char *const path) {
 }
 /* end of included loadFile helper code */
 
-#ifndef UA_BUILTIN_TYPES_COUNT
-// Newer open62541 since version 1.3 uses type pointer
-#define UA_DATATYPES_USE_POINTER
-// Older open62541 uses type index
-#endif
-
-#ifdef HAS_SECURITY
-extern const UA_String username_policy;
-extern const UA_String certificate_policy;
-#endif
-
-#define epicsExportSharedSymbols
-#include "Session.h"
-#include "RecordConnector.h"
-#include "linkParser.h"
-#include "RequestQueueBatcher.h"
-#include "SessionOpen62541.h"
-#include "SubscriptionOpen62541.h"
-#include "DataElementOpen62541.h"
-#include "ItemOpen62541.h"
-
 namespace DevOpcua {
 
 // print some UA types
@@ -114,23 +101,21 @@ operator << (std::ostream& os, const UA_NodeId& ua_nodeId)
 }
 
 std::ostream&
-operator << (std::ostream& os, const UA_ExtensionObject &ua_extensionObject)
-{
-    UA_String s = UA_STRING_NULL;
-    UA_print(&ua_extensionObject, &UA_TYPES[UA_TYPES_EXTENSIONOBJECT], &s);
-    os << "EO:{" << s << '}';
-    UA_String_clear(&s);
-    return os;
-}
-
-std::ostream&
 operator << (std::ostream& os, const UA_Variant &ua_variant)
 {
     if (ua_variant.data == nullptr) return os << "NO_DATA";
     if (ua_variant.type == nullptr) return os << "NO_TYPE";
     UA_String s = UA_STRING_NULL;
     if (UA_Variant_isScalar(&ua_variant)) {
-        UA_print(ua_variant.data, ua_variant.type, &s);
+        if (ua_variant.type == &UA_TYPES[UA_TYPES_DATETIME]) {
+            // UA_print does not correct printed time for time zone
+            UA_Int64 tOffset = UA_DateTime_localTimeUtcOffset();
+            UA_DateTime dt = *static_cast<UA_DateTime*>(ua_variant.data);
+            dt += tOffset;
+            UA_print(&dt, ua_variant.type, &s);
+        } else {
+            UA_print(ua_variant.data, ua_variant.type, &s);
+        }
         os << s << " (" << ua_variant.type->typeName << ')';
     } else {
         os << s << '{';
@@ -149,7 +134,7 @@ operator << (std::ostream& os, const UA_Variant &ua_variant)
     return os;
 }
 
-inline std::ostream&
+inline static std::ostream&
 operator << (std::ostream& os, UA_SecureChannelState channelState)
 {
     switch (channelState) {
@@ -240,6 +225,47 @@ operator += (std::string& str, const UA_String& ua_string)
 {
     return str.append(reinterpret_cast<const char*>(ua_string.data), ua_string.length);
 }
+
+const char* typeKindName(UA_UInt32 typeKind)
+{
+    static const char* typeKindNames[] = {
+        "Boolean",
+        "SByte",
+        "Byte",
+        "Int16",
+        "UInt16",
+        "Int32",
+        "UInt32",
+        "Int64",
+        "UInt64",
+        "Float",
+        "Double",
+        "String",
+        "DateTime",
+        "Guid",
+        "ByteString",
+        "XmlElement",
+        "NodeId",
+        "ExpandedNodeId",
+        "StatusCode",
+        "QualifiedName",
+        "LocalizedText",
+        "ExtensionObject",
+        "DataValue",
+        "Variant",
+        "DiagnosticInfo",
+        "Decimal",
+        "Enum",
+        "Structure",
+        "OptStruct",
+        "Union",
+        "BitfieldCluster",
+        "???"
+    };
+    if (typeKind > 31) typeKind = 31;
+    return typeKindNames[typeKind];
+}
+
 
 static epicsThreadOnceId session_open62541_ihooks_once = EPICS_THREAD_ONCE_INIT;
 static epicsThreadOnceId session_open62541_atexit_once = EPICS_THREAD_ONCE_INIT;
@@ -363,6 +389,15 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     } else if (name == "debug") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         debug = ul;
+        UA_ClientConfig *config = UA_Client_getConfig(client);
+        if (config) {
+            // Loglevels:  0:trace, 1:debug, 2:info, 3:warning, 4:error, 5:fatal (and higher)
+            // Our debug=0 shall only print fatal errors.
+            // After that, the higher debug the lower UA_LogLevel, down to 0.
+            if (config->logger.clear)
+                config->logger.clear(config->logger.context); // Use context as opaque handle only!
+            config->logger = UA_Log_Stdout_withLevel(static_cast<UA_LogLevel>(std::max(0, 5-debug)));
+        }
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
@@ -435,7 +470,8 @@ SessionOpen62541::connect (bool manual)
         return 0;
     }
 
-    disconnect(); // Do a proper disconnection before attempting to reconnect
+    if (client)
+        disconnect(); // Do a proper disconnection before attempting to reconnect
 
     setupClientSecurityInfo(securityInfo, &name, debug);
 
@@ -449,6 +485,11 @@ SessionOpen62541::connect (bool manual)
         }
     }
     UA_ClientConfig *config = UA_Client_getConfig(client);
+    if (debug < 5) {
+        if (config->logger.clear)
+            config->logger.clear(config->logger.context);
+        config->logger = UA_Log_Stdout_withLevel(static_cast<UA_LogLevel>(std::max(0, 5-debug)));
+    }
 #ifdef HAS_SECURITY
     // We need the client certificate before UA_ClientConfig_setDefaultEncryption
     UA_ClientConfig_setDefaultEncryption(config,
@@ -494,6 +535,13 @@ SessionOpen62541::connect (bool manual)
             autoConnector.start();
         return -1;
     }
+
+    /* connect inactivity callbacks */
+    config->inactivityCallback = [] (UA_Client *client)
+        {
+            static_cast<SessionOpen62541*>(UA_Client_getContext(client))->
+                connectionInactive();
+        };
 
     /* connect status change callback */
     config->stateCallback = [] (UA_Client *client,
@@ -549,7 +597,8 @@ SessionOpen62541::disconnect ()
     {
         Guard G(clientlock);
         if(!client) return 0;
-        UA_Client_delete(client); // this also deletes all open62541 subscriptions
+        clearCustomTypeDictionaries();
+        UA_Client_delete(client); // This also deletes all open62541 subscriptions
         client = nullptr;
     }
     // Worker thread terminates when client was destroyed
@@ -646,6 +695,11 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
     item.copyAndClearOutgoingData(cargo->wvalue);
+    if (debug >= 5)
+            std::cout << "Session " << name
+                      << ": (requestWrite) pushing write request for item " << item
+                      << " = " << cargo->wvalue.value.value
+                      << std::endl;
     writer.pushRequest(cargo, item.recConnector->getRecordPriority());
 }
 
@@ -962,7 +1016,7 @@ SessionOpen62541::setupSecurity ()
 #ifdef HAS_SECURITY
     } else {
         setupIdentity();
-        if (std::string(serverURL).compare(0, 7, "opc.tcp") == 0) {
+        if (serverURL.compare(0, 7, "opc.tcp") == 0) {
             UA_ClientConfig *config = UA_Client_getConfig(client);
             UA_EndpointDescription* endpointDescriptions;
             size_t endpointDescriptionsLength;
@@ -1204,6 +1258,18 @@ SessionOpen62541::show (const int level) const
             }
         }
     }
+#ifdef HAS_XMLPARSER
+    if (level >= 3 && customTypes.size()) {
+        if (customTypes.size() == 0) {
+            std::cout << "No custom data types" << std::endl;
+        } else {
+            std::cout << "Custom data types:" << std::endl;
+            showCustomDataTypes(level-3);
+        }
+    }
+#else
+    std::cout << "No custom data type support" << std::endl;
+#endif
 }
 
 void
@@ -1339,9 +1405,8 @@ SessionOpen62541::setupIdentity()
                 return;
             }
             securityUserName = "Certificate user";
-            // TODO: get name from certificate
+            // TODO: get user name from certificate
             identityToken->certificateData = cert;
-            // needed? UA_String_copy(&certificate_policy, &identityToken->policyId);
             securityInfo.userIdentityToken.encoding = UA_EXTENSIONOBJECT_DECODED;
             securityInfo.userIdentityToken.content.decoded.type = &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN];
             securityInfo.userIdentityToken.content.decoded.data = identityToken;
@@ -1406,209 +1471,489 @@ SessionOpen62541::run ()
     disconnect();
 }
 
-// This function collects reference type ID, forwarded flag,
-// Browse name, display name, node class and type definition
-// Retuns true if browse was successful
-UA_StatusCode browseNodeId(UA_Client* client, UA_NodeId nodeId, UA_BrowseResponse* bResp) {
-    if (!client) {
-        return UA_STATUSCODE_BAD;
-    }
-    UA_BrowseRequest bReq;
-    UA_BrowseRequest_init(&bReq);
-    bReq.requestedMaxReferencesPerNode = 0;
-    bReq.nodesToBrowse = UA_BrowseDescription_new();
-    bReq.nodesToBrowseSize = 1;
-    UA_NodeId_copy(&nodeId, &bReq.nodesToBrowse[0].nodeId);
-    bReq.nodesToBrowse[0].resultMask = UA_BROWSERESULTMASK_ALL; /* return everything */
-    bReq.nodesToBrowse[0].browseDirection = UA_BROWSEDIRECTION_BOTH;
-    *bResp = UA_Client_Service_browse(client, bReq);
-    UA_BrowseRequest_clear(&bReq);
-    return UA_STATUSCODE_GOOD;
-}
+#ifdef HAS_XMLPARSER
 
-#define UA_NAMESPACEOFFSET 1000 // the name space offset is used to read data types with the same name space index from different dictionaries
-std::map<UA_UInt32, xmlDocPtr> xmlDocMap;
+#ifndef UA_ENABLE_TYPEDESCRIPTION
+// Without type description, we cannot resolve type names
+#error Set UA_ENABLE_TYPEDESCRIPTION in open62541
+#endif
 
-inline const char*
+
+// Two small helper functions because xmlChar is not char.
+inline static const char*
 nodeName(xmlNode* node)
 {
     return reinterpret_cast<const char*>(node->name);
 }
 
-inline const char*
+inline static const char*
 getProp(xmlNode* node, const char* name)
 {
     return reinterpret_cast<const char*>(xmlGetProp(node, reinterpret_cast<const xmlChar*>(name)));
 }
 
-const UA_DataType*
-getTypeByName(const char* typeName, const UA_DataTypeArray *customTypes)
-{
-#ifdef UA_ENABLE_TYPEDESCRIPTION
-// Without type description, we cannot find any member types by name.
+// Pseudo-index for unknown type
+static const UA_UInt16 UnknownType = static_cast<UA_UInt16>(~0);
 
+size_t
+SessionOpen62541::getTypeIndexByName(UA_UInt16 nsIndex, const char* typeName)
+{
     if (((strncmp(typeName, "opc:", 4) == 0) && (typeName += 4)) ||
         ((strncmp(typeName, "ua:", 3) == 0) && (typeName += 3))) {
         // Search in built-in types.
-        for (size_t i = 0; i < UA_TYPES_COUNT; i++) {
+        for (UA_UInt16 i = 0; i < UA_TYPES_COUNT; i++) {
             if (strcmp(typeName, UA_TYPES[i].typeName) == 0)
-                return &UA_TYPES[i];
+                return i;
         }
         if (strcmp(typeName, "CharArray") == 0)
-            return &UA_TYPES[UA_TYPES_STRING];
+            return UA_TYPES_STRING;
     }
     else
     {
         // Search in custom type definitions.
         bool tns = false;
         if (strncmp(typeName, "tns:", 4) == 0 && (typeName += 4))
-            tns = true;
-        while (customTypes)
-        {
-            for (size_t i = 0; i < customTypes->typesSize; i++) {
-                if (!customTypes->types[i].typeName)
-                    continue;
-                if (strcmp(typeName, customTypes->types[i].typeName) == 0)
-                    return &customTypes->types[i];
-            }
-            if (tns) {
-                // tns="Target Name Space: search only our current,
-                // i.e. the first type array
-                break;
-            }
-            customTypes = customTypes->next;
+            tns = true; // tns="Target Name Space": limit search to our nsIndex
+        for (size_t i = 0; i < customTypes.size(); i++) {
+            if (tns && customTypes[i].typeId.namespaceIndex != nsIndex)
+                continue;
+            if (strcmp(typeName, customTypes[i].typeName) == 0)
+                return i + UA_TYPES_COUNT; // Start our index after the built-in types
         }
     }
-#endif
-    return nullptr;
+    return UnknownType;
 }
 
 void
-addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex, UA_DataTypeArray **customTypes, int depth = 0)
+SessionOpen62541::readCustomTypeDictionaries()
 {
-#ifdef UA_ENABLE_TYPEDESCRIPTION
-    std::vector<UA_DataType> userTypes;
-    struct unresolvedType {size_t typeIndex; size_t memberIndex; const char* typeName;};
-    std::vector<unresolvedType> unresolvedTypes;
-    UA_DataTypeArray currentCustomTypes = {*customTypes, 0, nullptr};
+    clearCustomTypeDictionaries();
+    UA_ClientConfig *config = UA_Client_getConfig(client);
+    if (debug)
+        std::cout << "Session " << name
+                  << ": reading type dictionaries"
+                  << std::endl;
+    UA_Client_forEachChildNodeCall(client, UA_NODEID_NUMERIC(0, UA_NS0ID_OPCBINARYSCHEMA_TYPESYSTEM),
+        [] (UA_NodeId childNodeId, UA_Boolean isInverse, UA_NodeId referenceTypeId, void *handle)
+        {
+            return static_cast<SessionOpen62541*>(handle)->
+                typeSystemIteratorCallback(childNodeId);
+        }, this);
+#ifdef UA_DATATYPES_USE_POINTER
+    // Resolve all pointers to custom types
+    for (auto type: customTypes) {
+        for (UA_UInt32 i = 0; i < type.membersSize; i++) {
+            size_t typeIndex = reinterpret_cast<size_t>(type.members[i].memberType);
+            if (!typeIndex) {
+                std::cerr << "Session " << name
+                          << ": type " << type.typeName << " is unresolved!" << std::endl;
+                exit(1);
+            }
+            if (typeIndex & 1)
+                type.members[i].memberType = &customTypes[typeIndex>>1];
+        }
+    }
+#endif
 
+    Guard G(clientlock);
+    if (!client) return;
+
+    // Add collected types to client
+    UA_DataTypeArray *customTypesArray = static_cast<UA_DataTypeArray*>(malloc(sizeof(UA_DataTypeArray)));
+    if (!customTypesArray) {
+        errlogPrintf(
+            "OPC UA Session %s: (readCustomTypeDictionaries) out of memory\n",
+            name.c_str());
+        return;
+    }
+
+    customTypesArray->next = config->customDataTypes; // Put our types in front of linked list (probably empty)
+    *const_cast<size_t*>(&customTypesArray->typesSize) = customTypes.size();
+    customTypesArray->types = customTypes.data(); // zero-copy: direct access to vector data
+    config->customDataTypes = customTypesArray;
+
+    if (debug >= 2) {
+        for (size_t i = 0; i < config->customDataTypes->typesSize; i++) {
+            const UA_DataType &customDataType = config->customDataTypes->types[i];
+            std::cerr << "- " << typeKindName(customDataType.typeKind)
+                      << " " << customDataType.typeName
+                      << " size:" << customDataType.memSize;
+            if (!UA_NodeId_isNull(&customDataType.binaryEncodingId))
+                std::cerr << " binaryEncodingId:" << customDataType.binaryEncodingId;
+            if (debug >= 3 && customDataType.membersSize) {
+                std::cerr << "\n  " << customDataType.membersSize << " Members:";
+                for (size_t j = 0; j < customDataType.membersSize; j++) {
+                    UA_DataTypeMember &member = customDataType.members[j];
+                    const UA_DataType& memberType =
+#ifdef UA_DATATYPES_USE_POINTER
+                        *member.memberType;
+#else
+                        (member.namespaceZero ? UA_TYPES : customTypesArray->types)[member.memberTypeIndex];
+#endif
+                    std::cerr << "\n    " << memberType.typeName
+                              << " " << member.memberName;
+                    if (member.isArray)
+                        std::cerr << "[]";
+                    if (member.isOptional)
+                        std::cerr << " (optional)";
+                    std::cerr << " typeId:" << memberType.typeId;
+                    if (!UA_NodeId_isNull(&memberType.binaryEncodingId))
+                        std::cerr << " binaryEncodingId:" << memberType.binaryEncodingId;
+                }
+            }
+            std::cerr << std::endl;
+        }
+    }
+
+    if (debug)
+        std::cout << "Session " << name
+                  << ": found " << config->customDataTypes->typesSize
+                  << " custom data types" << std::endl;
+}
+
+void
+SessionOpen62541::clearCustomTypeDictionaries()
+{
+    Guard G(clientlock);
+    if (!client) return;
+    UA_ClientConfig *config = UA_Client_getConfig(client);
+    UA_DataTypeArray *customTypesArray = const_cast<UA_DataTypeArray *>(config->customDataTypes);
+    if (customTypesArray) {
+        config->customDataTypes = customTypesArray->next;
+        free(customTypesArray);
+    }
+    for (auto type: customTypes) {
+        for (UA_UInt32 i = 0; i < type.membersSize; i++)
+        {
+            free(const_cast<char*>(type.members[i].memberName));
+        }
+        free(type.members);
+    }
+    customTypes.clear();
+    binaryTypeIds.clear();
+    enumTypes.clear();
+}
+
+UA_StatusCode
+SessionOpen62541::typeSystemIteratorCallback(const UA_NodeId& dictNodeId)
+{
+    UA_QualifiedName dictName;
+    UA_QualifiedName_init(&dictName);
+
+    if (dictNodeId.namespaceIndex == 0) { // custom type dictionaries only
+        if (debug) {
+            UA_Client_readBrowseNameAttribute(client, dictNodeId, &dictName);
+            std::cout << "Session " << name
+                  << ": ignoring types of system dict " << dictNodeId
+                  << " " << dictName
+                  << std::endl;
+        }
+        return UA_STATUSCODE_GOOD;
+    }
+
+    if (debug) {
+        UA_Client_readBrowseNameAttribute(client, dictNodeId, &dictName);
+        std::cout << "Session " << name
+                  << ": browsing types of custom dict " << dictNodeId
+                  << " " << dictName
+                  << std::endl;
+    }
+    UA_QualifiedName_clear(&dictName);
+
+    // Browse the dictionary for binaryTypeIds
+    UA_Client_forEachChildNodeCall(client, dictNodeId,
+        [] (UA_NodeId childNodeId, UA_Boolean isInverse, UA_NodeId referenceTypeId, void *handle)
+        {
+            return static_cast<SessionOpen62541*>(handle)->
+                dictIteratorCallback(childNodeId, referenceTypeId);
+        }, this);
+
+    // Read the XML type descriptions
+    UA_Variant xmldata;
+    UA_Variant_init(&xmldata);
+    UA_Client_readValueAttribute(client, dictNodeId, &xmldata);
+    if (UA_Variant_hasScalarType(&xmldata, &UA_TYPES[UA_TYPES_BYTESTRING])) {
+        UA_ByteString* xmlstring = static_cast<UA_ByteString*>(xmldata.data);
+        xmlDocPtr xmldoc = xmlReadMemory(reinterpret_cast<const char*>(xmlstring->data),
+            static_cast<int>(xmlstring->length), NULL, NULL, 0);
+        if (xmldoc) {
+            parseCustomDataTypes(xmlDocGetRootElement(xmldoc), dictNodeId.namespaceIndex);
+            xmlFreeDoc(xmldoc);
+        }
+    }
+    UA_Variant_clear(&xmldata);
+    return UA_STATUSCODE_GOOD;
+}
+
+// Wrapper to use lambda with capture in C callback
+struct LambdaHolder {
+    std::function<UA_StatusCode(const UA_NodeId&, UA_Boolean, const UA_NodeId&, void*)> func;
+};
+
+static UA_StatusCode iteratorCallbackAdapter(UA_NodeId childId, UA_Boolean isInverse,
+                              UA_NodeId referenceTypeId, void *handle)
+{
+    LambdaHolder *holder = static_cast<LambdaHolder*>(handle);
+    return holder->func(childId, isInverse, referenceTypeId, handle);
+}
+
+UA_StatusCode
+SessionOpen62541::dictIteratorCallback(const UA_NodeId& childId, const UA_NodeId& referenceTypeId)
+{
+    UA_StatusCode status = UA_STATUSCODE_GOOD;
+    const UA_NodeId hasComponent = UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT);
+
+    if (UA_NodeId_equal(&referenceTypeId, &hasComponent))
+    {
+        UA_QualifiedName typeName;
+        UA_QualifiedName_init(&typeName);
+        UA_Client_readBrowseNameAttribute(client, childId, &typeName);
+        LambdaHolder holder;
+        holder.func = [&typeName, this] (UA_NodeId childNodeId, UA_Boolean isInverse, UA_NodeId referenceTypeId, void *handle)
+        {
+            return this->typeIteratorCallback(childNodeId, referenceTypeId, typeName);
+        };
+        status = UA_Client_forEachChildNodeCall(client, childId, iteratorCallbackAdapter, &holder);
+        UA_QualifiedName_clear(&typeName);
+    }
+    return status;
+}
+
+UA_StatusCode
+SessionOpen62541::typeIteratorCallback(const UA_NodeId& childId, const UA_NodeId& referenceTypeId, const UA_QualifiedName& typeName)
+{
+    const UA_NodeId hasDescription = UA_NODEID_NUMERIC(0, UA_NS0ID_HASDESCRIPTION);
+
+    if (UA_NodeId_equal(&referenceTypeId, &hasDescription))
+    {
+        if (typeName.namespaceIndex != childId.namespaceIndex) {
+            if (debug)
+                std::cerr << "Session " << name
+                          << ": custom type " << typeName
+                          << " and its nodeId " << childId
+                          << " have different name spaces!"
+                          << std::endl;
+            return UA_STATUSCODE_BADUNEXPECTEDERROR;
+        }
+        if (debug >= 4)
+            std::cout << "Session " << name
+                      << ": custom type " << typeName
+                      << " has binaryEncodingId " << childId
+                      << std::endl;
+
+#if UA_OPEN62541_VER_MAJOR*100+UA_OPEN62541_VER_MINOR < 103
+        // open62541 v1.2 crashes with non-numeric binaryEncodingIds
+        if (childId.identifierType != UA_NODEIDTYPE_NUMERIC) {
+            std::cerr << "Session " << name
+                      << ": (readCustomTypeDictionaries) Can't use type " << typeName
+                      << " because open62541 v1.2 can't handle non-numeric binaryEncodingId "
+                      << childId << std::endl;
+            return UA_STATUSCODE_BADUNEXPECTEDERROR;
+        }
+#endif
+
+        // Need copy because content of non-numeric (e.g. string) childId is freed after this function returns
+        UA_NodeId binaryEncodingId = UA_NODEID_NULL;
+        UA_NodeId_copy(&childId, &binaryEncodingId);
+        binaryTypeIds.emplace(
+            std::string(reinterpret_cast<const char*>(typeName.name.data), typeName.name.length),
+            binaryEncodingId);
+    }
+    return UA_STATUSCODE_GOOD;
+}
+
+static inline bool typeAlreadyKnown(const std::vector<UA_DataType>& knownTypes, const char* name)
+{
+    for (auto known: knownTypes)
+        if (strcmp(name, known.typeName) == 0)
+            return true;
+    return false;
+}
+
+void
+SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
+{
     for (;node; node = node->next) {
         if (node->type != XML_ELEMENT_NODE)
-            continue; // in particular ignore all text elements
+            continue; // In particular ignore all text elements (mainly whitespace)
 
-        // Traverse the xml document tree until we find something interesting.
-
-        printf("%3d: %*cnode %s\n", node->line, depth, ' ', nodeName(node));
-        if (node->content)
-            printf("%3d:  %*ccontent: %s\n", node->line, depth, ' ', node->content);
-        for (xmlAttr* prop = node->properties; prop; prop = prop->next) {
-            printf("      %*cprop %s = \"%s\"\n", depth, ' ', prop->name, prop->children->content);
-        }
-        addUserDataTypes(node->children, nsIndex, customTypes, depth+1);
-
-        UA_DataType userDataType = {};
-        userDataType.typeKind = UA_DATATYPEKIND_STRUCTURE; // Until proven otherwise
-        userDataType.pointerFree = true;
+        UA_DataType customDataType = {};
+        customDataType.typeKind = UA_DATATYPEKIND_STRUCTURE; // until proven otherwise
+        customDataType.pointerFree = true;
 #ifndef UA_DATATYPES_USE_POINTER
-        userDataType.typeIndex = static_cast<UA_UInt16>(userTypes.size());
+        customDataType.typeIndex = static_cast<UA_UInt16>(customTypes.size());
 #endif
         std::vector<UA_DataTypeMember> members;
-        const char* userTypeKind = nodeName(node);
-        const char* typeName = getProp(node, "Name");
+        const char* nodeKind = nodeName(node);
 
-        if (strcmp(userTypeKind, "StructuredType") == 0) {
-            if (!typeName) {
-                 std::cerr << "unexpected " << userTypeKind << " without name" << std::endl;
-                 continue;
-            }
+        if (strcmp(nodeKind, "TypeDictionary") == 0) {
+            if (debug >= 4)
+                std::cout << "\n# namespace " << nsIndex
+                          << " " << getProp(node, "TargetNamespace")
+                          << std::endl;
+            // actual type definitions are one level deeper
+            parseCustomDataTypes(node->children, nsIndex);
+            continue;
+        }
+
+        const char* typeName = getProp(node, "Name");
+        if (!typeName) {
+             // All nodeKinds we are interested in (StructuredType, EnumeratedType) have names.
+             continue;
+        }
+
+        if (typeAlreadyKnown(customTypes, typeName)) {
+            if (debug >= 4)
+                std::cout << "# Type " << typeName << " already known" << std::endl;
+            break;
+        }
+
+        if (strcmp(nodeKind, "StructuredType") == 0) {
             UA_UInt32 structureAlignment = 0;
             UA_UInt32 memberSize;
 
+            auto binaryType = binaryTypeIds.find(typeName);
+            if (binaryType == binaryTypeIds.end()) {
+                if (debug)
+                    std::cerr << "Session " << name
+                              << ": Ignoring type " << typeName
+                              << " which has no binaryEncodingId" << std::endl;
+                continue;
+            }
+            UA_NodeId_copy(&binaryType->second, &customDataType.binaryEncodingId);
+
             const char* baseType = getProp(node, "BaseType");
             if (baseType && strcmp(baseType, "ua:Union") == 0)
-                userDataType.typeKind = UA_DATATYPEKIND_UNION;
+                customDataType.typeKind = UA_DATATYPEKIND_UNION;
 
-            std::cout << "\n" << (userDataType.typeKind == UA_DATATYPEKIND_UNION ? "union" : "struct")
-                      <<  " " << typeName << " {"
-                      <<  " # tns:" << userTypes.size()
-                      << std::endl;
+            if (debug >= 4)
+                std::cout << "\n" << typeKindName(customDataType.typeKind)
+                          <<  " " << typeName
+                          <<  " { # binaryEncodingId: " << customDataType.binaryEncodingId
+                          << std::endl;
 
-            // Get the fields.
             for (xmlNode* field = node->children; field; field = field->next) {
                 if (field->type != XML_ELEMENT_NODE)
                     continue;
                 if (strcmp(nodeName(field), "Documentation") == 0) {
                     for (xmlNode* doc = field->children; doc; doc = doc->next) {
-                        if (doc->content)
+                        if (debug >= 4 && doc->content)
                             std::cout << "# " << doc->content << std::endl;
                     }
                     continue;
                 }
                 if (strcmp(nodeName(field), "Field") != 0) {
-                    std::cerr << "# unexpected node " <<  nodeName(field) << std::endl;
+                    if (debug >= 4)
+                        std::cerr << "# unexpected node " <<  nodeName(field) << std::endl;
                     continue;
                 }
 
                 const char* fieldName = getProp(field, "Name");
                 if (!fieldName) {
-                    std::cerr << "# unexpected Field node without field name" << std::endl;
+                    if (debug >= 4)
+                        std::cerr << "# unexpected Field node without field name" << std::endl;
                     continue;
                 }
 
                 const char* fieldTypeName = getProp(field, "TypeName");
                 if (!fieldName) {
-                    std::cerr << "# unexpected field " << fieldName << " without type name" << std::endl;
+                    if (debug >= 4)
+                        std::cerr << "# unexpected field " << fieldName << " without type name" << std::endl;
                     continue;
                 }
 
-                if (userDataType.memSize == 0 &&
-                    userDataType.typeKind != UA_DATATYPEKIND_UNION &&
+                if (customDataType.memSize == 0 &&
+                    customDataType.typeKind != UA_DATATYPEKIND_UNION &&
                     strcmp(fieldTypeName, "opc:Bit") == 0) {
                     // Bit fields at the beginning of stuctures are part of
                     // a mask of optional fields.
-                    // They are not stored explicitly
-                    userDataType.typeKind = UA_DATATYPEKIND_OPTSTRUCT;
+                    // They are not stored explicitly.
+                    customDataType.typeKind = UA_DATATYPEKIND_OPTSTRUCT;
                     const char* length = getProp(field, "Length");
-                    std::cout << "  # " << fieldTypeName
-                              << " " << fieldName;
-                    if (length)
-                        std::cout << ":" << length;
-                    std::cout << " # implicit" << std::endl;
+                    if (debug >= 4) {
+                        std::cout << "  # " << fieldTypeName
+                                  << " " << fieldName;
+                        if (length)
+                            std::cout << ":" << length;
+                        std::cout << " # implicit" << std::endl;
+                    }
                     continue;
                 }
 
                 UA_DataTypeMember member = {};
-                const UA_DataType *memberType = getTypeByName(fieldTypeName, &currentCustomTypes); // May return nullptr!
+                size_t memberTypeIndex = getTypeIndexByName(nsIndex, fieldTypeName);
+                if (memberTypeIndex == UnknownType) {
+                    // Member type not read yet, will boably be defined later...
+                    if (debug >= 4)
+                        std::cout << "# unresolved member type " << fieldTypeName
+                                  << "\n#------------------------"
+                                     "\n# reading the other types first ..."
+                                  << std::endl;
+                    // read the other types first
+                    parseCustomDataTypes(node->next, nsIndex);
+                    if (debug >= 4)
+                        std::cout << "\n#------------------------"
+                                     "\n# returning to " << typeName
+                                  << "\n# fixing unresolved member type " << fieldTypeName
+                                  << std::endl;
+                    memberTypeIndex = getTypeIndexByName(nsIndex, fieldTypeName);
+                    if (memberTypeIndex == UnknownType) {
+                        if (debug >= 4)
+                            std::cerr << "Session " << name
+                                      << ": member type " << fieldTypeName
+                                      << " of " << typeName << '.' << fieldName
+                                      << " still not found." << std::endl;
+                        customDataType.memSize = 0;
+                        break;
+                    }
+                }
+                const UA_DataType *memberType = memberTypeIndex < UA_TYPES_COUNT ?
+                    &UA_TYPES[memberTypeIndex] : &customTypes[memberTypeIndex - UA_TYPES_COUNT];
 
 #ifdef UA_DATATYPES_USE_POINTER
-                member.memberType = memberType;
-#define memberTypeOf(field) ((field).memberType)
+                if (memberTypeIndex < UA_TYPES_COUNT) // builtin type
+                    member.memberType = memberType;
+                else
+                    // Remember that memberType pointer to custom types is only valid
+                    // until customTypes vector grows!
+                    // Abuse memberType pointer to store index instead:
+                    // A UA_DataType* never has an odd address, thus
+                    // store our index (which has an offset of UA_TYPES_COUNT)
+                    // as an odd number ((memberTypeIndex - UA_TYPES_COUNT) << 1 | 1).
+                    // The set LSB is our marker for later.
+                    member.memberType = reinterpret_cast<const UA_DataType*>
+                        (((memberTypeIndex - UA_TYPES_COUNT) << 1) | 1);
+                #define memberTypeOf(field) ((reinterpret_cast<size_t>((field).memberType) & 1) ? \
+                    &customTypes[reinterpret_cast<size_t>((field).memberType) >> 1] : (field).memberType)
 #else
-#define UNKNOWN_TYPE static_cast<UA_UInt16>(~0)
                 member.namespaceZero = memberType >= &UA_TYPES[0] && memberType < &UA_TYPES[UA_TYPES_COUNT];
-                member.memberTypeIndex = memberType ? memberType->typeIndex : UNKNOWN_TYPE;
-#define memberTypeOf(field) ((field).memberTypeIndex == UNKNOWN_TYPE ? nullptr : ((field).namespaceZero ? UA_TYPES : currentCustomTypes.types)+(field).memberTypeIndex)
+                member.memberTypeIndex = memberType ? memberType->typeIndex : UnknownType;
+                #define memberTypeOf(field) ((field).memberTypeIndex == UnknownType ? \
+                    nullptr : ((field).namespaceZero ? UA_TYPES : customTypes.data()) + (field).memberTypeIndex)
 #endif
 
-                if (userDataType.memSize == 0 &&
-                    userDataType.typeKind == UA_DATATYPEKIND_UNION)
+                if (customDataType.memSize == 0 &&
+                    customDataType.typeKind == UA_DATATYPEKIND_UNION)
                 {
                     // First field of a union must be UInt32 switch field,
-                    if (memberType != &UA_TYPES[UA_TYPES_UINT32])
+                    if (memberTypeIndex != UA_TYPES_UINT32)
                     {
-                        std::cerr << "addUserDataTypes: union " << typeName
-                                  << " has switch field of unexpected type "
-                                  << (memberType ? memberType->typeName : fieldTypeName)
-                                  << " instead of Unt32"
-                                  << std::endl;
+                        if (debug >= 4)
+                            std::cerr << "Session " << name
+                                      << ": union " << typeName
+                                      << " has switch field of unexpected type "
+                                      << memberType->typeName
+                                      << " instead of Unt32"
+                                      << std::endl;
                         break;
                     }
                     // It is not added to members but included in padding.
-                    userDataType.memSize = sizeof(UA_UInt32);
-                    std::cout << "  # " << memberType->typeName
-                              << " " << fieldName
-                              << "; # in padding"
-                              << std::endl;
+                    customDataType.memSize = sizeof(UA_UInt32);
+                    if (debug >= 4)
+                        std::cout << "  # " << memberType->typeName
+                                  << " " << fieldName
+                                  << "; # in padding"
+                                  << std::endl;
                     continue;
                 }
 
@@ -1617,305 +1962,262 @@ addUserDataTypes(xmlNode* node, UA_UInt16 nsIndex, UA_DataTypeArray **customType
                 const char* lengthFieldName = getProp(field, "LengthField");
                 const char* switchFieldName = getProp(field, "SwitchField");
 
-/*
-                printf("# %s", fieldTypeName);
-                if (lengthFieldName) {
-                    printf("[%s]", lengthFieldName);
-                }
-                if (switchFieldName) {
-                    printf(" {%s", switchFieldName);
-                    const char* switchVal = getProp(field, "SwitchValue");
-                    if (switchVal) {
-                        printf(" == %s", switchVal);
-                    }
-                    printf(" ?}");
-                }
-                printf(" %s;\n", fieldName);
-*/
-
                 if (lengthFieldName) {
                     // Fields with length field are (mandatory or optional) arrays.
-                    // First remove already added Int32 lengthField from members.
-                    // It should be the previous member.
-                    // We could not know that it was the length field until now.
+                    // First remove already added Int32 lengthField from members,
+                    // which should be the previous member.
+                    // We did not know that it was the length field until now.
                     {
                         UA_DataTypeMember& lengthField = members.back();
                         if (members.empty() || strcmp(lengthField.memberName, lengthFieldName) != 0) {
                             // previous field was not the length field!
-                            std::cerr << "addUserDataTypes: struct " << typeName
-                                      << " has array field " << fieldTypeName
-                                      << " not immediately following its length field " << lengthFieldName
-                                      << std::endl;
-                            userDataType.memSize = 0;
+                            if (debug >= 4)
+                                std::cerr << "Session " << name
+                                          << ": struct " << typeName
+                                          << " has array field " << fieldName
+                                          << " not immediately following its length field " << lengthFieldName
+                                          << std::endl;
+                            customDataType.memSize = 0;
                             break;
                         }
                         if (memberTypeOf(lengthField) != &UA_TYPES[UA_TYPES_INT32]) {
-                            std::cerr << "addUserDataTypes: struct " << typeName
-                                      << " has array " << fieldTypeName
-                                      << " with length field " << lengthFieldName
-                                      << " of unexpected type "
-                                      << (memberTypeOf(lengthField) ? memberTypeOf(lengthField)->typeName : "Unknown")
-                                      << " instead of Int32"
-                                      << std::endl;
-                            userDataType.memSize = 0;
+                            if (debug >= 4)
+                                std::cerr << "Session " << name
+                                          << ": struct " << typeName
+                                          << " has array " << fieldName
+                                          << " with length field " << lengthFieldName
+                                          << " of unexpected type "
+                                          << (memberTypeOf(lengthField) ? memberTypeOf(lengthField)->typeName : "Unknown")
+                                          << " instead of Int32"
+                                          << std::endl;
+                            customDataType.memSize = 0;
                             break;
                         }
-                        userDataType.memSize -= lengthField.padding +
+                        customDataType.memSize -= lengthField.padding +
                             lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize;
-                        std::cout << "  # removed array length field " << memberTypeOf(lengthField)->typeName
-                                  << " " << lengthField.memberName
-                                  << " memberSize=" << (lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize)
-                                  << " padding=" << static_cast<unsigned int>(lengthField.padding)
-                                  << " memSize=" << userDataType.memSize
-                                  << std::endl;
+                        if (debug >= 4)
+                            std::cout << "  # removed array length field " << memberTypeOf(lengthField)->typeName
+                                      << " " << lengthField.memberName
+                                      << " memberSize=" << (lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize)
+                                      << " padding=" << static_cast<unsigned int>(lengthField.padding)
+                                      << " memSize=" << customDataType.memSize
+                                      << std::endl;
                         free(const_cast<char*>(lengthField.memberName));
                         members.pop_back();
                     }
 
                     // Arrays are stored as {size_t length; void* data;}.
-                    userDataType.pointerFree = false;
+                    customDataType.pointerFree = false;
                     memberSize = sizeof(size_t) + sizeof(void*);
                     member.isArray = true;
-                    if (switchFieldName && userDataType.typeKind != UA_DATATYPEKIND_UNION)
+                    if (switchFieldName && customDataType.typeKind != UA_DATATYPEKIND_UNION)
                         member.isOptional = true;
-                    std::cout << "  size_t " << fieldName
-                              << "_Size;\n  " << (memberType ? memberType->typeName : fieldTypeName)
-                              << "* " << fieldName
-                              << "; # " << (member.isOptional ? "optional" : "mandatory")
-                              << " " << fieldTypeName
-                              << " array" << std::endl;
+                    if (debug >= 4)
+                        std::cout << "  size_t " << fieldName << "_Size;\n  "
+                                  << memberType->typeName << "* " << fieldName
+                                  << "; # " << (member.isOptional ? "optional" : "mandatory")
+                                  << " " << fieldTypeName
+                                  << " array" << std::endl;
                 }
-                else if (switchFieldName && userDataType.typeKind != UA_DATATYPEKIND_UNION) {
+                else if (switchFieldName && customDataType.typeKind != UA_DATATYPEKIND_UNION) {
                     // Structure fields with switch field are optional.
                     // They are stored as pointers.
-                    userDataType.pointerFree = false;
+                    customDataType.pointerFree = false;
                     memberSize = sizeof(void*);
                     member.isOptional = true;
-                    std::cout << "  " << (memberType ? memberType->typeName : fieldTypeName)
-                              << "* " << fieldName
-                              << "; # optional " << fieldTypeName
-                              << std::endl;
+                    if (debug >= 4)
+                        std::cout << "  " << memberType->typeName << "* " << fieldName
+                                  << "; # optional " << fieldTypeName
+                                  << std::endl;
                 }
                 else {
-                    // scalars are stored in-place
-                    if (!memberType) {
-                        // Sometimes, referenced types are defined after use.
-                        // We can toletate that for arrays and optional fields
-                        // where we only deal with pointers,
-                        // but here we need the type size.
-                        std::cerr << "addUserDataTypes: member type " << fieldTypeName
-                                  << " of member " << fieldName
-                                  << " in " << typeName
-                                  << " undefined"
-                                  << std::endl;
-                        userDataType.memSize = 0;
-                        break;
-                    }
+                    // Scalars are stored in-place.
                     memberSize = memberType->memSize;
-                    userDataType.pointerFree = userDataType.pointerFree && memberType->pointerFree;
-                    std::cout << "  " << memberType->typeName
-                              << " " << fieldName
-                              << " # mandatory " << fieldTypeName
-                              << std::endl;
+                    customDataType.pointerFree = customDataType.pointerFree && memberType->pointerFree;
+                    if (debug >= 4)
+                        std::cout << "  " << memberType->typeName
+                                  << " " << fieldName
+                                  << " # mandatory " << fieldTypeName
+                                  << std::endl;
                 }
 
                 // Pad to align this member.
                 // Primitives are max 8 bytes long (double, void*, int64).
                 // Thus, maximal 8 byte alignment is sufficient.
                 UA_UInt32 memberAlignment = (memberSize-1) & 7; // actually alignment-1
-                if (userDataType.typeKind != UA_DATATYPEKIND_UNION) {
+                if (customDataType.typeKind != UA_DATATYPEKIND_UNION) {
                     // Align this member on top of structure so far.
-                    member.padding = memberAlignment & ~(userDataType.memSize-1);
+                    member.padding = memberAlignment & ~(customDataType.memSize-1);
                     // Total size is the sum of all member sizes including padding.
-                    userDataType.memSize += member.padding + memberSize;
+                    customDataType.memSize += member.padding + memberSize;
                 } else {
                     // For unions padding includes the UInt32 switch field.
                     member.padding = sizeof(UA_UInt32) + (memberAlignment & ~(sizeof(UA_UInt32)-1));
                     // Total size is the maximum of all member sizes including padding.
-                    if (member.padding + memberSize > userDataType.memSize)
-                        userDataType.memSize = member.padding + memberSize;
+                    if (member.padding + memberSize > customDataType.memSize)
+                        customDataType.memSize = member.padding + memberSize;
                 }
                 // Align structure to largest member alignment.
                 if (memberAlignment > structureAlignment)
                     structureAlignment = memberAlignment;
-                std::cout << "  # memberSize=" << memberSize
-                          << " alignment=" << memberAlignment+1
-                          << " padding=" << static_cast<unsigned int>(member.padding)
-                          << " memSize=" << userDataType.memSize
-                          << std::endl;
+                if (debug >= 4)
+                    std::cout << "  # memberSize=" << memberSize
+                              << " alignment=" << memberAlignment+1
+                              << " padding=" << static_cast<unsigned int>(member.padding)
+                              << " memSize=" << customDataType.memSize
+                              << std::endl;
 
-                if (!memberType) {
-                    // Sometimes, referenced types are defined after use.
-                    std::cerr << "# unresolved type " << userTypes.size() << '=' << typeName << " member " << members.size() << '=' << fieldName << " type=" << fieldTypeName << std::endl;
-                    unresolvedTypes.push_back({userTypes.size(), members.size(), fieldTypeName});
-                }
                 members.push_back(member);
             }
 
-            if (!userDataType.memSize) // Error bail out: Clean up and ignore invalid types.
+            if (members.size() > 255) {
+                if (debug >= 4)
+                    std::cerr << "Session " << name
+                              << ": type " << typeName
+                              << " has too many members" << std::endl;
+                customDataType.memSize = 0;
+            }
+
+            if (!customDataType.memSize && members.size()) // Error bail out: Clean up and ignore invalid types.
             {
-                for (auto it: members)
-                    free(const_cast<char*>(it.memberName));
+                if (debug >= 5)
+                    std::cerr << "# cleaning up invalid type " << typeName << std::endl;
+                for (auto member: members) {
+                    if (debug >= 5)
+                        std::cerr << "#  cleaning up member " << member.memberName << std::endl;
+                    free(const_cast<char*>(member.memberName));
+                }
                 members.clear();
+                UA_NodeId_clear(&customDataType.binaryEncodingId);
                 continue;
             }
 
             // Pad structure to align with its largest primitive.
-            userDataType.memSize += (structureAlignment & ~(userDataType.memSize-1));
-            std::cout << "}; # alignment=" << structureAlignment+1
-                      << " memSize=" << userDataType.memSize
-                      << " " << members.size() << " members"
-                      << std::endl;
+            customDataType.memSize += (structureAlignment & ~(customDataType.memSize-1));
+            if (debug >= 4)
+                std::cout << "}; # alignment=" << structureAlignment+1
+                          << " memSize=" << customDataType.memSize
+                          << " " << members.size() << " members"
+                          << std::endl;
 
-            // Move collected members into userDataType.
-            userDataType.membersSize = members.size();
-            userDataType.members = static_cast<UA_DataTypeMember*>(malloc(userDataType.membersSize * sizeof(UA_DataTypeMember)));
-            memcpy(userDataType.members, members.data(), userDataType.membersSize * sizeof(UA_DataTypeMember));
+            // Move collected members into customDataType.
+            customDataType.membersSize = members.size();
+            customDataType.members = static_cast<UA_DataTypeMember*>(malloc(customDataType.membersSize * sizeof(UA_DataTypeMember)));
+            if (!customDataType.members) {
+                errlogPrintf(
+                    "OPC UA Session %s: (parseCustomDataTypes) out of memory\n",
+                    name.c_str());
+                return;
+            }
+            memcpy(customDataType.members, members.data(), customDataType.membersSize * sizeof(UA_DataTypeMember));
         }
 
-        if (strcmp(userTypeKind, "EnumeratedType") == 0) {
-            if (!typeName) {
-                 std::cerr << "unexpected " << userTypeKind << " without name" << std::endl;
-                 continue;
-            }
-            // Enums are stored as UInt32 index
+        if (strcmp(nodeKind, "EnumeratedType") == 0) {
+            // Enums are stored as UInt32 index.
             const char* enumSizeStr = getProp(node, "LengthInBits");
             unsigned int enumSize = enumSizeStr ? atoi(enumSizeStr) : 0;
             if (enumSize != 32) {
-                std::cerr << "addUserDataTypes: enum " << typeName
-                          << " has unexpected size of " << enumSize
-                          << " bits instead of 32"
-                          << std::endl;
+                if (debug >= 4)
+                    std::cerr << "Session " << name
+                              << ": enum " << typeName
+                              << " has unexpected size of " << enumSize
+                              << " bits instead of 32"
+                              << std::endl;
                 continue;
             }
 
-            userDataType.typeKind = UA_DATATYPEKIND_ENUM;
-            userDataType.memSize = sizeof(UA_UInt32);
-            userDataType.overlayable = UA_BINARY_OVERLAYABLE_INTEGER;
+            customDataType.typeKind = UA_DATATYPEKIND_ENUM;
+            customDataType.memSize = sizeof(UA_UInt32);
+            customDataType.overlayable = UA_BINARY_OVERLAYABLE_INTEGER;
 
-            std::cout << "\nenum " << typeName << " {"
-                      <<  " # tns:" << userTypes.size()
-                      << std::endl;
+            if (debug >= 4)
+                std::cout << "\nenum " << typeName << " {"
+                          << std::endl;
+            std::vector<std::pair<int64_t,std::string>> choices;
             for (xmlNode* choice = node->children; choice; choice = choice->next) {
                 if (choice->type != XML_ELEMENT_NODE)
                     continue;
                 if (strcmp(nodeName(choice), "Documentation") == 0) {
                     for (xmlNode* doc = choice->children; doc; doc = doc->next) {
-                        if (doc->content)
+                        if (debug >= 4 && doc->content)
                             std::cout << "# " << doc->content << std::endl;
                     }
                     continue;
                 }
                 if (strcmp(nodeName(choice), "EnumeratedValue") != 0) {
-                    std::cerr << "# unexpected node " << nodeName(choice) << std::endl;
+                    if (debug >= 4)
+                        std::cerr << "# unexpected node " << nodeName(choice) << std::endl;
                     continue;
                 }
                 const char* choiceName = getProp(choice, "Name");
                 const char* choiceValue = getProp(choice, "Value");
-                std::cout << "  " << choiceName << " = " << choiceValue << std::endl;
-                // TODO: Maybe do something with the enum strings?
+                if (debug >= 4)
+                    std::cout << "  " << choiceName << " = " << choiceValue << ';' << std::endl;
+                choices.emplace_back(static_cast<int64_t>(atoll(choiceValue)), choiceName);
             }
-            std::cout << "};" << std::endl;
+            enumTypes.emplace(typeName, std::move(choices));
+            if (debug >= 4)
+                std::cout << "};" << std::endl;
         }
 
-        // Update current custom type wrapper array for searching type names
-        if (userDataType.memSize) {
-            userDataType.typeId =  UA_NODEID_STRING(nsIndex, const_cast<char*>(typeName));
-            userDataType.typeName = strdup(typeName);
-            userTypes.push_back(userDataType);
-            // Someone made all UA_DataTypeArray members const. Thank you very much.
-            *const_cast<size_t*>(&currentCustomTypes.typesSize) = userTypes.size();
-            currentCustomTypes.types = userTypes.data();
+        // Update customTypes array for searching type names.
+        if (typeName) {
+            if (debug >= 5)
+                std::cout << "# adding type " << typeName << " to known types" << std::endl;
+            customDataType.typeId = UA_NODEID_STRING(nsIndex, const_cast<char*>(typeName));
+            customDataType.typeName = strdup(typeName);
+            customTypes.push_back(customDataType);
         }
     }
-
-    if (userTypes.empty())
-        return;
-
-    // Check for unresolved types (defined after use)
-    std::cout << "### Looking up " << unresolvedTypes.size() << " unresolved types "<< std::endl;
-    for (auto unresolved: unresolvedTypes) {
-        UA_DataType &type = userTypes[unresolved.typeIndex];
-        UA_DataTypeMember& member = type.members[unresolved.memberIndex];
-        const UA_DataType *memberType = getTypeByName(unresolved.typeName, &currentCustomTypes);
-        if (!memberType) {
-            std::cerr << type.typeName << '.' << member.memberName
-                      << "has unknown type" << unresolved.typeName <<std::endl;
-            continue;
-        }
-#ifdef UA_DATATYPES_USE_POINTER
-        member.memberType = memberType;
-#else
-        member.memberTypeIndex = memberType->typeIndex;
-#endif
-        std::cout << "#### " << type.typeName << '.' << member.memberName
-                  << " = " << unresolved.typeName << " = " << getTypeByName(unresolved.typeName, &currentCustomTypes)
-                  << " fixed to " << memberTypeOf(member)->typeName << std::endl;
-    }
-    // Move collected types to the beginning of the customTypes linked list.
-    UA_DataTypeArray* newCustomTypes = static_cast<UA_DataTypeArray*>(malloc(sizeof(UA_DataTypeArray)));
-    newCustomTypes->next = *customTypes;
-    *const_cast<size_t*>(&newCustomTypes->typesSize) = userTypes.size();
-    newCustomTypes->types = static_cast<UA_DataType*>(malloc(newCustomTypes->typesSize * sizeof(UA_DataType)));
-    memcpy(const_cast<UA_DataType*>(newCustomTypes->types), userTypes.data(), newCustomTypes->typesSize * sizeof(UA_DataType));
-    *customTypes = newCustomTypes;
-#endif
 }
 
 void
-clearTypeDictionaries(UA_Client* client) {
-    UA_ClientConfig *config = UA_Client_getConfig(client);
-    const UA_DataTypeArray *customTypes = config->customDataTypes;
-    while (customTypes) {
-        delete(customTypes->types);
-        const UA_DataTypeArray *nextCustomTypes = customTypes->next;
-        delete(customTypes);
-        customTypes = nextCustomTypes;
-    }
-    config->customDataTypes = nullptr;
-}
-
-// retrieves all dictionaries of the OPC UA server
-void
-getTypeDictionaries(UA_Client* client) {
-    clearTypeDictionaries(client);
-    UA_ClientConfig *config = UA_Client_getConfig(client);
-    UA_BrowseResponse bResp;
-    UA_BrowseResponse_init(&bResp);
-    browseNodeId(client, UA_NODEID_NUMERIC(0, UA_NS0ID_OPCBINARYSCHEMA_TYPESYSTEM), &bResp);
-    for (size_t i = 0; i < bResp.resultsSize; ++i) {
-        for (size_t j = 0; j < bResp.results[i].referencesSize; ++j) {
-            UA_NodeId& nodeId = bResp.results[i].references[j].nodeId.nodeId;
-            if (nodeId.namespaceIndex == 0) // user directories only
-                continue;
-            UA_Variant variant;
-            UA_Variant_init(&variant);
-            UA_Client_readValueAttribute(client, nodeId, &variant);
-            size_t localIndex = j * UA_NAMESPACEOFFSET + nodeId.namespaceIndex;
-            if (!UA_Variant_hasScalarType(&variant, &UA_TYPES[UA_TYPES_BYTESTRING])) {
-                std::cerr << "getTypeDictionaries: "<< nodeId
-                          << " has unexpected type " << (variant.type ? variant.type->typeName : "None" )
-                          << (!variant.type || UA_Variant_isScalar(&variant) ? "" : "[]")
-                          << std::endl;
-            } else {
-                UA_ByteString* bytestring = static_cast<UA_ByteString*>(variant.data);
-                xmlDocPtr xmldoc = xmlReadMemory(reinterpret_cast<const char*>(bytestring->data),
-                    static_cast<int>(bytestring->length), "include.xml", NULL, 0);
-                if (!xmldoc) {
-                    std::cerr << "getTypeDictionaries: error parsing " << nodeId << std::endl;
-                } else {
-                    std::cout << "getTypeDictionaries: nodeId " << nodeId << " localIndex " << localIndex << std::endl;
-                    // xmlDocDump(stdout, xmldoc);
-                    addUserDataTypes(xmlDocGetRootElement(xmldoc), nodeId.namespaceIndex, const_cast<UA_DataTypeArray**>(&config->customDataTypes));
-                    xmlFreeDoc(xmldoc);
+SessionOpen62541::showCustomDataTypes(int level) const
+{
+    for (auto type: customTypes)
+    {
+        std::cout << "  " << type.typeName
+                  << " : " << typeKindName(type.typeKind);
+        if (level >= 1) {
+            std::cout << " {";
+            if (type.typeKind == UA_DATATYPEKIND_ENUM)
+            {
+                for (auto choice: enumTypes.find(type.typeName)->second)
+                {
+                    std::cout << "\n    " << choice.second << " = " << choice.first;
                 }
+            } else
+            for (size_t i = 0; i < type.membersSize; i++) {
+                UA_DataTypeMember member = type.members[i];
+                const UA_DataType& memberType =
+#ifdef UA_DATATYPES_USE_POINTER
+                    *member.memberType;
+#else
+                    (member.namespaceZero ? UA_TYPES :customTypes.data())[member.memberTypeIndex];
+#endif
+                std::cout << "\n    " << member.memberName << " : " << memberType.typeName;
+                if (member.isArray)
+                    std::cout << "[]";
+                if (member.isOptional)
+                    std::cout << " (optional)";
             }
-            UA_Variant_clear(&variant);
+            std::cout << "\n  }";
         }
+        std::cout << std::endl;
     }
 }
+#endif // HAS_XMLPARSER
 
 // callbacks
+void
+SessionOpen62541::connectionInactive()
+{
+    UA_Client_getConfig(client)->connectivityCheckInterval = 0;
+    errlogPrintf("OPC UA Session %s: server inactive\n", name.c_str());
+    markConnectionLoss();
+    clearCustomTypeDictionaries();
+    return;
+}
 
 void
 SessionOpen62541::connectionStatusChanged (
@@ -1976,6 +2278,8 @@ SessionOpen62541::connectionStatusChanged (
             case UA_SESSIONSTATE_ACTIVATED:
             {
                 UA_ClientConfig *config = UA_Client_getConfig(client);
+                config->connectivityCheckInterval = 1000; // 1 sec
+
                 std::string token;
                 auto type = config->userIdentityToken.content.decoded.type;
                 if (type == &UA_TYPES[UA_TYPES_USERNAMEIDENTITYTOKEN])
@@ -2037,8 +2341,7 @@ SessionOpen62541::connectionStatusChanged (
                     updateNamespaceMap(static_cast<UA_String*>(value.data), static_cast<UA_UInt16>(value.arrayLength));
                 UA_Variant_clear(&value);
 
-                getTypeDictionaries(client);
-
+                readCustomTypeDictionaries();
                 rebuildNodeIds();
                 registerNodes();
                 createAllSubscriptions();
@@ -2066,6 +2369,7 @@ SessionOpen62541::connectionStatusChanged (
             case UA_SESSIONSTATE_CREATED: {
                 if (sessionState == UA_SESSIONSTATE_ACTIVATED)
                     errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
+                clearCustomTypeDictionaries();
                 break;
             }
 
@@ -2114,46 +2418,6 @@ SessionOpen62541::readComplete (UA_UInt32 transactionId,
                 ProcessReason reason = ProcessReason::readComplete;
                 if (UA_STATUS_IS_BAD(response->results[i].status))
                     reason = ProcessReason::readFailure;
-                if (response->results[i].value.type &&
-                    response->results[i].value.type->typeKind == UA_TYPES_EXTENSIONOBJECT) {
-                    UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(response->results[i].value.data);
-                    std::cout << "Item " << item << " UA_ExtensionObject encoding: " << extensionObject.encoding << std::endl;
-                    if (extensionObject.encoding == UA_EXTENSIONOBJECT_ENCODED_BYTESTRING) {
-                        UA_ClientConfig *config = UA_Client_getConfig(client);
-                        UA_NodeId dataTypeId;
-                        UA_NodeId_init(&dataTypeId);
-                        UA_Client_readDataTypeAttribute(client, item->getNodeId(), &dataTypeId);
-                        UA_QualifiedName browseName;
-                        UA_QualifiedName_init(&browseName);
-                        UA_Client_readBrowseNameAttribute(client, dataTypeId, &browseName);
-                        std::cout << "Item " << item
-                                  << " encoded extension object, typeId " << extensionObject.content.encoded.typeId
-                                  << " , dataTypeId " << dataTypeId
-                                  << " browseName " << browseName
-                                  << std::endl;
-                        std::string typeName;
-                        typeName += browseName.name;
-                        const UA_DataType *userDataType = getTypeByName(typeName.c_str(), config->customDataTypes);
-                        if (!userDataType) {
-                            std::cout << "Item " << item
-                                      << " cannot find data type " << typeName
-                                      << std::endl;
-                        } else {
-                            UA_NodeId_copy(&dataTypeId, &const_cast<UA_DataType *>(userDataType)->binaryEncodingId);
-                            std::cout << "Session " << name
-                                      << ": re-triggering initial read for " << item
-                                      << std::endl;
-                            auto cargo = std::vector<std::shared_ptr<ReadRequest>>(1);
-                            item->setState(ConnectionStatus::initialRead);
-                            cargo[0] = std::make_shared<ReadRequest>();
-                            cargo[0]->item = item;
-                            //reader.pushRequest(cargo, menuPriorityHIGH);
-                        }
-                        UA_QualifiedName_clear(&browseName);
-                        UA_NodeId_clear(&dataTypeId);
-                        continue;
-                    }
-                }
                 item->setIncomingData(response->results[i], reason);
             }
             i++;

@@ -13,22 +13,33 @@
 #ifndef DEVOPCUA_SESSIONOPEN62541_H
 #define DEVOPCUA_SESSIONOPEN62541_H
 
-#include <algorithm>
-#include <vector>
-#include <memory>
-#include <set>
+#include "Session.h"
+#include "Registry.h"
+#include "RequestQueueBatcher.h"
 
-#include <open62541/client_config_default.h>
-
-#include <epicsString.h>
 #include <epicsMutex.h>
 #include <epicsTypes.h>
 #include <epicsThread.h>
 #include <initHooks.h>
 
-#include "RequestQueueBatcher.h"
-#include "Session.h"
-#include "Registry.h"
+#include <open62541/client.h>
+
+#ifndef UA_BUILTIN_TYPES_COUNT
+// Newer open62541 since version 1.3 uses type pointer
+#define UA_DATATYPES_USE_POINTER
+// Older open62541 uses type index
+#endif
+
+#ifdef HAS_XMLPARSER
+#include <libxml/tree.h>
+#endif
+
+#include <string>
+#include <ostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <memory>
 
 namespace DevOpcua {
 
@@ -58,12 +69,16 @@ inline std::ostream& operator << (std::ostream& os, const UA_LocalizedText& ua_l
 
 inline std::ostream& operator << (std::ostream& os, const UA_QualifiedName& ua_qualifiedName)
 {
-    return os << "ns" << ua_qualifiedName.namespaceIndex << ":\"" << ua_qualifiedName.name << '"';
+    if (ua_qualifiedName.namespaceIndex)
+        os << "ns" << ua_qualifiedName.namespaceIndex << ':';
+    return os << '"' << ua_qualifiedName.name << '"';
 }
 
 std::ostream& operator << (std::ostream& os, const UA_NodeId& ua_nodeId);
 
 std::ostream& operator << (std::ostream& os, const UA_Variant &ua_variant);
+
+const char* typeKindName(UA_UInt32 typeKind);
 
 // Open62541 has no ClientSecurityInfo structure
 // Make our own for convenience
@@ -283,6 +298,8 @@ public:
     UA_UInt32 getTransactionId();
 
     // Open62541 session callbacks
+    void connectionInactive();
+
     void connectionStatusChanged(
             UA_SecureChannelState channelState,
             UA_SessionState sessionState,
@@ -398,6 +415,21 @@ private:
     unsigned int MaxNodesPerRead;                                 /**< server max number of nodes per write request */
     unsigned int MaxNodesPerWrite;                                /**< server max number of nodes per write request */
     epicsThread *workerThread;                                    /**< Asynchronous worker thread */
+
+#ifdef HAS_XMLPARSER
+    /** open62541 type dictionary handling */
+    std::vector<UA_DataType> customTypes;                         /**< descriptions of custom (non-standard) OPC-UA types */
+    std::map<std::string, UA_NodeId> binaryTypeIds;               /**< server defined binary ids of custom types */
+    std::map<std::string, std::vector<std::pair<int64_t,std::string>>> enumTypes;
+    void readCustomTypeDictionaries();                            /**< read custom types from the server */
+    void clearCustomTypeDictionaries();                           /**< clear old custom types */
+    void parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex);  /**< parse XML representation of custom types */
+    size_t getTypeIndexByName(UA_UInt16 nsIndex, const char* typeName);
+    UA_StatusCode typeSystemIteratorCallback(const UA_NodeId& dictNodeId);
+    UA_StatusCode dictIteratorCallback(const UA_NodeId& childId, const UA_NodeId& referenceTypeId);
+    UA_StatusCode typeIteratorCallback(const UA_NodeId& childId, const UA_NodeId& referenceTypeId, const UA_QualifiedName& typeName);
+    void showCustomDataTypes(int level) const;
+#endif
 };
 
 } // namespace DevOpcua

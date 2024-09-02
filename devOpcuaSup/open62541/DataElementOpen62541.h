@@ -13,11 +13,18 @@
 #ifndef DEVOPCUA_DATAELEMENTOPEN62541_H
 #define DEVOPCUA_DATAELEMENTOPEN62541_H
 
-#include <unordered_map>
-#include <limits>
+#include "DataElement.h"
+#include "RecordConnector.h"
+#include "Update.h"
+#include "UpdateQueue.h"
+#include "ItemOpen62541.h"
+
+#include <errlog.h>
+#include <recGbl.h>
+#include <alarm.h>
+#include <epicsTypes.h>
 
 #include <open62541/client.h>
-
 #ifndef UA_STATUSCODE_BAD  // Not yet defined in open62541 version 1.2
 #define UA_STATUSCODE_BAD 0x80000000
 #endif
@@ -28,18 +35,12 @@
 #endif
 #define UA_STATUS_IS_UNCERTAIN(status) (((status)&UA_STATUSCODE_UNCERTAIN)!=0)
 
-#include <errlog.h>
-
-#include "DataElement.h"
-#include "devOpcua.h"
-#include "RecordConnector.h"
-#include "Update.h"
-#include "UpdateQueue.h"
-#include "ItemOpen62541.h"
+#include <string>
+#include <unordered_map>
+#include <limits>
+#include <cstdlib>
 
 namespace DevOpcua {
-
-class ItemOpen62541;
 
 typedef Update<UA_Variant, UA_StatusCode> UpdateOpen62541;
 
@@ -738,9 +739,7 @@ private:
                       const std::string &targetTypeName) const;
     void checkWriteArray(const UA_DataType *expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
-    bool updateDataInStruct(void* container,
-                            const int index,
-                            std::shared_ptr<DataElementOpen62541> pelem);
+    bool updateDataInStruct(void* container, std::shared_ptr<DataElementOpen62541> pelem);
 
     bool createMap(const UA_DataType *type, const std::string* timefrom);
 
@@ -751,16 +750,6 @@ private:
     {
         isdirty = true;
         pitem->markAsDirty();
-    }
-
-     // Convert the time stamp from a data element
-    epicsTime
-    epicsTimeFromUaVariant(const UA_Variant &data) const
-    {
-        if (UA_Variant_hasScalarType(&data, &UA_TYPES[UA_TYPES_DATETIME])) {
-            return ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(data.data), 0);
-        }
-        return pitem->tsSource;
     }
 
    // Get the time stamp from the incoming object
@@ -829,73 +818,80 @@ private:
                     // Valid OPC UA value, so try to convert
                     UA_Variant &data = upd->getData();
                     switch(typeKindOf(data)) {
-                        case UA_TYPES_BOOLEAN:
+                        case UA_DATATYPEKIND_BOOLEAN:
                             *value = (*static_cast<UA_Boolean*>(data.data) != 0);
                             break;
-                        case UA_TYPES_BYTE:
+                        case UA_DATATYPEKIND_BYTE:
                             if (isWithinRange<ET, UA_Byte>(*static_cast<UA_Byte*>(data.data)))
                                 *value = *static_cast<UA_Byte*>(data.data);
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_SBYTE:
+                        case UA_DATATYPEKIND_SBYTE:
                             if (isWithinRange<ET, UA_SByte>(*static_cast<UA_SByte*>(data.data)))
                                 *value = *static_cast<UA_SByte*>(data.data);
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_INT16:
+                        case UA_DATATYPEKIND_INT16:
                             if (isWithinRange<ET, UA_Int16>(*static_cast<UA_Int16*>(data.data)))
                                 *value = static_cast<ET>(*static_cast<UA_Int16*>(data.data));
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_UINT16:
+                        case UA_DATATYPEKIND_UINT16:
                             if (isWithinRange<ET, UA_UInt16>(*static_cast<UA_UInt16*>(data.data)))
                                 *value = static_cast<ET>(*static_cast<UA_UInt16*>(data.data));
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_INT32:
+                        case UA_DATATYPEKIND_INT32:
                             if (isWithinRange<ET, UA_Int32>(*static_cast<UA_Int32*>(data.data)))
                                 *value = static_cast<ET>(*static_cast<UA_Int32*>(data.data));
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_UINT32:
+                        case UA_DATATYPEKIND_UINT32:
                             if (isWithinRange<ET, UA_UInt32>(*static_cast<UA_UInt32*>(data.data)))
                                 *value = static_cast<ET>(*static_cast<UA_UInt32*>(data.data));
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_INT64:
+                        case UA_DATATYPEKIND_INT64:
                             if (isWithinRange<ET, UA_Int64>(*static_cast<UA_Int64*>(data.data)))
                                 *value = static_cast<ET>(*static_cast<UA_Int64*>(data.data));
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_UINT64:
+                        case UA_DATATYPEKIND_UINT64:
                             if (isWithinRange<ET, UA_UInt64>(*static_cast<UA_UInt64*>(data.data)))
                                 *value = static_cast<ET>(*static_cast<UA_UInt64*>(data.data));
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_FLOAT:
+                        case UA_DATATYPEKIND_FLOAT:
                             if (isWithinRange<ET, UA_Float>(*static_cast<UA_Float*>(data.data)))
                                 *value = static_cast<ET>(*static_cast<UA_Float*>(data.data));
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_DOUBLE:
+                        case UA_DATATYPEKIND_DOUBLE:
                             if (isWithinRange<ET, UA_Double>(*static_cast<UA_Double*>(data.data)))
                                 *value = static_cast<ET>(*static_cast<UA_Double*>(data.data));
                             else
                                 ret = 1;
                             break;
-                        case UA_TYPES_STRING:
+                        case UA_DATATYPEKIND_STRING:
                         {
-                            UA_String* s = static_cast<UA_String*>(data.data); // Not terminated!
+                            UA_String* s = static_cast<UA_String*>(data.data);
                             if (!string_to(std::string(reinterpret_cast<const char*>(s->data), s->length), *value))
+                                ret = 1;
+                            break;
+                        }
+                        case UA_DATATYPEKIND_LOCALIZEDTEXT:
+                        {
+                            UA_LocalizedText* lt = static_cast<UA_LocalizedText*>(data.data);
+                            if (!string_to(std::string(reinterpret_cast<const char*>(lt->text.data), lt->text.length), *value))
                                 ret = 1;
                             break;
                         }
@@ -905,10 +901,12 @@ private:
                     if (ret == 1) {
                         UA_String datastring = UA_STRING_NULL;
                         if (data.type)
-                            UA_print(&data, data.type, &datastring); // Not terminated!
-                        errlogPrintf("%s : incoming data (%.*s) out-of-bounds\n",
+                            UA_print(data.data, data.type, &datastring);
+                        errlogPrintf("%s : incoming data (%s %.*s) out-of-bounds for %s\n",
                                      prec->name,
-                                     static_cast<int>(datastring.length), datastring.data);
+                                     variantTypeString(data),
+                                     static_cast<int>(datastring.length), datastring.data,
+                                     epicsTypeString(*value));
                         UA_String_clear(&datastring);
                         (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     } else {
@@ -1043,7 +1041,7 @@ private:
         UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
 
         switch (typeKindOf(incomingData)) {
-        case UA_TYPES_BOOLEAN:
+        case UA_DATATYPEKIND_BOOLEAN:
         { // Scope of Guard G
             Guard G(outgoingLock);
             UA_Boolean val = (value != 0);
@@ -1051,7 +1049,7 @@ private:
             markAsDirty();
             break;
         }
-        case UA_TYPES_BYTE:
+        case UA_DATATYPEKIND_BYTE:
             if (isWithinRange<UA_Byte>(value)) {
                 Guard G(outgoingLock);
                 UA_Byte val = static_cast<UA_Byte>(value);
@@ -1062,7 +1060,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_SBYTE:
+        case UA_DATATYPEKIND_SBYTE:
             if (isWithinRange<UA_SByte>(value)) {
                 Guard G(outgoingLock);
                 UA_SByte val = static_cast<UA_Byte>(value);
@@ -1073,7 +1071,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_UINT16:
+        case UA_DATATYPEKIND_UINT16:
             if (isWithinRange<UA_UInt16>(value)) {
                 Guard G(outgoingLock);
                 UA_UInt16 val = static_cast<UA_UInt16>(value);
@@ -1084,7 +1082,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_INT16:
+        case UA_DATATYPEKIND_INT16:
             if (isWithinRange<UA_Int16>(value)) {
                 Guard G(outgoingLock);
                 UA_Int16 val = static_cast<UA_Int16>(value);
@@ -1095,7 +1093,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_UINT32:
+        case UA_DATATYPEKIND_UINT32:
             if (isWithinRange<UA_UInt32>(value)) {
                 Guard G(outgoingLock);
                 UA_UInt32 val = static_cast<UA_UInt32>(value);
@@ -1106,7 +1104,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_INT32:
+        case UA_DATATYPEKIND_INT32:
             if (isWithinRange<UA_Int32>(value)) {
                 Guard G(outgoingLock);
                 UA_Int32 val = static_cast<UA_Int32>(value);
@@ -1117,7 +1115,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_UINT64:
+        case UA_DATATYPEKIND_UINT64:
             if (isWithinRange<UA_UInt64>(value)) {
                 Guard G(outgoingLock);
                 UA_UInt64 val = static_cast<UA_UInt64>(value);
@@ -1128,7 +1126,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_INT64:
+        case UA_DATATYPEKIND_INT64:
             if (isWithinRange<UA_Int64>(value)) {
                 Guard G(outgoingLock);
                 UA_Int64 val = static_cast<UA_Int64>(value);
@@ -1139,7 +1137,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_FLOAT:
+        case UA_DATATYPEKIND_FLOAT:
             if (isWithinRange<UA_Float>(value)) {
                 Guard G(outgoingLock);
                 UA_Float val = static_cast<UA_Float>(value);
@@ -1150,7 +1148,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_DOUBLE:
+        case UA_DATATYPEKIND_DOUBLE:
             if (isWithinRange<UA_Double>(value)) {
                 Guard G(outgoingLock);
                 UA_Double val = static_cast<UA_Double>(value);
@@ -1161,7 +1159,7 @@ private:
                 ret = 1;
             }
             break;
-        case UA_TYPES_STRING:
+        case UA_DATATYPEKIND_STRING:
         {
             std::string strval = std::to_string(value);
             UA_String val;
@@ -1170,6 +1168,20 @@ private:
             { // Scope of Guard G
                 Guard G(outgoingLock);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
+                markAsDirty();
+            }
+            break;
+        }
+        case UA_DATATYPEKIND_LOCALIZEDTEXT:
+        {
+            std::string strval = std::to_string(value);
+            UA_LocalizedText val;
+            val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
+            val.text.length = strval.length();
+            val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(strval.c_str()));
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
                 markAsDirty();
             }
             break;
@@ -1245,11 +1257,11 @@ private:
     std::shared_ptr<DataElementOpen62541> parent;               /**< parent */
 
     std::unordered_map<int, std::weak_ptr<DataElementOpen62541>> elementMap;
-    int timesrc;
+    ptrdiff_t timesrc;
 
-    typedef struct {ptrdiff_t offs; const UA_DataType *type;} ElementDesc;
-    std::vector<ElementDesc> elementDesc;
-
+    const UA_DataType *memberType;           /**< type of this element */
+    UA_Boolean isArray;                      /**< is this element an array? */
+    size_t offset;                           /**< data offset of this element in parent structure */
     bool mapped;                             /**< child name to index mapping done */
     UpdateQueue<UpdateOpen62541> incomingQueue;  /**< queue of incoming values */
     UA_Variant incomingData;                 /**< cache of latest incoming value */
