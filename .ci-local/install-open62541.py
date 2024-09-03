@@ -18,10 +18,15 @@ cue.detect_context()
 
 version = os.environ['OPEN62541']
 
+cachedir = cue.ci['cachedir']
+# Special case: MSYS2 shell
+if cue.ci['os'] == 'windows' and os.sep == '/':
+    cachedir = cachedir.replace('\\', '/')
+
 sourcedir = os.path.join(cue.homedir, '.source')
 sdkdir = os.path.join(sourcedir, 'open62541-{0}'.format(version))
 builddir = os.path.join(sdkdir, 'build')
-installdir = os.path.join(cue.homedir, 'open62541')
+installdir = os.path.join(cachedir, 'open62541')
 
 if 'OPEN62541' in os.environ:
     with open(os.path.join(curdir, 'configure', 'CONFIG_SITE.local'), 'a') as f:
@@ -68,16 +73,28 @@ OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
             'set(OPEN62541_VER_PATCH 7)\n'
             'set(OPEN62541_VER_LABEL -undefined)'.format(ver[0], ver[1], ver[2])), end='')
 
+    generator = 'Unix Makefiles'
+    if cue.ci['os'] == 'windows':
+        if cue.ci['compiler'] == 'gcc':
+            generator = 'MinGW Makefiles'
+        elif cue.ci['compiler'] == 'vs2019':
+            generator = 'Visual Studio 16 2019'
+
+    build_shared = 'ON'
+    if cue.ci['static']:
+        build_shared = 'OFF'
+
     if ver[0] == '1' and ver[1] == '3':
         sp.check_call(['patch', '-p1', '-i', os.path.join(curdir, '.ci-local', 'open62541-1.3.patch')], cwd=sdkdir)
 
     sp.check_call(['cmake', '..',
-                   '-DBUILD_SHARED_LIBS=ON',
+                   '-G', generator,
+                   '-DBUILD_SHARED_LIBS={0}'.format(build_shared),
                    '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
                    '-DUA_ENABLE_ENCRYPTION=OPENSSL',
                    '-DUA_ENABLE_ENCRYPTION_OPENSSL=ON',
                    '-DCMAKE_INSTALL_PREFIX={0}'.format(installdir)],
                    cwd=builddir)
 
-    sp.check_call(['cmake', '--build', '.'], cwd=builddir)
-    sp.check_call(['cmake', '--install', '.'], cwd=builddir)
+    sp.check_call(['cmake', '--build', '.', '--config', 'RelWithDebInfo'], cwd=builddir)
+    sp.check_call(['cmake', '--install', '.', '--config', 'RelWithDebInfo'], cwd=builddir)
