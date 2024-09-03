@@ -8,9 +8,10 @@ ifdef UASDK
 ifeq ($(UASDK_USE_CRYPTO),YES)
   USR_LDFLAGS_WIN32 += /LIBPATH:$(OPENSSL)/out32dll
   USR_INCLUDES_WIN32 += -I$(OPENSSL)/inc32
+  UASDK_SSL_LIBS += libeay32 ssleay32
   #USR_INCLUDES_WIN32 += -I$(OPENSSL)/include/openssl
   #USR_INCLUDES_WIN32 += -I$(OPENSSL)/include/crypto
-  UASDK_SSL_LIBS += libssl libcrypto
+  #UASDK_SSL_LIBS += libssl libcrypto
   USR_SYS_LIBS_WIN32 += $(UASDK_SSL_LIBS) oleaut32 ole32
 endif
 ifeq ($(UASDK_USE_XMLPARSER),YES)

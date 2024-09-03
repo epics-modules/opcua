@@ -1,0 +1,141 @@
+# OPCUA CI build using EPICS ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# open62541 SDK client library - Windows builds
+# =============================================
+
+# This is YAML - indentation levels are crucial
+
+# Set the 'name:' properties to values that work for you
+
+name: open62541 Windows build
+
+# Trigger on pushes and PRs to any branch
+on:
+  push:
+    paths-ignore:
+      - 'documentation/*'
+      - '**/*.html'
+      - '**/*.md'
+      - 'devOpcuaSup/UaSdk/*'
+  pull_request:
+
+env:
+  SETUP_PATH: .ci-local:.ci
+  MODULES: "gtest"
+  GTEST: "v1.0.1"
+  BASE_HOOK: ".ci-local/base.patch"
+  BASE_RECURSIVE: NO
+  encrypted_178ee45b7f75_pass: ${{ secrets.encrypted_178ee45b7f75_pass }}
+
+jobs:
+  build-msvc:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    # Set environment variables from matrix parameters
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+      BASE: ${{ matrix.base }}
+      OPEN62541: ${{ matrix.open62541 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+
+          - os: windows-2019
+            cmp: vs2019
+            configuration: default
+            base: "3.15"
+            open62541: "1.3.12"
+            name: "3.15 Win2019 v1.3.12 VS2019 DLL"
+
+          - os: windows-2019
+            cmp: vs2019
+            configuration: default
+            base: "7.0"
+            open62541: "1.3.12"
+            name: "7.0 Win2019 v1.3.12 VS2019 DLL"
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Download and compile open62541 client
+      run: |
+        python .ci-local/install-open62541.py
+    - name: Prepare build dependencies
+      run: |
+        python .ci/cue.py prepare
+    - name: Install MSVC dependencies
+      run: |
+        python .ci-local/install-msvc-deps.py
+    - name: Add DLL locations to PATH
+      run: |
+        "C:/Users/runneradmin/.cache/open62541/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+        "C:/Users/runneradmin/.cache/libxml2-2.9.3/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+        "C:/Users/runneradmin/.cache/iconv-1.14/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+    - name: Build main module
+      run: python .ci/cue.py build
+    - name: Run main module tests
+      run: python .ci/cue.py test
+    - name: Collect and show test results
+      run: python .ci/cue.py test-results
+
+  build-msys2:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    # Set environment variables from matrix parameters
+    env:
+      CMP: gcc
+      CHOCO: NO
+      BCFG: ${{ matrix.configuration }}
+      BASE: ${{ matrix.base }}
+      OPEN62541: ${{ matrix.open62541 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+
+          - os: windows-2019
+            configuration: default
+            base: "3.15"
+            open62541: "1.3.12"
+            name: "3.15 Win2019 v1.3.12 MinGW DLL"
+
+          - os: windows-2019
+            configuration: default
+            base: "7.0"
+            open62541: "1.3.12"
+            name: "7.0 Win2019 v1.3.12 MinGW DLL"
+
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        release: false
+        msystem: mingw64
+        install: >-
+          git
+        pacboy: openssl:p
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Download and compile open62541 client
+      run: |
+        python .ci-local/install-open62541.py
+    - name: Prepare build dependencies
+      run: |
+        python .ci/cue.py prepare
+    - name: Build main module
+      run: |
+        export PATH=$PATH:/c/Users/runneradmin/.cache/open62541/bin
+        python .ci/cue.py build
+    - name: Run main module tests
+      run: |
+        export PATH=$PATH:/c/Users/runneradmin/.cache/open62541/bin
+        python .ci/cue.py test
+    - name: Collect and show test results
+      run: python .ci/cue.py test-results
