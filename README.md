@@ -1,6 +1,11 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
-<a target="_blank" href="https://github.com/epics-modules/opcua/actions/workflows/ci-build.yml">![GitHub Actions status][badge.gha]</a>
 <a target="_blank" href="https://app.codacy.com/gh/epics-modules/opcua/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade">![Codacy grade][badge.codacy]</a>
+
+[![open62541](https://github.com/epics-modules/opcua/actions/workflows/ci-build-open62541-linux.yml/badge.svg)](https://github.com/epics-modules/opcua/actions/workflows/ci-build-open62541-linux.yml)
+[![UA SDK](https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-linux.yml/badge.svg)](https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-linux.yml)
+
+[![open62541](https://github.com/epics-modules/opcua/actions/workflows/ci-build-open62541-win.yml/badge.svg)](https://github.com/epics-modules/opcua/actions/workflows/ci-build-open62541-win.yml)
+[![UA SDK](https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-win.yml/badge.svg)](https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-win.yml)
 
 # opcua - EPICS Device Support for OPC UA
 
@@ -151,6 +156,11 @@ in file LICENSE that is included with this distribution.
 [badge.version]: https://img.shields.io/github/v/release/epics-modules/opcua?sort=semver
 [badge.codacy]: https://app.codacy.com/project/badge/Grade/ec0d53f8285249d394b3af067acf2ad4
 [badge.gha]: https://github.com/epics-modules/opcua/actions/workflows/ci-build.yml/badge.svg
+
+[badge.ua-win]: https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-win.yml/badge.svg
+[badge.ua-linux]: 
+
+
 
 [unified.sdk]: https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html
 
