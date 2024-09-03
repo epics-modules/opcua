@@ -1,0 +1,75 @@
+# OPCUA CI build using EPICS ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# Unified Automation SDK client library - Windows builds
+# ======================================================
+
+# This is YAML - indentation levels are crucial
+
+# Set the 'name:' properties to values that work for you
+
+name: UA SDK Windows build
+
+# Trigger on pushes and PRs to any branch
+on:
+  push:
+    paths-ignore:
+      - 'documentation/*'
+      - '**/*.html'
+      - '**/*.md'
+      - 'devOpcuaSup/open62541/*'
+  pull_request:
+
+env:
+  SETUP_PATH: .ci-local:.ci
+  MODULES: "gtest"
+  GTEST: "v1.0.1"
+  BASE_HOOK: ".ci-local/base.patch"
+  BASE_RECURSIVE: NO
+  encrypted_178ee45b7f75_pass: ${{ secrets.encrypted_178ee45b7f75_pass }}
+
+jobs:
+  build-msvc:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    # Set environment variables from matrix parameters
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+      BASE: ${{ matrix.base }}
+      UASDK: ${{ matrix.uasdk }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+
+          - os: windows-2019
+            cmp: vs2019
+            configuration: default
+            base: "3.15"
+            uasdk: "1.6.3"
+            name: "3.15 Win2019 v1.6.3 VS2019 DLL"
+
+          - os: windows-2019
+            cmp: vs2019
+            configuration: default
+            base: "7.0"
+            uasdk: "1.6.3"
+            name: "7.0 Win2019 v1.6.3 VS2019 DLL"
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Download and install UASDK client
+      run: |
+        python .ci-local/install-sdk.py
+    - name: Prepare build dependencies
+      run: |
+        python .ci/cue.py prepare
+    - name: Build main module
+      run: python .ci/cue.py build
+    - name: Run main module tests
+      run: python .ci/cue.py test
+    - name: Collect and show test results
+      run: python .ci/cue.py test-results

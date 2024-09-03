@@ -1,13 +1,14 @@
 # OPCUA CI build using EPICS ci-scripts
 # (see: https://github.com/epics-base/ci-scripts)
 
-# open62541 SDK client library
+# Unified Automation SDK client library - Linux builds
+# ====================================================
 
 # This is YAML - indentation levels are crucial
 
 # Set the 'name:' properties to values that work for you
 
-name: open62541 SDK based build and end-to-end test
+name: UA SDK Linux build and end-to-end test
 
 # Trigger on pushes and PRs to any branch
 on:
@@ -16,7 +17,7 @@ on:
       - 'documentation/*'
       - '**/*.html'
       - '**/*.md'
-      - 'devOpcuaSup/UaSdk/*'
+      - 'devOpcuaSup/open62541/*'
   pull_request:
 
 env:
@@ -36,70 +37,77 @@ jobs:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
       BASE: ${{ matrix.base }}
-      OPEN62541: ${{ matrix.open62541 }}
+      UASDK: ${{ matrix.uasdk }}
     strategy:
       fail-fast: false
       matrix:
         include:
 
+          # Oldest supported Base 7.x
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "R7.0.4"
+            uasdk: "1.6.3"
+            name: "7.0.4 Ub-20 v1.6.3"
+
           - os: ubuntu-20.04
             cmp: gcc
             configuration: default
             base: "7.0"
-            open62541: "1.3.11"
-            name: "7.0 Ub-20 v1.3.11"
+            uasdk: "1.6.3"
+            name: "7.0 Ub-20 v1.6.3"
+
+          # Oldest supported Base 3.15.x
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "R3.15.7"
+            uasdk: "1.6.3"
+            name: "3.15.7 Ub-20 v1.6.3"
+
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "3.15"
+            uasdk: "1.6.3"
+            name: "3.15 Ub-20 v1.6.3"
+
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "R7.0.4"
+            uasdk: "1.7.2"
+            name: "7.0.4 Ub-20 v1.7.2"
 
           - os: ubuntu-20.04
             cmp: gcc
             configuration: default
             base: "7.0"
-            open62541: "1.2.7"
-            name: "7.0 Ub-20 v1.2.7"
+            uasdk: "1.7.2"
+            name: "7.0 Ub-20 v1.7.2"
+
+          - os: ubuntu-20.04
+            cmp: gcc
+            configuration: default
+            base: "R3.15.7"
+            uasdk: "1.7.2"
+            name: "3.15.7 Ub-20 v1.7.2"
 
           - os: ubuntu-20.04
             cmp: gcc
             configuration: default
             base: "3.15"
-            open62541: "1.3.11"
-            name: "3.15 Ub-20 v1.3.11"
-
-          - os: ubuntu-20.04
-            cmp: gcc
-            configuration: default
-            base: "3.15"
-            open62541: "1.2.7"
-            name: "3.15 Ub-20 v1.2.7"
-
-          # Windows
-
-          - os: windows-2019
-            cmp: vs2019
-            configuration: default
-            base: "3.15"
-            open62541: "1.3.11"
-            name: "3.15 Win2019 v1.3.11 MSC-19 DLL"
-
-          - os: windows-2019
-            cmp: gcc
-            configuration: default
-            base: "3.15"
-            open62541: "1.3.11"
-            name: "3.15 Win2019 v1.3.11 MinGW DLL"
-
-          - os: windows-2019
-            cmp: gcc
-            configuration: static-debug
-            base: "3.15"
-            open62541: "1.3.11"
-            name: "3.15 Win2019 v1.3.11 MinGW static"
+            uasdk: "1.7.2"
+            name: "3.15 Ub-20 v1.7.2"
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Download and compile open62541 client
+    - name: Download and install UASDK client
       run: |
-        python .ci-local/install-open62541.py
+        python .ci-local/install-sdk.py
     - name: Prepare build dependencies
       run: |
         python .ci/cue.py prepare
@@ -113,7 +121,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install libfaketime faketime
-        sudo pip3 install pytest opcua pyepics
+        sudo pip3 install pytest opcua pyepics==3.5.6
         sudo pip3 install run-iocsh -i https://artifactory.esss.lu.se/artifactory/api/pypi/pypi-virtual/simple
     - name: Run end2end tests
       run: |
