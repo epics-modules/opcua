@@ -67,6 +67,11 @@ jobs:
     - name: Prepare build dependencies
       run: |
         python .ci/cue.py prepare
+    - name: Add DLL locations to PATH
+      run: |
+        "C:/Users/runneradmin/.source/sdk/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+        "C:/Users/runneradmin/.source/sdk/third-party/win64/vs2015/libxml2/out32dll" | Out-File -FilePath $env:GITHUB_PATH -Append
+        "C:/Users/runneradmin/.source/sdk/third-party/win64/vs2015/openssl/out32dll" | Out-File -FilePath $env:GITHUB_PATH -Append
     - name: Build main module
       run: python .ci/cue.py build
     - name: Run main module tests

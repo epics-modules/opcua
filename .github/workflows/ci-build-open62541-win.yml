@@ -70,6 +70,11 @@ jobs:
     - name: Install MSVC dependencies
       run: |
         python .ci-local/install-msvc-deps.py
+    - name: Add DLL locations to PATH
+      run: |
+        "C:/Users/runneradmin/.cache/open62541/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+        "C:/Users/runneradmin/.cache/libxml2-2.9.3/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+        "C:/Users/runneradmin/.cache/iconv-1.14/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
     - name: Build main module
       run: python .ci/cue.py build
     - name: Run main module tests
@@ -125,8 +130,12 @@ jobs:
       run: |
         python .ci/cue.py prepare
     - name: Build main module
-      run: python .ci/cue.py build
+      run: |
+        export PATH=$PATH:/c/Users/runneradmin/.cache/open62541/bin
+        python .ci/cue.py build
     - name: Run main module tests
-      run: python .ci/cue.py test
+      run: |
+        export PATH=$PATH:/c/Users/runneradmin/.cache/open62541/bin
+        python .ci/cue.py test
     - name: Collect and show test results
       run: python .ci/cue.py test-results
