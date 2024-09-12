@@ -18,6 +18,11 @@ opcuaSubscription SUB1 OPC1 200
 # Switch off security
 opcuaOptions OPC1 sec-mode=None
 
+# Set up a namespace mapping
+# (the databases use ns=2, but the demo server >=v1.8 uses ns=3)
+
+opcuaMapNamespace OPC1 2 "http://www.unifiedautomation.com/DemoServer/"
+
 # Load the databases for the UaServerCpp demo server
 # (you can set DEBUG=<n>) to set default values in all TPRO fields)
 
