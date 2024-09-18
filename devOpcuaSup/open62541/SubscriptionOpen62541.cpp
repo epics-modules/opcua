@@ -172,7 +172,8 @@ SubscriptionOpen62541::addMonitoredItems ()
                 it->setRevisedSamplingInterval(monitoredItemCreateResult.revisedSamplingInterval);
                 it->setRevisedQueueSize(monitoredItemCreateResult.revisedQueueSize);
                 if (debug >= 5) {
-                    std::cout << "** Monitored item " << monitoredItemCreateRequest.itemToMonitor.nodeId
+                    std::cout << "** OPC UA record " << it->recConnector->getRecordName()
+                              << " monitored item " << monitoredItemCreateRequest.itemToMonitor.nodeId
                               << " succeeded with id " << monitoredItemCreateResult.monitoredItemId
                               << " revised sampling interval " << monitoredItemCreateResult.revisedSamplingInterval
                               << " revised queue size " << monitoredItemCreateResult.revisedQueueSize
@@ -183,6 +184,7 @@ SubscriptionOpen62541::addMonitoredItems ()
                           << " monitored item " << monitoredItemCreateRequest.itemToMonitor.nodeId
                           << " failed with error " << UA_StatusCode_name(monitoredItemCreateResult.statusCode)
                           << std::endl;
+                it->setIncomingEvent(ProcessReason::connectionLoss);
             }
             i++;
         }

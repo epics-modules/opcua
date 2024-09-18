@@ -2347,7 +2347,6 @@ SessionOpen62541::connectionStatusChanged (
                 rebuildNodeIds();
                 registerNodes();
                 createAllSubscriptions();
-                addAllMonitoredItems();
                 if (debug) {
                     std::cout << "Session " << name
                               << ": triggering initial read for all "
@@ -2365,6 +2364,7 @@ SessionOpen62541::connectionStatusChanged (
                 // status needs to be updated before requests are being issued
                 sessionState = newSessionState;
                 reader.pushRequest(cargo, menuPriorityHIGH);
+                addAllMonitoredItems();
                 break;
             }
 

@@ -202,7 +202,8 @@ SubscriptionUaSdk::addMonitoredItems ()
             for (i = 0; i < items.size(); i++) {
                 if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode)) {
                     if (debug >= 5)
-                        std::cout << "** Monitored item " << UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8()
+                        std::cout << "** OPC UA record " << items[i]->recConnector->getRecordName()
+                                  << " monitored item " << UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8()
                                   << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
                                   << " revised sampling interval " << monitoredItemCreateResults[i].RevisedSamplingInterval
                                   << " revised queue size " << monitoredItemCreateResults[i].RevisedQueueSize
@@ -212,6 +213,7 @@ SubscriptionUaSdk::addMonitoredItems ()
                         items[i]->recConnector->getRecordName(),
                         UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8(),
                         UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8());
+                    items[i]->setIncomingEvent(ProcessReason::connectionLoss);
                 }
             }
         }
