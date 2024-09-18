@@ -1173,7 +1173,6 @@ void SessionUaSdk::connectionStatusChanged (
             rebuildNodeIds();
             registerNodes();
             createAllSubscriptions();
-            addAllMonitoredItems();
         }
         if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout) {
             if (debug) {
@@ -1192,6 +1191,8 @@ void SessionUaSdk::connectionStatusChanged (
             // status needs to be updated before requests are being issued
             serverConnectionStatus = serverStatus;
             reader.pushRequest(cargo, menuPriorityHIGH);
+            epicsThreadSleep(0.01); // Don't know how to wait for initial read to complete
+            addAllMonitoredItems();
         }
         break;
 
