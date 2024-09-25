@@ -1210,7 +1210,7 @@ private:
 
     // Write array value for EPICS String / UA_String
     long
-    writeArray (const char **value, const epicsUInt32 len,
+    writeArray (const char *value, const epicsUInt32 len,
                 const epicsUInt32 num,
                 const UA_DataType *targetType,
                 dbCommon *prec);

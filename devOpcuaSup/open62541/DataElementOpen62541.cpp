@@ -1093,7 +1093,7 @@ DataElementOpen62541::dbgWriteArray (const epicsUInt32 targetSize, const std::st
 
 // Write array for EPICS String / UA_String
 long
-DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
+DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len,
                               const epicsUInt32 num,
                               const UA_DataType *targetType,
                               dbCommon *prec)
@@ -1109,7 +1109,7 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
                      prec->name,
                      variantTypeString(incomingData),
                      variantTypeString(targetType),
-                     epicsTypeString(*value));
+                     epicsTypeString(value));
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     } else {
@@ -1117,36 +1117,23 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
         if (!arr) {
             errlogPrintf("%s : out of memory\n", prec->name);
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            ret = 1;
         } else {
             for (epicsUInt32 i = 0; i < num; i++) {
-                char *val = nullptr;
-                const char *pval;
-                // add zero termination if necessary
-                if (memchr(value[i], '\0', len) == nullptr) {
-                    val = new char[static_cast<epicsInt64>(len)+1]; // static_cast to avoid warning C26451
-                    strncpy(val, value[i], len);
-                    val[len] = '\0';
-                    pval = val;
-                } else {
-                    pval = value[i];
+                arr[i].length = strnlen(value, len);
+                if (arr[i].length) {
+                    arr[i].data = static_cast<UA_Byte*>(UA_malloc(arr[i].length));
+                    memcpy(arr[i].data, value, arr[i].length);
                 }
-                arr[i] = UA_STRING_ALLOC(pval);
-                delete[] val;
+                value += len;
             }
-            UA_StatusCode status;
             { // Scope of Guard G
                 Guard G(outgoingLock);
-                status = UA_Variant_setArrayCopy(&outgoingData, arr, num, targetType);
+                UA_Variant_setArray(&outgoingData, arr, num, targetType);
                 markAsDirty();
             }
-            if (UA_STATUS_IS_BAD(status)) {
-                errlogPrintf("%s : array copy failed: %s\n",
-                             prec->name, UA_StatusCode_name(status));
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
-            } else {
-                dbgWriteArray(num, epicsTypeString(*value));
-            }
+
+            dbgWriteArray(num, epicsTypeString(value));
         }
     }
     return ret;
@@ -1215,7 +1202,7 @@ DataElementOpen62541::writeArray (const epicsFloat64 *value, const epicsUInt32 n
 long
 DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray(&value, len, num, &UA_TYPES[UA_TYPES_STRING], prec);
+    return writeArray(value, len, num, &UA_TYPES[UA_TYPES_STRING], prec);
 }
 
 void

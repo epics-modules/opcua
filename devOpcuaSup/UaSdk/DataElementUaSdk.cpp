@@ -1051,7 +1051,7 @@ DataElementUaSdk::dbgWriteArray (const epicsUInt32 targetSize, const std::string
 
 // Write array for EPICS String / OpcUa_String
 long
-DataElementUaSdk::writeArray (const char **value, const epicsUInt32 len,
+DataElementUaSdk::writeArray (const char *value, const epicsUInt32 len,
                               const epicsUInt32 num,
                               OpcUa_BuiltInType targetType,
                               dbCommon *prec)
@@ -1067,7 +1067,7 @@ DataElementUaSdk::writeArray (const char **value, const epicsUInt32 len,
                      prec->name,
                      variantTypeString(incomingData.type()),
                      variantTypeString(targetType),
-                     epicsTypeString(*value));
+                     epicsTypeString(value));
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     } else {
@@ -1077,16 +1077,17 @@ DataElementUaSdk::writeArray (const char **value, const epicsUInt32 len,
             char *val = nullptr;
             const char *pval;
             // add zero termination if necessary
-            if (memchr(value[i], '\0', len) == nullptr) {
+            if (value[len-1] != '\0') {
                 val = new char[len+1];
-                strncpy(val, value[i], len);
+                strncpy(val, value, len);
                 val[len] = '\0';
                 pval = val;
             } else {
-                pval = value[i];
+                pval = value;
             }
             UaString(pval).copyTo(&arr[i]);
             delete[] val;
+            value += len;
         }
         { // Scope of Guard G
             Guard G(outgoingLock);
@@ -1094,7 +1095,7 @@ DataElementUaSdk::writeArray (const char **value, const epicsUInt32 len,
             markAsDirty();
         }
 
-        dbgWriteArray(num, epicsTypeString(*value));
+        dbgWriteArray(num, epicsTypeString(value));
     }
     return ret;
 }
@@ -1198,7 +1199,7 @@ DataElementUaSdk::writeArray (const epicsFloat64 *value, const epicsUInt32 num, 
 long
 DataElementUaSdk::writeArray (const char *value, const epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray(&value, len, num, OpcUaType_String, prec);
+    return writeArray(value, len, num, OpcUaType_String, prec);
 }
 
 void
