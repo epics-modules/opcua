@@ -94,13 +94,13 @@ public:
      * @brief Setter for the node id of this item.
      * @return node id
      */
-    void setRegisteredNodeId(const UA_NodeId &id) { UA_NodeId_copy(&id, &nodeid); registered = true; }
+    void setRegisteredNodeId(const UA_NodeId &id) { UA_NodeId_copy(&id, &nodeId); registered = true; }
 
     /**
      * @brief Getter that returns the node id of this item.
      * @return node id
      */
-    const UA_NodeId &getNodeId() const { return nodeid; }
+    const UA_NodeId &getNodeId() const { return nodeId; }
 
     /**
      * @brief Setter for the status of a read operation.
@@ -202,7 +202,7 @@ public:
 private:
     SubscriptionOpen62541 *subscription;   /**< raw pointer to subscription (if monitored) */
     SessionOpen62541 *session;             /**< raw pointer to session */
-    UA_NodeId nodeid;                      /**< node id of this item */
+    UA_NodeId nodeId;                      /**< node id of this item */
     bool registered;                       /**< flag for registration status */
     UA_Double revisedSamplingInterval;     /**< server-revised sampling interval */
     UA_UInt32 revisedQueueSize;            /**< server-revised queue size */
