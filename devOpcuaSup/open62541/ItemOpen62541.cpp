@@ -46,7 +46,7 @@ ItemOpen62541::ItemOpen62541(const linkInfo &info)
     , lastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED)
     , lastReason(ProcessReason::connectionLoss)
 {
-    UA_NodeId_init(&nodeid);
+    UA_NodeId_init(&nodeId);
     if (linkinfo.subscription != "" && linkinfo.monitor) {
         subscription = SubscriptionOpen62541::find(linkinfo.subscription);
         subscription->addItemOpen62541(this);
@@ -61,18 +61,18 @@ ItemOpen62541::~ItemOpen62541 ()
 {
     subscription->removeItemOpen62541(this);
     session->removeItemOpen62541(this);
-    UA_NodeId_clear(&nodeid);
+    UA_NodeId_clear(&nodeId);
 }
 
 void
 ItemOpen62541::rebuildNodeId ()
 {
     UA_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
-    UA_NodeId_clear(&nodeid);
+    UA_NodeId_clear(&nodeId);
     if (linkinfo.identifierIsNumeric) {
-        nodeid = UA_NODEID_NUMERIC(ns, linkinfo.identifierNumber);
+        nodeId = UA_NODEID_NUMERIC(ns, linkinfo.identifierNumber);
     } else {
-        nodeid = UA_NODEID_STRING_ALLOC(ns, linkinfo.identifierString.c_str());
+        nodeId = UA_NODEID_STRING_ALLOC(ns, linkinfo.identifierString.c_str());
     }
     registered = false;
 }
@@ -90,8 +90,8 @@ ItemOpen62541::show (int level) const
 {
     std::cout << "item"
               << " ns=";
-    if (nodeid.namespaceIndex != linkinfo.namespaceIndex)
-        std::cout << nodeid.namespaceIndex << "(" << linkinfo.namespaceIndex << ")";
+    if (nodeId.namespaceIndex != linkinfo.namespaceIndex)
+        std::cout << nodeId.namespaceIndex << "(" << linkinfo.namespaceIndex << ")";
     else
         std::cout << linkinfo.namespaceIndex;
     if (linkinfo.identifierIsNumeric)
@@ -115,7 +115,7 @@ ItemOpen62541::show (int level) const
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
               << " registered=";
     if (registered)
-        std::cout << nodeid;
+        std::cout << nodeId;
         else std::cout << "-";
     std::cout << "(" << (linkinfo.registerNode ? "y" : "n") << ")"
               << std::endl;
