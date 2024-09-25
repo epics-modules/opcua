@@ -999,161 +999,148 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     unsigned long ul;
     double d;
 
-    switch (typeKindOf(incomingData)) {
-    case UA_DATATYPEKIND_STRING:
-    {
-        UA_String val;
-        val.length = strnlen(value, len);
-        val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
-        { // Scope of Guard G
-            Guard G(outgoingLock);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
-            markAsDirty();
-        }
-        break;
-    }
-    case UA_DATATYPEKIND_LOCALIZEDTEXT:
-    {
-        UA_LocalizedText val;
-        val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
-        val.text.length = strnlen(value, len);
-        val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
-        { // Scope of Guard G
-            Guard G(outgoingLock);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
-            markAsDirty();
-        }
-        break;
-    }
-    case UA_DATATYPEKIND_BOOLEAN:
     { // Scope of Guard G
         Guard G(outgoingLock);
-        UA_Boolean val = strchr("YyTt1", *value) != NULL;
-        status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
-        markAsDirty();
-        break;
-    }
-    case UA_DATATYPEKIND_BYTE:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<UA_Byte>(ul)) {
-            Guard G(outgoingLock);
-            UA_Byte val = static_cast<UA_Byte>(ul);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
+        UA_Variant_clear(&outgoingData);  // unlikely but we may still have unsent old data to discard
+        switch (typeKindOf(incomingData)) {
+        case UA_DATATYPEKIND_STRING:
+        {
+            UA_String val;
+            val.length = strnlen(value, len);
+            val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_SBYTE:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<UA_SByte>(l)) {
-            Guard G(outgoingLock);
-            UA_SByte val = static_cast<UA_Byte>(l);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
+        case UA_DATATYPEKIND_LOCALIZEDTEXT:
+        {
+            UA_LocalizedText val;
+            val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
+            val.text.length = strnlen(value, len);
+            val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_UINT16:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<UA_UInt16>(ul)) {
-            Guard G(outgoingLock);
-            UA_UInt16 val = static_cast<UA_UInt16>(ul);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
+        case UA_DATATYPEKIND_BOOLEAN:
+        {
+            UA_Boolean val = strchr("YyTt1", *value) != NULL;
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_INT16:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<UA_Int16>(l)) {
-            Guard G(outgoingLock);
-            UA_Int16 val = static_cast<UA_Int16>(l);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
+        case UA_DATATYPEKIND_BYTE:
+            ul = strtoul(value, nullptr, 0);
+            if (isWithinRange<UA_Byte>(ul)) {
+                UA_Byte val = static_cast<UA_Byte>(ul);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_SBYTE:
+            l = strtol(value, nullptr, 0);
+            if (isWithinRange<UA_SByte>(l)) {
+                UA_SByte val = static_cast<UA_Byte>(l);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_UINT16:
+            ul = strtoul(value, nullptr, 0);
+            if (isWithinRange<UA_UInt16>(ul)) {
+                UA_UInt16 val = static_cast<UA_UInt16>(ul);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_INT16:
+            l = strtol(value, nullptr, 0);
+            if (isWithinRange<UA_Int16>(l)) {
+                UA_Int16 val = static_cast<UA_Int16>(l);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_UINT32:
+            ul = strtoul(value, nullptr, 0);
+            if (isWithinRange<UA_UInt32>(ul)) {
+                UA_UInt32 val = static_cast<UA_UInt32>(ul);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_INT32:
+            l = strtol(value, nullptr, 0);
+            if (isWithinRange<UA_Int32>(l)) {
+                UA_Int32 val = static_cast<UA_Int32>(l);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_UINT64:
+            ul = strtoul(value, nullptr, 0);
+            if (isWithinRange<UA_UInt64>(ul)) {
+                UA_UInt64 val = static_cast<UA_UInt64>(ul);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_INT64:
+            l = strtol(value, nullptr, 0);
+            if (isWithinRange<UA_Int64>(l)) {
+                UA_Int64 val = static_cast<UA_Int64>(l);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_FLOAT:
+            d = strtod(value, nullptr);
+            if (isWithinRange<UA_Float>(d)) {
+                UA_Float val = static_cast<UA_Float>(d);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
+                markAsDirty();
+            } else {
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                ret = 1;
+            }
+            break;
+        case UA_DATATYPEKIND_DOUBLE:
+        {
+            d = strtod(value, nullptr);
+            UA_Double val = static_cast<UA_Double>(d);
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_UINT32:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<UA_UInt32>(ul)) {
-            Guard G(outgoingLock);
-            UA_UInt32 val = static_cast<UA_UInt32>(ul);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
-            markAsDirty();
-        } else {
+        default:
+            errlogPrintf("%s : unsupported conversion for outgoing data\n",
+                         prec->name);
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
         }
-        break;
-    case UA_DATATYPEKIND_INT32:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<UA_Int32>(l)) {
-            Guard G(outgoingLock);
-            UA_Int32 val = static_cast<UA_Int32>(l);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
-            markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
-        }
-        break;
-    case UA_DATATYPEKIND_UINT64:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<UA_UInt64>(ul)) {
-            Guard G(outgoingLock);
-            UA_UInt64 val = static_cast<UA_UInt64>(ul);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
-            markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
-        }
-        break;
-    case UA_DATATYPEKIND_INT64:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<UA_Int64>(l)) {
-            Guard G(outgoingLock);
-            UA_Int64 val = static_cast<UA_Int64>(l);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
-            markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
-        }
-        break;
-    case UA_DATATYPEKIND_FLOAT:
-        d = strtod(value, nullptr);
-        if (isWithinRange<UA_Float>(d)) {
-            Guard G(outgoingLock);
-            UA_Float val = static_cast<UA_Float>(d);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
-            markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
-        }
-        break;
-    case UA_DATATYPEKIND_DOUBLE:
-    {
-        d = strtod(value, nullptr);
-        Guard G(outgoingLock);
-        UA_Double val = static_cast<UA_Double>(d);
-        status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
-        markAsDirty();
-        break;
-    }
-    default:
-        errlogPrintf("%s : unsupported conversion for outgoing data\n",
-                     prec->name);
-        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
     }
     if (ret == 0 && UA_STATUS_IS_BAD(status)) {
         errlogPrintf("%s : scalar copy failed: %s\n",
@@ -1215,7 +1202,8 @@ DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len,
             }
             { // Scope of Guard G
                 Guard G(outgoingLock);
-                UA_Variant_setArray(&outgoingData, arr, num, targetType);
+                UA_Variant_clear(&outgoingData);  // unlikely but we may still have unsent old data to discard
+                UA_Variant_setArray(&outgoingData, arr, num, targetType); // no copy but move arr content
                 markAsDirty();
             }
 
