@@ -1067,7 +1067,7 @@ private:
 
     // Write array value for EPICS String / OpcUa_String
     long
-    writeArray (const char **value, const epicsUInt32 len,
+    writeArray (const char *value, const epicsUInt32 len,
                 const epicsUInt32 num,
                 OpcUa_BuiltInType targetType,
                 dbCommon *prec);
