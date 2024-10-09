@@ -219,6 +219,8 @@ ItemUaSdk::setState(const ConnectionStatus state)
     if (auto pd = dataTree.root().lock()) {
         pd->setState(state);
     }
+    if (linkinfo.isItemRecord)
+        recConnector->setState(state);
 }
 
 void
