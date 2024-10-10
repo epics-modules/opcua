@@ -179,8 +179,8 @@ DataElementOpen62541::createMap (const UA_DataType *type,
                                  timefrom->c_str(),
                                  typeKindName(typeKindOf(timeMemberType)),
                                  timeIsArray ? "[]" : "");
-                }
-                timesrc = timeOffset;
+                } else
+                    timesrc = timeOffset;
             } else {
                 errlogPrintf(
                     "%s: timestamp element %s not found - using source timestamp\n",
