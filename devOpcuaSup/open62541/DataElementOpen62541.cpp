@@ -109,26 +109,31 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
 
 // Older open62541 version 1.2 has no UA_DataType_getStructMember
 // Code from open62541 version 1.3.7 modified for compatibility with version 1.2
-// and extended to return isOptional flag
-UA_Boolean
+// and extended to return isOptional flag and index for union
+
+inline const UA_DataType*
+memberTypeOf(const UA_DataType *type, const UA_DataTypeMember *m) {
+#ifdef UA_DATATYPES_USE_POINTER
+    return m->memberType;
+#else
+    const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+    return &typelists[!m->namespaceZero][m->memberTypeIndex];
+#endif
+}
+
+UA_UInt32
 UA_DataType_getStructMemberExt(const UA_DataType *type, const char *memberName,
                             size_t *outOffset, const UA_DataType **outMemberType,
                             UA_Boolean *outIsArray, UA_Boolean *outIsOptional) {
     if(type->typeKind != UA_DATATYPEKIND_STRUCTURE &&
-       type->typeKind != UA_DATATYPEKIND_OPTSTRUCT)
-        return false;
+       type->typeKind != UA_DATATYPEKIND_OPTSTRUCT &&
+       type->typeKind != UA_DATATYPEKIND_UNION)
+        return 0;
 
     size_t offset = 0;
-#ifndef UA_DATATYPES_USE_POINTER
-    const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
-#endif
-    for(size_t i = 0; i < type->membersSize; ++i) {
+    for(UA_UInt32 i = 0; i < type->membersSize; ++i) {
         const UA_DataTypeMember *m = &type->members[i];
-#ifndef UA_DATATYPES_USE_POINTER
-        const UA_DataType *mt = &typelists[!m->namespaceZero][m->memberTypeIndex];
-#else
-        const UA_DataType *mt = m->memberType;
-#endif
+        const UA_DataType *mt = memberTypeOf(type, m);
         offset += m->padding;
 
         if(strcmp(memberName, m->memberName) == 0) {
@@ -136,10 +141,12 @@ UA_DataType_getStructMemberExt(const UA_DataType *type, const char *memberName,
             *outMemberType = mt;
             *outIsArray = m->isArray;
             *outIsOptional = m->isOptional;
-            return true;
+            return i+1;
         }
 
-        if(!m->isOptional) {
+        if (type->typeKind == UA_DATATYPEKIND_UNION) {
+            offset = 0;
+        } else if(!m->isOptional) {
             if(!m->isArray) {
                 offset += mt->memSize;
             } else {
@@ -156,19 +163,20 @@ UA_DataType_getStructMemberExt(const UA_DataType *type, const char *memberName,
         }
     }
 
-    return false;
+    return 0;
 }
 
 void
 DataElementOpen62541::createMap (const UA_DataType *type,
                                  const std::string *timefrom)
 {
+    if (debug() >= 5)
+        std::cout << " ** creating index-to-element map for child elements" << std::endl;
+
     switch (typeKindOf(type)) {
     case UA_DATATYPEKIND_STRUCTURE:
-    case UA_DATATYPEKIND_OPTSTRUCT: {
-        if (debug() >= 5)
-            std::cout << " ** creating index-to-element map for child elements" << std::endl;
-
+    case UA_DATATYPEKIND_OPTSTRUCT:
+    case UA_DATATYPEKIND_UNION:
         if (timefrom) {
             const UA_DataType *timeMemberType;
             UA_Boolean timeIsArray;
@@ -199,11 +207,20 @@ DataElementOpen62541::createMap (const UA_DataType *type,
 
         for (auto &it : elements) {
             auto pelem = it.lock();
-            if (UA_DataType_getStructMemberExt(type, pelem->name.c_str(),
+            if ((pelem->index = UA_DataType_getStructMemberExt(type, pelem->name.c_str(),
                             &pelem->offset,
                             &pelem->memberType,
                             &pelem->isArray,
-                            &pelem->isOptional)) {
+                            &pelem->isOptional))) {
+                if (debug() >= 5)
+                    std::cout << typeKindName(typeKindOf(type))
+                              << " " << pelem
+                              << " index=" << pelem->index
+                              << " offset=" << pelem->offset
+                              << " type=" << variantTypeString(pelem->memberType)
+                              << (pelem->isArray ? "[]" : "")
+                              << (pelem->isOptional ? " optional" : "")
+                              << std::endl;
                 if (typeKindOf(pelem->memberType) == UA_DATATYPEKIND_ENUM) {
                     pelem->enumChoices = pitem->session->getEnumChoices(&pelem->memberType->typeId);
                 }
@@ -220,7 +237,6 @@ DataElementOpen62541::createMap (const UA_DataType *type,
                       << variantTypeString(type)
                       << " of " << type->membersSize << " elements" << std::endl;
         break;
-    }
     default:
         std::cerr << "Error: " << this
                   << " is not a structure or an optstruct but a " << typeKindName(typeKindOf(type))
@@ -314,14 +330,21 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                 /* optional scalar stored through pointer like an array */
                 memberData = *reinterpret_cast<char**>(memberData);
             }
+            if (type->typeKind == UA_DATATYPEKIND_UNION &&
+                    pelem->index != *reinterpret_cast<UA_UInt32*>(container)) {
+                // union option not taken
+                memberData = nullptr;
+            }
             UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
-            if (debug() && !memberData && pelem->isOptional) {
-                std::cerr << pelem << " absent optional " << variantTypeString(memberType)
+            if (debug() && !memberData) {
+                std::cerr << pitem->recConnector->getRecordName()
+                          << " " << pelem
+                          << (type->typeKind == UA_DATATYPEKIND_UNION ? " not taken choice " : " absent optional ")
+                          << variantTypeString(memberType)
                           << (pelem->isArray ? " array" : " scalar" )
                           << std::endl;
             }
-            pelem->setIncomingData(memberValue,
-                pelem->isOptional && !memberData ? ProcessReason::readFailure : reason);
+            pelem->setIncomingData(memberValue, memberData ? reason : ProcessReason::readFailure);
         }
     }
 }
@@ -387,6 +410,9 @@ DataElementOpen62541::updateDataInStruct(void* container,
                 // mandatory scalar: shallow copy
                 UA_clear(memberData, memberType);
                 void* data = pelem->moveOutgoingData();
+                if (typeKindOf(outgoingData) == UA_DATATYPEKIND_UNION) {
+                    *reinterpret_cast<UA_UInt32*>(container) = pelem->index;
+                }
                 memcpy(memberData, data, memberType->memSize);
                 UA_free(data);
             } else {
@@ -437,7 +463,8 @@ DataElementOpen62541::getOutgoingData ()
         isdirty = false;
         const UA_DataType *type = outgoingData.type;
         void* container = outgoingData.data;
-        if (type && type->typeKind == UA_DATATYPEKIND_EXTENSIONOBJECT) {
+
+        if (typeKindOf(type) == UA_DATATYPEKIND_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content decoded extension objects
@@ -591,35 +618,57 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 if (UA_STATUS_IS_UNCERTAIN(stat)) {
                     (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                 }
-                UA_Variant &data = upd->getData();
-                size_t n = num-1;
+
                 UA_String buffer = UA_STRING_NULL;
                 UA_String *datastring = &buffer;
-                switch (typeKindOf(data)) {
+                size_t n = num-1;
+
+                UA_Variant &data = upd->getData();
+                void* payload = data.data;
+                const UA_DataType* type = data.type;
+
+                if (type->typeKind == UA_DATATYPEKIND_UNION)
+                {
+                    UA_UInt32 switchfield = *static_cast<UA_UInt32*>(payload)-1;
+                    if (switchfield >= type->membersSize) {
+                        (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                        break;
+                    }
+                    const UA_DataTypeMember *member = &type->members[switchfield];
+                    payload = static_cast<char*>(payload) + member->padding;
+                    type = memberTypeOf(type, member);
+
+                    // prefix value string with switch choice name
+                    size_t len = snprintf(value, n, "%s:", member->memberName);
+                    value += len;
+                    n -= len;
+                }
+
+                switch (type->typeKind) {
                 case UA_DATATYPEKIND_STRING:
                 {
-                    datastring = static_cast<UA_String *>(data.data);
+                    datastring = static_cast<UA_String *>(payload);
                     break;
                 }
                 case UA_DATATYPEKIND_LOCALIZEDTEXT:
                 {
-                    datastring = &static_cast<UA_LocalizedText *>(data.data)->text;
+                    datastring = &static_cast<UA_LocalizedText *>(payload)->text;
                     break;
                 }
                 case UA_DATATYPEKIND_DATETIME:
                 {
                     // UA_print does not correct printed time for time zone
                     UA_Int64 tOffset = UA_DateTime_localTimeUtcOffset();
-                    UA_DateTime dt = *static_cast<UA_DateTime*>(data.data);
+                    UA_DateTime dt = *static_cast<UA_DateTime*>(payload);
                     dt += tOffset;
-                    UA_print(&dt, data.type, &buffer);
+                    UA_print(&dt, type, &buffer);
                     break;
                 }
                 case UA_DATATYPEKIND_ENUM:
                 case UA_DATATYPEKIND_INT32:
                 {
                     if (enumChoices) {
-                        auto it = enumChoices->find(*static_cast<UA_UInt32*>(data.data));
+                        auto it = enumChoices->find(*static_cast<UA_UInt32*>(payload));
                         if (it != enumChoices->end()) {
                             buffer = UA_String_fromChars(it->second.c_str());
                             break;
@@ -628,9 +677,9 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                     // no enum or index not found: fall through
                 }
                 default:
-                    if (data.type)
-                        UA_print(data.data, data.type, &buffer);
-                }
+                    if (type)
+                        UA_print(payload, type, &buffer);
+                };
                 if (n > datastring->length)
                     n = datastring->length;
                 strncpy(value, reinterpret_cast<char*>(datastring->data), n);
@@ -1027,7 +1076,7 @@ DataElementOpen62541::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 }
 
 long
-DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
+DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon *prec)
 {
     long ret = 1;
     UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
@@ -1039,7 +1088,25 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
     { // Scope of Guard G
         Guard G(outgoingLock);
         UA_Variant_clear(&outgoingData);  // unlikely but we may still have unsent old data to discard
-        switch (typeKindOf(incomingData)) {
+        const UA_DataType* type = incomingData.type;
+
+        int switchfield = -1;
+        if (typeKindOf(type) == UA_DATATYPEKIND_UNION) {
+            if (value[0] == '\0') {
+                switchfield = 0;
+            } else for (UA_UInt32 i = 0; i < type->membersSize; i++) {
+                size_t namelen = strlen(type->members[i].memberName);
+                if (strncmp(value, type->members[i].memberName, namelen) == 0
+                        && value[namelen] == ':') {
+                    value += namelen+1;
+                    len -= namelen+1;
+                    switchfield = i+1;
+                    type = memberTypeOf(type, &type->members[i]);
+                }
+            }
+        }
+
+        switch (typeKindOf(type)) {
         case UA_DATATYPEKIND_STRING:
         {
             UA_String val;
@@ -1176,8 +1243,6 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
             if (end != value) {
                 UA_Double val = static_cast<UA_Double>(d);
                 status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
-                markAsDirty();
-                ret = 0;
             }
             break;
         }
@@ -1186,7 +1251,23 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
                          prec->name, variantTypeString(incomingData));
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         }
-    }
+        if (switchfield >= 0) {
+            // manually wrap value from outgoingData into union
+            void *p = UA_new(incomingData.type);
+            if (p) {
+                *static_cast<UA_UInt32*>(p) = switchfield;
+                if (switchfield > 0) {
+                    memcpy(static_cast<char*>(p) + incomingData.type->members[switchfield-1].padding,
+                        outgoingData.data, outgoingData.type->memSize);
+                    UA_free(outgoingData.data);
+                }
+                UA_Variant_setScalar(&outgoingData, p, incomingData.type);
+                status = UA_STATUSCODE_GOOD;
+                markAsDirty();
+                ret = 0;
+            }
+        }
+    } // Scope of Guard G
     if (ret != 0) {
         errlogPrintf("%s : value \"%s\" out of range\n",
                      prec->name, value);
