@@ -683,9 +683,6 @@ private:
                       const std::string &targetTypeName) const;
     void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
-    bool updateDataInGenericValue(UaGenericStructureValue &value,
-                                  const int index,
-                                  std::shared_ptr<DataElementUaSdk> pelem);
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
     void
