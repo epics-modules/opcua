@@ -154,7 +154,7 @@ ItemOpen62541::uaToEpicsTime (const UA_DateTime &dt, const UA_UInt16 pico10)
 }
 
 void
-ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
+ItemOpen62541::setIncomingData(UA_DataValue &value, ProcessReason reason)
 {
     tsClient = epicsTime::getCurrent();
     if (!UA_STATUS_IS_BAD(value.status)) {
@@ -182,6 +182,7 @@ ItemOpen62541::setIncomingData(const UA_DataValue &value, ProcessReason reason)
         if (linkinfo.timestamp == LinkOptionTimestamp::data && linkinfo.timestampElement.length())
             timefrom = &linkinfo.timestampElement;
         pd->setIncomingData(value.value, reason, timefrom);
+        value.value.storageType = UA_VARIANT_DATA_NODELETE; // take ownership of data
     }
 
     if (linkinfo.isItemRecord) {

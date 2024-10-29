@@ -154,7 +154,7 @@ public:
      * @param value  new value for this data element
      * @param reason  reason for this value update
      */
-    void setIncomingData(const UA_DataValue &value, ProcessReason reason);
+    void setIncomingData(UA_DataValue &value, ProcessReason reason);
 
     /**
      * @brief Push an incoming event down the root element.
