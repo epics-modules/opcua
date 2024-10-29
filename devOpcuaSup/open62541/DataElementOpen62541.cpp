@@ -252,9 +252,11 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                                        ProcessReason reason,
                                        const std::string *timefrom)
 {
-    // Make a copy of this element and cache it
+    // Cache this element. We can make a shallow copy because
+    // ItemOpen62541::setIncomingData marks the original response data as "ours".
+    // Member data is owned by the [ROOT] element.
     UA_Variant_clear(&incomingData);
-    UA_Variant_copy(&value, &incomingData);
+    incomingData = value;
 
     if (isLeaf()) {
         if (pconnector->state() == ConnectionStatus::initialRead && typeKindOf(value) == UA_DATATYPEKIND_ENUM) {
@@ -336,6 +338,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                 memberData = nullptr;
             }
             UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
+            memberValue.storageType = UA_VARIANT_DATA_NODELETE; // Keep ownership of data
             if (debug() && !memberData) {
                 std::cerr << pitem->recConnector->getRecordName()
                           << " " << pelem
