@@ -155,7 +155,7 @@ public:
      * @param reason  reason for this value update
      * @param typeId  data type id of the item
      */
-    void setIncomingData(const UA_DataValue &value, ProcessReason reason);
+    void setIncomingData(UA_DataValue &value, ProcessReason reason);
 
     /**
      * @brief Push an incoming event down the root element.
