@@ -331,9 +331,10 @@ public:
      * DevOpcua::DataElement::readScalar(char*,const size_t,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
 
-    virtual long int readScalar(char *value, const size_t num,
+    virtual long int readScalar(char *value, const epicsUInt32 len,
                                 dbCommon *prec,
                                 ProcessReason *nextReason = nullptr,
+                                epicsUInt32 *lenRead = nullptr,
                                 epicsUInt32 *statusCode = nullptr,
                                 char *statusText = nullptr,
                                 const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
@@ -484,7 +485,7 @@ public:
      * See the DataElement API method it overrides
      * DevOpcua::DataElement::readArray(char*,const epicsUInt32,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
-    virtual long int readArray(char *value, const epicsUInt32 len,
+    virtual long int readArray(char *value, epicsUInt32 len,
                                const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
@@ -645,7 +646,7 @@ public:
      * See the DataElement API method it overrides
      * DevOpcua::DataElement::writeArray(const char*,const epicsUInt32,dbCommon*)
      */
-    virtual long int writeArray(const char *value, const epicsUInt32 len,
+    virtual long int writeArray(const char *value, epicsUInt32 len,
                                 const epicsUInt32 num,
                                 dbCommon *prec) override;
 
@@ -683,6 +684,10 @@ private:
                       const std::string &targetTypeName) const;
     void checkWriteArray(OpcUa_BuiltInType expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
+    void createMap(const UaStructureDefinition& definition, const std::string *timefrom = nullptr);
+    void createMap(const UaLocalizedText&);
+    void createMap(const UaQualifiedName&);
+
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
     void
@@ -741,6 +746,9 @@ private:
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaFloatArray &value) { return variant.toFloatArray(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaDoubleArray &value) { return variant.toDoubleArray(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaStringArray &value) { return variant.toStringArray(value); }
+    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaXmlElementArray &value) { return variant.toXmlElementArray(value); }
+    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaLocalizedTextArray &value) { return variant.toLocalizedTextArray(value); }
+    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaQualifiedNameArray &value) { return variant.toQualifiedNameArray(value); }
 
     void UaVariant_set(UaVariant &variant, UaBooleanArray &value) { variant.setBoolArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaSByteArray &value) { variant.setSByteArray(value, OpcUa_True); }
@@ -754,6 +762,9 @@ private:
     void UaVariant_set(UaVariant &variant, UaFloatArray &value) { variant.setFloatArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaDoubleArray &value) { variant.setDoubleArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaStringArray &value) { variant.setStringArray(value, OpcUa_True); }
+    void UaVariant_set(UaVariant &variant, UaXmlElementArray &value) { variant.setXmlElementArray(value, OpcUa_True); }
+    void UaVariant_set(UaVariant &variant, UaLocalizedTextArray &value) { variant.setLocalizedTextArray(value, OpcUa_True); }
+    void UaVariant_set(UaVariant &variant, UaQualifiedNameArray &value) { variant.setQualifiedNameArray(value, OpcUa_True); }
 
     // Read scalar value as templated function on EPICS type and OPC UA type
     // value == nullptr is allowed and leads to the value being dropped (ignored),
@@ -878,14 +889,14 @@ private:
                     ret = 1;
                 } else {
                     // Valid OPC UA value, so try to convert
-                    UaVariant &data = upd->getData();
-                    if (!data.isArray()) {
+                    UaVariant &variant = upd->getData();
+                    if (!variant.isArray()) {
                         errlogPrintf("%s : incoming data is not an array\n", prec->name);
                         (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                         ret = 1;
-                    } else if (data.type() != expectedType) {
+                    } else if (variant.type() != expectedType) {
                         errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                     prec->name, variantTypeString(data.type()), epicsTypeString(*value));
+                                     prec->name, variantTypeString(variant.type()), epicsTypeString(*value));
                         (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                         ret = 1;
                     } else {
@@ -920,7 +931,7 @@ private:
 
     // Read array value for EPICS String / OpcUa_String
     long
-    readArray (char *value, const epicsUInt32 len,
+    readArray (char *value, epicsUInt32 len,
                const epicsUInt32 num,
                epicsUInt32 *numRead,
                OpcUa_BuiltInType expectedType,
@@ -1054,7 +1065,7 @@ private:
 
     // Write array value for EPICS String / OpcUa_String
     long
-    writeArray (const char *value, const epicsUInt32 len,
+    writeArray (const char *value, epicsUInt32 len,
                 const epicsUInt32 num,
                 OpcUa_BuiltInType targetType,
                 dbCommon *prec);

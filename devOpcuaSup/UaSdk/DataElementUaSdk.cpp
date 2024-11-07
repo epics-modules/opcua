@@ -107,6 +107,87 @@ DataElementUaSdk::show (const int level, const unsigned int indent) const
     }
 }
 
+void
+DataElementUaSdk::createMap(const UaStructureDefinition& definition,
+                            const std::string *timefrom)
+{
+    if (debug() >= 5)
+        std::cout << " ** creating index-to-element map for child elements" << std::endl;
+
+    if (timefrom) {
+        for (int i = 0; i < definition.childrenCount(); i++) {
+            if (*timefrom == definition.child(i).name().toUtf8()) {
+                timesrc = i;
+            }
+        }
+        OpcUa_BuiltInType t = definition.child(timesrc).valueType();
+        if (timesrc == -1) {
+            errlogPrintf(
+                "%s: timestamp element %s not found - using source timestamp\n",
+                pitem->recConnector->getRecordName(),
+                timefrom->c_str());
+        } else if (t != OpcUaType_DateTime) {
+            errlogPrintf("%s: timestamp element %s has invalid type %s - using "
+                         "source timestamp\n",
+                         pitem->recConnector->getRecordName(),
+                         timefrom->c_str(),
+                         variantTypeString(t));
+            timesrc = -1;
+        }
+    }
+    for (auto &it : elements) {
+        auto pelem = it.lock();
+        for (int i = 0; i < definition.childrenCount(); i++) {
+            if (pelem->name == definition.child(i).name().toUtf8()) {
+                elementMap.insert({i, it});
+                delete pelem->enumChoices;
+                pelem->enumChoices = pitem->session->getEnumChoices(definition.child(i).enumDefinition());
+            }
+        }
+    }
+    if (debug() >= 5)
+        std::cout << " ** " << elementMap.size() << "/" << elements.size()
+                  << " child elements mapped to a "
+                  << "structure of " << definition.childrenCount() << " elements" << std::endl;
+    mapped = true;
+}
+
+void
+DataElementUaSdk::createMap(const UaLocalizedText&)
+{
+    for (auto &it : elements) {
+        auto pelem = it.lock();
+        if (pelem->name == "locale")
+            elementMap.insert({0, it});
+        else if (pelem->name == "text")
+            elementMap.insert({1, it});
+        else
+            errlogPrintf("Item %s %s element %s not found\n",
+                pitem->nodeid->toString().toUtf8(),
+                name.c_str(),
+                pelem->name.c_str());
+    }
+    mapped = true;
+}
+
+void
+DataElementUaSdk::createMap(const UaQualifiedName&)
+{
+    for (auto &it : elements) {
+        auto pelem = it.lock();
+        if (pelem->name == "namespaceIndex")
+            elementMap.insert({0, it});
+        else if (pelem->name == "name")
+            elementMap.insert({1, it});
+        else
+            errlogPrintf("Item %s %s element %s not found\n",
+                pitem->nodeid->toString().toUtf8(),
+                name.c_str(),
+                pelem->name.c_str());
+    }
+    mapped = true;
+}
+
 // Getting the timestamp and status information from the Item assumes that only one thread
 // is pushing data into the Item's DataElement structure at any time.
 void
@@ -145,101 +226,16 @@ DataElementUaSdk::setIncomingData(const UaVariant &value,
             std::cout << "Element " << name << " splitting structured data to "
                       << elements.size() << " child elements" << std::endl;
 
-        if (value.type() == OpcUaType_ExtensionObject) {
+        switch (value.type()) {
+        case OpcUaType_ExtensionObject: {
             UaExtensionObject extensionObject;
             value.toExtensionObject(extensionObject);
+            if (extensionObject.encoding() == UaExtensionObject::EncodeableObject)
+                extensionObject.changeEncoding(UaExtensionObject::Binary);
 
             // Try to get the structure definition from the dictionary
             UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
-            if (!definition.isNull()) {
-                // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
-                if (extensionObject.encoding() == UaExtensionObject::EncodeableObject)
-                    extensionObject.changeEncoding(UaExtensionObject::Binary);
-                if (!mapped) {
-                    if (debug() >= 5)
-                        std::cout << " ** creating index-to-element map for child elements" << std::endl;
-                    if (timefrom) {
-                        for (int i = 0; i < definition.childrenCount(); i++) {
-                            if (*timefrom == definition.child(i).name().toUtf8()) {
-                                timesrc = i;
-                            }
-                        }
-                        OpcUa_BuiltInType t = definition.child(timesrc).valueType();
-                        if (timesrc == -1) {
-                            errlogPrintf(
-                                "%s: timestamp element %s not found - using source timestamp\n",
-                                pitem->recConnector->getRecordName(),
-                                timefrom->c_str());
-                        } else if (t != OpcUaType_DateTime) {
-                            errlogPrintf("%s: timestamp element %s has invalid type %s - using "
-                                         "source timestamp\n",
-                                         pitem->recConnector->getRecordName(),
-                                         timefrom->c_str(),
-                                         variantTypeString(t));
-                            timesrc = -1;
-                        }
-                    }
-                    for (auto &it : elements) {
-                        auto pelem = it.lock();
-                        for (int i = 0; i < definition.childrenCount(); i++) {
-                            if (pelem->name == definition.child(i).name().toUtf8()) {
-                                elementMap.insert({i, it});
-                                delete pelem->enumChoices;
-                                pelem->enumChoices = pitem->session->getEnumChoices(definition.child(i).enumDefinition());
-                            }
-                        }
-                    }
-                    if (debug() >= 5)
-                        std::cout << " ** " << elementMap.size() << "/" << elements.size()
-                                  << " child elements mapped to a "
-                                  << "structure of " << definition.childrenCount() << " elements" << std::endl;
-                    mapped = true;
-                }
-
-                if (timesrc >= 0)
-                    pitem->tsData = epicsTimeFromUaVariant(UaGenericStructureValue(extensionObject, definition).value(timesrc));
-                else
-                    pitem->tsData = pitem->tsSource;
-
-                for (auto &it : elementMap) {
-                    auto pelem = it.second.lock();
-                    OpcUa_StatusCode stat;
-                    if (definition.isUnion()) {
-                        UaGenericUnionValue genericValue(extensionObject, definition);
-                        int index = genericValue.switchValue() - 1;
-                        if (it.first == index) {
-                            pelem->setIncomingData(genericValue.value(), reason);
-                            stat = OpcUa_Good;
-                        } else {
-                            stat = OpcUa_BadNoData;
-                        }
-                    } else {
-                        const UaVariant &memberValue = UaGenericStructureValue(extensionObject, definition).value(it.first, &stat);
-                        if (stat == OpcUa_Good) {
-                            pelem->setIncomingData(memberValue, reason);
-                        }
-                    }
-                    if (stat == OpcUa_BadNoData) {
-                        // Absent optional field or union choice not taken:
-                        // Pass a fake value with correct data type so that
-                        // later writing will not fail with type mismatch.
-                        const UaStructureField &field = definition.child(it.first);
-                        OpcUa_Variant fakeValue;
-                        OpcUa_Variant_Initialize(&fakeValue);
-                        fakeValue.Datatype = field.valueType();
-                        fakeValue.ArrayType = field.valueRank() != 0;
-                        if (debug())
-                            std::cerr << pitem->recConnector->getRecordName()
-                                      << " element " << pelem->name
-                                      << (definition.isUnion() ? " not taken choice " : " absent optional " )
-                                      << variantTypeString((OpcUa_BuiltInType)fakeValue.Datatype)
-                                      << (fakeValue.ArrayType ? " array" : " scalar")
-                                      << std::endl;
-                        pelem->setIncomingData(fakeValue, ProcessReason::readFailure);
-                    }
-                }
-
-            } else
+            if (definition.isNull()) {
                 errlogPrintf(
                     "Cannot get a structure definition for item %s element %s (dataTypeId %s "
                     "encodingTypeId %s) - check access to type dictionary\n",
@@ -247,6 +243,104 @@ DataElementUaSdk::setIncomingData(const UaVariant &value,
                     name.c_str(),
                     extensionObject.dataTypeId().toString().toUtf8(),
                     extensionObject.encodingTypeId().toString().toUtf8());
+                return;
+            }
+
+            // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
+            if (!mapped)
+                createMap(definition, timefrom);
+
+            if (timesrc >= 0)
+                pitem->tsData = epicsTimeFromUaVariant(UaGenericStructureValue(extensionObject, definition).value(timesrc));
+            else
+                pitem->tsData = pitem->tsSource;
+
+            for (auto &it : elementMap) {
+                auto pelem = it.second.lock();
+                OpcUa_StatusCode stat;
+                if (definition.isUnion()) {
+                    UaGenericUnionValue genericValue(extensionObject, definition);
+                    int index = genericValue.switchValue() - 1;
+                    if (it.first == index) {
+                        pelem->setIncomingData(genericValue.value(), reason);
+                        stat = OpcUa_Good;
+                    } else {
+                        stat = OpcUa_BadNoData;
+                    }
+                } else {
+                    const UaVariant &memberValue = UaGenericStructureValue(extensionObject, definition).value(it.first, &stat);
+                    if (stat == OpcUa_Good) {
+                        pelem->setIncomingData(memberValue, reason);
+                    }
+                }
+                if (stat == OpcUa_BadNoData) {
+                    // Absent optional field or union choice not taken:
+                    // Pass a fake value with correct data type so that
+                    // later writing will not fail with type mismatch.
+                    const UaStructureField &field = definition.child(it.first);
+                    OpcUa_Variant fakeValue;
+                    OpcUa_Variant_Initialize(&fakeValue);
+                    fakeValue.Datatype = field.valueType();
+                    fakeValue.ArrayType = field.valueRank() != 0;
+                    if (debug())
+                        std::cerr << pitem->recConnector->getRecordName()
+                                  << " element " << pelem->name
+                                  << (definition.isUnion() ? " not taken choice " : " absent optional " )
+                                  << variantTypeString((OpcUa_BuiltInType)fakeValue.Datatype)
+                                  << (fakeValue.ArrayType ? " array" : " scalar")
+                                  << std::endl;
+                    pelem->setIncomingData(fakeValue, ProcessReason::readFailure);
+                }
+            }
+            break;
+        }
+        case OpcUaType_LocalizedText: {
+            UaLocalizedText localizedText;
+            value.toLocalizedText(localizedText);
+            if (!mapped)
+                createMap(localizedText);
+
+            for (auto &it : elementMap) {
+                auto pelem = it.second.lock();
+                UaVariant memberValue;
+                switch (it.first) {
+                case 0:
+                    memberValue.setString(localizedText.locale());
+                    break;
+                case 1:
+                    memberValue.setString(localizedText.text());
+                    break;
+                }
+                pelem->setIncomingData(memberValue, reason);
+            }
+            break;
+        }
+        case OpcUaType_QualifiedName: {
+            UaQualifiedName qualifiedName;
+            value.toQualifiedName(qualifiedName);
+            if (!mapped)
+                createMap(qualifiedName);
+
+            for (auto &it : elementMap) {
+                auto pelem = it.second.lock();
+                UaVariant memberValue;
+                switch (it.first) {
+                case 0:
+                    memberValue.setUInt16(qualifiedName.namespaceIndex());
+                    break;
+                case 1:
+                    memberValue.setString(qualifiedName.name());
+                    break;
+                }
+                pelem->setIncomingData(memberValue, reason);
+            }
+            break;
+        }
+        default:
+            errlogPrintf("%s: %s is no structured data but a %s\n",
+                pitem->recConnector->getRecordName(),
+                name.c_str(),
+                variantTypeString(value.type()));
         }
     }
 }
@@ -305,7 +399,8 @@ DataElementUaSdk::getOutgoingData ()
 
         outgoingData = incomingData;
         isdirty = false;
-        if (outgoingData.type() == OpcUaType_ExtensionObject) {
+        switch (outgoingData.type()) {
+        case OpcUaType_ExtensionObject: {
             UaExtensionObject extensionObject;
             outgoingData.toExtensionObject(extensionObject);
             if (extensionObject.encoding() == UaExtensionObject::EncodeableObject)
@@ -323,23 +418,9 @@ DataElementUaSdk::getOutgoingData ()
             }
 
             // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
-            if (!mapped) {
-                if (debug() >= 5)
-                    std::cout << " ** creating index-to-element map for child elements" << std::endl;
-                for (auto &it : elements) {
-                    auto pelem = it.lock();
-                    for (int i = 0; i < definition.childrenCount(); i++) {
-                        if (pelem->name == definition.child(i).name().toUtf8()) {
-                            elementMap.insert({i, it});
-                        }
-                    }
-                }
-                if (debug() >= 5)
-                    std::cout << " ** " << elementMap.size() << "/" << elements.size()
-                              << " child elements mapped to a "
-                              << "structure of " << definition.childrenCount() << " elements" << std::endl;
-                mapped = true;
-            }
+            if (!mapped)
+                createMap(definition);
+
             if (definition.isUnion()) {
                 UaGenericUnionValue genericUnion(extensionObject, definition);
                 for (auto &it : elementMap) {
@@ -384,16 +465,95 @@ DataElementUaSdk::getOutgoingData ()
                 if (isdirty)
                     genericStruct.toExtensionObject(extensionObject);
             }
-            if (isdirty) {
-                if (debug() >= 4)
-                    std::cout << "Encoding changed data structure to outgoingData of element " << name
-                              << std::endl;
+
+            if (isdirty)
                 outgoingData.setExtensionObject(extensionObject, OpcUa_True);
-            } else {
-                if (debug() >= 4)
-                    std::cout << "Returning unchanged outgoingData of element " << name
-                              << std::endl;
+            break;
+        }
+        case OpcUaType_LocalizedText: {
+            UaLocalizedText localizedText;
+            outgoingData.toLocalizedText(localizedText);
+            if (!mapped)
+                createMap(localizedText);
+
+            for (auto &it : elementMap) {
+                auto pelem = it.second.lock();
+                bool updated = false;
+                { // Scope of Guard G
+                    Guard G(pelem->outgoingLock);
+                    if (pelem->isDirty()) {
+                        switch (it.first) {
+                        case 0:
+                            localizedText.setLocale(pelem->getOutgoingData().toString());
+                            break;
+                        case 1:
+                            localizedText.setText(pelem->getOutgoingData().toString());
+                            break;
+                        }
+                        pelem->isdirty = false;
+                        isdirty = true;
+                        updated = true;
+                    }
+                    if (debug() >= 4)
+                        std::cout << "Data from child element " << pelem->name
+                                  << (updated ? " inserted into LocalizedText" : " ignored (not dirty)")
+                                  << std::endl;
+                }
             }
+            if (isdirty)
+                outgoingData.setLocalizedText(localizedText);
+            break;
+        }
+        case OpcUaType_QualifiedName: {
+            UaQualifiedName qualifiedName;
+            outgoingData.toQualifiedName(qualifiedName);
+            if (!mapped)
+                createMap(qualifiedName);
+
+            for (auto &it : elementMap) {
+                auto pelem = it.second.lock();
+                bool updated = false;
+                { // Scope of Guard G
+                    Guard G(pelem->outgoingLock);
+                    OpcUa_UInt16 ns;
+                    if (pelem->isDirty()) {
+                        switch (it.first) {
+                        case 0:
+                            if (pelem->getOutgoingData().toUInt16(ns) == OpcUa_Good)
+                                qualifiedName.setNamespaceIndex(ns);
+                            break;
+                        case 1:
+                            qualifiedName.setQualifiedName(pelem->getOutgoingData().toString(), qualifiedName.namespaceIndex());
+                            break;
+                        }
+                        pelem->isdirty = false;
+                        isdirty = true;
+                        updated = true;
+                    }
+                    if (debug() >= 4)
+                        std::cout << "Data from child element " << pelem->name
+                                  << (updated ? " inserted into QualifiedName" : " ignored (not dirty)")
+                                  << std::endl;
+                }
+            }
+            if (isdirty)
+                outgoingData.setQualifiedName(qualifiedName);
+            break;
+        }
+        default:
+            errlogPrintf("%s: %s is no structured data but a %s\n",
+                pitem->recConnector->getRecordName(),
+                name.c_str(),
+                variantTypeString(outgoingData.type()));
+            return outgoingData;
+        }
+        if (debug() >= 4) {
+            if (isdirty)
+                std::cout << "Encoding changed data structure to outgoingData of element " << name
+                          << std::endl;
+            else
+                std::cout << "Returning unchanged outgoingData of element " << name
+                          << std::endl;
         }
     }
     return outgoingData;
@@ -477,11 +637,69 @@ DataElementUaSdk::readScalar (epicsFloat64 *value,
     return readScalar<epicsFloat64, OpcUa_Double>(value, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
+// Helper functions to convert between OpcUa_ByteString and hex encoded C string
+// We use our own functions instead of UaByteString methods toHex/fromHex because
+// they work on UaString, not C string, which would require additional copy.
+static int printByteString(const OpcUa_ByteString& byteString, char* encoded, int len)
+{
+    static const char hexdigits[] = "0123456789ABCDEF";
+    int i, l = 0;
+    for (i = 0; i < byteString.Length && l < len-3; i++) {
+        encoded[l++] = hexdigits[byteString.Data[i] >> 4];
+        encoded[l++] = hexdigits[byteString.Data[i] & 0xf];
+    }
+    encoded[l] = 0; // terminate
+    return l;
+}
+
+// parseByteString accepts hex strings with optional spaces separating units of 1 or multiple of 2 hex digits
+static int parseByteString(OpcUa_ByteString& byteString, const char* encoded, int len)
+{
+    OpcUa_ByteString_Clear(&byteString);
+    byteString.Data = static_cast<OpcUa_Byte*>(OpcUa_Alloc((len+1)/2)); // can never be longer, shorter does not hurt
+    if (!byteString.Data) return -1;
+    int l = 0;
+    bool firstDigit = true;
+    while (len--) {
+        OpcUa_Byte c, b;
+        c = *encoded++;
+        if (!c) break;
+        if (isblank(c)) {
+            firstDigit = true;
+            continue;
+        }
+        if (!isxdigit(c)) {
+            // invalid character
+            OpcUa_ByteString_Clear(&byteString);
+            return -1;
+        }
+        b = c - (isdigit(c) ? '0' : isupper(c) ? 'A'-10 : 'a'-10);
+        if (len && isxdigit(c = *encoded)) {
+            firstDigit = false;
+            encoded++;
+            len--;
+            b <<= 4;
+            b |= c - (isdigit(c) ? '0' : isupper(c) ? 'A'-10 : 'a'-10);
+        } else {
+            if (!firstDigit || (c && !isblank(c) && !isxdigit(c))) {
+                // 1 is the only odd number of digits allowed
+                // because otherwise where is the byte border? 12|3 or 1|23 ?
+                OpcUa_ByteString_Clear(&byteString);
+                return -1;
+            }
+        }
+        byteString.Data[l++] = b;
+    }
+    byteString.Length = l;
+    return l;
+}
+
 // CString type needs specialization
 long
-DataElementUaSdk::readScalar (char *value, const size_t num,
+DataElementUaSdk::readScalar (char *value, const epicsUInt32 len,
                               dbCommon *prec,
                               ProcessReason *nextReason,
+                              epicsUInt32 *lenRead,
                               epicsUInt32 *statusCode,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
@@ -497,7 +715,7 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
 
     ProcessReason nReason;
     std::shared_ptr<UpdateUaSdk> upd = incomingQueue.popUpdate(&nReason);
-    dbgReadScalar(upd.get(), "CString", num);
+    dbgReadScalar(upd.get(), "CString", len);
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -511,7 +729,7 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
     case ProcessReason::incomingData:
     case ProcessReason::readComplete:
     {
-        if (num && value) {
+        if (len && value) {
             OpcUa_StatusCode stat = upd->getStatus();
             if (OpcUa_IsNotGood(stat)) {
                 // No valid OPC UA value
@@ -523,16 +741,18 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
                     (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                 }
                 UaVariant& data = upd->getData();
+                UaString str;
+                const void* s = nullptr;
+                OpcUa_Int32 n = 0;
                 if (data.type() == OpcUaType_ExtensionObject) {
                     UaExtensionObject extensionObject;
                     data.toExtensionObject(extensionObject);
                     UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
                     if (definition.isUnion()) {
-                        memset(value, 0, num);
                         UaGenericUnionValue genericValue(extensionObject, definition);
                         int switchValue = genericValue.switchValue();
                         if (switchValue > 0) {
-                            snprintf(value, num, "%s:%s",
+                            n = snprintf(value, len, "%s:%s",
                                 definition.child(switchValue-1).name().toUtf8(),
                                 genericValue.value().toString().toUtf8());
                         } else {
@@ -540,20 +760,49 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
                             ret = 1;
                         }
                     }
-                } else if (enumChoices) {
-                    OpcUa_Int32 enumIndex;
-                    data.toInt32(enumIndex);
-                    auto it = enumChoices->find(enumIndex);
-                    if (it != enumChoices->end() && !it->second.empty()) {
-                        strncpy(value, it->second.c_str(), num);
-                    } else {
-                        strncpy(value, data.toString().toUtf8(), num);
-                    }
                 } else {
-                    strncpy(value, data.toString().toUtf8(), num);
+                    const OpcUa_Variant* variant = data;
+                    switch (variant->Datatype) {
+                    case OpcUaType_Byte:
+                    case OpcUaType_SByte:
+                        if (variant->ArrayType == OpcUa_VariantArrayType_Array) {
+                            n = variant->Value.Array.Length;
+                            s = variant->Value.Array.Value.Array;
+                        } else if (variant->ArrayType == OpcUa_VariantArrayType_Matrix) {
+                            OpcUa_VariantMatrix_GetElementCount(&variant->Value.Matrix, &n);
+                            s = variant->Value.Matrix.Value.Array;
+                        }
+                        if (static_cast<epicsUInt32>(n) > len)
+                            n = len;
+                        break;
+                    case OpcUaType_ByteString:
+                        n = printByteString(variant->Value.ByteString, value, len);
+                    }
+                    if (enumChoices) {
+                        OpcUa_Int32 enumIndex;
+                        data.toInt32(enumIndex);
+                        auto it = enumChoices->find(enumIndex);
+                        if (it != enumChoices->end() && !it->second.empty()) {
+                            s = it->second.c_str();
+                            n = static_cast<epicsUInt32>(it->second.length());
+                            if (static_cast<epicsUInt32>(n) >= len)
+                                n = len-1;
+                        }
+                    }
+                    if (!n) {
+                        str = data.toString();
+                        s = str.toUtf8();
+                        n = str.length();
+                        if (static_cast<epicsUInt32>(n) >= len)
+                            n = len-1;
+                    }
+                    if (s)
+                        memcpy(value, s, n);
                 }
-                value[num-1] = '\0';
+                memset(value+n, 0, len-n);
                 prec->udf = false;
+                if (lenRead)
+                    *lenRead = n;
             }
             if (statusCode) *statusCode = stat;
             if (statusText) {
@@ -603,7 +852,7 @@ DataElementUaSdk::dbgReadArray (const UpdateUaSdk *upd,
 
 // Read array for EPICS String / OpcUa_String
 long int
-DataElementUaSdk::readArray (char *value, const epicsUInt32 len,
+DataElementUaSdk::readArray (char *value, epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              OpcUa_BuiltInType expectedType,
@@ -651,21 +900,66 @@ DataElementUaSdk::readArray (char *value, const epicsUInt32 len,
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
-                } else if (data.type() != expectedType) {
-                    errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data.type()), epicsTypeString(value));
-                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-                    ret = 1;
                 } else {
                     if (OpcUa_IsUncertain(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
-                    UaStringArray arr;
-                    UaVariant_to(upd->getData(), arr);
-                    elemsWritten = num < arr.length() ? num : arr.length();
-                    for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                        strncpy(value + i * len, UaString(arr[i]).toUtf8(), len);
-                        (value + i * len)[len - 1] = '\0';
+                    switch (data.type()) {
+                    case OpcUaType_String: {
+                        UaStringArray arr;
+                        UaVariant_to(upd->getData(), arr);
+                        elemsWritten = num < arr.length() ? num : arr.length();
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            strncpy(value + i * len, UaString(arr[i]).toUtf8(), len);
+                            (value + i * len)[len - 1] = '\0';
+                        }
+                        break;
+                    }
+                    case OpcUaType_XmlElement: {
+                        UaXmlElementArray arr;
+                        UaVariant_to(upd->getData(), arr);
+                        elemsWritten = num < arr.length() ? num : arr.length();
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            strncpy(value + i * len, UaString(arr[i]).toUtf8(), len);
+                            (value + i * len)[len - 1] = '\0';
+                        }
+                        break;
+                    }
+                    case OpcUaType_LocalizedText: {
+                        UaLocalizedTextArray arr;
+                        UaVariant_to(upd->getData(), arr);
+                        elemsWritten = num < arr.length() ? num : arr.length();
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            strncpy(value + i * len, UaString(arr[i].Text).toUtf8(), len);
+                            (value + i * len)[len - 1] = '\0';
+                        }
+                        break;
+                    }
+                    case OpcUaType_QualifiedName: {
+                        UaQualifiedNameArray arr;
+                        UaVariant_to(upd->getData(), arr);
+                        elemsWritten = num < arr.length() ? num : arr.length();
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            strncpy(value + i * len, UaString(arr[i].Name).toUtf8(), len);
+                            (value + i * len)[len - 1] = '\0';
+                        }
+                        break;
+                    }
+                    case OpcUaType_ByteString: {
+                        UaByteStringArray arr;
+                        upd->getData().toByteStringArray(arr);
+                        elemsWritten = num < arr.length() ? num : arr.length();
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            int l = printByteString(arr[i], value + i * len, len);
+                            memset(value + i * len + l, 0, len - l);
+                        }
+                        break;
+                    }
+                    default:
+                        errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
+                                     prec->name, variantTypeString(data.type()), epicsTypeString(value));
+                        (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                        ret = 1;
                     }
                     prec->udf = false;
                 }
@@ -737,29 +1031,29 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
                 ret = 1;
             } else {
                 // Valid OPC UA value, so try to convert
-                UaVariant &data = upd->getData();
-                if (!data.isArray()) {
+                UaVariant &variant = upd->getData();
+                if (!variant.isArray() && variant.type() != OpcUaType_ByteString) {
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
-                } else if (data.type() != OpcUaType_Byte && data.type() != OpcUaType_Boolean) {
+                } else if (variant.type() != expectedType && variant.type() != OpcUaType_Boolean && variant.type() != OpcUaType_ByteString) {
                     errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data.type()), epicsTypeString(*value));
+                                 prec->name, variantTypeString(variant.type()), epicsTypeString(*value));
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
                 } else {
                     if (OpcUa_IsUncertain(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
-                    if (data.type() == OpcUaType_Byte) {
+                    if (variant.type() != OpcUaType_Boolean) {
                         UaByteArray arr;
-                        UaVariant_to(upd->getData(), arr);
+                        UaVariant_to(variant, arr); // works for ByteArray and ByteString !
                         elemsWritten = static_cast<epicsUInt32>(arr.size());
                         if (num < elemsWritten) elemsWritten = num;
                         memcpy(value, arr.data(), sizeof(epicsUInt8) * elemsWritten);
                     } else {
                         UaBooleanArray arr;
-                        UaVariant_to(upd->getData(), arr);
+                        UaVariant_to(variant, arr);
                         elemsWritten = static_cast<epicsUInt32>(arr.length());
                         if (num < elemsWritten) elemsWritten = num;
                         memcpy(value, arr.rawData(), sizeof(epicsUInt8) * elemsWritten);
@@ -907,7 +1201,7 @@ DataElementUaSdk::readArray (epicsFloat64 *value, const epicsUInt32 num,
 }
 
 long
-DataElementUaSdk::readArray (char *value, const epicsUInt32 len,
+DataElementUaSdk::readArray (char *value, epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
@@ -959,7 +1253,7 @@ DataElementUaSdk::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 }
 
 long
-DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
+DataElementUaSdk::writeScalar (const char *value, epicsUInt32 len, dbCommon *prec)
 {
     long ret = 1;
     long l;
@@ -1011,7 +1305,15 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     case OpcUaType_String:
     { // Scope of Guard G
         Guard G(outgoingLock);
-        outgoingData.setString(static_cast<UaString>(value));
+        outgoingData.setString(UaByteString(len, (OpcUa_Byte*)value)); // UaByteString supports len
+        markAsDirty();
+        ret = 0;
+        break;
+    }
+    case OpcUaType_XmlElement:
+    { // Scope of Guard G
+        Guard G(outgoingLock);
+        outgoingData.setXmlElement(UaByteString(len, (OpcUa_Byte*)value));
         markAsDirty();
         ret = 0;
         break;
@@ -1020,11 +1322,50 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     { // Scope of Guard G
         Guard G(outgoingLock);
         UaLocalizedText localizedText;
-        incomingData.toLocalizedText(localizedText);
-        localizedText.setText(static_cast<UaString>(value)); // keep the Locale
+        const char* sep = static_cast<const char*>(memchr(value, '|', len));
+        if (sep) {
+            localizedText.setLocale(UaByteString(static_cast<OpcUa_Int32>(sep - value), (OpcUa_Byte*)value));
+            value = sep + 1;
+            len -= static_cast<epicsUInt32>(sep + 1 - value);
+        } else { // keep the locale
+            incomingData.toLocalizedText(localizedText);
+        }
+        localizedText.setText(UaByteString(len, (OpcUa_Byte*)value));
         outgoingData.setLocalizedText(localizedText);
         markAsDirty();
         ret = 0;
+        break;
+    }
+    case OpcUaType_QualifiedName:
+    { // Scope of Guard G
+        Guard G(outgoingLock);
+        UaQualifiedName qualifiedName;
+        const char* sep = static_cast<const char*>(memchr(value, '|', len));
+        if (sep) {
+            qualifiedName.setNamespaceIndex(atoi(value));
+            value = sep + 1;
+            len -= static_cast<epicsUInt32>(sep + 1 - value);
+        } else { // keep the namespace
+            incomingData.toQualifiedName(qualifiedName);
+        }
+        qualifiedName.setQualifiedName(UaByteString(len, (OpcUa_Byte*)value), qualifiedName.namespaceIndex());
+        outgoingData.setQualifiedName(qualifiedName);
+        markAsDirty();
+        ret = 0;
+        break;
+    }
+    case OpcUaType_ByteString:
+    { // Scope of Guard G
+        OpcUa_ByteString bs;
+        OpcUa_ByteString_Initialize(&bs);
+        if (parseByteString(bs, value, len) >= 0) {
+            UaByteString byteString;
+            byteString.attach(&bs); // wrap, no copy
+            Guard G(outgoingLock);
+            outgoingData.setByteString(byteString, true); // move, no copy
+            markAsDirty();
+            ret = 0;
+        }
         break;
     }
     case OpcUaType_Boolean:
@@ -1180,7 +1521,7 @@ DataElementUaSdk::dbgWriteArray (const epicsUInt32 targetSize, const std::string
 
 // Write array for EPICS String / OpcUa_String
 long
-DataElementUaSdk::writeArray (const char *value, const epicsUInt32 len,
+DataElementUaSdk::writeArray (const char *value, epicsUInt32 len,
                               const epicsUInt32 num,
                               OpcUa_BuiltInType targetType,
                               dbCommon *prec)
@@ -1191,39 +1532,93 @@ DataElementUaSdk::writeArray (const char *value, const epicsUInt32 len,
         errlogPrintf("%s : OPC UA data type is not an array\n", prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
-    } else if (incomingData.type() != targetType) {
-        errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
-                     prec->name,
-                     variantTypeString(incomingData.type()),
-                     variantTypeString(targetType),
-                     epicsTypeString(value));
-        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-        ret = 1;
     } else {
-        UaStringArray arr;
-        arr.create(static_cast<OpcUa_UInt32>(num));
-        for (epicsUInt32 i = 0; i < num; i++) {
-            char *val = nullptr;
-            const char *pval;
-            // add zero termination if necessary
-            if (value[len-1] != '\0') {
-                val = new char[len+1];
-                strncpy(val, value, len);
-                val[len] = '\0';
-                pval = val;
-            } else {
-                pval = value;
+        switch (incomingData.type()) {
+        case OpcUaType_String: {
+            UaStringArray arr;
+            arr.create(num);
+            for (epicsUInt32 i = 0; i < num; i++) {
+                UaString(UaByteString(len, (OpcUa_Byte*)value + i * len)).copyTo(&arr[i]);
             }
-            UaString(pval).copyTo(&arr[i]);
-            delete[] val;
-            value += len;
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                UaVariant_set(outgoingData, arr);
+                markAsDirty();
+            }
+            break;
         }
-        { // Scope of Guard G
-            Guard G(outgoingLock);
-            UaVariant_set(outgoingData, arr);
-            markAsDirty();
+        case OpcUaType_XmlElement: {
+            UaXmlElementArray arr;
+            arr.create(num);
+            for (epicsUInt32 i = 0; i < num; i++) {
+                UaByteString(len, (OpcUa_Byte*)value + i * len).copyTo(&arr[i]);
+            }
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                UaVariant_set(outgoingData, arr);
+                markAsDirty();
+            }
+            break;
         }
+        case OpcUaType_LocalizedText: {
+            UaLocalizedTextArray arr;
+            UaLocalizedTextArray incoming;
+            UaVariant_to(incomingData, incoming);
 
+            arr.create(num);
+            for (epicsUInt32 i = 0; i < num; i++) {
+                const char* sep = static_cast<const char*>(memchr(value, '|', len));
+                if (sep) {
+                    UaString(UaByteString(static_cast<OpcUa_Int32>(sep - value), (OpcUa_Byte*)value)).copyTo(&arr[i].Locale);
+                } else if (i < incoming.length()) {
+                    UaString(incoming[i].Locale).copyTo(&arr[i].Locale);
+                } else if (i > 0) {
+                    UaString(arr[i-1].Locale).copyTo(&arr[i].Locale);
+                }
+                UaString(UaByteString(len - (sep ? static_cast<OpcUa_Int32>(sep+1-value) : 0), (OpcUa_Byte*)(sep ? sep+1 : value))).copyTo(&arr[i].Text);
+                value += len;
+            }
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                UaVariant_set(outgoingData, arr);
+                markAsDirty();
+            }
+            break;
+        }
+        case OpcUaType_QualifiedName: {
+            UaQualifiedNameArray arr;
+            UaQualifiedNameArray incoming;
+            UaVariant_to(incomingData, incoming);
+
+            arr.create(num);
+            for (epicsUInt32 i = 0; i < num; i++) {
+                const char* sep = static_cast<const char*>(memchr(value, '|', len));
+                if (sep) {
+                    arr[i].NamespaceIndex = atoi(value);
+                } else if (i < incoming.length()) {
+                    arr[i].NamespaceIndex = incoming[i].NamespaceIndex;
+                } else if (i > 0) {
+                    arr[i].NamespaceIndex = arr[i-1].NamespaceIndex;
+                }
+                UaString(UaByteString(len - (sep ? static_cast<OpcUa_Int32>(sep+1-value) : 0), (OpcUa_Byte*)(sep ? sep+1 : value))).copyTo(&arr[i].Name);
+                value += len;
+            }
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                UaVariant_set(outgoingData, arr);
+                markAsDirty();
+            }
+            break;
+        }
+        default:
+            errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
+                         prec->name,
+                         variantTypeString(incomingData.type()),
+                         variantTypeString(targetType),
+                         epicsTypeString(value));
+            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            ret = 1;
+        }
         dbgWriteArray(num, epicsTypeString(value));
     }
     return ret;
@@ -1241,7 +1636,16 @@ DataElementUaSdk::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epicsUI
 {
     long ret = 0;
 
-    if (!incomingData.isArray()) {
+    if (!incomingData.isArray() && incomingData.type() == OpcUaType_ByteString) {
+        UaByteString bs(num, reinterpret_cast<OpcUa_Byte*>(const_cast<epicsUInt8 *>(value)));
+        { // Scope of Guard G
+            Guard G(outgoingLock);
+            outgoingData.setByteString(bs, true); // move, no copy
+            markAsDirty();
+        }
+
+        dbgWriteScalar();
+    } else if (!incomingData.isArray()) {
         errlogPrintf("%s : OPC UA data type is not an array\n", prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
@@ -1335,7 +1739,7 @@ DataElementUaSdk::writeArray (const epicsFloat64 *value, const epicsUInt32 num, 
 }
 
 long
-DataElementUaSdk::writeArray (const char *value, const epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
+DataElementUaSdk::writeArray (const char *value, epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray(value, len, num, OpcUaType_String, prec);
 }

@@ -949,8 +949,8 @@ opcua_read_string_val (REC *prec)
             }
         } else {
             char *value = useReadValue(pcon) ? prec->val : nullptr;
-            unsigned short num = value ? MAX_STRING_SIZE : 0;
-            ret = pcon->readScalar(value, num, &nextReason);
+            unsigned short len = value ? MAX_STRING_SIZE : 0;
+            ret = pcon->readScalar(value, len, &nextReason);
             traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
@@ -1015,9 +1015,7 @@ opcua_read_lstring_val (REC *prec)
             }
         } else {
             char *value = useReadValue(pcon) ? prec->val : nullptr;
-            ret = pcon->readScalar(value, prec->sizv, &nextReason);
-            if (value)
-                prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
+            ret = pcon->readScalar(value, prec->sizv, &nextReason, &prec->len);
             traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
@@ -1051,9 +1049,7 @@ opcua_write_lstring_val (REC *prec)
             }
         } else {
             char *value = useReadValue(pcon) ? prec->val : nullptr;
-            ret = pcon->readScalar(value, prec->sizv, &nextReason);
-            if (value)
-                prec->len = static_cast<epicsUInt32>(strlen(prec->val) + 1);
+            ret = pcon->readScalar(value, prec->sizv, &nextReason, &prec->len);
             traceReadPrint(pdbc, pcon, ret, !!value, prec->val);
             manageStateAndBiniProcessing(pcon);
         }
@@ -1085,17 +1081,12 @@ opcua_read_array (REC *prec)
         } else {
             void *bptr = useReadValue(pcon) ? prec->bptr : nullptr;
             switch (prec->ftvl) {
+            case menuFtypeCHAR:
+                /* Allow to handle CHAR arrays as long strings */
+                ret = pcon->readScalar(static_cast<char *>(bptr), prec->nelm, &nextReason, &prec->nord);
+                break;
             case menuFtypeSTRING:
                 ret = pcon->readArray(static_cast<char *>(bptr), MAX_STRING_SIZE, prec->nelm,
-                                     &prec->nord, &nextReason);
-                break;
-            case menuFtypeCHAR:
-                if (pcon->pdataelement->enumChoices) {
-                    ret = pcon->readScalar(static_cast<char *>(bptr), prec->nelm, &nextReason);
-                    if (bptr) prec->nord = static_cast<epicsUInt32>(strlen(static_cast<char *>(bptr)));
-                    break;
-                }
-                ret = pcon->readArray(static_cast<epicsInt8 *>(bptr), prec->nelm,
                                      &prec->nord, &nextReason);
                 break;
             case menuFtypeUCHAR:
@@ -1168,15 +1159,12 @@ opcua_write_array (REC *prec)
             } else if (pcon->state() != ConnectionStatus::initialRead) {
                 traceWriteArrayPrint(pdbc, pcon, prec->nord);
                 switch (prec->ftvl) {
+                case menuFtypeCHAR:
+                    /* Allow to handle CHAR arrays as long strings */
+                    ret = pcon->writeScalar(static_cast<char *>(prec->bptr), prec->nord);
+                    break;
                 case menuFtypeSTRING:
                     ret = pcon->writeArray(static_cast<char *>(prec->bptr), MAX_STRING_SIZE, prec->nord);
-                    break;
-                case menuFtypeCHAR:
-                    if (pcon->pdataelement->enumChoices) {
-                        ret = pcon->writeScalar(static_cast<char *>(prec->bptr), prec->nord);
-                        break;
-                    }
-                    ret = pcon->writeArray(static_cast<epicsInt8 *>(prec->bptr), prec->nord);
                     break;
                 case menuFtypeUCHAR:
                     ret = pcon->writeArray(static_cast<epicsUInt8 *>(prec->bptr), prec->nord);
@@ -1221,17 +1209,12 @@ opcua_write_array (REC *prec)
         } else {
             void *bptr = useReadValue(pcon) ? prec->bptr : nullptr;
             switch (prec->ftvl) {
+            case menuFtypeCHAR:
+                /* Allow to handle CHAR arrays as long strings */
+                ret = pcon->readScalar(static_cast<char *>(bptr), prec->nelm, &nextReason, &prec->nord);
+                break;
             case menuFtypeSTRING:
                 ret = pcon->readArray(static_cast<char *>(bptr), MAX_STRING_SIZE, prec->nelm,
-                                     &prec->nord, &nextReason);
-                break;
-            case menuFtypeCHAR:
-                if (pcon->pdataelement->enumChoices) {
-                    ret = pcon->readScalar(static_cast<char *>(bptr), prec->nelm, &nextReason);
-                    if (bptr) prec->nord = static_cast<epicsUInt32>(strlen(static_cast<char *>(bptr)));
-                    break;
-                }
-                ret = pcon->readArray(static_cast<epicsInt8 *>(bptr), prec->nelm,
                                      &prec->nord, &nextReason);
                 break;
             case menuFtypeUCHAR:

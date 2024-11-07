@@ -45,9 +45,9 @@ public:
         return pdataelement->readScalar(val, prec, nextReason);
     }
 
-    long int readScalar(char *val, const epicsUInt32 num, ProcessReason *nextReason = nullptr)
+    long int readScalar(char *val, const epicsUInt32 len, ProcessReason *nextReason = nullptr, epicsUInt32 *lenRead = nullptr)
     {
-        return pdataelement->readScalar(val, num, prec, nextReason);
+        return pdataelement->readScalar(val, len, prec, nextReason, lenRead);
     }
 
     template <typename T>
@@ -56,9 +56,9 @@ public:
         return pdataelement->writeScalar(val, prec);
     }
 
-    long int writeScalar(const char* val, const epicsUInt32 num)
+    long int writeScalar(const char* val, const epicsUInt32 len)
     {
-        return pdataelement->writeScalar(val, num, prec);
+        return pdataelement->writeScalar(val, len, prec);
     }
 
     template <typename T>
