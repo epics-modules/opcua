@@ -125,50 +125,78 @@ UA_UInt32
 UA_DataType_getStructMemberExt(const UA_DataType *type, const char *memberName,
                             size_t *outOffset, const UA_DataType **outMemberType,
                             UA_Boolean *outIsArray, UA_Boolean *outIsOptional) {
-    if(type->typeKind != UA_DATATYPEKIND_STRUCTURE &&
-       type->typeKind != UA_DATATYPEKIND_OPTSTRUCT &&
-       type->typeKind != UA_DATATYPEKIND_UNION)
-        return 0;
 
     size_t offset = 0;
-    for(UA_UInt32 i = 0; i < type->membersSize; ++i) {
-        const UA_DataTypeMember *m = &type->members[i];
-        const UA_DataType *mt = memberTypeOf(type, m);
-        offset += m->padding;
+    switch(type->typeKind) {
+    case UA_DATATYPEKIND_STRUCTURE:
+    case UA_DATATYPEKIND_OPTSTRUCT:
+    case UA_DATATYPEKIND_UNION:
+        for(UA_UInt32 i = 0; i < type->membersSize; ++i) {
+            const UA_DataTypeMember *m = &type->members[i];
+            const UA_DataType *mt = memberTypeOf(type, m);
+            offset += m->padding;
 
-        if(strcmp(memberName, m->memberName) == 0) {
-            *outOffset = offset;
-            *outMemberType = mt;
-            *outIsArray = m->isArray;
-            *outIsOptional = m->isOptional;
-            return i+1;
-        }
+            if(strcmp(memberName, m->memberName) == 0) {
+                *outOffset = offset;
+                *outMemberType = mt;
+                *outIsArray = m->isArray;
+                *outIsOptional = m->isOptional;
+                return i+1;
+            }
 
-        if (type->typeKind == UA_DATATYPEKIND_UNION) {
-            offset = 0;
-        } else if(!m->isOptional) {
-            if(!m->isArray) {
-                offset += mt->memSize;
-            } else {
-                offset += sizeof(size_t);
-                offset += sizeof(void*);
-            }
-        } else { /* field is optional */
-            if(!m->isArray) {
-                offset += sizeof(void *);
-            } else {
-                offset += sizeof(size_t);
-                offset += sizeof(void *);
+            if (type->typeKind == UA_DATATYPEKIND_UNION) {
+                offset = 0;
+            } else if(!m->isOptional) {
+                if(!m->isArray) {
+                    offset += mt->memSize;
+                } else {
+                    offset += sizeof(size_t);
+                    offset += sizeof(void*);
+                }
+            } else { /* field is optional */
+                if(!m->isArray) {
+                    offset += sizeof(void *);
+                } else {
+                    offset += sizeof(size_t);
+                    offset += sizeof(void *);
+                }
             }
         }
+        break;
+    case UA_DATATYPEKIND_LOCALIZEDTEXT:
+        *outMemberType = &UA_TYPES[UA_TYPES_STRING];
+        *outIsArray = 0;
+        *outIsOptional = 0;
+        if (strcmp(memberName, "locale") == 0) {
+            *outOffset = offsetof(UA_LocalizedText, locale);
+            return 1;
+        }
+        if (strcmp(memberName, "text") == 0) {
+            *outOffset = offsetof(UA_LocalizedText, text);
+            return 2;
+        }
+        break;
+    case UA_DATATYPEKIND_QUALIFIEDNAME:
+        *outIsArray = 0;
+        *outIsOptional = 0;
+        if (strcmp(memberName, "namespaceIndex") == 0) {
+            *outMemberType = &UA_TYPES[UA_DATATYPEKIND_UINT16];
+            *outOffset = offsetof(UA_QualifiedName, namespaceIndex);
+            return 1;
+        }
+        if (strcmp(memberName, "name") == 0) {
+            *outMemberType = &UA_TYPES[UA_TYPES_STRING];
+            *outOffset = offsetof(UA_QualifiedName, name);
+            return 2;
+        }
+        break;
     }
-
     return 0;
 }
 
 void
-DataElementOpen62541::createMap (const UA_DataType *type,
-                                 const std::string *timefrom)
+DataElementOpen62541::createMap(const UA_DataType *type,
+                                const std::string *timefrom)
 {
     if (debug() >= 5)
         std::cout << " ** creating index-to-element map for child elements" << std::endl;
@@ -177,6 +205,8 @@ DataElementOpen62541::createMap (const UA_DataType *type,
     case UA_DATATYPEKIND_STRUCTURE:
     case UA_DATATYPEKIND_OPTSTRUCT:
     case UA_DATATYPEKIND_UNION:
+    case UA_DATATYPEKIND_LOCALIZEDTEXT:
+    case UA_DATATYPEKIND_QUALIFIEDNAME:
         if (timefrom) {
             const UA_DataType *timeMemberType;
             UA_Boolean timeIsArray;
@@ -239,7 +269,7 @@ DataElementOpen62541::createMap (const UA_DataType *type,
         break;
     default:
         std::cerr << "Error: " << this
-                  << " is not a structure or an optstruct but a " << typeKindName(typeKindOf(type))
+                  << " is no structured data but a " << typeKindName(typeKindOf(type))
                   << std::endl;
     }
     mapped = true;
@@ -482,7 +512,7 @@ DataElementOpen62541::getOutgoingData ()
         }
 
         if (!mapped)
-            createMap(type, nullptr);
+            createMap(type);
 
         for (auto &it : elements) {
             auto pelem = it.lock();
@@ -578,9 +608,10 @@ DataElementOpen62541::readScalar (epicsFloat64 *value,
 
 // CString type needs specialization
 long
-DataElementOpen62541::readScalar (char *value, const size_t num,
+DataElementOpen62541::readScalar (char *value, const epicsUInt32 len,
                               dbCommon *prec,
                               ProcessReason *nextReason,
+                              epicsUInt32 *lenRead,
                               epicsUInt32 *statusCode,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
@@ -596,7 +627,7 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
 
     ProcessReason nReason;
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
-    dbgReadScalar(upd.get(), "CString", num);
+    dbgReadScalar(upd.get(), "CString", len);
     prec->udf = false;
 
     switch (upd->getType()) {
@@ -611,7 +642,7 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
     case ProcessReason::incomingData:
     case ProcessReason::readComplete:
     {
-        if (num && value) {
+        if (len && value) {
             UA_StatusCode stat = upd->getStatus();
             if (UA_STATUS_IS_BAD(stat)) {
                 // No valid OPC UA value
@@ -625,7 +656,7 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
 
                 UA_String buffer = UA_STRING_NULL;
                 UA_String *datastring = &buffer;
-                size_t n = num-1;
+                size_t n = len-1;
 
                 UA_Variant &data = upd->getData();
                 void* payload = data.data;
@@ -643,20 +674,27 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                     type = memberTypeOf(type, member);
 
                     // prefix value string with switch choice name
-                    size_t len = snprintf(value, n, "%s:", member->memberName);
-                    value += len;
-                    n -= len;
+                    size_t l = snprintf(value, n, "%s:", member->memberName);
+                    value += l;
+                    n -= l;
                 }
 
                 switch (type->typeKind) {
                 case UA_DATATYPEKIND_STRING:
+                case UA_DATATYPEKIND_XMLELEMENT:
+                case UA_DATATYPEKIND_BYTESTRING:
                 {
-                    datastring = static_cast<UA_String *>(payload);
+                    datastring = static_cast<UA_String*>(payload);
                     break;
                 }
                 case UA_DATATYPEKIND_LOCALIZEDTEXT:
                 {
-                    datastring = &static_cast<UA_LocalizedText *>(payload)->text;
+                    datastring = &static_cast<UA_LocalizedText*>(payload)->text;
+                    break;
+                }
+                case UA_DATATYPEKIND_QUALIFIEDNAME:
+                {
+                    datastring = &static_cast<UA_QualifiedName*>(payload)->name;
                     break;
                 }
                 case UA_DATATYPEKIND_DATETIME:
@@ -666,6 +704,15 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                     UA_DateTime dt = *static_cast<UA_DateTime*>(payload);
                     dt += tOffset;
                     UA_print(&dt, type, &buffer);
+                    break;
+                }
+                case UA_DATATYPEKIND_BYTE:
+                case UA_DATATYPEKIND_SBYTE:
+                {
+                    buffer.data = static_cast<UA_Byte*>(payload);
+                    buffer.length = UA_Variant_isScalar(&data) ? 1 : data.arrayLength;
+                    data.storageType = UA_VARIANT_DATA_NODELETE; // we have moved ownership
+                    n++;
                     break;
                 }
                 case UA_DATATYPEKIND_ENUM:
@@ -686,8 +733,10 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 };
                 if (n > datastring->length)
                     n = datastring->length;
-                strncpy(value, reinterpret_cast<char*>(datastring->data), n);
-                value[n] = '\0';
+                memcpy(value, reinterpret_cast<char*>(datastring->data), n);
+                memset(value+n, 0, len-n);
+                if (lenRead)
+                    *lenRead = static_cast<epicsUInt32>(n);
                 UA_String_clear(&buffer);
                 UA_Variant_clear(&data);
             }
@@ -739,7 +788,7 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
 
 // Read array for EPICS String / UA_String
 long int
-DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
+DataElementOpen62541::readArray (char *value, epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              const UA_DataType *expectedType,
@@ -788,19 +837,46 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
-                } else if (data.type != expectedType) {
-                    errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data), epicsTypeString(value));
-                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-                    ret = 1;
                 } else {
                     if (UA_STATUS_IS_UNCERTAIN(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
                     elemsWritten = static_cast<epicsUInt32>(num < data.arrayLength ? num : data.arrayLength);
-                    for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                        strncpy(value + i * len, reinterpret_cast<char*>(static_cast<UA_String *>(data.data)[i].data), len);
-                        (value + i * len)[len - 1] = '\0';
+                    switch (typeKindOf(data.type)) {
+                    case UA_DATATYPEKIND_STRING:
+                    case UA_DATATYPEKIND_XMLELEMENT:
+                    case UA_DATATYPEKIND_BYTESTRING:
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            UA_String* str = &static_cast<UA_String *>(data.data)[i];
+                            size_t l = str->length;
+                            if (l >= len) l = len-1;
+                            strncpy(value + i * len, reinterpret_cast<char*>(str->data), l);
+                            (value + i * len)[l] = '\0';
+                        }
+                        break;
+                    case UA_DATATYPEKIND_LOCALIZEDTEXT:
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            UA_String* str = &static_cast<UA_LocalizedText *>(data.data)[i].text;
+                            size_t l = str->length;
+                            if (l >= len) l = len-1;
+                            strncpy(value + i * len, reinterpret_cast<char*>(str->data), l);
+                            (value + i * len)[l] = '\0';
+                        }
+                        break;
+                    case UA_DATATYPEKIND_QUALIFIEDNAME:
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            UA_String* str = &static_cast<UA_QualifiedName *>(data.data)[i].name;
+                            size_t l = str->length;
+                            if (l >= len) l = len-1;
+                            strncpy(value + i * len, reinterpret_cast<char*>(str->data), l);
+                            (value + i * len)[l] = '\0';
+                        }
+                        break;
+                    default:
+                        errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
+                                     prec->name, variantTypeString(data), epicsTypeString(value));
+                        (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                        ret = 1;
                     }
                 }
                 UA_Variant_clear(&data);
@@ -945,7 +1021,7 @@ DataElementOpen62541::readArray (epicsFloat64 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
+DataElementOpen62541::readArray (char *value, epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
@@ -1012,7 +1088,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             if (value[0] == '\0') {
                 switchfield = 0;
             } else for (UA_UInt32 i = 0; i < type->membersSize; i++) {
-                size_t namelen = strlen(type->members[i].memberName);
+                epicsUInt32 namelen = static_cast<epicsUInt32>(strlen(type->members[i].memberName));
                 if (strncmp(value, type->members[i].memberName, namelen) == 0
                         && value[namelen] == ':') {
                     value += namelen+1;
@@ -1025,11 +1101,13 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
 
         switch (typeKindOf(type)) {
         case UA_DATATYPEKIND_STRING:
+        case UA_DATATYPEKIND_XMLELEMENT:
+        case UA_DATATYPEKIND_BYTESTRING:
         {
             UA_String val;
             val.length = strnlen(value, len);
             val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
             markAsDirty();
             ret = 0;
             break;
@@ -1037,10 +1115,36 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
         case UA_DATATYPEKIND_LOCALIZEDTEXT:
         {
             UA_LocalizedText val;
-            val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
+            const char* sep = static_cast<const char*>(memchr(value, '|', len));
+            if (sep) {
+                val.locale.length = sep - value;
+                val.locale.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+                len -= static_cast<epicsUInt32>(sep + 1 - value);
+                value = sep + 1;
+            } else { // keep the locale
+                val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
+            }
             val.text.length = strnlen(value, len);
             val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+            markAsDirty();
+            ret = 0;
+            break;
+        }
+        case UA_DATATYPEKIND_QUALIFIEDNAME:
+        {
+            UA_QualifiedName val;
+            const char* sep = static_cast<const char*>(memchr(value, '|', len));
+            if (sep) {
+                val.namespaceIndex = atoi(value);
+                len -= static_cast<epicsUInt32>(sep + 1 - value);
+                value = sep + 1;
+            } else { // keep the namespace
+                val.namespaceIndex = reinterpret_cast<const UA_QualifiedName*>(incomingData.data)->namespaceIndex;
+            }
+            val.name.length = strnlen(value, len);
+            val.name.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
             markAsDirty();
             ret = 0;
             break;
@@ -1048,7 +1152,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
         case UA_DATATYPEKIND_BOOLEAN:
         {
             UA_Boolean val = strchr("YyTt1", *value) != NULL;
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
             markAsDirty();
             ret = 0;
             break;
@@ -1057,7 +1161,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             ul = strtoul(value, &end, 0);
             if (end != value && isWithinRange<UA_Byte>(ul)) {
                 UA_Byte val = static_cast<UA_Byte>(ul);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
                 markAsDirty();
                 ret = 0;
             }
@@ -1066,7 +1170,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             l = strtol(value, &end, 0);
             if (end != value && isWithinRange<UA_SByte>(l)) {
                 UA_SByte val = static_cast<UA_Byte>(l);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
                 markAsDirty();
                 ret = 0;
             }
@@ -1075,7 +1179,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             ul = strtoul(value, &end, 0);
             if (end != value && isWithinRange<UA_UInt16>(ul)) {
                 UA_UInt16 val = static_cast<UA_UInt16>(ul);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
                 markAsDirty();
                 ret = 0;
             }
@@ -1084,7 +1188,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             l = strtol(value, &end, 0);
             if (end != value && isWithinRange<UA_Int16>(l)) {
                 UA_Int16 val = static_cast<UA_Int16>(l);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
                 markAsDirty();
                 ret = 0;
             }
@@ -1093,7 +1197,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             ul = strtoul(value, &end, 0);
             if (end != value && isWithinRange<UA_UInt32>(ul)) {
                 UA_UInt32 val = static_cast<UA_UInt32>(ul);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
                 markAsDirty();
                 ret = 0;
             }
@@ -1131,7 +1235,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             ul = strtoul(value, &end, 0);
             if (end != value && isWithinRange<UA_UInt64>(ul)) {
                 UA_UInt64 val = static_cast<UA_UInt64>(ul);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
                 markAsDirty();
                 ret = 0;
             }
@@ -1140,7 +1244,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             l = strtol(value, &end, 0);
             if (end != value && isWithinRange<UA_Int64>(l)) {
                 UA_Int64 val = static_cast<UA_Int64>(l);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
                 markAsDirty();
                 ret = 0;
             }
@@ -1149,7 +1253,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             d = strtod(value, &end);
             if (end != value && isWithinRange<UA_Float>(d)) {
                 UA_Float val = static_cast<UA_Float>(d);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
                 markAsDirty();
                 ret = 0;
             }
@@ -1159,7 +1263,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             d = strtod(value, &end);
             if (end != value) {
                 UA_Double val = static_cast<UA_Double>(d);
-                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
             }
             break;
         }
@@ -1170,15 +1274,15 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
         }
         if (switchfield >= 0) {
             // manually wrap value from outgoingData into union
-            void *p = UA_new(incomingData.type);
+            void *p = UA_new(type);
             if (p) {
                 *static_cast<UA_UInt32*>(p) = switchfield;
                 if (switchfield > 0) {
-                    memcpy(static_cast<char*>(p) + incomingData.type->members[switchfield-1].padding,
+                    memcpy(static_cast<char*>(p) + type->members[switchfield-1].padding,
                         outgoingData.data, outgoingData.type->memSize);
                     UA_free(outgoingData.data);
                 }
-                UA_Variant_setScalar(&outgoingData, p, incomingData.type);
+                UA_Variant_setScalar(&outgoingData, p, type);
                 status = UA_STATUSCODE_GOOD;
                 markAsDirty();
                 ret = 0;
@@ -1213,9 +1317,19 @@ DataElementOpen62541::dbgWriteArray (const epicsUInt32 targetSize, const std::st
     }
 }
 
+static inline
+UA_String UA_StringNCopy(const char *src, size_t maxlength)
+{
+    UA_String s;
+    s.length = src ? strnlen(src, maxlength) : 0;
+    s.data = s.length ? static_cast<UA_Byte*>(UA_malloc(s.length)) : nullptr;
+    if (s.data) memcpy(s.data, src, s.length);
+    return s;
+}
+
 // Write array for EPICS String / UA_String
 long
-DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len,
+DataElementOpen62541::writeArray (const char *value, epicsUInt32 len,
                               const epicsUInt32 num,
                               const UA_DataType *targetType,
                               dbCommon *prec)
@@ -1226,33 +1340,75 @@ DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len,
         errlogPrintf("%s : OPC UA data type is not an array\n", prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
-    } else if (incomingData.type != targetType) {
-        errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
-                     prec->name,
-                     variantTypeString(incomingData),
-                     variantTypeString(targetType),
-                     epicsTypeString(value));
-        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-        ret = 1;
     } else {
-        UA_String *arr = static_cast<UA_String *>(UA_Array_new(num, &UA_TYPES[UA_TYPES_STRING]));
-        if (!arr) {
+        const UA_DataType* type = incomingData.type;
+        void* data = UA_Array_new(num, type);
+        if (!data) {
             errlogPrintf("%s : out of memory\n", prec->name);
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
             ret = 1;
         } else {
-            for (epicsUInt32 i = 0; i < num; i++) {
-                arr[i].length = strnlen(value, len);
-                if (arr[i].length) {
-                    arr[i].data = static_cast<UA_Byte*>(UA_malloc(arr[i].length));
-                    memcpy(arr[i].data, value, arr[i].length);
+            switch(typeKindOf(type)) {
+            case UA_DATATYPEKIND_STRING:
+            case UA_DATATYPEKIND_XMLELEMENT:
+            case UA_DATATYPEKIND_BYTESTRING: {
+                UA_String *arr = static_cast<UA_String *>(data);
+                for (epicsUInt32 i = 0; i < num; i++) {
+                    arr[i] = UA_StringNCopy(value, len);
+                    value += len;
                 }
-                value += len;
+                break;
+            }
+            case UA_DATATYPEKIND_LOCALIZEDTEXT: {
+                UA_LocalizedText *arr = static_cast<UA_LocalizedText *>(data);
+                for (epicsUInt32 i = 0; i < num; i++) {
+                    const char* sep = static_cast<const char*>(memchr(value, '|', len));
+                    if (sep) {
+                        arr[i].locale = UA_StringNCopy(value, sep - value);
+                    } else if (i < incomingData.arrayLength) {
+                        UA_copy(&reinterpret_cast<const UA_LocalizedText*>(
+                            incomingData.data)[i].locale,
+                            &arr[i].locale, &UA_TYPES[UA_TYPES_STRING]);
+                    } else if (i > 0) {
+                        UA_copy(&arr[i-1].locale,
+                            &arr[i].locale, &UA_TYPES[UA_TYPES_STRING]);
+                    }
+                    arr[i].text = UA_StringNCopy(sep ? sep+1 : value, sep ? len - (sep+1-value) : len);
+                    value += len;
+                }
+                break;
+            }
+            case UA_DATATYPEKIND_QUALIFIEDNAME: {
+                UA_QualifiedName *arr = static_cast<UA_QualifiedName *>(data);
+                for (epicsUInt32 i = 0; i < num; i++) {
+                    const char* sep = static_cast<const char*>(memchr(value, '|', len));
+                    if (sep) {
+                        arr[i].namespaceIndex = atoi(value);
+                    } else if (i < incomingData.arrayLength) {
+                        arr[i].namespaceIndex = reinterpret_cast<const UA_QualifiedName*>(
+                            incomingData.data)[i].namespaceIndex;
+                    } else if (i > 0) {
+                        arr[i].namespaceIndex = arr[i-1].namespaceIndex;
+                    }
+                    arr[i].name = UA_StringNCopy(sep ? sep+1 : value, sep ? len - (sep+1-value) : len);
+                    value += len;
+                }
+                break;
+            }
+            default:
+                errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
+                             prec->name,
+                             variantTypeString(incomingData),
+                             variantTypeString(targetType),
+                             epicsTypeString(value));
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                UA_Array_delete(data, num, type);
+                ret = 1;
             }
             { // Scope of Guard G
                 Guard G(outgoingLock);
                 UA_Variant_clear(&outgoingData);  // unlikely but we may still have unsent old data to discard
-                UA_Variant_setArray(&outgoingData, arr, num, targetType); // no copy but move arr content
+                UA_Variant_setArray(&outgoingData, data, num, type); // no copy but move content
                 markAsDirty();
             }
 
@@ -1323,7 +1479,7 @@ DataElementOpen62541::writeArray (const epicsFloat64 *value, const epicsUInt32 n
 }
 
 long
-DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541::writeArray (const char *value, epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray(value, len, num, &UA_TYPES[UA_TYPES_STRING], prec);
 }

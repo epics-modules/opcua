@@ -389,12 +389,13 @@ public:
      * @brief Read incoming data as classic C string (char[]).
      *
      * See the DataElement API method it overrides
-     * DevOpcua::DataElement::readScalar(char*,const size_t,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
+     * DevOpcua::DataElement::readScalar(char*,const epicsUInt32,dbCommon*,ProcessReason*,epicsUInt32*,epicsUInt32*,char*,const epicsUInt32)
      */
 
-    virtual long int readScalar(char *value, const size_t num,
+    virtual long int readScalar(char *value, const epicsUInt32 len,
                                 dbCommon *prec,
                                 ProcessReason *nextReason = nullptr,
+                                epicsUInt32* lenRead = nullptr,
                                 epicsUInt32 *statusCode = nullptr,
                                 char *statusText = nullptr,
                                 const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) override;
@@ -545,7 +546,7 @@ public:
      * See the DataElement API method it overrides
      * DevOpcua::DataElement::readArray(char*,const epicsUInt32,const epicsUInt32,epicsUInt32*,dbCommon*,ProcessReason*,epicsUInt32*,char*,const epicsUInt32)
      */
-    virtual long int readArray(char *value, const epicsUInt32 len,
+    virtual long int readArray(char *value, epicsUInt32 len,
                                const epicsUInt32 num,
                                epicsUInt32 *numRead,
                                dbCommon *prec,
@@ -597,7 +598,7 @@ public:
      * DevOpcua::DataElement::writeScalar(const char*,const epicsUInt32,dbCommon*)
      */
     virtual long int writeScalar(const char *value,
-                                 epicsUInt32 num,
+                                 const epicsUInt32 len,
                                  dbCommon *prec) override;
 
     /**
@@ -760,8 +761,7 @@ private:
     void checkWriteArray(const UA_DataType *expectedType, const std::string &targetTypeName) const;
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
     bool updateDataInStruct(void* container, std::shared_ptr<DataElementOpen62541> pelem);
-
-    void createMap(const UA_DataType *type, const std::string* timefrom);
+    void createMap(const UA_DataType *type, const std::string* timefrom = nullptr);
 
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
