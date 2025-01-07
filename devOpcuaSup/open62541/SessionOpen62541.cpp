@@ -652,41 +652,42 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
 
     {
         Guard G(clientlock);
-        if (!isConnected()) return; // may have disconnected while we waited
-        status=UA_Client_sendAsyncReadRequest(client, &request,
-            [] (UA_Client *client,
-                void *userdata,
-                UA_UInt32
-                requestId,
-                UA_ReadResponse *response)
-            {
-                static_cast<SessionOpen62541*>(userdata)->readComplete(requestId, response);
-            },
-            this, &id);
-    }
-    UA_ReadRequest_clear(&request);
-    if (UA_STATUS_IS_BAD(status)) {
-        errlogPrintf(
-            "OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
-            name.c_str(),
-            UA_StatusCode_name(status));
-        // Create readFailure events for all items of the batch
-        for (auto c : batch) {
-            c->item->setIncomingEvent(ProcessReason::readFailure);
+        if (isConnected()) { // may have disconnected while we waited
+            status=UA_Client_sendAsyncReadRequest(client, &request,
+                [] (UA_Client *client,
+                    void *userdata,
+                    UA_UInt32
+                    requestId,
+                    UA_ReadResponse *response)
+                {
+                    static_cast<SessionOpen62541*>(userdata)->readComplete(requestId, response);
+                },
+                this, &id);
+            if (UA_STATUS_IS_BAD(status)) {
+                errlogPrintf(
+                    "OPC UA session %s: (requestRead) beginRead service failed with status %s\n",
+                    name.c_str(),
+                    UA_StatusCode_name(status));
+                // Create readFailure events for all items of the batch
+                for (auto c : batch) {
+                    c->item->setIncomingEvent(ProcessReason::readFailure);
+                }
+            } else {
+                if (debug >= 5)
+                    std::cout << "Session " << name
+                              << ": (requestRead) beginRead service ok"
+                              << " (transaction id " << id
+                              << "; retrieving " << itemsToRead->size()
+                              << " nodes)"
+                              << std::endl;
+                outstandingOps.insert(
+                    std::pair<UA_UInt32,
+                        std::unique_ptr<std::vector<ItemOpen62541 *>>>(id, std::move(itemsToRead)));
+            }
         }
-    } else {
-        if (debug >= 5)
-            std::cout << "Session " << name
-                      << ": (requestRead) beginRead service ok"
-                      << " (transaction id " << id
-                      << "; retrieving " << itemsToRead->size()
-                      << " nodes)"
-                      << std::endl;
-        Guard G(opslock);
-        outstandingOps.insert(
-            std::pair<UA_UInt32,
-                std::unique_ptr<std::vector<ItemOpen62541 *>>>(id, std::move(itemsToRead)));
     }
+
+    UA_ReadRequest_clear(&request);
 }
 
 void
@@ -731,38 +732,39 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &b
 
     {
         Guard G(clientlock);
-        if (!isConnected()) return; // may have disconnected while we waited
-        status=UA_Client_sendAsyncWriteRequest(client, &request,
-            [] (UA_Client *client,
-                void *userdata,
-                UA_UInt32 requestId,
-                UA_WriteResponse *response)
-            {
-                static_cast<SessionOpen62541*>(userdata)->writeComplete(requestId, response);
-            },
-            this, &id);
+        if (isConnected()) { // may have disconnected while we waited
+            status=UA_Client_sendAsyncWriteRequest(client, &request,
+                [] (UA_Client *client,
+                    void *userdata,
+                    UA_UInt32 requestId,
+                    UA_WriteResponse *response)
+                {
+                    static_cast<SessionOpen62541*>(userdata)->writeComplete(requestId, response);
+                },
+                this, &id);
+
+            if (UA_STATUS_IS_BAD(status)) {
+                errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
+                             name.c_str(), UA_StatusCode_name(status));
+                // Create writeFailure events for all items of the batch
+                for (auto c : batch) {
+                    c->item->setIncomingEvent(ProcessReason::writeFailure);
+                }
+            } else {
+                if (debug >= 5)
+                    std::cout << "Session " << name
+                              << ": (requestWrite) beginWrite service ok"
+                              << " (transaction id " << id
+                              << "; writing " << itemsToWrite->size()
+                              << " nodes)"
+                              << std::endl;
+                outstandingOps.insert(std::pair<UA_UInt32,
+                    std::unique_ptr<std::vector<ItemOpen62541 *>>>(id, std::move(itemsToWrite)));
+            }
+        }
     }
 
     UA_WriteRequest_clear(&request);
-    if (UA_STATUS_IS_BAD(status)) {
-        errlogPrintf("OPC UA session %s: (requestWrite) beginWrite service failed with status %s\n",
-                     name.c_str(), UA_StatusCode_name(status));
-        // Create writeFailure events for all items of the batch
-        for (auto c : batch) {
-            c->item->setIncomingEvent(ProcessReason::writeFailure);
-        }
-    } else {
-        if (debug >= 5)
-            std::cout << "Session " << name
-                      << ": (requestWrite) beginWrite service ok"
-                      << " (transaction id " << id
-                      << "; writing " << itemsToWrite->size()
-                      << " nodes)"
-                      << std::endl;
-        Guard G(opslock);
-        outstandingOps.insert(std::pair<UA_UInt32,
-            std::unique_ptr<std::vector<ItemOpen62541 *>>>(id, std::move(itemsToWrite)));
-    }
 }
 
 void
@@ -2383,7 +2385,6 @@ void
 SessionOpen62541::readComplete (UA_UInt32 transactionId,
                             UA_ReadResponse* response)
 {
-    Guard G(opslock);
     auto it = outstandingOps.find(transactionId);
     if (it == outstandingOps.end()) {
         errlogPrintf("OPC UA session %s: (readComplete) received a callback "
@@ -2449,7 +2450,6 @@ void
 SessionOpen62541::writeComplete (UA_UInt32 transactionId,
                             UA_WriteResponse* response)
 {
-    Guard G(opslock);
     auto it = outstandingOps.find(transactionId);
     if (it == outstandingOps.end()) {
         errlogPrintf("OPC UA session %s: (writeComplete) received a callback "

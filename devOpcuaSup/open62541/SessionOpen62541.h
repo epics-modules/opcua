@@ -395,7 +395,6 @@ private:
     int transactionId;                                            /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */
     std::map<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>> outstandingOps;
-    epicsMutex opslock;                                           /**< lock for outstandingOps map */
 
     RequestQueueBatcher<WriteRequest> writer;                     /**< batcher for write requests */
     unsigned int writeNodesMax;                                   /**< max number of nodes per write request */
