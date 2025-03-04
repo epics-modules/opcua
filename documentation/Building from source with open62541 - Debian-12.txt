@@ -1,0 +1,86 @@
+# Container debian:12
+
+# Install general dependencies
+
+apt update
+apt install -y build-essential curl
+
+# Install EPICS dependencies
+apt install -y libreadline-dev
+
+# Install open62541 dependencies
+apt install -y cmake python3 libssl-dev libxml2-dev
+
+# Create installation dir cd into it
+mkdir /opt/epics
+cd /opt/epics
+
+# Download EPICS Base, OPCUA Device Support, open62541
+curl -L https://github.com/epics-base/epics-base/releases/download/R7.0.8.1/base-7.0.8.1.tar.gz | tar xzf -
+curl -L https://github.com/epics-modules/opcua/archive/refs/tags/v0.10.0.tar.gz | tar xzf -
+curl -L https://github.com/open62541/open62541/archive/refs/tags/v1.3.15.tar.gz | tar xzf -
+
+# Configure EPICS Base (set C++ standard to C++11)
+cat >> base-7.0.8.1/configure/os/CONFIG_SITE.Common.linuxCommon <<EOF
+OP_SYS_CXXFLAGS += -std=c++11
+EOF
+
+# Build EPICS Base
+make -j4 -C base-7.0.8.1
+make -C base-7.0.8.1 clean
+
+# Build open62541 (shared and static versions separate)
+# if you install into /usr/local, 'make install' must be run under sudo
+mkdir open62541-1.3.15/build
+cd open62541-1.3.15/build
+
+cmake .. -DBUILD_SHARED_LIBS=ON \
+         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+         -DUA_ENABLE_ENCRYPTION=OPENSSL
+make
+make install
+rm -fr *
+
+cmake .. -DBUILD_SHARED_LIBS=OFF \
+         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+         -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
+         -DUA_ENABLE_ENCRYPTION=OPENSSL
+make
+make install
+rm -fr *
+
+cd -
+# Now open62541 is installed in /usr/local
+
+# Create a RELEASE.local file for EPICS modules
+cat > RELEASE.local <<EOF
+OPCUA = /opt/epics/opcua-0.10.0
+EPICS_BASE = /opt/epics/base-7.0.8.1
+EOF
+
+# Configure OPCUA Device Support
+cat > opcua-0.10.0/configure/CONFIG_SITE.local <<\EOF
+# Path to the Open62541 installation
+OPEN62541 = /usr/local
+
+# How the Open62541 SDK shared libraries are deployed
+#   SYSTEM = shared libs are in a system location
+#   PROVIDED = shared libs are in $(OPEN62541_SHRLIB_DIR)
+#   INSTALL = shared libs are installed (copied) into this module
+#   EMBED = link SDK code statically into libopcua,
+#           SDK libraries are not required on target system
+OPEN62541_DEPLOY_MODE = PROVIDED
+OPEN62541_LIB_DIR = $(OPEN62541)/lib
+OPEN62541_SHRLIB_DIR = $(OPEN62541_LIB_DIR)
+# How the Open62541 libraries were built
+OPEN62541_USE_CRYPTO = YES
+OPEN62541_USE_XMLPARSER = YES
+EOF
+
+# Build the OPCUA Device Support
+make -j4 -C opcua-0.10.0
+
+### Done ###
+
+# Now, e.g., run the example IOC
+( cd opcua-0.10.0/exampleTop/iocBoot/iocS7-1500/; ../../bin/linux-x86_64/opcuaIoc st.cmd )
