@@ -625,7 +625,8 @@ DataElementUaSdk::readArray (char *value, const epicsUInt32 len,
 }
 
 // Specialization for epicsUInt8 / OpcUa_Byte
-//   (needed because UaByteArray API is different from all other UaXxxArray classes)
+//   needed because UaByteArray API is different from all other UaXxxArray classes
+//   and because epicsUInt8 is also used for arrays of OpcUa_Boolean
 // CAVEAT: changes in the template (in DataElementUaSdk.h) must be reflected here
 template<>
 long
@@ -676,7 +677,7 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
-                } else if (data.type() != expectedType) {
+                } else if (data.type() != OpcUaType_Byte && data.type() != OpcUaType_Boolean) {
                     errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
                                  prec->name, variantTypeString(data.type()), epicsTypeString(*value));
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
@@ -685,11 +686,19 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
                     if (OpcUa_IsUncertain(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
-                    UaByteArray arr;
-                    UaVariant_to(upd->getData(), arr);
-                    elemsWritten = static_cast<epicsUInt32>(arr.size());
-                    if (num < elemsWritten) elemsWritten = num;
-                    memcpy(value, arr.data(), sizeof(epicsUInt8) * elemsWritten);
+                    if (data.type() == OpcUaType_Byte) {
+                        UaByteArray arr;
+                        UaVariant_to(upd->getData(), arr);
+                        elemsWritten = static_cast<epicsUInt32>(arr.size());
+                        if (num < elemsWritten) elemsWritten = num;
+                        memcpy(value, arr.data(), sizeof(epicsUInt8) * elemsWritten);
+                    } else {
+                        UaBooleanArray arr;
+                        UaVariant_to(upd->getData(), arr);
+                        elemsWritten = static_cast<epicsUInt32>(arr.length());
+                        if (num < elemsWritten) elemsWritten = num;
+                        memcpy(value, arr.rawData(), sizeof(epicsUInt8) * elemsWritten);
+                    }
                     prec->udf = false;
                 }
             }
@@ -1100,7 +1109,8 @@ DataElementUaSdk::writeArray (const char **value, const epicsUInt32 len,
 }
 
 // Specialization for epicsUInt8 / OpcUa_Byte
-//   (needed because UaByteArray API is different from all other UaXxxArray classes)
+//   needed because UaByteArray API is different from all other UaXxxArray classes
+//   and because epicsUInt8 is also used for arrays of OpcUa_Boolean
 // CAVEAT: changes in the template (in DataElementUaSdk.h) must be reflected here
 template<>
 long
@@ -1114,7 +1124,7 @@ DataElementUaSdk::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epicsUI
         errlogPrintf("%s : OPC UA data type is not an array\n", prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
-    } else if (incomingData.type() != targetType) {
+    } else if (incomingData.type() != OpcUaType_Byte && incomingData.type() != OpcUaType_Boolean) {
         errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
                      prec->name,
                      variantTypeString(incomingData.type()),
@@ -1123,13 +1133,21 @@ DataElementUaSdk::writeArray<epicsUInt8, UaByteArray, OpcUa_Byte> (const epicsUI
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     } else {
-        UaByteArray arr(reinterpret_cast<const char *>(value), static_cast<OpcUa_Int32>(num));
-        { // Scope of Guard G
-            Guard G(outgoingLock);
-            UaVariant_set(outgoingData, arr);
-            markAsDirty();
+        if (incomingData.type() == OpcUaType_Byte) {
+            UaByteArray arr(reinterpret_cast<const char *>(value), static_cast<OpcUa_Int32>(num));
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                UaVariant_set(outgoingData, arr);
+                markAsDirty();
+            }
+        } else {
+            UaBooleanArray arr(static_cast<OpcUa_Int32>(num), const_cast<OpcUa_Boolean *>(value));
+            { // Scope of Guard G
+                Guard G(outgoingLock);
+                UaVariant_set(outgoingData, arr);
+                markAsDirty();
+            }
         }
-
         dbgWriteArray(num, epicsTypeString(*value));
     }
     return ret;
