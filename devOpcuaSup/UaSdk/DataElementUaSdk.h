@@ -728,6 +728,7 @@ private:
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_Int64 &value) { return variant.toInt64(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_Double &value) { return variant.toDouble(value); }
 
+    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaBooleanArray &value) { return variant.toBoolArray(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaSByteArray &value) { return variant.toSByteArray(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaByteArray &value) { return variant.toByteArray(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaInt16Array &value) { return variant.toInt16Array(value); }
@@ -740,6 +741,7 @@ private:
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaDoubleArray &value) { return variant.toDoubleArray(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaStringArray &value) { return variant.toStringArray(value); }
 
+    void UaVariant_set(UaVariant &variant, UaBooleanArray &value) { variant.setBoolArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaSByteArray &value) { variant.setSByteArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaByteArray &value) { variant.setByteArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaInt16Array &value) { variant.setInt16Array(value, OpcUa_True); }
