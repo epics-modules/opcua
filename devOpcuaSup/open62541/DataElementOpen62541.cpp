@@ -736,6 +736,92 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
     return ret;
 }
 
+// Specialization for epicsUInt8
+//   needed because epicsUInt8 is used for arrays of UA_BYTE and UA_BOOLEAN
+// CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
+template<>
+long
+DataElementOpen62541::readArray<epicsUInt8> (epicsUInt8 *value, const epicsUInt32 num,
+                                             epicsUInt32 *numRead,
+                                             const UA_DataType *expectedType,
+                                             dbCommon *prec,
+                                             ProcessReason *nextReason,
+                                             epicsUInt32 *statusCode,
+                                             char *statusText,
+                                             const epicsUInt32 statusTextLen)
+{
+    long ret = 0;
+    epicsUInt32 elemsWritten = 0;
+
+    if (incomingQueue.empty()) {
+        errlogPrintf("%s : incoming data queue empty\n", prec->name);
+        *numRead = 0;
+        return 1;
+    }
+
+    ProcessReason nReason;
+    std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
+    dbgReadArray(upd.get(), num, epicsTypeString(*value));
+
+    switch (upd->getType()) {
+    case ProcessReason::readFailure:
+        (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+        ret = 1;
+        break;
+    case ProcessReason::connectionLoss:
+        (void) recGblSetSevr(prec, COMM_ALARM, INVALID_ALARM);
+        ret = 1;
+        break;
+    case ProcessReason::incomingData:
+    case ProcessReason::readComplete:
+    {
+        if (num && value) {
+            UA_StatusCode stat = upd->getStatus();
+            if (UA_STATUS_IS_BAD(stat)) {
+                // No valid OPC UA value
+                (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                ret = 1;
+            } else  {
+                // Valid OPC UA value, so try to convert
+                UA_Variant &data = upd->getData();
+                if (UA_Variant_isScalar(&data)) {
+                    errlogPrintf("%s : incoming data is not an array\n", prec->name);
+                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                    ret = 1;
+                } else if (typeKindOf(data) != UA_DATATYPEKIND_BYTE && typeKindOf(data) != UA_DATATYPEKIND_BOOLEAN) {
+                    errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
+                                 prec->name, variantTypeString(data), epicsTypeString(*value));
+                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                    ret = 1;
+                } else {
+                    if (UA_STATUS_IS_UNCERTAIN(stat)) {
+                        (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
+                    }
+                    elemsWritten = static_cast<epicsUInt32>(num) < data.arrayLength ? num : static_cast<epicsUInt32>(data.arrayLength);
+                    memcpy(value, data.data, elemsWritten);
+                    prec->udf = false;
+                }
+                UA_Variant_clear(&data);
+            }
+            if (statusCode) *statusCode = stat;
+            if (statusText) {
+                strncpy(statusText, UA_StatusCode_name(stat), statusTextLen);
+                statusText[statusTextLen-1] = '\0';
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    prec->time = upd->getTimeStamp();
+    if (nextReason) *nextReason = nReason;
+    if (num && value)
+        *numRead = elemsWritten;
+    return ret;
+}
+
 long
 DataElementOpen62541::readArray (epicsInt8 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
@@ -1147,6 +1233,49 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
             } else {
                 dbgWriteArray(num, epicsTypeString(*value));
             }
+        }
+    }
+    return ret;
+}
+
+// Specialization for epicsUInt8
+//   needed because epicsUInt8 is used for arrays of UA_BYTE and UA_BOOLEAN
+// CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
+template<>
+long
+DataElementOpen62541::writeArray<epicsUInt8>(const epicsUInt8 *value,
+                                             const epicsUInt32 num,
+                                             const UA_DataType *targetType,
+                                             dbCommon *prec)
+{
+    long ret = 0;
+
+    if (UA_Variant_isScalar(&incomingData)) {
+        errlogPrintf("%s : OPC UA data type is not an array\n", prec->name);
+        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+        ret = 1;
+    } else if (typeKindOf(incomingData) != UA_DATATYPEKIND_BYTE && typeKindOf(incomingData) != UA_DATATYPEKIND_BOOLEAN) {
+        errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
+                     prec->name,
+                     variantTypeString(incomingData),
+                     variantTypeString(targetType),
+                     epicsTypeString(*value));
+        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+        ret = 1;
+    } else {
+        UA_StatusCode status;
+        { // Scope of Guard G
+            Guard G(outgoingLock);
+            status = UA_Variant_setArrayCopy(&outgoingData, value, num, incomingData.type);
+            markAsDirty();
+        }
+        if (UA_STATUS_IS_BAD(status)) {
+            errlogPrintf("%s : array copy failed: %s\n",
+                         prec->name, UA_StatusCode_name(status));
+            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            ret = 1;
+        } else {
+            dbgWriteArray(num, epicsTypeString(*value));
         }
     }
     return ret;
