@@ -1161,7 +1161,7 @@ DataElementOpen62541::writeArray (const epicsInt8 *value, const epicsUInt32 num,
 long
 DataElementOpen62541::writeArray (const epicsUInt8 *value, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray<epicsUInt8>(value, num, &UA_TYPES[UA_TYPES_SBYTE], prec);
+    return writeArray<epicsUInt8>(value, num, &UA_TYPES[UA_TYPES_BYTE], prec);
 }
 
 long
