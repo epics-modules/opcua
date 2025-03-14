@@ -23,6 +23,7 @@
 
 #include <uaclientsdk.h>
 #include <uasession.h>
+#include <opcua_types.h>
 
 #include <errlog.h>
 #include <epicsThread.h>
@@ -178,6 +179,26 @@ SubscriptionUaSdk::addMonitoredItems ()
             monitoredItemCreateRequests[i].RequestedParameters.SamplingInterval = it->linkinfo.samplingInterval;
             monitoredItemCreateRequests[i].RequestedParameters.QueueSize = it->linkinfo.queueSize;
             monitoredItemCreateRequests[i].RequestedParameters.DiscardOldest = it->linkinfo.discardOldest;
+            if (it->linkinfo.deadband > 0.0) {
+#ifdef _WIN32
+                errlogPrintf("OPC UA subscription %s@%s: deadband not implemented for UA SDK on Windows\n",
+                    name.c_str(), psessionuasdk->getName().c_str());
+#else
+                OpcUa_DataChangeFilter* pDataChangeFilter = NULL;
+                status = OpcUa_EncodeableObject_CreateExtension(
+                    &OpcUa_DataChangeFilter_EncodeableType,
+                    &monitoredItemCreateRequests[i].RequestedParameters.Filter,
+                    (OpcUa_Void**)&pDataChangeFilter);
+                if (status.isBad()) {
+                    errlogPrintf("OPC UA subscription %s@%s: cannot create deadband filter: %s\n",
+                    name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
+                } else {
+                    pDataChangeFilter->DeadbandType = OpcUa_DeadbandType_Absolute;
+                    pDataChangeFilter->DeadbandValue = it->linkinfo.deadband;
+                    pDataChangeFilter->Trigger = OpcUa_DataChangeTrigger_StatusValue;
+                }
+#endif
+            }
             i++;
         }
 
@@ -199,20 +220,21 @@ SubscriptionUaSdk::addMonitoredItems ()
                 std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
                           << ": created " << items.size() << " monitored items ("
                           << status.toString().toUtf8() << ")" << std::endl;
-            if (debug >= 5) {
-                for (i = 0; i < items.size(); i++) {
-                    UaNodeId node(monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
-                    if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode))
-                        std::cout << "** Monitored item " << node.toXmlString().toUtf8()
+            for (i = 0; i < items.size(); i++) {
+                if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode)) {
+                    if (debug >= 5)
+                        std::cout << "** OPC UA record " << items[i]->recConnector->getRecordName()
+                                  << " monitored item " << UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8()
                                   << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
                                   << " revised sampling interval " << monitoredItemCreateResults[i].RevisedSamplingInterval
                                   << " revised queue size " << monitoredItemCreateResults[i].RevisedQueueSize
                                   << std::endl;
-                    else
-                        std::cout << "** Monitored item " << node.toXmlString().toUtf8()
-                                  << " failed with error "
-                                  << UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8()
-                                  << std::endl;
+                } else {
+                    errlogPrintf("OPC UA record %s monitored item %s failed with error %s\n",
+                        items[i]->recConnector->getRecordName(),
+                        UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8(),
+                        UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8());
+                    items[i]->setIncomingEvent(ProcessReason::connectionLoss);
                 }
             }
         }

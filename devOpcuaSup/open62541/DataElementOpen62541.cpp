@@ -107,71 +107,117 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
 #error Set UA_ENABLE_TYPEDESCRIPTION in open62541
 #endif
 
-#ifndef UA_DATATYPES_USE_POINTER
 // Older open62541 version 1.2 has no UA_DataType_getStructMember
 // Code from open62541 version 1.3.7 modified for compatibility with version 1.2
-UA_Boolean
-UA_DataType_getStructMember(const UA_DataType *type, const char *memberName,
+// and extended to return isOptional flag and index for union
+
+inline const UA_DataType*
+memberTypeOf(const UA_DataType *type, const UA_DataTypeMember *m) {
+#ifdef UA_DATATYPES_USE_POINTER
+    return m->memberType;
+#else
+    const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+    return &typelists[!m->namespaceZero][m->memberTypeIndex];
+#endif
+}
+
+UA_UInt32
+UA_DataType_getStructMemberExt(const UA_DataType *type, const char *memberName,
                             size_t *outOffset, const UA_DataType **outMemberType,
-                            UA_Boolean *outIsArray) {
-    if(type->typeKind != UA_DATATYPEKIND_STRUCTURE &&
-       type->typeKind != UA_DATATYPEKIND_OPTSTRUCT)
-        return false;
+                            UA_Boolean *outIsArray, UA_Boolean *outIsOptional) {
 
     size_t offset = 0;
-    const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
-    for(size_t i = 0; i < type->membersSize; ++i) {
-        const UA_DataTypeMember *m = &type->members[i];
-        const UA_DataType *mt = &typelists[!m->namespaceZero][m->memberTypeIndex];
-        offset += m->padding;
+    switch(type->typeKind) {
+    case UA_DATATYPEKIND_STRUCTURE:
+    case UA_DATATYPEKIND_OPTSTRUCT:
+    case UA_DATATYPEKIND_UNION:
+        for(UA_UInt32 i = 0; i < type->membersSize; ++i) {
+            const UA_DataTypeMember *m = &type->members[i];
+            const UA_DataType *mt = memberTypeOf(type, m);
+            offset += m->padding;
 
-        if(strcmp(memberName, m->memberName) == 0) {
-            *outOffset = offset;
-            *outMemberType = mt;
-            *outIsArray = m->isArray;
-            return true;
-        }
+            if(strcmp(memberName, m->memberName) == 0) {
+                *outOffset = offset;
+                *outMemberType = mt;
+                *outIsArray = m->isArray;
+                *outIsOptional = m->isOptional;
+                return i+1;
+            }
 
-        if(!m->isOptional) {
-            if(!m->isArray) {
-                offset += mt->memSize;
-            } else {
-                offset += sizeof(size_t);
-                offset += sizeof(void*);
-            }
-        } else { /* field is optional */
-            if(!m->isArray) {
-                offset += sizeof(void *);
-            } else {
-                offset += sizeof(size_t);
-                offset += sizeof(void *);
+            if (type->typeKind == UA_DATATYPEKIND_UNION) {
+                offset = 0;
+            } else if(!m->isOptional) {
+                if(!m->isArray) {
+                    offset += mt->memSize;
+                } else {
+                    offset += sizeof(size_t);
+                    offset += sizeof(void*);
+                }
+            } else { /* field is optional */
+                if(!m->isArray) {
+                    offset += sizeof(void *);
+                } else {
+                    offset += sizeof(size_t);
+                    offset += sizeof(void *);
+                }
             }
         }
+        break;
+    case UA_DATATYPEKIND_LOCALIZEDTEXT:
+        *outMemberType = &UA_TYPES[UA_TYPES_STRING];
+        *outIsArray = 0;
+        *outIsOptional = 0;
+        if (strcmp(memberName, "locale") == 0) {
+            *outOffset = offsetof(UA_LocalizedText, locale);
+            return 1;
+        }
+        if (strcmp(memberName, "text") == 0) {
+            *outOffset = offsetof(UA_LocalizedText, text);
+            return 2;
+        }
+        break;
+    case UA_DATATYPEKIND_QUALIFIEDNAME:
+        *outIsArray = 0;
+        *outIsOptional = 0;
+        if (strcmp(memberName, "namespaceIndex") == 0) {
+            *outMemberType = &UA_TYPES[UA_DATATYPEKIND_UINT16];
+            *outOffset = offsetof(UA_QualifiedName, namespaceIndex);
+            return 1;
+        }
+        if (strcmp(memberName, "name") == 0) {
+            *outMemberType = &UA_TYPES[UA_TYPES_STRING];
+            *outOffset = offsetof(UA_QualifiedName, name);
+            return 2;
+        }
+        break;
     }
-
-    return false;
+    return 0;
 }
-#endif
 
-bool
-DataElementOpen62541::createMap (const UA_DataType *type,
-                                 const std::string *timefrom)
+void
+DataElementOpen62541::createMap(const UA_DataType *type,
+                                const std::string *timefrom)
 {
+    if (debug() >= 5)
+        std::cout << " ** creating index-to-element map for child elements" << std::endl;
+
     switch (typeKindOf(type)) {
     case UA_DATATYPEKIND_STRUCTURE:
-    {
-        if (debug() >= 5)
-            std::cout << " ** creating index-to-element map for child elements" << std::endl;
-
+    case UA_DATATYPEKIND_OPTSTRUCT:
+    case UA_DATATYPEKIND_UNION:
+    case UA_DATATYPEKIND_LOCALIZEDTEXT:
+    case UA_DATATYPEKIND_QUALIFIEDNAME:
         if (timefrom) {
             const UA_DataType *timeMemberType;
             UA_Boolean timeIsArray;
+            UA_Boolean timeIsOptional;
             size_t timeOffset;
 
-            if (UA_DataType_getStructMember(type, timefrom->c_str(),
+            if (UA_DataType_getStructMemberExt(type, timefrom->c_str(),
                             &timeOffset,
                             &timeMemberType,
-                            &timeIsArray)) {
+                            &timeIsArray,
+                            &timeIsOptional)) {
                 if (typeKindOf(timeMemberType) != UA_TYPES_DATETIME || timeIsArray) {
                     errlogPrintf("%s: timestamp element %s has invalid type %s%s - using "
                                  "source timestamp\n",
@@ -179,8 +225,8 @@ DataElementOpen62541::createMap (const UA_DataType *type,
                                  timefrom->c_str(),
                                  typeKindName(typeKindOf(timeMemberType)),
                                  timeIsArray ? "[]" : "");
-                }
-                timesrc = timeOffset;
+                } else
+                    timesrc = timeOffset;
             } else {
                 errlogPrintf(
                     "%s: timestamp element %s not found - using source timestamp\n",
@@ -191,10 +237,23 @@ DataElementOpen62541::createMap (const UA_DataType *type,
 
         for (auto &it : elements) {
             auto pelem = it.lock();
-            if (UA_DataType_getStructMember(type, pelem->name.c_str(),
+            if ((pelem->index = UA_DataType_getStructMemberExt(type, pelem->name.c_str(),
                             &pelem->offset,
                             &pelem->memberType,
-                            &pelem->isArray)) {
+                            &pelem->isArray,
+                            &pelem->isOptional))) {
+                if (debug() >= 5)
+                    std::cout << typeKindName(typeKindOf(type))
+                              << " " << pelem
+                              << " index=" << pelem->index
+                              << " offset=" << pelem->offset
+                              << " type=" << variantTypeString(pelem->memberType)
+                              << (pelem->isArray ? "[]" : "")
+                              << (pelem->isOptional ? " optional" : "")
+                              << std::endl;
+                if (typeKindOf(pelem->memberType) == UA_DATATYPEKIND_ENUM) {
+                    pelem->enumChoices = pitem->session->getEnumChoices(&pelem->memberType->typeId);
+                }
             } else {
                 std::cerr << "Item " << pitem
                           << ": element " << pelem->name
@@ -204,18 +263,16 @@ DataElementOpen62541::createMap (const UA_DataType *type,
         }
         if (debug() >= 5)
             std::cout << " ** " << elements.size()
-                      << " child elements mapped to a "
-                      << "structure of " << type->membersSize << " elements" << std::endl;
+                      << " child elements mapped to "
+                      << variantTypeString(type)
+                      << " of " << type->membersSize << " elements" << std::endl;
         break;
-    }
     default:
-        std::cerr << "Item " << pitem
-                  << " has unimplemented type " << variantTypeString(type)
+        std::cerr << "Error: " << this
+                  << " is no structured data but a " << typeKindName(typeKindOf(type))
                   << std::endl;
-        return false;
     }
     mapped = true;
-    return true;
 }
 
 // Getting the timestamp and status information from the Item assumes that only one thread
@@ -225,11 +282,16 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
                                        ProcessReason reason,
                                        const std::string *timefrom)
 {
-    // Make a copy of this element and cache it
+    // Cache this element. We can make a shallow copy because
+    // ItemOpen62541::setIncomingData marks the original response data as "ours".
+    // Member data is owned by the [ROOT] element.
     UA_Variant_clear(&incomingData);
-    UA_Variant_copy(&value, &incomingData);
+    incomingData = value;
 
     if (isLeaf()) {
+        if (pconnector->state() == ConnectionStatus::initialRead && typeKindOf(value) == UA_DATATYPEKIND_ENUM) {
+            enumChoices = pitem->session->getEnumChoices(&value.type->typeId);
+        }
         if ((pconnector->state() == ConnectionStatus::initialRead
              && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
             || (pconnector->state() == ConnectionStatus::up)) {
@@ -265,7 +327,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
 
         const UA_DataType *type = value.type;
         char* container = static_cast<char*>(value.data);
-        if (type->typeKind == UA_DATATYPEKIND_EXTENSIONOBJECT) {
+        if (typeKindOf(type) == UA_DATATYPEKIND_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content of decoded extension objects
@@ -282,28 +344,40 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
         if (!mapped)
             createMap(type, timefrom);
 
-        if (timefrom) {
-            if (timesrc >= 0)
-                pitem->tsData = ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(container + timesrc), 0);
-            else
-                pitem->tsData = pitem->tsSource;
-        }
+        if (timesrc >= 0)
+            pitem->tsData = ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(container + timesrc), 0);
+        else
+            pitem->tsData = pitem->tsSource;
 
         for (auto &it : elements) {
             auto pelem = it.lock();
-            char* memberData = container + pelem->offset;
             const UA_DataType* memberType = pelem->memberType;
+            char* memberData = container + pelem->offset;
             UA_Variant memberValue;
-            if (pelem->isArray)
-            {
-                size_t arrayLength = *reinterpret_cast<size_t*>(memberData);
+            size_t arrayLength = 0; // default to scalar
+            if (pelem->isArray) {
+                arrayLength = *reinterpret_cast<size_t*>(memberData);
                 memberData = *reinterpret_cast<char**>(memberData + sizeof(size_t));
-                if (arrayLength == 0) memberData = reinterpret_cast<char*>(UA_EMPTY_ARRAY_SENTINEL);
-                UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
-            } else {
-                UA_Variant_setScalar(&memberValue, memberData, memberType);
+            } else if (pelem->isOptional) {
+                /* optional scalar stored through pointer like an array */
+                memberData = *reinterpret_cast<char**>(memberData);
             }
-            pelem->setIncomingData(memberValue, reason);
+            if (type->typeKind == UA_DATATYPEKIND_UNION &&
+                    pelem->index != *reinterpret_cast<UA_UInt32*>(container)) {
+                // union option not taken
+                memberData = nullptr;
+            }
+            UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
+            memberValue.storageType = UA_VARIANT_DATA_NODELETE; // Keep ownership of data
+            if (debug() && !memberData) {
+                std::cerr << pitem->recConnector->getRecordName()
+                          << " " << pelem
+                          << (type->typeKind == UA_DATATYPEKIND_UNION ? " not taken choice " : " absent optional ")
+                          << variantTypeString(memberType)
+                          << (pelem->isArray ? " array" : " scalar" )
+                          << std::endl;
+            }
+            pelem->setIncomingData(memberValue, memberData ? reason : ProcessReason::readFailure);
         }
     }
 }
@@ -313,6 +387,8 @@ DataElementOpen62541::setIncomingEvent (ProcessReason reason)
 {
     if (isLeaf()) {
         Guard(pconnector->lock);
+        if (reason == ProcessReason::connectionLoss && enumChoices)
+            enumChoices = nullptr;
         bool wasFirst = false;
         // Put the event on the queue
         UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
@@ -350,35 +426,42 @@ DataElementOpen62541::setState(const ConnectionStatus state)
 
 // Helper to update one data structure element from pointer to child
 bool
-DataElementOpen62541::updateDataInStruct (void* container,
-                                          std::shared_ptr<DataElementOpen62541> pelem)
+DataElementOpen62541::updateDataInStruct(void* container,
+                                         std::shared_ptr<DataElementOpen62541> pelem)
 {
     bool updated = false;
     { // Scope of Guard G
         Guard G(pelem->outgoingLock);
         if (pelem->isDirty()) {
-            void* memberData = static_cast<char*>(container) + pelem->offset;
-            const UA_Variant& data = pelem->getOutgoingData();
+            char* memberData = static_cast<char*>(container) + pelem->offset;
+            const UA_Variant& elementData = pelem->getOutgoingData();
             const UA_DataType* memberType = pelem->memberType;
-            assert(memberType == data.type);
-            if (pelem->isArray)
-            {
-                size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
-                void*& arrayData = *reinterpret_cast<void**>(static_cast<char*>(memberData) + sizeof(size_t));
-                UA_Array_delete(arrayData, arrayLength, memberType);
-                UA_StatusCode status = UA_Array_copy(data.data, data.arrayLength, &arrayData, memberType);
-                if (status == UA_STATUSCODE_GOOD) {
-                    arrayLength = data.arrayLength;
-                } else {
-                    arrayLength = 0;
-                    std::cerr << "Item " << pitem
-                              << ": inserting data from from child element" << pelem->name
-                              << " failed (" << UA_StatusCode_name(status) << ')'
-                              << std::endl;
-                    return false;
+            assert(memberType == elementData.type ||
+                (typeKindOf(memberType) == UA_DATATYPEKIND_ENUM &&
+                 typeKindOf(elementData.type) == UA_DATATYPEKIND_INT32));
+            if (!pelem->isArray && !pelem->isOptional) {
+                // mandatory scalar: shallow copy
+                UA_clear(memberData, memberType);
+                void* data = pelem->moveOutgoingData();
+                if (typeKindOf(outgoingData) == UA_DATATYPEKIND_UNION) {
+                    *reinterpret_cast<UA_UInt32*>(container) = pelem->index;
                 }
+                memcpy(memberData, data, memberType->memSize);
+                UA_free(data);
             } else {
-                UA_copy(data.data, memberData, memberType);
+                // array or optional scalar: move content
+                void **memberDataPtr;
+                if (pelem->isArray) /* mandatory or optional array stored as length and pointer */ {
+                    size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
+                    memberDataPtr = reinterpret_cast<void**>(memberData + sizeof(size_t));
+                    UA_Array_delete(*memberDataPtr, arrayLength, memberType);
+                    arrayLength = elementData.arrayLength;
+                } else /* optional scalar stored through pointer */ {
+                    memberDataPtr = reinterpret_cast<void**>(memberData);
+                    if (*memberDataPtr) /* absent optional has nullptr here */
+                        UA_Array_delete(*memberDataPtr, 1, memberType);
+                }
+                *memberDataPtr = pelem->moveOutgoingData();
             }
             pelem->isdirty = false;
             updated = true;
@@ -413,7 +496,8 @@ DataElementOpen62541::getOutgoingData ()
         isdirty = false;
         const UA_DataType *type = outgoingData.type;
         void* container = outgoingData.data;
-        if (type && type->typeKind == UA_DATATYPEKIND_EXTENSIONOBJECT) {
+
+        if (typeKindOf(type) == UA_DATATYPEKIND_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content decoded extension objects
@@ -428,7 +512,7 @@ DataElementOpen62541::getOutgoingData ()
         }
 
         if (!mapped)
-            createMap(type, nullptr);
+            createMap(type);
 
         for (auto &it : elements) {
             auto pelem = it.lock();
@@ -524,9 +608,10 @@ DataElementOpen62541::readScalar (epicsFloat64 *value,
 
 // CString type needs specialization
 long
-DataElementOpen62541::readScalar (char *value, const size_t num,
+DataElementOpen62541::readScalar (char *value, const epicsUInt32 len,
                               dbCommon *prec,
                               ProcessReason *nextReason,
+                              epicsUInt32 *lenRead,
                               epicsUInt32 *statusCode,
                               char *statusText,
                               const epicsUInt32 statusTextLen)
@@ -542,7 +627,8 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
 
     ProcessReason nReason;
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
-    dbgReadScalar(upd.get(), "CString", num);
+    dbgReadScalar(upd.get(), "CString", len);
+    prec->udf = false;
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -556,7 +642,7 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
     case ProcessReason::incomingData:
     case ProcessReason::readComplete:
     {
-        if (num && value) {
+        if (len && value) {
             UA_StatusCode stat = upd->getStatus();
             if (UA_STATUS_IS_BAD(stat)) {
                 // No valid OPC UA value
@@ -567,40 +653,91 @@ DataElementOpen62541::readScalar (char *value, const size_t num,
                 if (UA_STATUS_IS_UNCERTAIN(stat)) {
                     (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                 }
-                UA_Variant &data = upd->getData();
-                size_t n = num-1;
+
                 UA_String buffer = UA_STRING_NULL;
                 UA_String *datastring = &buffer;
-                switch (typeKindOf(data)) {
-                case UA_DATATYPEKIND_STRING:
+                size_t n = len-1;
+
+                UA_Variant &data = upd->getData();
+                void* payload = data.data;
+                const UA_DataType* type = data.type;
+
+                if (type->typeKind == UA_DATATYPEKIND_UNION)
                 {
-                    datastring = static_cast<UA_String *>(data.data);
+                    UA_UInt32 switchfield = *static_cast<UA_UInt32*>(payload)-1;
+                    if (switchfield >= type->membersSize) {
+                        (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                        break;
+                    }
+                    const UA_DataTypeMember *member = &type->members[switchfield];
+                    payload = static_cast<char*>(payload) + member->padding;
+                    type = memberTypeOf(type, member);
+
+                    // prefix value string with switch choice name
+                    size_t l = snprintf(value, n, "%s:", member->memberName);
+                    value += l;
+                    n -= l;
+                }
+
+                switch (type->typeKind) {
+                case UA_DATATYPEKIND_STRING:
+                case UA_DATATYPEKIND_XMLELEMENT:
+                case UA_DATATYPEKIND_BYTESTRING:
+                {
+                    datastring = static_cast<UA_String*>(payload);
                     break;
                 }
                 case UA_DATATYPEKIND_LOCALIZEDTEXT:
                 {
-                    datastring = &static_cast<UA_LocalizedText *>(data.data)->text;
+                    datastring = &static_cast<UA_LocalizedText*>(payload)->text;
+                    break;
+                }
+                case UA_DATATYPEKIND_QUALIFIEDNAME:
+                {
+                    datastring = &static_cast<UA_QualifiedName*>(payload)->name;
                     break;
                 }
                 case UA_DATATYPEKIND_DATETIME:
                 {
                     // UA_print does not correct printed time for time zone
                     UA_Int64 tOffset = UA_DateTime_localTimeUtcOffset();
-                    UA_DateTime dt = *static_cast<UA_DateTime*>(data.data);
+                    UA_DateTime dt = *static_cast<UA_DateTime*>(payload);
                     dt += tOffset;
-                    UA_print(&dt, data.type, &buffer);
+                    UA_print(&dt, type, &buffer);
                     break;
                 }
-                default:
-                    if (data.type)
-                        UA_print(data.data, data.type, &buffer);
+                case UA_DATATYPEKIND_BYTE:
+                case UA_DATATYPEKIND_SBYTE:
+                {
+                    buffer.data = static_cast<UA_Byte*>(payload);
+                    buffer.length = UA_Variant_isScalar(&data) ? 1 : data.arrayLength;
+                    data.storageType = UA_VARIANT_DATA_NODELETE; // we have moved ownership
+                    n++;
+                    break;
                 }
+                case UA_DATATYPEKIND_ENUM:
+                case UA_DATATYPEKIND_INT32:
+                {
+                    if (enumChoices) {
+                        auto it = enumChoices->find(*static_cast<UA_UInt32*>(payload));
+                        if (it != enumChoices->end()) {
+                            buffer = UA_String_fromChars(it->second.c_str());
+                            break;
+                        }
+                    }
+                    // no enum or index not found: fall through
+                }
+                default:
+                    if (type)
+                        UA_print(payload, type, &buffer);
+                };
                 if (n > datastring->length)
                     n = datastring->length;
-                strncpy(value, reinterpret_cast<char*>(datastring->data), n);
-                value[n] = '\0';
+                memcpy(value, reinterpret_cast<char*>(datastring->data), n);
+                memset(value+n, 0, len-n);
+                if (lenRead)
+                    *lenRead = static_cast<epicsUInt32>(n);
                 UA_String_clear(&buffer);
-                prec->udf = false;
                 UA_Variant_clear(&data);
             }
             if (statusCode) *statusCode = stat;
@@ -651,7 +788,7 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
 
 // Read array for EPICS String / UA_String
 long int
-DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
+DataElementOpen62541::readArray (char *value, epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              const UA_DataType *expectedType,
@@ -673,6 +810,7 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
     ProcessReason nReason;
     std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
     dbgReadArray(upd.get(), num, epicsTypeString(value));
+    prec->udf = false;
 
     switch (upd->getType()) {
     case ProcessReason::readFailure:
@@ -699,21 +837,47 @@ DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
-                } else if (data.type != expectedType) {
-                    errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                 prec->name, variantTypeString(data), epicsTypeString(value));
-                    (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-                    ret = 1;
                 } else {
                     if (UA_STATUS_IS_UNCERTAIN(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
                     elemsWritten = static_cast<epicsUInt32>(num < data.arrayLength ? num : data.arrayLength);
-                    for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                        strncpy(value + i * len, reinterpret_cast<char*>(static_cast<UA_String *>(data.data)[i].data), len);
-                        (value + i * len)[len - 1] = '\0';
+                    switch (typeKindOf(data.type)) {
+                    case UA_DATATYPEKIND_STRING:
+                    case UA_DATATYPEKIND_XMLELEMENT:
+                    case UA_DATATYPEKIND_BYTESTRING:
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            UA_String* str = &static_cast<UA_String *>(data.data)[i];
+                            size_t l = str->length;
+                            if (l >= len) l = len-1;
+                            strncpy(value + i * len, reinterpret_cast<char*>(str->data), l);
+                            (value + i * len)[l] = '\0';
+                        }
+                        break;
+                    case UA_DATATYPEKIND_LOCALIZEDTEXT:
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            UA_String* str = &static_cast<UA_LocalizedText *>(data.data)[i].text;
+                            size_t l = str->length;
+                            if (l >= len) l = len-1;
+                            strncpy(value + i * len, reinterpret_cast<char*>(str->data), l);
+                            (value + i * len)[l] = '\0';
+                        }
+                        break;
+                    case UA_DATATYPEKIND_QUALIFIEDNAME:
+                        for (epicsUInt32 i = 0; i < elemsWritten; i++) {
+                            UA_String* str = &static_cast<UA_QualifiedName *>(data.data)[i].name;
+                            size_t l = str->length;
+                            if (l >= len) l = len-1;
+                            strncpy(value + i * len, reinterpret_cast<char*>(str->data), l);
+                            (value + i * len)[l] = '\0';
+                        }
+                        break;
+                    default:
+                        errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
+                                     prec->name, variantTypeString(data), epicsTypeString(value));
+                        (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                        ret = 1;
                     }
-                    prec->udf = false;
                 }
                 UA_Variant_clear(&data);
             }
@@ -857,7 +1021,7 @@ DataElementOpen62541::readArray (epicsFloat64 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (char *value, const epicsUInt32 len,
+DataElementOpen62541::readArray (char *value, epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
@@ -905,168 +1069,229 @@ DataElementOpen62541::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 }
 
 long
-DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbCommon *prec)
+DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon *prec)
 {
-    long ret = 0;
+    long ret = 1;
     UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
     long l;
     unsigned long ul;
     double d;
+    char* end = nullptr;
 
-    switch (typeKindOf(incomingData)) {
-    case UA_DATATYPEKIND_STRING:
-    {
-        UA_String val;
-        val.length = strnlen(value, len);
-        val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
-        { // Scope of Guard G
-            Guard G(outgoingLock);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_STRING]);
-            markAsDirty();
-        }
-        break;
-    }
-    case UA_DATATYPEKIND_LOCALIZEDTEXT:
-    {
-        UA_LocalizedText val;
-        val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
-        val.text.length = strnlen(value, len);
-        val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
-        { // Scope of Guard G
-            Guard G(outgoingLock);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_LOCALIZEDTEXT]);
-            markAsDirty();
-        }
-        break;
-    }
-    case UA_DATATYPEKIND_BOOLEAN:
     { // Scope of Guard G
         Guard G(outgoingLock);
-        UA_Boolean val = strchr("YyTt1", *value) != NULL;
-        status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BOOLEAN]);
-        markAsDirty();
-        break;
-    }
-    case UA_DATATYPEKIND_BYTE:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<UA_Byte>(ul)) {
-            Guard G(outgoingLock);
-            UA_Byte val = static_cast<UA_Byte>(ul);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_BYTE]);
-            markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+        UA_Variant_clear(&outgoingData);  // unlikely but we may still have unsent old data to discard
+        const UA_DataType* type = incomingData.type;
+
+        int switchfield = -1;
+        if (typeKindOf(type) == UA_DATATYPEKIND_UNION) {
+            if (value[0] == '\0') {
+                switchfield = 0;
+            } else for (UA_UInt32 i = 0; i < type->membersSize; i++) {
+                epicsUInt32 namelen = static_cast<epicsUInt32>(strlen(type->members[i].memberName));
+                if (strncmp(value, type->members[i].memberName, namelen) == 0
+                        && value[namelen] == ':') {
+                    value += namelen+1;
+                    len -= namelen+1;
+                    switchfield = i+1;
+                    type = memberTypeOf(type, &type->members[i]);
+                }
+            }
         }
-        break;
-    case UA_DATATYPEKIND_SBYTE:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<UA_SByte>(l)) {
-            Guard G(outgoingLock);
-            UA_SByte val = static_cast<UA_Byte>(l);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_SBYTE]);
+
+        switch (typeKindOf(type)) {
+        case UA_DATATYPEKIND_STRING:
+        case UA_DATATYPEKIND_XMLELEMENT:
+        case UA_DATATYPEKIND_BYTESTRING:
+        {
+            UA_String val;
+            val.length = strnlen(value, len);
+            val.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_UINT16:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<UA_UInt16>(ul)) {
-            Guard G(outgoingLock);
-            UA_UInt16 val = static_cast<UA_UInt16>(ul);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT16]);
+        case UA_DATATYPEKIND_LOCALIZEDTEXT:
+        {
+            UA_LocalizedText val;
+            const char* sep = static_cast<const char*>(memchr(value, '|', len));
+            if (sep) {
+                val.locale.length = sep - value;
+                val.locale.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+                len -= static_cast<epicsUInt32>(sep + 1 - value);
+                value = sep + 1;
+            } else { // keep the locale
+                val.locale = reinterpret_cast<const UA_LocalizedText*>(incomingData.data)->locale;
+            }
+            val.text.length = strnlen(value, len);
+            val.text.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_INT16:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<UA_Int16>(l)) {
-            Guard G(outgoingLock);
-            UA_Int16 val = static_cast<UA_Int16>(l);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT16]);
+        case UA_DATATYPEKIND_QUALIFIEDNAME:
+        {
+            UA_QualifiedName val;
+            const char* sep = static_cast<const char*>(memchr(value, '|', len));
+            if (sep) {
+                val.namespaceIndex = atoi(value);
+                len -= static_cast<epicsUInt32>(sep + 1 - value);
+                value = sep + 1;
+            } else { // keep the namespace
+                val.namespaceIndex = reinterpret_cast<const UA_QualifiedName*>(incomingData.data)->namespaceIndex;
+            }
+            val.name.length = strnlen(value, len);
+            val.name.data = const_cast<UA_Byte*>(reinterpret_cast<const UA_Byte*>(value));
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_UINT32:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<UA_UInt32>(ul)) {
-            Guard G(outgoingLock);
-            UA_UInt32 val = static_cast<UA_UInt32>(ul);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT32]);
+        case UA_DATATYPEKIND_BOOLEAN:
+        {
+            UA_Boolean val = strchr("YyTt1", *value) != NULL;
+            status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
             markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+            ret = 0;
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_INT32:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<UA_Int32>(l)) {
-            Guard G(outgoingLock);
-            UA_Int32 val = static_cast<UA_Int32>(l);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
-            markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+        case UA_DATATYPEKIND_BYTE:
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_Byte>(ul)) {
+                UA_Byte val = static_cast<UA_Byte>(ul);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_SBYTE:
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_SByte>(l)) {
+                UA_SByte val = static_cast<UA_Byte>(l);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_UINT16:
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt16>(ul)) {
+                UA_UInt16 val = static_cast<UA_UInt16>(ul);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_INT16:
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_Int16>(l)) {
+                UA_Int16 val = static_cast<UA_Int16>(l);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_UINT32:
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt32>(ul)) {
+                UA_UInt32 val = static_cast<UA_UInt32>(ul);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_ENUM:
+        case UA_DATATYPEKIND_INT32:
+            l = strtol(value, &end, 0);
+            if (enumChoices) {
+                // first test enum strings then numeric values
+                // in case a string starts with a number but means a different value
+                for (auto it: *enumChoices)
+                    if (it.second == value) {
+                        l = static_cast<long>(it.first);
+                        ret = 0;
+                        end = nullptr;
+                        break;
+                    }
+                if (ret != 0 && end != value)
+                    for (auto it: *enumChoices)
+                        if (l == it.first) {
+                            ret = 0;
+                            break;
+                        }
+                if (ret != 0)
+                    break;
+            }
+            if (end != value && isWithinRange<UA_Int32>(l)) {
+                UA_Int32 val = static_cast<UA_Int32>(l);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT32]);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_UINT64:
+            ul = strtoul(value, &end, 0);
+            if (end != value && isWithinRange<UA_UInt64>(ul)) {
+                UA_UInt64 val = static_cast<UA_UInt64>(ul);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_INT64:
+            l = strtol(value, &end, 0);
+            if (end != value && isWithinRange<UA_Int64>(l)) {
+                UA_Int64 val = static_cast<UA_Int64>(l);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_FLOAT:
+            d = strtod(value, &end);
+            if (end != value && isWithinRange<UA_Float>(d)) {
+                UA_Float val = static_cast<UA_Float>(d);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+                markAsDirty();
+                ret = 0;
+            }
+            break;
+        case UA_DATATYPEKIND_DOUBLE:
+        {
+            d = strtod(value, &end);
+            if (end != value) {
+                UA_Double val = static_cast<UA_Double>(d);
+                status = UA_Variant_setScalarCopy(&outgoingData, &val, type);
+            }
+            break;
         }
-        break;
-    case UA_DATATYPEKIND_UINT64:
-        ul = strtoul(value, nullptr, 0);
-        if (isWithinRange<UA_UInt64>(ul)) {
-            Guard G(outgoingLock);
-            UA_UInt64 val = static_cast<UA_UInt64>(ul);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_UINT64]);
-            markAsDirty();
-        } else {
+        default:
+            errlogPrintf("%s : unsupported conversion from string to %s for outgoing data\n",
+                         prec->name, variantTypeString(incomingData));
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
         }
-        break;
-    case UA_DATATYPEKIND_INT64:
-        l = strtol(value, nullptr, 0);
-        if (isWithinRange<UA_Int64>(l)) {
-            Guard G(outgoingLock);
-            UA_Int64 val = static_cast<UA_Int64>(l);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_INT64]);
-            markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
+        if (switchfield >= 0) {
+            // manually wrap value from outgoingData into union
+            void *p = UA_new(type);
+            if (p) {
+                *static_cast<UA_UInt32*>(p) = switchfield;
+                if (switchfield > 0) {
+                    memcpy(static_cast<char*>(p) + type->members[switchfield-1].padding,
+                        outgoingData.data, outgoingData.type->memSize);
+                    UA_free(outgoingData.data);
+                }
+                UA_Variant_setScalar(&outgoingData, p, type);
+                status = UA_STATUSCODE_GOOD;
+                markAsDirty();
+                ret = 0;
+            }
         }
-        break;
-    case UA_DATATYPEKIND_FLOAT:
-        d = strtod(value, nullptr);
-        if (isWithinRange<UA_Float>(d)) {
-            Guard G(outgoingLock);
-            UA_Float val = static_cast<UA_Float>(d);
-            status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_FLOAT]);
-            markAsDirty();
-        } else {
-            (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-            ret = 1;
-        }
-        break;
-    case UA_DATATYPEKIND_DOUBLE:
-    {
-        d = strtod(value, nullptr);
-        Guard G(outgoingLock);
-        UA_Double val = static_cast<UA_Double>(d);
-        status = UA_Variant_setScalarCopy(&outgoingData, &val, &UA_TYPES[UA_TYPES_DOUBLE]);
-        markAsDirty();
-        break;
-    }
-    default:
-        errlogPrintf("%s : unsupported conversion for outgoing data\n",
-                     prec->name);
+    } // Scope of Guard G
+    if (ret != 0) {
+        errlogPrintf("%s : value \"%s\" out of range\n",
+                     prec->name, value);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
     }
     if (ret == 0 && UA_STATUS_IS_BAD(status)) {
@@ -1075,7 +1300,8 @@ DataElementOpen62541::writeScalar (const char *value, const epicsUInt32 len, dbC
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
     }
-    dbgWriteScalar();
+    if (ret == 0)
+        dbgWriteScalar();
     return ret;
 }
 
@@ -1091,9 +1317,19 @@ DataElementOpen62541::dbgWriteArray (const epicsUInt32 targetSize, const std::st
     }
 }
 
+static inline
+UA_String UA_StringNCopy(const char *src, size_t maxlength)
+{
+    UA_String s;
+    s.length = src ? strnlen(src, maxlength) : 0;
+    s.data = s.length ? static_cast<UA_Byte*>(UA_malloc(s.length)) : nullptr;
+    if (s.data) memcpy(s.data, src, s.length);
+    return s;
+}
+
 // Write array for EPICS String / UA_String
 long
-DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
+DataElementOpen62541::writeArray (const char *value, epicsUInt32 len,
                               const epicsUInt32 num,
                               const UA_DataType *targetType,
                               dbCommon *prec)
@@ -1104,49 +1340,79 @@ DataElementOpen62541::writeArray (const char **value, const epicsUInt32 len,
         errlogPrintf("%s : OPC UA data type is not an array\n", prec->name);
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         ret = 1;
-    } else if (incomingData.type != targetType) {
-        errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
-                     prec->name,
-                     variantTypeString(incomingData),
-                     variantTypeString(targetType),
-                     epicsTypeString(*value));
-        (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-        ret = 1;
     } else {
-        UA_String *arr = static_cast<UA_String *>(UA_Array_new(num, &UA_TYPES[UA_TYPES_STRING]));
-        if (!arr) {
+        const UA_DataType* type = incomingData.type;
+        void* data = UA_Array_new(num, type);
+        if (!data) {
             errlogPrintf("%s : out of memory\n", prec->name);
             (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+            ret = 1;
         } else {
-            for (epicsUInt32 i = 0; i < num; i++) {
-                char *val = nullptr;
-                const char *pval;
-                // add zero termination if necessary
-                if (memchr(value[i], '\0', len) == nullptr) {
-                    val = new char[static_cast<epicsInt64>(len)+1]; // static_cast to avoid warning C26451
-                    strncpy(val, value[i], len);
-                    val[len] = '\0';
-                    pval = val;
-                } else {
-                    pval = value[i];
+            switch(typeKindOf(type)) {
+            case UA_DATATYPEKIND_STRING:
+            case UA_DATATYPEKIND_XMLELEMENT:
+            case UA_DATATYPEKIND_BYTESTRING: {
+                UA_String *arr = static_cast<UA_String *>(data);
+                for (epicsUInt32 i = 0; i < num; i++) {
+                    arr[i] = UA_StringNCopy(value, len);
+                    value += len;
                 }
-                arr[i] = UA_STRING_ALLOC(pval);
-                delete[] val;
+                break;
             }
-            UA_StatusCode status;
+            case UA_DATATYPEKIND_LOCALIZEDTEXT: {
+                UA_LocalizedText *arr = static_cast<UA_LocalizedText *>(data);
+                for (epicsUInt32 i = 0; i < num; i++) {
+                    const char* sep = static_cast<const char*>(memchr(value, '|', len));
+                    if (sep) {
+                        arr[i].locale = UA_StringNCopy(value, sep - value);
+                    } else if (i < incomingData.arrayLength) {
+                        UA_copy(&reinterpret_cast<const UA_LocalizedText*>(
+                            incomingData.data)[i].locale,
+                            &arr[i].locale, &UA_TYPES[UA_TYPES_STRING]);
+                    } else if (i > 0) {
+                        UA_copy(&arr[i-1].locale,
+                            &arr[i].locale, &UA_TYPES[UA_TYPES_STRING]);
+                    }
+                    arr[i].text = UA_StringNCopy(sep ? sep+1 : value, sep ? len - (sep+1-value) : len);
+                    value += len;
+                }
+                break;
+            }
+            case UA_DATATYPEKIND_QUALIFIEDNAME: {
+                UA_QualifiedName *arr = static_cast<UA_QualifiedName *>(data);
+                for (epicsUInt32 i = 0; i < num; i++) {
+                    const char* sep = static_cast<const char*>(memchr(value, '|', len));
+                    if (sep) {
+                        arr[i].namespaceIndex = atoi(value);
+                    } else if (i < incomingData.arrayLength) {
+                        arr[i].namespaceIndex = reinterpret_cast<const UA_QualifiedName*>(
+                            incomingData.data)[i].namespaceIndex;
+                    } else if (i > 0) {
+                        arr[i].namespaceIndex = arr[i-1].namespaceIndex;
+                    }
+                    arr[i].name = UA_StringNCopy(sep ? sep+1 : value, sep ? len - (sep+1-value) : len);
+                    value += len;
+                }
+                break;
+            }
+            default:
+                errlogPrintf("%s : OPC UA data type (%s) does not match expected type (%s) for EPICS array (%s)\n",
+                             prec->name,
+                             variantTypeString(incomingData),
+                             variantTypeString(targetType),
+                             epicsTypeString(value));
+                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
+                UA_Array_delete(data, num, type);
+                ret = 1;
+            }
             { // Scope of Guard G
                 Guard G(outgoingLock);
-                status = UA_Variant_setArrayCopy(&outgoingData, arr, num, targetType);
+                UA_Variant_clear(&outgoingData);  // unlikely but we may still have unsent old data to discard
+                UA_Variant_setArray(&outgoingData, data, num, type); // no copy but move content
                 markAsDirty();
             }
-            if (UA_STATUS_IS_BAD(status)) {
-                errlogPrintf("%s : array copy failed: %s\n",
-                             prec->name, UA_StatusCode_name(status));
-                (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-                ret = 1;
-            } else {
-                dbgWriteArray(num, epicsTypeString(*value));
-            }
+
+            dbgWriteArray(num, epicsTypeString(value));
         }
     }
     return ret;
@@ -1213,9 +1479,9 @@ DataElementOpen62541::writeArray (const epicsFloat64 *value, const epicsUInt32 n
 }
 
 long
-DataElementOpen62541::writeArray (const char *value, const epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541::writeArray (const char *value, epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
 {
-    return writeArray(&value, len, num, &UA_TYPES[UA_TYPES_STRING], prec);
+    return writeArray(value, len, num, &UA_TYPES[UA_TYPES_STRING], prec);
 }
 
 void

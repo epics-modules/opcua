@@ -104,6 +104,7 @@ ItemUaSdk::show (int level) const
               << " dataDirty=" << (dataTreeDirty ? "y" : "n")
               << " context=" << linkinfo.subscription << "@" << session->getName()
               << " sampling=" << revisedSamplingInterval << "(" << linkinfo.samplingInterval << ")"
+              << " deadband=" << linkinfo.deadband
               << " qsize=" << revisedQueueSize << "(" << linkinfo.queueSize << ")"
               << " cqsize=" << linkinfo.clientQueueSize
               << " discard=" << (linkinfo.discardOldest ? "old" : "new")
@@ -150,7 +151,7 @@ ItemUaSdk::uaToEpicsTime (const UaDateTime &dt, const OpcUa_UInt16 pico10)
 }
 
 void
-ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
+ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason, const UaNodeId* typeId)
 {
     tsClient = epicsTime::getCurrent();
     if (OpcUa_IsNotBad(value.StatusCode)) {
@@ -177,7 +178,7 @@ ItemUaSdk::setIncomingData(const OpcUa_DataValue &value, ProcessReason reason)
         const std::string *timefrom = nullptr;
         if (linkinfo.timestamp == LinkOptionTimestamp::data && linkinfo.timestampElement.length())
             timefrom = &linkinfo.timestampElement;
-        pd->setIncomingData(value.Value, reason, timefrom);
+        pd->setIncomingData(value.Value, reason, timefrom, typeId);
     }
 
     if (linkinfo.isItemRecord) {
@@ -219,6 +220,8 @@ ItemUaSdk::setState(const ConnectionStatus state)
     if (auto pd = dataTree.root().lock()) {
         pd->setState(state);
     }
+    if (linkinfo.isItemRecord)
+        recConnector->setState(state);
 }
 
 void

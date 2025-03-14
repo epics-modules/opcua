@@ -13,6 +13,7 @@
 #ifndef DEVOPCUA_DATAELEMENT_H
 #define DEVOPCUA_DATAELEMENT_H
 
+#include <map>
 #include <vector>
 #include <memory>
 #include <cstring>
@@ -23,6 +24,8 @@
 #include "devOpcua.h"
 
 namespace DevOpcua {
+
+typedef std::map<epicsUInt32, std::string> EnumChoices;
 
 class RecordConnector;
 
@@ -201,18 +204,20 @@ public:
      * the OPC UA status of the item related to this DataElement.
      *
      * @param[out] value  target string buffer
-     * @param[in] num  length of target string buffer (including null byte)
+     * @param[in] len  length of target string buffer (including null byte)
      * @param[in] prec  pointer to EPICS record
      * @param[out] nextReason  set to ProcessReason for the next update, `none` if last element
+     * @param[out] lenRead  actual number of chars read (may be NULL)
      * @param[out] statusCode  set to the OPC UA status code of the update
      * @param[out] statusText  set to the OPC UA status text of the update (will be null terminated)
      * @param[in] statusTextLen  length of the statusText buffer
      *
      * @return status  0 = ok, 1 = error
      */
-    virtual long readScalar(char *value, const size_t num,
+    virtual long readScalar(char *value, const epicsUInt32 len,
                             dbCommon *prec,
                             ProcessReason *nextReason = nullptr,
+                            epicsUInt32* lenRead = nullptr,
                             epicsUInt32 *statusCode = nullptr,
                             char *statusText = nullptr,
                             const epicsUInt32 statusTextLen = MAX_STRING_SIZE+1) = 0;
@@ -591,13 +596,13 @@ public:
      * @brief Write outgoing classic C string (char[]) data.
      *
      * @param value  pointer to null terminated source string
-     * @param num  source string size
+     * @param len  source string length
      * @param prec  pointer to EPICS record
      *
      * @return status  0 = ok, 1 = error
      */
     virtual long writeScalar(const char *value,
-                             const epicsUInt32 num,
+                             const epicsUInt32 len,
                              dbCommon *prec) = 0;
 
     /**
@@ -795,6 +800,7 @@ public:
     virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
     const std::string name;                     /**< element name */
+    const EnumChoices* enumChoices = nullptr;   /**< enum definition if this element is an enum */
 
 protected:
     /**
