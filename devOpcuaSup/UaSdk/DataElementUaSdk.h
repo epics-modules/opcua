@@ -734,22 +734,6 @@ private:
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_Int64 &value) { return variant.toInt64(value); }
     OpcUa_StatusCode UaVariant_to(const UaVariant &variant, OpcUa_Double &value) { return variant.toDouble(value); }
 
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaBooleanArray &value) { return variant.toBoolArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaSByteArray &value) { return variant.toSByteArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaByteArray &value) { return variant.toByteArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaInt16Array &value) { return variant.toInt16Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaUInt16Array &value) { return variant.toUInt16Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaInt32Array &value) { return variant.toInt32Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaUInt32Array &value) { return variant.toUInt32Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaInt64Array &value) { return variant.toInt64Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaUInt64Array &value) { return variant.toUInt64Array(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaFloatArray &value) { return variant.toFloatArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaDoubleArray &value) { return variant.toDoubleArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaStringArray &value) { return variant.toStringArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaXmlElementArray &value) { return variant.toXmlElementArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaLocalizedTextArray &value) { return variant.toLocalizedTextArray(value); }
-    OpcUa_StatusCode UaVariant_to(const UaVariant &variant, UaQualifiedNameArray &value) { return variant.toQualifiedNameArray(value); }
-
     void UaVariant_set(UaVariant &variant, UaBooleanArray &value) { variant.setBoolArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaSByteArray &value) { variant.setSByteArray(value, OpcUa_True); }
     void UaVariant_set(UaVariant &variant, UaByteArray &value) { variant.setByteArray(value, OpcUa_True); }
@@ -845,7 +829,7 @@ private:
     // Read array value as templated function on EPICS type and OPC UA type
     // (latter *must match* OPC UA type enum argument)
     // CAVEAT: changes must also be reflected in specializations (in DataElementUaSdk.cpp)
-    template<typename ET, typename OT>
+    template<typename ET>
     long
     readArray (ET *value, const epicsUInt32 num,
                epicsUInt32 *numRead,
@@ -903,11 +887,11 @@ private:
                         if (OpcUa_IsUncertain(stat)) {
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
-                        OT arr;
-                        UaVariant_to(upd->getData(), arr);
-                        elemsWritten = num < arr.length() ? num : arr.length();
-                        memcpy(value, arr.rawData(), sizeof(ET) * elemsWritten);
-                        prec->udf = false;
+                        elemsWritten = variant.arraySize();
+                        if (elemsWritten > num)
+                            elemsWritten = num;
+                        memcpy(value, static_cast<const OpcUa_Variant*>(variant)
+                                ->Value.Array.Value.Array, sizeof(ET) * elemsWritten);
                     }
                 }
                 if (statusCode) *statusCode = stat;

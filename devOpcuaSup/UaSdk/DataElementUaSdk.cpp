@@ -895,8 +895,8 @@ DataElementUaSdk::readArray (char *value, epicsUInt32 len,
                 ret = 1;
             } else {
                 // Valid OPC UA value, so try to convert
-                UaVariant &data = upd->getData();
-                if (!data.isArray()) {
+                UaVariant &variant = upd->getData();
+                if (!variant.isArray()) {
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
@@ -904,60 +904,58 @@ DataElementUaSdk::readArray (char *value, epicsUInt32 len,
                     if (OpcUa_IsUncertain(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
-                    switch (data.type()) {
+                    elemsWritten = variant.arraySize();
+                    if (elemsWritten > num) elemsWritten = num;
+                    const OpcUa_VariantArrayUnion& arrayData =
+                        static_cast<const OpcUa_Variant*>(variant)->Value.Array.Value;
+                    size_t l;
+                    switch (variant.type()) {
                     case OpcUaType_String: {
-                        UaStringArray arr;
-                        UaVariant_to(upd->getData(), arr);
-                        elemsWritten = num < arr.length() ? num : arr.length();
                         for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                            strncpy(value + i * len, UaString(arr[i]).toUtf8(), len);
-                            (value + i * len)[len - 1] = '\0';
+                            l = OpcUa_String_StrSize(&arrayData.StringArray[i]);
+                            if (l >= len) l = len - 1;
+                            memcpy(value + i * len, OpcUa_String_GetRawString(&arrayData.StringArray[i]), l);
+                            memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
                     case OpcUaType_XmlElement: {
-                        UaXmlElementArray arr;
-                        UaVariant_to(upd->getData(), arr);
-                        elemsWritten = num < arr.length() ? num : arr.length();
                         for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                            strncpy(value + i * len, UaString(arr[i]).toUtf8(), len);
-                            (value + i * len)[len - 1] = '\0';
+                            l = arrayData.XmlElementArray[i].Length;
+                            if (l >= len) l = len - 1;
+                            memcpy(value + i * len, arrayData.XmlElementArray[i].Data, l);
+                            memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
                     case OpcUaType_LocalizedText: {
-                        UaLocalizedTextArray arr;
-                        UaVariant_to(upd->getData(), arr);
-                        elemsWritten = num < arr.length() ? num : arr.length();
                         for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                            strncpy(value + i * len, UaString(arr[i].Text).toUtf8(), len);
-                            (value + i * len)[len - 1] = '\0';
+                            l = OpcUa_String_StrSize(&arrayData.LocalizedTextArray[i].Text);
+                            if (l >= len) l = len - 1;
+                            memcpy(value + i * len, OpcUa_String_GetRawString(&arrayData.LocalizedTextArray[i].Text), l);
+                            memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
                     case OpcUaType_QualifiedName: {
-                        UaQualifiedNameArray arr;
-                        UaVariant_to(upd->getData(), arr);
-                        elemsWritten = num < arr.length() ? num : arr.length();
                         for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                            strncpy(value + i * len, UaString(arr[i].Name).toUtf8(), len);
-                            (value + i * len)[len - 1] = '\0';
+                            l = OpcUa_String_StrSize(&arrayData.QualifiedNameArray[i].Name);
+                            if (l >= len) l = len - 1;
+                            memcpy(value + i * len, OpcUa_String_GetRawString(&arrayData.QualifiedNameArray[i].Name), l);
+                            memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
                     case OpcUaType_ByteString: {
-                        UaByteStringArray arr;
-                        upd->getData().toByteStringArray(arr);
-                        elemsWritten = num < arr.length() ? num : arr.length();
                         for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                            int l = printByteString(arr[i], value + i * len, len);
+                            l = printByteString(arrayData.ByteStringArray[i], value + i * len, len);
                             memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
                     default:
                         errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
-                                     prec->name, variantTypeString(data.type()), epicsTypeString(value));
+                                     prec->name, variantTypeString(variant.type()), epicsTypeString(value));
                         (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                         ret = 1;
                     }
@@ -989,14 +987,14 @@ DataElementUaSdk::readArray (char *value, epicsUInt32 len,
 // CAVEAT: changes in the template (in DataElementUaSdk.h) must be reflected here
 template<>
 long
-DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const epicsUInt32 num,
-                                                      epicsUInt32 *numRead,
-                                                      OpcUa_BuiltInType expectedType,
-                                                      dbCommon *prec,
-                                                      ProcessReason *nextReason,
-                                                      epicsUInt32 *statusCode,
-                                                      char *statusText,
-                                                      const epicsUInt32 statusTextLen)
+DataElementUaSdk::readArray (epicsUInt8 *value, const epicsUInt32 num,
+                             epicsUInt32 *numRead,
+                             OpcUa_BuiltInType expectedType,
+                             dbCommon *prec,
+                             ProcessReason *nextReason,
+                             epicsUInt32 *statusCode,
+                             char *statusText,
+                             const epicsUInt32 statusTextLen)
 {
     long ret = 0;
     epicsUInt32 elemsWritten = 0;
@@ -1032,11 +1030,17 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
             } else {
                 // Valid OPC UA value, so try to convert
                 UaVariant &variant = upd->getData();
-                if (!variant.isArray() && variant.type() != OpcUaType_ByteString) {
+                if (!variant.isArray() && variant.type() == OpcUaType_ByteString) {
+                    const OpcUa_ByteString& bs =
+                        static_cast<const OpcUa_Variant*>(variant)->Value.ByteString;
+                    elemsWritten = bs.Length;
+                    if (elemsWritten > num) elemsWritten = num;
+                    memcpy(value, bs.Data, elemsWritten);
+                } else if (!variant.isArray()) {
                     errlogPrintf("%s : incoming data is not an array\n", prec->name);
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
                     ret = 1;
-                } else if (variant.type() != expectedType && variant.type() != OpcUaType_Boolean && variant.type() != OpcUaType_ByteString) {
+                } else if (variant.type() != expectedType && variant.type() != OpcUaType_Boolean) {
                     errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
                                  prec->name, variantTypeString(variant.type()), epicsTypeString(*value));
                     (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
@@ -1045,20 +1049,11 @@ DataElementUaSdk::readArray<epicsUInt8, UaByteArray> (epicsUInt8 *value, const e
                     if (OpcUa_IsUncertain(stat)) {
                         (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                     }
-                    if (variant.type() != OpcUaType_Boolean) {
-                        UaByteArray arr;
-                        UaVariant_to(variant, arr); // works for ByteArray and ByteString !
-                        elemsWritten = static_cast<epicsUInt32>(arr.size());
-                        if (num < elemsWritten) elemsWritten = num;
-                        memcpy(value, arr.data(), sizeof(epicsUInt8) * elemsWritten);
-                    } else {
-                        UaBooleanArray arr;
-                        UaVariant_to(variant, arr);
-                        elemsWritten = static_cast<epicsUInt32>(arr.length());
-                        if (num < elemsWritten) elemsWritten = num;
-                        memcpy(value, arr.rawData(), sizeof(epicsUInt8) * elemsWritten);
-                    }
-                    prec->udf = false;
+                    elemsWritten = variant.arraySize();
+                    if (elemsWritten > num) elemsWritten = num;
+                    memcpy(value,
+                        static_cast<const OpcUa_Variant*>(variant)->Value.Array.Value.Array,
+                        elemsWritten);
                 }
             }
             if (statusCode) *statusCode = stat;
@@ -1089,7 +1084,7 @@ DataElementUaSdk::readArray (epicsInt8 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt8, UaSByteArray>(value, num, numRead, OpcUaType_SByte, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsInt8>(value, num, numRead, OpcUaType_SByte, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1101,7 +1096,7 @@ DataElementUaSdk::readArray (epicsUInt8 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt8, UaByteArray>(value, num, numRead, OpcUaType_Byte, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsUInt8>(value, num, numRead, OpcUaType_Byte, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1113,7 +1108,7 @@ DataElementUaSdk::readArray (epicsInt16 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt16, UaInt16Array>(value, num, numRead, OpcUaType_Int16, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsInt16>(value, num, numRead, OpcUaType_Int16, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1125,7 +1120,7 @@ DataElementUaSdk::readArray (epicsUInt16 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt16, UaUInt16Array>(value, num, numRead, OpcUaType_UInt16, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsUInt16>(value, num, numRead, OpcUaType_UInt16, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1137,7 +1132,7 @@ DataElementUaSdk::readArray (epicsInt32 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt32, UaInt32Array>(value, num, numRead, OpcUaType_Int32, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsInt32>(value, num, numRead, OpcUaType_Int32, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1149,7 +1144,7 @@ DataElementUaSdk::readArray (epicsUInt32 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt32, UaUInt32Array>(value, num, numRead, OpcUaType_UInt32, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsUInt32>(value, num, numRead, OpcUaType_UInt32, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1161,7 +1156,7 @@ DataElementUaSdk::readArray (epicsInt64 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsInt64, UaInt64Array>(value, num, numRead, OpcUaType_Int64, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsInt64>(value, num, numRead, OpcUaType_Int64, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1173,7 +1168,7 @@ DataElementUaSdk::readArray (epicsUInt64 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsUInt64, UaUInt64Array>(value, num, numRead, OpcUaType_UInt64, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsUInt64>(value, num, numRead, OpcUaType_UInt64, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1185,7 +1180,7 @@ DataElementUaSdk::readArray (epicsFloat32 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsFloat32, UaFloatArray>(value, num, numRead, OpcUaType_Float, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsFloat32>(value, num, numRead, OpcUaType_Float, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1197,7 +1192,7 @@ DataElementUaSdk::readArray (epicsFloat64 *value, const epicsUInt32 num,
                              char *statusText,
                              const epicsUInt32 statusTextLen)
 {
-    return readArray<epicsFloat64, UaDoubleArray>(value, num, numRead, OpcUaType_Double, prec, nextReason, statusCode, statusText, statusTextLen);
+    return readArray<epicsFloat64>(value, num, numRead, OpcUaType_Double, prec, nextReason, statusCode, statusText, statusTextLen);
 }
 
 long
@@ -1562,20 +1557,20 @@ DataElementUaSdk::writeArray (const char *value, epicsUInt32 len,
         }
         case OpcUaType_LocalizedText: {
             UaLocalizedTextArray arr;
-            UaLocalizedTextArray incoming;
-            UaVariant_to(incomingData, incoming);
+            OpcUa_UInt32 arraySize = incomingData.arraySize();
+            const OpcUa_LocalizedText* incoming = static_cast<const OpcUa_Variant*>(incomingData)->Value.Array.Value.LocalizedTextArray;
 
             arr.create(num);
             for (epicsUInt32 i = 0; i < num; i++) {
                 const char* sep = static_cast<const char*>(memchr(value, '|', len));
                 if (sep) {
-                    UaString(UaByteString(static_cast<OpcUa_Int32>(sep - value), (OpcUa_Byte*)value)).copyTo(&arr[i].Locale);
-                } else if (i < incoming.length()) {
-                    UaString(incoming[i].Locale).copyTo(&arr[i].Locale);
+                    OpcUa_String_AttachToString(const_cast<char*>(value), static_cast<OpcUa_Int32>(sep - value), 0, OpcUa_True, OpcUa_False, &arr[i].Locale);
+                } else if (i < arraySize) {
+                    OpcUa_String_StrnCpy(&arr[i].Locale, &incoming[i].Locale, OPCUA_STRING_LENDONTCARE);
                 } else if (i > 0) {
-                    UaString(arr[i-1].Locale).copyTo(&arr[i].Locale);
+                    OpcUa_String_StrnCpy(&arr[i].Locale, &arr[i-1].Locale, OPCUA_STRING_LENDONTCARE);
                 }
-                UaString(UaByteString(len - (sep ? static_cast<OpcUa_Int32>(sep+1-value) : 0), (OpcUa_Byte*)(sep ? sep+1 : value))).copyTo(&arr[i].Text);
+                OpcUa_String_AttachToString(const_cast<char*>(sep ? sep+1 : value), OPCUA_STRINGLENZEROTERMINATED, 0, OpcUa_True, OpcUa_False, &arr[i].Text);
                 value += len;
             }
             { // Scope of Guard G
@@ -1587,20 +1582,20 @@ DataElementUaSdk::writeArray (const char *value, epicsUInt32 len,
         }
         case OpcUaType_QualifiedName: {
             UaQualifiedNameArray arr;
-            UaQualifiedNameArray incoming;
-            UaVariant_to(incomingData, incoming);
+            OpcUa_UInt32 arraySize = incomingData.arraySize();
+            const OpcUa_QualifiedName* incoming = static_cast<const OpcUa_Variant*>(incomingData)->Value.Array.Value.QualifiedNameArray;
 
             arr.create(num);
             for (epicsUInt32 i = 0; i < num; i++) {
                 const char* sep = static_cast<const char*>(memchr(value, '|', len));
                 if (sep) {
                     arr[i].NamespaceIndex = atoi(value);
-                } else if (i < incoming.length()) {
+                } else if (i < arraySize) {
                     arr[i].NamespaceIndex = incoming[i].NamespaceIndex;
                 } else if (i > 0) {
                     arr[i].NamespaceIndex = arr[i-1].NamespaceIndex;
                 }
-                UaString(UaByteString(len - (sep ? static_cast<OpcUa_Int32>(sep+1-value) : 0), (OpcUa_Byte*)(sep ? sep+1 : value))).copyTo(&arr[i].Name);
+                OpcUa_String_AttachToString(const_cast<char*>(sep ? sep+1 : value), OPCUA_STRINGLENZEROTERMINATED, 0, OpcUa_True, OpcUa_False, &arr[i].Name);
                 value += len;
             }
             { // Scope of Guard G
