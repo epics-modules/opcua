@@ -22,6 +22,7 @@
 #include <opcua_builtintypes.h>
 #include <statuscode.h>
 #include <uaenumdefinition.h>
+#include <uagenericunionvalue.h>
 
 #include <errlog.h>
 #include <epicsTime.h>
@@ -151,66 +152,90 @@ DataElementUaSdk::setIncomingData(const UaVariant &value,
             // Try to get the structure definition from the dictionary
             UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
             if (!definition.isNull()) {
-                if (!definition.isUnion()) {
-                    // ExtensionObject is a structure
-                    // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
-                    if (extensionObject.encoding() == UaExtensionObject::EncodeableObject)
-                        extensionObject.changeEncoding(UaExtensionObject::Binary);
-                    UaGenericStructureValue genericValue;
-                    genericValue.setGenericValue(extensionObject, definition);
+                // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
+                if (extensionObject.encoding() == UaExtensionObject::EncodeableObject)
+                    extensionObject.changeEncoding(UaExtensionObject::Binary);
+                if (!mapped) {
+                    if (debug() >= 5)
+                        std::cout << " ** creating index-to-element map for child elements" << std::endl;
+                    if (timefrom) {
+                        for (int i = 0; i < definition.childrenCount(); i++) {
+                            if (*timefrom == definition.child(i).name().toUtf8()) {
+                                timesrc = i;
+                            }
+                        }
+                        OpcUa_BuiltInType t = definition.child(timesrc).valueType();
+                        if (timesrc == -1) {
+                            errlogPrintf(
+                                "%s: timestamp element %s not found - using source timestamp\n",
+                                pitem->recConnector->getRecordName(),
+                                timefrom->c_str());
+                        } else if (t != OpcUaType_DateTime) {
+                            errlogPrintf("%s: timestamp element %s has invalid type %s - using "
+                                         "source timestamp\n",
+                                         pitem->recConnector->getRecordName(),
+                                         timefrom->c_str(),
+                                         variantTypeString(t));
+                            timesrc = -1;
+                        }
+                    }
+                    for (auto &it : elements) {
+                        auto pelem = it.lock();
+                        for (int i = 0; i < definition.childrenCount(); i++) {
+                            if (pelem->name == definition.child(i).name().toUtf8()) {
+                                elementMap.insert({i, it});
+                                delete pelem->enumChoices;
+                                pelem->enumChoices = pitem->session->getEnumChoices(definition.child(i).enumDefinition());
+                            }
+                        }
+                    }
+                    if (debug() >= 5)
+                        std::cout << " ** " << elementMap.size() << "/" << elements.size()
+                                  << " child elements mapped to a "
+                                  << "structure of " << definition.childrenCount() << " elements" << std::endl;
+                    mapped = true;
+                }
 
-                    if (!mapped) {
-                        if (debug() >= 5)
-                            std::cout << " ** creating index-to-element map for child elements" << std::endl;
-                        if (timefrom) {
-                            for (int i = 0; i < definition.childrenCount(); i++) {
-                                if (*timefrom == definition.child(i).name().toUtf8()) {
-                                    timesrc = i;
-                                    pitem->tsData = epicsTimeFromUaVariant(genericValue.value(i));
-                                }
-                            }
-                            OpcUa_BuiltInType t = genericValue.value(timesrc).type();
-                            if (timesrc == -1) {
-                                errlogPrintf(
-                                    "%s: timestamp element %s not found - using source timestamp\n",
-                                    pitem->recConnector->getRecordName(),
-                                    timefrom->c_str());
-                            } else if (t != OpcUaType_DateTime) {
-                                errlogPrintf("%s: timestamp element %s has invalid type %s - using "
-                                             "source timestamp\n",
-                                             pitem->recConnector->getRecordName(),
-                                             timefrom->c_str(),
-                                             variantTypeString(t));
-                                timesrc = -1;
-                            }
+                if (timesrc >= 0)
+                    pitem->tsData = epicsTimeFromUaVariant(UaGenericStructureValue(extensionObject, definition).value(timesrc));
+                else
+                    pitem->tsData = pitem->tsSource;
+
+                for (auto &it : elementMap) {
+                    auto pelem = it.second.lock();
+                    OpcUa_StatusCode stat;
+                    if (definition.isUnion()) {
+                        UaGenericUnionValue genericValue(extensionObject, definition);
+                        int index = genericValue.switchValue() - 1;
+                        if (it.first == index) {
+                            pelem->setIncomingData(genericValue.value(), reason);
+                            stat = OpcUa_Good;
+                        } else {
+                            stat = OpcUa_BadNoData;
                         }
-                        for (auto &it : elements) {
-                            auto pelem = it.lock();
-                            for (int i = 0; i < definition.childrenCount(); i++) {
-                                if (pelem->name == definition.child(i).name().toUtf8()) {
-                                    elementMap.insert({i, it});
-                                    delete pelem->enumChoices;
-                                    pelem->enumChoices = pitem->session->getEnumChoices(definition.child(i).enumDefinition());
-                                    pelem->setIncomingData(genericValue.value(i), reason);
-                                }
-                            }
-                        }
-                        if (debug() >= 5)
-                            std::cout << " ** " << elementMap.size() << "/" << elements.size()
-                                      << " child elements mapped to a "
-                                      << "structure of " << definition.childrenCount() << " elements" << std::endl;
-                        mapped = true;
                     } else {
-                        if (timefrom) {
-                            if (timesrc >= 0)
-                                pitem->tsData = epicsTimeFromUaVariant(genericValue.value(timesrc));
-                            else
-                                pitem->tsData = pitem->tsSource;
+                        const UaVariant &memberValue = UaGenericStructureValue(extensionObject, definition).value(it.first, &stat);
+                        if (stat == OpcUa_Good) {
+                            pelem->setIncomingData(memberValue, reason);
                         }
-                        for (auto &it : elementMap) {
-                            auto pelem = it.second.lock();
-                            pelem->setIncomingData(genericValue.value(it.first), reason);
-                        }
+                    }
+                    if (stat == OpcUa_BadNoData) {
+                        // Absent optional field or union choice not taken:
+                        // Pass a fake value with correct data type so that
+                        // later writing will not fail with type mismatch.
+                        const UaStructureField &field = definition.child(it.first);
+                        OpcUa_Variant fakeValue;
+                        OpcUa_Variant_Initialize(&fakeValue);
+                        fakeValue.Datatype = field.valueType();
+                        fakeValue.ArrayType = field.valueRank() != 0;
+                        if (debug())
+                            std::cerr << pitem->recConnector->getRecordName()
+                                      << " element " << pelem->name
+                                      << (definition.isUnion() ? " not taken choice " : " absent optional " )
+                                      << variantTypeString((OpcUa_BuiltInType)fakeValue.Datatype)
+                                      << (fakeValue.ArrayType ? " array" : " scalar")
+                                      << std::endl;
+                        pelem->setIncomingData(fakeValue, ProcessReason::readFailure);
                     }
                 }
 
@@ -270,33 +295,6 @@ DataElementUaSdk::setState(const ConnectionStatus state)
     }
 }
 
-// Helper to update one data structure element from pointer to child
-bool
-DataElementUaSdk::updateDataInGenericValue (UaGenericStructureValue &value,
-                                            const int index,
-                                            std::shared_ptr<DataElementUaSdk> pelem)
-{
-    bool updated = false;
-    { // Scope of Guard G
-        Guard G(pelem->outgoingLock);
-        if (pelem->isDirty()) {
-            value.setField(index, pelem->getOutgoingData());
-            pelem->isdirty = false;
-            updated = true;
-        }
-    }
-    if (debug() >= 4) {
-        if (updated) {
-            std::cout << "Data from child element " << pelem->name
-                      << " inserted into data structure" << std::endl;
-        } else {
-            std::cout << "Data from child element " << pelem->name
-                      << " ignored (not dirty)" << std::endl;
-        }
-    }
-    return updated;
-}
-
 const UaVariant &
 DataElementUaSdk::getOutgoingData ()
 {
@@ -315,57 +313,87 @@ DataElementUaSdk::getOutgoingData ()
 
             // Try to get the structure definition from the dictionary
             UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
-            if (!definition.isNull()) {
-                if (!definition.isUnion()) {
-                    // ExtensionObject is a structure
-                    // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
-                    UaGenericStructureValue genericValue;
-                    genericValue.setGenericValue(extensionObject, definition);
-
-                    if (!mapped) {
-                        if (debug() >= 5)
-                            std::cout << " ** creating index-to-element map for child elements" << std::endl;
-                        for (auto &it : elements) {
-                            auto pelem = it.lock();
-                            for (int i = 0; i < definition.childrenCount(); i++) {
-                                if (pelem->name == definition.child(i).name().toUtf8()) {
-                                    elementMap.insert({i, it});
-                                    if (updateDataInGenericValue(genericValue, i, pelem))
-                                        isdirty = true;
-                                }
-                            }
-                        }
-                        if (debug() >= 5)
-                            std::cout << " ** " << elementMap.size() << "/" << elements.size()
-                                      << " child elements mapped to a "
-                                      << "structure of " << definition.childrenCount() << " elements" << std::endl;
-                        mapped = true;
-                    } else {
-                        for (auto &it : elementMap) {
-                            auto pelem = it.second.lock();
-                            if (updateDataInGenericValue(genericValue, it.first, pelem))
-                               isdirty = true;
-                        }
-                    }
-                    if (isdirty) {
-                        if (debug() >= 4)
-                            std::cout << "Encoding changed data structure to outgoingData of element " << name
-                                      << std::endl;
-                        genericValue.toExtensionObject(extensionObject);
-                        outgoingData.setExtensionObject(extensionObject, OpcUa_True);
-                    } else {
-                        if (debug() >= 4)
-                            std::cout << "Returning unchanged outgoingData of element " << name
-                                      << std::endl;
-                    }
-                }
-
-            } else
+            if (definition.isNull()) {
                 errlogPrintf(
                     "Cannot get a structure definition for extensionObject with dataTypeID %s "
                     "/ encodingTypeID %s - check access to type dictionary\n",
                     extensionObject.dataTypeId().toString().toUtf8(),
                     extensionObject.encodingTypeId().toString().toUtf8());
+                return outgoingData;
+            }
+
+            // Decode the ExtensionObject to a UaGenericValue to provide access to the structure fields
+            if (!mapped) {
+                if (debug() >= 5)
+                    std::cout << " ** creating index-to-element map for child elements" << std::endl;
+                for (auto &it : elements) {
+                    auto pelem = it.lock();
+                    for (int i = 0; i < definition.childrenCount(); i++) {
+                        if (pelem->name == definition.child(i).name().toUtf8()) {
+                            elementMap.insert({i, it});
+                        }
+                    }
+                }
+                if (debug() >= 5)
+                    std::cout << " ** " << elementMap.size() << "/" << elements.size()
+                              << " child elements mapped to a "
+                              << "structure of " << definition.childrenCount() << " elements" << std::endl;
+                mapped = true;
+            }
+            if (definition.isUnion()) {
+                UaGenericUnionValue genericUnion(extensionObject, definition);
+                for (auto &it : elementMap) {
+                    auto pelem = it.second.lock();
+                    bool updated = false;
+                    { // Scope of Guard G
+                        Guard G(pelem->outgoingLock);
+                        if (pelem->isDirty()) {
+                            genericUnion.setValue(it.first + 1, pelem->getOutgoingData());
+                            pelem->isdirty = false;
+                            isdirty = true;
+                            updated = true;
+                        }
+                    }
+                    if (debug() >= 4)
+                        std::cout << "Data from child element " << pelem->name
+                                  << (updated ? " inserted into union" : " ignored (not dirty)")
+                                  << std::endl;
+                }
+                if (isdirty)
+                    genericUnion.toExtensionObject(extensionObject);
+
+            } else {
+                UaGenericStructureValue genericStruct(extensionObject, definition);
+                for (auto &it : elementMap) {
+                    auto pelem = it.second.lock();
+                    bool updated = false;
+                    { // Scope of Guard G
+                        Guard G(pelem->outgoingLock);
+                        if (pelem->isDirty()) {
+                            genericStruct.setField(it.first, pelem->getOutgoingData());
+                            pelem->isdirty = false;
+                            isdirty = true;
+                            updated = true;
+                        }
+                    }
+                    if (debug() >= 4)
+                        std::cout << "Data from child element " << pelem->name
+                                  << (updated ? " inserted into structure" : " ignored (not dirty)")
+                                  << std::endl;
+                }
+                if (isdirty)
+                    genericStruct.toExtensionObject(extensionObject);
+            }
+            if (isdirty) {
+                if (debug() >= 4)
+                    std::cout << "Encoding changed data structure to outgoingData of element " << name
+                              << std::endl;
+                outgoingData.setExtensionObject(extensionObject, OpcUa_True);
+            } else {
+                if (debug() >= 4)
+                    std::cout << "Returning unchanged outgoingData of element " << name
+                              << std::endl;
+            }
         }
     }
     return outgoingData;
@@ -495,7 +523,24 @@ DataElementUaSdk::readScalar (char *value, const size_t num,
                     (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                 }
                 UaVariant& data = upd->getData();
-                if (enumChoices) {
+                if (data.type() == OpcUaType_ExtensionObject) {
+                    UaExtensionObject extensionObject;
+                    data.toExtensionObject(extensionObject);
+                    UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
+                    if (definition.isUnion()) {
+                        memset(value, 0, num);
+                        UaGenericUnionValue genericValue(extensionObject, definition);
+                        int switchValue = genericValue.switchValue();
+                        if (switchValue > 0) {
+                            snprintf(value, num, "%s:%s",
+                                definition.child(switchValue-1).name().toUtf8(),
+                                genericValue.value().toString().toUtf8());
+                        } else {
+                            (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                            ret = 1;
+                        }
+                    }
+                } else if (enumChoices) {
                     OpcUa_Int32 enumIndex;
                     data.toInt32(enumIndex);
                     auto it = enumChoices->find(enumIndex);
@@ -921,8 +966,48 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     unsigned long ul;
     double d;
     char* end = nullptr;
+    OpcUa_BuiltInType type = incomingData.type();
 
-    switch (incomingData.type()) {
+    if (type == OpcUaType_ExtensionObject)
+    {
+        UaExtensionObject extensionObject;
+        incomingData.toExtensionObject(extensionObject);
+        UaStructureDefinition definition = pitem->structureDefinition(extensionObject.encodingTypeId());
+        if (definition.isUnion()) {
+            if (value[0] == '\0') {
+            } else for (int i = 0; i < definition.childrenCount(); i++) {
+                UaGenericUnionValue genericValue(extensionObject, definition);
+                const UaString& memberName = definition.child(i).name();
+                epicsUInt32 namelen = static_cast<epicsUInt32>(memberName.length());
+                if ((strncmp(value, memberName.toUtf8(), namelen) == 0)
+                        && value[namelen] == ':') {
+                    // temporarily set incomingData to selected union member type
+                    UaVariant saveValue = incomingData;
+                    OpcUa_Variant fakeValue;
+                    OpcUa_Variant_Initialize(&fakeValue);
+                    fakeValue.Datatype = definition.child(i).valueType();
+                    incomingData = fakeValue;
+                    const UaNodeId& typeId = definition.child(i).typeId();
+                    enumChoices = pitem->session->getEnumChoices(&typeId);
+                    // recurse to set union member
+                    ret = writeScalar(value+namelen+1, len-(namelen+1), prec);
+                    // restore incomingData type to union
+                    delete enumChoices;
+                    enumChoices = nullptr;
+                    incomingData = saveValue;
+                    if (ret == 0) {
+                        Guard G(outgoingLock);
+                        genericValue.setValue(i+1, outgoingData);
+                        genericValue.toExtensionObject(extensionObject);
+                        outgoingData.setExtensionObject(extensionObject,true);
+                    }
+                    return ret;
+                }
+            }
+        }
+    }
+
+    switch (type) {
     case OpcUaType_String:
     { // Scope of Guard G
         Guard G(outgoingLock);
@@ -1066,10 +1151,11 @@ DataElementUaSdk::writeScalar (const char *value, const epicsUInt32 len, dbCommo
     }
     default:
         errlogPrintf("%s : unsupported conversion from string to %s for outgoing data\n",
-                     prec->name, variantTypeString(incomingData.type()));
+                     prec->name, variantTypeString(type));
         (void) recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         return -1;
     }
+
     if (ret != 0) {
         errlogPrintf("%s : value \"%s\" out of range\n",
                      prec->name, value);

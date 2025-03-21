@@ -107,28 +107,35 @@ DataElementOpen62541::show (const int level, const unsigned int indent) const
 #error Set UA_ENABLE_TYPEDESCRIPTION in open62541
 #endif
 
-#ifndef UA_DATATYPES_USE_POINTER
 // Older open62541 version 1.2 has no UA_DataType_getStructMember
 // Code from open62541 version 1.3.7 modified for compatibility with version 1.2
+// and extended to return isOptional flag
 UA_Boolean
-UA_DataType_getStructMember(const UA_DataType *type, const char *memberName,
+UA_DataType_getStructMemberExt(const UA_DataType *type, const char *memberName,
                             size_t *outOffset, const UA_DataType **outMemberType,
-                            UA_Boolean *outIsArray) {
+                            UA_Boolean *outIsArray, UA_Boolean *outIsOptional) {
     if(type->typeKind != UA_DATATYPEKIND_STRUCTURE &&
        type->typeKind != UA_DATATYPEKIND_OPTSTRUCT)
         return false;
 
     size_t offset = 0;
+#ifndef UA_DATATYPES_USE_POINTER
     const UA_DataType *typelists[2] = { UA_TYPES, &type[-type->typeIndex] };
+#endif
     for(size_t i = 0; i < type->membersSize; ++i) {
         const UA_DataTypeMember *m = &type->members[i];
+#ifndef UA_DATATYPES_USE_POINTER
         const UA_DataType *mt = &typelists[!m->namespaceZero][m->memberTypeIndex];
+#else
+        const UA_DataType *mt = m->memberType;
+#endif
         offset += m->padding;
 
         if(strcmp(memberName, m->memberName) == 0) {
             *outOffset = offset;
             *outMemberType = mt;
             *outIsArray = m->isArray;
+            *outIsOptional = m->isOptional;
             return true;
         }
 
@@ -151,27 +158,28 @@ UA_DataType_getStructMember(const UA_DataType *type, const char *memberName,
 
     return false;
 }
-#endif
 
-bool
+void
 DataElementOpen62541::createMap (const UA_DataType *type,
                                  const std::string *timefrom)
 {
     switch (typeKindOf(type)) {
     case UA_DATATYPEKIND_STRUCTURE:
-    {
+    case UA_DATATYPEKIND_OPTSTRUCT: {
         if (debug() >= 5)
             std::cout << " ** creating index-to-element map for child elements" << std::endl;
 
         if (timefrom) {
             const UA_DataType *timeMemberType;
             UA_Boolean timeIsArray;
+            UA_Boolean timeIsOptional;
             size_t timeOffset;
 
-            if (UA_DataType_getStructMember(type, timefrom->c_str(),
+            if (UA_DataType_getStructMemberExt(type, timefrom->c_str(),
                             &timeOffset,
                             &timeMemberType,
-                            &timeIsArray)) {
+                            &timeIsArray,
+                            &timeIsOptional)) {
                 if (typeKindOf(timeMemberType) != UA_TYPES_DATETIME || timeIsArray) {
                     errlogPrintf("%s: timestamp element %s has invalid type %s%s - using "
                                  "source timestamp\n",
@@ -191,10 +199,11 @@ DataElementOpen62541::createMap (const UA_DataType *type,
 
         for (auto &it : elements) {
             auto pelem = it.lock();
-            if (UA_DataType_getStructMember(type, pelem->name.c_str(),
+            if (UA_DataType_getStructMemberExt(type, pelem->name.c_str(),
                             &pelem->offset,
                             &pelem->memberType,
-                            &pelem->isArray)) {
+                            &pelem->isArray,
+                            &pelem->isOptional)) {
                 if (typeKindOf(pelem->memberType) == UA_DATATYPEKIND_ENUM) {
                     pelem->enumChoices = pitem->session->getEnumChoices(&pelem->memberType->typeId);
                 }
@@ -207,18 +216,17 @@ DataElementOpen62541::createMap (const UA_DataType *type,
         }
         if (debug() >= 5)
             std::cout << " ** " << elements.size()
-                      << " child elements mapped to a "
-                      << "structure of " << type->membersSize << " elements" << std::endl;
+                      << " child elements mapped to "
+                      << variantTypeString(type)
+                      << " of " << type->membersSize << " elements" << std::endl;
         break;
     }
     default:
-        std::cerr << "Item " << pitem
-                  << " has unimplemented type " << variantTypeString(type)
+        std::cerr << "Error: " << this
+                  << " is not a structure or an optstruct but a " << typeKindName(typeKindOf(type))
                   << std::endl;
-        return false;
     }
     mapped = true;
-    return true;
 }
 
 // Getting the timestamp and status information from the Item assumes that only one thread
@@ -271,7 +279,7 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
 
         const UA_DataType *type = value.type;
         char* container = static_cast<char*>(value.data);
-        if (type->typeKind == UA_DATATYPEKIND_EXTENSIONOBJECT) {
+        if (typeKindOf(type) == UA_DATATYPEKIND_EXTENSIONOBJECT) {
             UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
             if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
                 // Access content of decoded extension objects
@@ -288,28 +296,32 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
         if (!mapped)
             createMap(type, timefrom);
 
-        if (timefrom) {
-            if (timesrc >= 0)
-                pitem->tsData = ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(container + timesrc), 0);
-            else
-                pitem->tsData = pitem->tsSource;
-        }
+        if (timesrc >= 0)
+            pitem->tsData = ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(container + timesrc), 0);
+        else
+            pitem->tsData = pitem->tsSource;
 
         for (auto &it : elements) {
             auto pelem = it.lock();
-            char* memberData = container + pelem->offset;
             const UA_DataType* memberType = pelem->memberType;
+            char* memberData = container + pelem->offset;
             UA_Variant memberValue;
-            if (pelem->isArray)
-            {
-                size_t arrayLength = *reinterpret_cast<size_t*>(memberData);
+            size_t arrayLength = 0; // default to scalar
+            if (pelem->isArray) {
+                arrayLength = *reinterpret_cast<size_t*>(memberData);
                 memberData = *reinterpret_cast<char**>(memberData + sizeof(size_t));
-                if (arrayLength == 0) memberData = reinterpret_cast<char*>(UA_EMPTY_ARRAY_SENTINEL);
-                UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
-            } else {
-                UA_Variant_setScalar(&memberValue, memberData, memberType);
+            } else if (pelem->isOptional) {
+                /* optional scalar stored through pointer like an array */
+                memberData = *reinterpret_cast<char**>(memberData);
             }
-            pelem->setIncomingData(memberValue, reason);
+            UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
+            if (debug() && !memberData && pelem->isOptional) {
+                std::cerr << pelem << " absent optional " << variantTypeString(memberType)
+                          << (pelem->isArray ? " array" : " scalar" )
+                          << std::endl;
+            }
+            pelem->setIncomingData(memberValue,
+                pelem->isOptional && !memberData ? ProcessReason::readFailure : reason);
         }
     }
 }
@@ -358,37 +370,39 @@ DataElementOpen62541::setState(const ConnectionStatus state)
 
 // Helper to update one data structure element from pointer to child
 bool
-DataElementOpen62541::updateDataInStruct (void* container,
-                                          std::shared_ptr<DataElementOpen62541> pelem)
+DataElementOpen62541::updateDataInStruct(void* container,
+                                         std::shared_ptr<DataElementOpen62541> pelem)
 {
     bool updated = false;
     { // Scope of Guard G
         Guard G(pelem->outgoingLock);
         if (pelem->isDirty()) {
-            void* memberData = static_cast<char*>(container) + pelem->offset;
-            const UA_Variant& data = pelem->getOutgoingData();
+            char* memberData = static_cast<char*>(container) + pelem->offset;
+            const UA_Variant& elementData = pelem->getOutgoingData();
             const UA_DataType* memberType = pelem->memberType;
-            assert(memberType == data.type ||
+            assert(memberType == elementData.type ||
                 (typeKindOf(memberType) == UA_DATATYPEKIND_ENUM &&
-                 typeKindOf(data.type) == UA_DATATYPEKIND_INT32));
-            if (pelem->isArray)
-            {
-                size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
-                void*& arrayData = *reinterpret_cast<void**>(static_cast<char*>(memberData) + sizeof(size_t));
-                UA_Array_delete(arrayData, arrayLength, memberType);
-                UA_StatusCode status = UA_Array_copy(data.data, data.arrayLength, &arrayData, memberType);
-                if (status == UA_STATUSCODE_GOOD) {
-                    arrayLength = data.arrayLength;
-                } else {
-                    arrayLength = 0;
-                    std::cerr << "Item " << pitem
-                              << ": inserting data from from child element" << pelem->name
-                              << " failed (" << UA_StatusCode_name(status) << ')'
-                              << std::endl;
-                    return false;
-                }
+                 typeKindOf(elementData.type) == UA_DATATYPEKIND_INT32));
+            if (!pelem->isArray && !pelem->isOptional) {
+                // mandatory scalar: shallow copy
+                UA_clear(memberData, memberType);
+                void* data = pelem->moveOutgoingData();
+                memcpy(memberData, data, memberType->memSize);
+                UA_free(data);
             } else {
-                UA_copy(data.data, memberData, memberType);
+                // array or optional scalar: move content
+                void **memberDataPtr;
+                if (pelem->isArray) /* mandatory or optional array stored as length and pointer */ {
+                    size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
+                    memberDataPtr = reinterpret_cast<void**>(memberData + sizeof(size_t));
+                    UA_Array_delete(*memberDataPtr, arrayLength, memberType);
+                    arrayLength = elementData.arrayLength;
+                } else /* optional scalar stored through pointer */ {
+                    memberDataPtr = reinterpret_cast<void**>(memberData);
+                    if (*memberDataPtr) /* absent optional has nullptr here */
+                        UA_Array_delete(*memberDataPtr, 1, memberType);
+                }
+                *memberDataPtr = pelem->moveOutgoingData();
             }
             pelem->isdirty = false;
             updated = true;
