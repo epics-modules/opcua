@@ -723,6 +723,21 @@ public:
     virtual void clearOutgoingData() { UA_Variant_clear(&outgoingData); }
 
     /**
+     * @brief Move the contents of the current outgoing data.
+     *
+     * Avoids a deep copy by moving the contents out of the outgoing data
+     * and clearing it afterwards.
+     *
+     * Call holding outgoingLock!
+     */
+    void* moveOutgoingData() {
+        void* data = outgoingData.data;
+        outgoingData.data = nullptr;
+        UA_Variant_clear(&outgoingData);
+        return data;
+    }
+
+    /**
      * @brief Create processing requests for record(s) attached to this element.
      * See DevOpcua::DataElement::requestRecordProcessing
      */
@@ -746,7 +761,7 @@ private:
     void dbgWriteArray(const epicsUInt32 targetSize, const std::string &targetTypeName) const;
     bool updateDataInStruct(void* container, std::shared_ptr<DataElementOpen62541> pelem);
 
-    bool createMap(const UA_DataType *type, const std::string* timefrom);
+    void createMap(const UA_DataType *type, const std::string* timefrom);
 
     // Structure always returns true to ensure full traversal
     bool isDirty() const { return isdirty || !isleaf; }
@@ -757,7 +772,7 @@ private:
         pitem->markAsDirty();
     }
 
-   // Get the time stamp from the incoming object
+    // Get the time stamp from the incoming object
     const epicsTime &getIncomingTimeStamp() const {
         ProcessReason reason = pitem->getReason();
         if ((reason == ProcessReason::incomingData || reason == ProcessReason::readComplete)
@@ -800,6 +815,7 @@ private:
         ProcessReason nReason;
         std::shared_ptr<UpdateOpen62541> upd = incomingQueue.popUpdate(&nReason);
         dbgReadScalar(upd.get(), epicsTypeString(*value));
+        prec->udf = false;
 
         switch (upd->getType()) {
         case ProcessReason::readFailure:
@@ -925,7 +941,6 @@ private:
                         if (UA_STATUS_IS_UNCERTAIN(stat)) {
                             (void) recGblSetSevr(prec, READ_ALARM, MINOR_ALARM);
                         }
-                        prec->udf = false;
                     }
                     UA_Variant_clear(&data);
                 }
@@ -1008,7 +1023,6 @@ private:
                         }
                         elemsWritten = static_cast<epicsUInt32>(num) < data.arrayLength ? num : static_cast<epicsUInt32>(data.arrayLength);
                         memcpy(value, data.data, sizeof(ET) * elemsWritten);
-                        prec->udf = false;
                     }
                     UA_Variant_clear(&data);
                 }
@@ -1250,16 +1264,39 @@ private:
     std::unordered_map<int, std::weak_ptr<DataElementOpen62541>> elementMap;
     ptrdiff_t timesrc;
 
-    const UA_DataType *memberType;           /**< type of this element */
-    UA_Boolean isArray;                      /**< is this element an array? */
-    size_t offset;                           /**< data offset of this element in parent structure */
+    const UA_DataType *memberType = NULL;    /**< type of this element */
+    UA_Boolean isArray = false;              /**< is this element an array? */
+    UA_Boolean isOptional = false;           /**< is this element optional? */
+    size_t offset = 0;                       /**< data offset of this element in parent structure */
     bool mapped;                             /**< child name to index mapping done */
     UpdateQueue<UpdateOpen62541> incomingQueue;  /**< queue of incoming values */
     UA_Variant incomingData;                 /**< cache of latest incoming value */
     epicsMutex &outgoingLock;                /**< data lock for outgoing value */
     UA_Variant outgoingData;                 /**< cache of latest outgoing value */
     bool isdirty;                            /**< outgoing value has been (or needs to be) updated */
+
+    friend std::ostream& operator << (std::ostream& os, const DataElementOpen62541& element);
 };
+
+
+// print the full element name, e.g.: item elem.array[index].elem
+inline std::ostream& operator << (std::ostream& os, const DataElementOpen62541& element)
+{
+    // Skip the [ROOT] element in printing and print the item name instead
+    if (!element.parent)
+        return os << element.pitem;
+    os << element.parent;
+    if (!element.parent->parent)
+        os << " element ";
+    else if (element.name[0] != '[')
+        os << '.';
+    return os << element.name;
+}
+
+inline std::ostream& operator << (std::ostream& os, const DataElementOpen62541* pelement)
+{
+    return os << *pelement;
+}
 
 } // namespace DevOpcua
 
