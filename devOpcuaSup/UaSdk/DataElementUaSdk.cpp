@@ -865,6 +865,9 @@ DataElementUaSdk::readArray (char *value, epicsUInt32 len,
     long ret = 0;
     epicsUInt32 elemsWritten = 0;
 
+    // clear *old* array content
+    memset(value, 0, *numRead * len);
+
     if (incomingQueue.empty()) {
         errlogPrintf("%s : incoming data queue empty\n", prec->name);
         *numRead = 0;
@@ -915,7 +918,6 @@ DataElementUaSdk::readArray (char *value, epicsUInt32 len,
                             l = OpcUa_String_StrSize(&arrayData.StringArray[i]);
                             if (l >= len) l = len - 1;
                             memcpy(value + i * len, OpcUa_String_GetRawString(&arrayData.StringArray[i]), l);
-                            memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
@@ -924,7 +926,6 @@ DataElementUaSdk::readArray (char *value, epicsUInt32 len,
                             l = arrayData.XmlElementArray[i].Length;
                             if (l >= len) l = len - 1;
                             memcpy(value + i * len, arrayData.XmlElementArray[i].Data, l);
-                            memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
@@ -933,7 +934,6 @@ DataElementUaSdk::readArray (char *value, epicsUInt32 len,
                             l = OpcUa_String_StrSize(&arrayData.LocalizedTextArray[i].Text);
                             if (l >= len) l = len - 1;
                             memcpy(value + i * len, OpcUa_String_GetRawString(&arrayData.LocalizedTextArray[i].Text), l);
-                            memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
@@ -942,14 +942,12 @@ DataElementUaSdk::readArray (char *value, epicsUInt32 len,
                             l = OpcUa_String_StrSize(&arrayData.QualifiedNameArray[i].Name);
                             if (l >= len) l = len - 1;
                             memcpy(value + i * len, OpcUa_String_GetRawString(&arrayData.QualifiedNameArray[i].Name), l);
-                            memset(value + i * len + l, 0, len - l);
                         }
                         break;
                     }
                     case OpcUaType_ByteString: {
                         for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                            l = printByteString(arrayData.ByteStringArray[i], value + i * len, len);
-                            memset(value + i * len + l, 0, len - l);
+                            printByteString(arrayData.ByteStringArray[i], value + i * len, len);
                         }
                         break;
                     }
