@@ -862,6 +862,9 @@ DataElementOpen62541::readArray (char *value, epicsUInt32 len,
     long ret = 0;
     epicsUInt32 elemsWritten = 0;
 
+    // clear *old* array content
+    memset(value, 0, *numRead * len);
+
     if (incomingQueue.empty()) {
         errlogPrintf("%s : incoming data queue empty\n", prec->name);
         *numRead = 0;
@@ -909,8 +912,7 @@ DataElementOpen62541::readArray (char *value, epicsUInt32 len,
                             const UA_String& str = static_cast<UA_String *>(variant.data)[i];
                             size_t l = str.length;
                             if (l >= len) l = len-1;
-                            strncpy(value + i * len, reinterpret_cast<char*>(str.data), l);
-                            (value + i * len)[l] = '\0';
+                            memcpy(value + i * len, str.data, l);
                         }
                         break;
                     case UA_DATATYPEKIND_LOCALIZEDTEXT:
@@ -918,8 +920,7 @@ DataElementOpen62541::readArray (char *value, epicsUInt32 len,
                             const UA_String& str = static_cast<UA_LocalizedText *>(variant.data)[i].text;
                             size_t l = str.length;
                             if (l >= len) l = len-1;
-                            strncpy(value + i * len, reinterpret_cast<char*>(str.data), l);
-                            (value + i * len)[l] = '\0';
+                            memcpy(value + i * len, str.data, l);
                         }
                         break;
                     case UA_DATATYPEKIND_QUALIFIEDNAME:
@@ -927,14 +928,12 @@ DataElementOpen62541::readArray (char *value, epicsUInt32 len,
                             const UA_String& str = static_cast<UA_QualifiedName *>(variant.data)[i].name;
                             size_t l = str.length;
                             if (l >= len) l = len-1;
-                            strncpy(value + i * len, reinterpret_cast<char*>(str.data), l);
-                            (value + i * len)[l] = '\0';
+                            memcpy(value + i * len, str.data, l);
                         }
                         break;
                     case UA_DATATYPEKIND_BYTESTRING:
                         for (epicsUInt32 i = 0; i < elemsWritten; i++) {
-                            size_t l = printByteString(static_cast<UA_ByteString *>(variant.data)[i], value + i * len, len);
-                            memset(value + i * len + l, 0, len - l);
+                            printByteString(static_cast<UA_ByteString *>(variant.data)[i], value + i * len, len);
                         }
                         break;
                     default:
