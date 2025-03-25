@@ -5,6 +5,16 @@
 
 # waveform records connecting to arrays of different types
 
+record(waveform, "$(P)$(R)wfbool") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.Boolean")
+    field(FTVL, "UCHAR")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
+}
+
 record(waveform, "$(P)$(R)wfchar") {
     field(DTYP, "OPCUA")
     field(INP,  "@$(SUBS) ns=2;s=Demo.Dynamic.Arrays.SByte")
