@@ -5,6 +5,25 @@
 
 # aai/aao records connecting to arrays of different types
 
+record(aai, "$(P)$(R)aaibool") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Boolean")
+    field(FTVL, "UCHAR")
+    field(NELM, "10")
+    field(SCAN, "I/O Intr")
+    field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
+}
+
+record(aao, "$(P)$(R)aaobool") {
+    field(DTYP, "OPCUA")
+    field(OUT,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.Boolean")
+    field(FTVL, "UCHAR")
+    field(NELM, "10")
+    field(TSE,  "-2")
+    field(TPRO, "$(DEBUG=0)")
+}
+
 record(aai, "$(P)$(R)aaichar") {
     field(DTYP, "OPCUA")
     field(INP,  "@$(SUBS) ns=2;s=Demo.Static.Arrays.SByte")
