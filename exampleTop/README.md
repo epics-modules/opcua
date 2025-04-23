@@ -86,7 +86,7 @@ script and the database links.
 ## Feedback / Reporting issues
 
 Please use the OPC UA Device Support Module's GitHub
-[issue tracker](https://github.com/ralphlange/opcua/issues).
+[issue tracker](https://github.com/epics-modules/opcua/issues).
 
 ## Contributing
 
@@ -108,5 +108,5 @@ that is distributed subject to a Software License Agreement found
 in file LICENSE that is included with its distribution.
 
 <!-- Links -->
-[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
-[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/ralphlange/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
+[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
+[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf

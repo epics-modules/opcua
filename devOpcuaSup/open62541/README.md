@@ -194,7 +194,7 @@ consider linking your IOCs statically.
 
 ## Feedback / Reporting issues
 
-Please use the GitHub project's [issue tracker](https://github.com/ralphlange/opcua/issues).
+Please use the GitHub project's [issue tracker](https://github.com/epics-modules/opcua/issues).
 
 ## Known issues
 
