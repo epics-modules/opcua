@@ -115,7 +115,7 @@ On newer Windows systems, the Windows system version of the openssl DLLs are not
 
 ## Feedback / Reporting issues
 
-Please use the GitHub project's [issue tracker](https://github.com/ralphlange/opcua/issues).
+Please use the GitHub project's [issue tracker](https://github.com/epics-modules/opcua/issues).
 
 ## Known issues
 
