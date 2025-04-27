@@ -43,7 +43,8 @@ The script will:
 2. Build `open62541` as a static library with security support
 3. Create the corresponding `CONFIG_SITE.local` configuration
 
-**Please note**: This requires `curl`, `cmake` and the `openssl-devel`/`libssl-dev` library to be present.
+**Please note**: This requires `curl`, `cmake` and the `openssl-devel`/`libssl-dev` library to be present. For support of structures also `libxml2-devel` / `libxml2-dev`
+is required.
 
 #### Manual Way
 
