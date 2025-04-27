@@ -10,6 +10,8 @@
 # Default version of open62541 to use
 DEFAULT_VERSION="1.3.15"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_DIR="$SCRIPT_DIR/temp_build"
+LIB_DIR="$SCRIPT_DIR/lib-open62541"
 OPEN62541_VERSION=${1:-$DEFAULT_VERSION}
 
 # Check if cmake and curl are available
@@ -18,23 +20,26 @@ if ! command -v cmake &> /dev/null || ! command -v curl &> /dev/null; then
     exit 1
 fi
 
+echo "Removing any existing build and library directory..."
+rm -rf "$BUILD_DIR"
+rm -rf "$LIB_DIR"
+
+mkdir -p "$BUILD_DIR"
+mkdir -p "$LIB_DIR"
+
 # Download and extract open62541 if not already present
 echo "Downloading open62541 version $OPEN62541_VERSION..."
-curl -L -o "$SCRIPT_DIR/open62541-$OPEN62541_VERSION.tar.gz" "https://github.com/open62541/open62541/archive/refs/tags/v$OPEN62541_VERSION.tar.gz"
+curl -L "https://github.com/open62541/open62541/archive/refs/tags/v$OPEN62541_VERSION.tar.gz" \
+    | tar -xz -C "$BUILD_DIR" --strip-components=1
 if [ $? -ne 0 ]; then
-    echo "Error: Failed to download open62541 version $OPEN62541_VERSION."
+    echo "Error: Failed to download and unpack."
     exit 1
 fi
-temp_dir="`mktemp -d -p "$SCRIPT_DIR"`"
-echo "Extracting open62541 archive..."
-mkdir -p "$SCRIPT_DIR/lib-open62541"
-tar -xzf "$SCRIPT_DIR/open62541-$OPEN62541_VERSION.tar.gz" -C "$temp_dir" --strip-components=1
-rm "$SCRIPT_DIR/open62541-$OPEN62541_VERSION.tar.gz"
 
 echo "Building open62541..."
 cmake \
-    -S "$temp_dir" \
-    -B "$temp_dir"/build \
+    -S "$BUILD_DIR" \
+    -B "$BUILD_DIR"/build \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_INSTALL_PREFIX="$SCRIPT_DIR"/lib-open62541 \
@@ -43,22 +48,19 @@ cmake \
     -DUA_ENABLE_ENCRYPTION=OPENSSL
 if [ $? -ne 0 ]; then
     echo "Error: cmake configuration failed."
-    rm -rf "$temp_dir"
     exit 1
 fi
-make -C "$temp_dir"/build
+make -C "$BUILD_DIR"/build
 if [ $? -ne 0 ]; then
     echo "Error: make failed."
-    rm -rf "$temp_dir"
     exit 1
 fi
-make -C "$temp_dir"/build install
+make -C "$BUILD_DIR"/build install
 if [ $? -ne 0 ]; then
     echo "Error: make install failed."
-    rm -rf "$temp_dir"
     exit 1
 fi
-rm -rf "$temp_dir"
+rm -rf "$BUILD_DIR"
 
 echo "Writing configuration to CONFIG_SITE.local..."
 cat <<EOL > "$SCRIPT_DIR/../../configure/CONFIG_SITE.local"
