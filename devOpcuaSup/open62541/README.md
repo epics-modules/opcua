@@ -18,7 +18,7 @@ Please contact the authors
     (v1.2 and v1.3 series have been tested; their system packages should also work.
     open62541 v1.4 changed the header file structure and does not work yet.)
     
-*   Cmake (3.x) if you're building Open62541 from sources.
+*   cmake (3.x) if you're building Open62541 from sources.
 
 *   For OPC UA security support (authentication/encryption), we suggest using the openssl plugin for Open62541. For that to work, you need openssl on your system - both when compiling the client library and when generating any binaries (IOCs).
     On Linux, the name of the package you have to install depends on the distribution: development packages are called `openssl-devel` on RedHat/CentOS/Fedora and `libssl-dev` on Debian/Ubuntu, runtime packages are called `openssl` on RedHat/CentOS/Fedora and `libssl` on Debian/Ubuntu, respectively.
@@ -43,7 +43,7 @@ The script will:
 2. Build `open62541` as a static library with security support
 3. Create the corresponding `CONFIG_SITE.local` configuration
 
-**Please note**: This requires `curl`, `Cmake` and the `openssl-devel`/`libssl-dev` library to be present.
+**Please note**: This requires `curl`, `cmake` and the `openssl-devel`/`libssl-dev` library to be present.
 
 #### Manual Way
 
