@@ -311,7 +311,6 @@ opcuaOptionsCallFunc(const iocshArgBuf *args)
         } else if (strcmp(args[0].sval, "help") == 0) {
             std::cout << opcuaOptionsUsage.c_str() << std::endl;
         } else {
-            std::cerr << args[1].aval.ac << " options: " << args[1].aval.av[0] << std::endl;
             if (args[1].aval.ac <= 1) {
                 errlogPrintf("missing argument #2 (options)\n");
             } else {
