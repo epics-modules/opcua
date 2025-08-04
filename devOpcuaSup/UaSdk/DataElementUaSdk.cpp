@@ -268,7 +268,7 @@ DataElementUaSdk::setIncomingData(const UaVariant &value,
                         stat = OpcUa_BadNoData;
                     }
                 } else {
-                    const UaVariant &memberValue = UaGenericStructureValue(extensionObject, definition).value(it.first, &stat);
+                    const UaVariant memberValue = structure.value(it.first, &stat);
                     if (stat == OpcUa_Good) {
                         pelem->setIncomingData(memberValue, reason);
                     }
