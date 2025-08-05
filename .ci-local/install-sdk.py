@@ -10,6 +10,8 @@ import subprocess as sp
 import re
 
 curdir = os.getcwd()
+openssl_debs = ['libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb', 'libssl-dev_1.1.1f-1ubuntu2.24_amd64.deb']
+openssl_url  = 'http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl'
 
 sys.path.append(os.path.join(curdir, '.ci'))
 import cue
@@ -74,3 +76,11 @@ OPENSSL = $(UASDK)/third-party/win64/vs2015/openssl''')
 
     os.remove(os.path.join(cue.toolsdir, enc_name))
     os.remove(os.path.join(cue.toolsdir, tar_name))
+
+    # Downgrade libssl to 1.1.1 on GHA's Ubuntu 22.04 and up
+    if cue.ci['service'] == 'github-actions' and cue.ci['os'] == 'linux':
+        for deb in openssl_debs:
+            sp.check_call(['curl', '-fsSLO', '--retry', '3', '{0}/{1}'.format(openssl_url, deb)],
+                          cwd=cue.toolsdir)
+            sp.check_call(['sudo', 'dpkg', '-i', deb],
+                          cwd=cue.toolsdir)
