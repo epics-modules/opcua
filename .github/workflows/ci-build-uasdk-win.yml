@@ -44,19 +44,19 @@ jobs:
       matrix:
         include:
 
-          - os: windows-2019
-            cmp: vs2019
+          - os: windows-2022
+            cmp: vs2022
             configuration: default
             base: "3.15"
             uasdk: "1.6.3"
-            name: "3.15 Win2019 v1.6.3 VS2019 DLL"
+            name: "3.15 Win2022 v1.6.3 VS2022 DLL"
 
-          - os: windows-2019
-            cmp: vs2019
+          - os: windows-2022
+            cmp: vs2022
             configuration: default
             base: "7.0"
             uasdk: "1.6.3"
-            name: "7.0 Win2019 v1.6.3 VS2019 DLL"
+            name: "7.0 Win2022 v1.6.3 VS2022 DLL"
 
     steps:
     - uses: actions/checkout@v4
@@ -64,18 +64,18 @@ jobs:
         submodules: true
     - name: Download and install UASDK client
       run: |
-        python .ci-local/install-sdk.py
+        python3 .ci-local/install-sdk.py
     - name: Prepare build dependencies
       run: |
-        python .ci/cue.py prepare
+        python3 .ci/cue.py prepare
     - name: Add DLL locations to PATH
       run: |
         "C:/Users/runneradmin/.source/sdk/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
         "C:/Users/runneradmin/.source/sdk/third-party/win64/vs2015/libxml2/out32dll" | Out-File -FilePath $env:GITHUB_PATH -Append
         "C:/Users/runneradmin/.source/sdk/third-party/win64/vs2015/openssl/out32dll" | Out-File -FilePath $env:GITHUB_PATH -Append
     - name: Build main module
-      run: python .ci/cue.py build
+      run: python3 .ci/cue.py build
     - name: Run main module tests
-      run: python .ci/cue.py test
+      run: python3 .ci/cue.py test
     - name: Collect and show test results
-      run: python .ci/cue.py test-results
+      run: python3 .ci/cue.py test-results
