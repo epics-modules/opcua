@@ -49,15 +49,15 @@ jobs:
             cmp: vs2022
             configuration: default
             base: "3.15"
-            open62541: "1.3.12"
-            name: "3.15 Win2022 v1.3.12 VS2022 DLL"
+            open62541: "1.3.15"
+            name: "3.15 Win2022 v1.3.15 VS2022 DLL"
 
           - os: windows-2022
             cmp: vs2022
             configuration: default
             base: "7.0"
-            open62541: "1.3.12"
-            name: "7.0 Win2022 v1.3.12 VS2022 DLL"
+            open62541: "1.3.15"
+            name: "7.0 Win2022 v1.3.15 VS2022 DLL"
 
     steps:
     - uses: actions/checkout@v4
@@ -112,14 +112,14 @@ jobs:
           - os: windows-2022
             configuration: default
             base: "3.15"
-            open62541: "1.3.12"
-            name: "3.15 Win2022 v1.3.12 MinGW DLL"
+            open62541: "1.3.15"
+            name: "3.15 Win2022 v1.3.15 MinGW DLL"
 
           - os: windows-2022
             configuration: default
             base: "7.0"
-            open62541: "1.3.12"
-            name: "7.0 Win2022 v1.3.12 MinGW DLL"
+            open62541: "1.3.15"
+            name: "7.0 Win2022 v1.3.15 MinGW DLL"
 
     steps:
     - uses: msys2/setup-msys2@v2
