@@ -19,6 +19,7 @@ on:
       - '**/*.md'
       - 'devOpcuaSup/open62541/*'
   pull_request:
+  workflow_dispatch:
 
 env:
   SETUP_PATH: .ci-local:.ci
