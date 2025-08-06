@@ -44,9 +44,11 @@
 #include <unordered_map>
 #include <memory>
 
+namespace std {
+
 /* Allow UA_NodeId as key */
 template<>
-struct std::hash<UA_NodeId>
+struct hash<UA_NodeId>
 {
     inline std::size_t operator()(const UA_NodeId& nodeId) const noexcept
     {
@@ -55,13 +57,15 @@ struct std::hash<UA_NodeId>
 };
 
 template<>
-struct std::equal_to<UA_NodeId>
+struct equal_to<UA_NodeId>
 {
     inline bool operator()(const UA_NodeId& nodeId1, const UA_NodeId& nodeId2) const noexcept
     {
         return UA_NodeId_equal(&nodeId1, &nodeId2);
     }
 };
+
+}
 
 namespace DevOpcua {
 
