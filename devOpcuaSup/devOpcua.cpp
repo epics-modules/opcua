@@ -735,7 +735,7 @@ inline void updateEnumInfos (REC *prec, RecordConnector *pcon)
         prec->sdef |= ENUM_VALUES_CHECKED;
         auto pvl = &prec->zrvl;
         for (int i = 0; i < NUMBER_OF_ENUM_CHOICES; i++) {
-            if (*pvl) {
+            if (*pvl++) {
                 prec->sdef |= ENUM_VALUES_DEFINED;
                 break;
             }
