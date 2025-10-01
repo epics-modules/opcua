@@ -103,7 +103,7 @@ void processCallback (epicsCallback *pcallback, const ProcessReason reason)
 
     // Do not process FLNK on updates if not "I/O Intr"
     SAVE_FLNK(prec);
-    if (reason != writeComplete && prec->scan != menuScanI_O_Intr)
+    if (reason == incomingData && prec->scan != menuScanI_O_Intr)
         DISABLE_FLNK(prec);
     if (prec->pact)
         reProcess(prec);
