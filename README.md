@@ -22,13 +22,13 @@ The module is under development, but releases are stable and robust.
 
 There are two choices for the low-level OPC UA client library:
 
-1. The commercially available
+1. The free open source client of the [open62541 project SDK][open62541.sdk]. \
+   This integration is relatively new (added 2024)
+   and is gradually introduced in production at more and more places.
+
+2. The commercially available
    [Unified Automation C++ Based OPC UA Client SDK][unified.sdk]. \
    This is the original implementation.
-   
-2. The open source client of the [open62541 project SDK][open62541.sdk]. \
-   This integration is relatively new (2024)
-   and hasn't seen much in-production use yet.
 
 ## Prerequisites
 
@@ -60,7 +60,8 @@ There are two choices for the low-level OPC UA client library:
 ### Using the open62541 SDK
 
 * The [open62541 SDK][open62541.sdk] \
-  Choose a recent release (1.2 and 1.3 are supported).
+  Choose a recent release from series 1.2 or 1.3
+  (release seriens 1.4 is not supported yet).
   Download the sources using GitHub releases, not through the project website.
 
 * For OPC UA security support (authentication/encryption), you need
