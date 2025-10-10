@@ -12,7 +12,7 @@
 
 #include <epicsTypes.h>
 
-#include "DataElementUaSdk.h"
+#include "DataElementUaSdkLeaf.h"
 
 namespace {
 

@@ -24,7 +24,6 @@
 #include <epicsTime.h>
 
 #include "Item.h"
-#include "opcuaItemRecord.h"
 #include "devOpcua.h"
 #include "ElementTree.h"
 #include "SessionUaSdk.h"
@@ -35,6 +34,7 @@ using namespace UaClientSdk;
 
 class SubscriptionUaSdk;
 class DataElementUaSdk;
+class DataElementUaSdkNode;
 struct linkInfo;
 
 /**
@@ -45,6 +45,8 @@ struct linkInfo;
 class ItemUaSdk : public Item
 {
     friend class DataElementUaSdk;
+    friend class DataElementUaSdkNode;
+    friend class DataElementUaSdkLeaf;
 
 public:
     /**
@@ -222,7 +224,7 @@ private:
     bool registered;                       /**< flag for registration status */
     OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
     OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
-    ElementTree<DataElementUaSdk, ItemUaSdk> dataTree; /**< data element tree */
+    ElementTree<DataElementUaSdkNode, DataElementUaSdk, ItemUaSdk> dataTree; /**< data element tree */
     epicsMutex dataTreeWriteLock;           /**< lock for dirty flag */
     bool dataTreeDirty;                    /**< true if any element has been modified */
     UaStatusCode lastStatus;               /**< status code of most recent service */

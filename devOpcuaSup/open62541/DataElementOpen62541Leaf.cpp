@@ -11,8 +11,10 @@
  */
 
 #define epicsExportSharedSymbols
-#include "DataElementOpen62541.h"
+#include "DataElementOpen62541Leaf.h"
+#include "DataElementOpen62541Node.h"
 #include "ItemOpen62541.h"
+#include "RecordConnector.h"
 
 #include <errlog.h>
 #include <epicsTypes.h>
@@ -26,80 +28,52 @@
 
 namespace DevOpcua {
 
+DataElementOpen62541Leaf::DataElementOpen62541Leaf (const std::string &name,
+                                                    ItemOpen62541 *item,
+                                                    RecordConnector *pconnector)
+    : DataElementOpen62541(name, item)
+    , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
+{
+    UA_Variant_init(&incomingData);
+    UA_Variant_init(&outgoingData);
+}
+
+/* Explicitly implement the destructor here (allows the compiler to place the vtable) */
+DataElementOpen62541::~DataElementOpen62541() = default;
+
 /* Specific implementation of DataElement's "factory" method */
 void
-DataElement::addElementToTree(Item *item,
-                              RecordConnector *pconnector,
-                              const std::list<std::string> &elementPath)
+DataElement::addElementToTree (Item *item, RecordConnector *pconnector, const std::list<std::string> &elementPath)
 {
-    DataElementOpen62541::addElementToTree(static_cast<ItemOpen62541*>(item), pconnector, elementPath);
-}
-
-DataElementOpen62541::DataElementOpen62541 (const std::string &name,
-                                    ItemOpen62541 *item,
-                                    RecordConnector *pconnector)
-    : DataElement(pconnector, name)
-    , pitem(item)
-    , timesrc(-1)
-    , mapped(false)
-    , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
-    , outgoingLock(pitem->dataTreeWriteLock)
-    , isdirty(false)
-{
-    UA_Variant_init(&incomingData);
-    UA_Variant_init(&outgoingData);
-}
-
-DataElementOpen62541::DataElementOpen62541 (const std::string &name,
-                                            ItemOpen62541 *item)
-    : DataElement(name)
-    , pitem(item)
-    , timesrc(-1)
-    , mapped(false)
-    , incomingQueue(0ul)
-    , outgoingLock(pitem->dataTreeWriteLock)
-    , isdirty(false)
-{
-    UA_Variant_init(&incomingData);
-    UA_Variant_init(&outgoingData);
+    DataElementOpen62541Leaf::addElementToTree(static_cast<ItemOpen62541 *>(item), pconnector, elementPath);
 }
 
 void
-DataElementOpen62541::addElementToTree(ItemOpen62541 *item,
-                                       RecordConnector *pconnector,
-                                       const std::list<std::string> &elementPath)
+DataElementOpen62541Leaf::addElementToTree (ItemOpen62541 *item,
+                                            RecordConnector *pconnector,
+                                            const std::list<std::string> &elementPath)
 {
     std::string name("[ROOT]");
     if (elementPath.size())
         name = elementPath.back();
 
-    auto leaf = std::make_shared<DataElementOpen62541>(name, item, pconnector);
-    item->dataTree.addLeaf(leaf, elementPath);
+    auto leaf = std::make_shared<DataElementOpen62541Leaf>(name, item, pconnector);
+    item->dataTree.addLeaf(leaf, elementPath, item);
     // reference from connector after adding to the tree worked
     pconnector->setDataElement(leaf);
+    leaf->pconnector = pconnector;
 }
 
 void
-DataElementOpen62541::show (const int level, const unsigned int indent) const
+DataElementOpen62541Leaf::show (const int level, const unsigned int indent) const
 {
-    std::string ind(static_cast<epicsInt64>(indent)*2, ' '); // static_cast to avoid warning C26451
+    std::string ind(static_cast<epicsInt64>(indent) * 2, ' '); // static_cast to avoid warning C26451
     std::cout << ind;
-    if (isLeaf()) {
-        std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")="
-                  << pconnector->getRecordName()
-                  << " type=" << variantTypeString(incomingData)
-                  << " timestamp=" << linkOptionTimestampString(pconnector->plinkinfo->timestamp)
-                  << " bini=" << linkOptionBiniString(pconnector->plinkinfo->bini)
-                  << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
-    } else {
-        std::cout << "node=" << name << " children=" << elements.size()
-                  << " mapped=" << (mapped ? "y" : "n") << "\n";
-        for (auto it : elements) {
-            if (auto pelem = it.lock()) {
-                pelem->show(level, indent + 1);
-            }
-        }
-    }
+    std::cout << "leaf=" << name << " record(" << pconnector->getRecordType() << ")=" << pconnector->getRecordName()
+              << " type=" << variantTypeString(incomingData)
+              << " timestamp=" << linkOptionTimestampString(pconnector->plinkinfo->timestamp)
+              << " bini=" << linkOptionBiniString(pconnector->plinkinfo->bini)
+              << " monitor=" << (pconnector->plinkinfo->monitor ? "y" : "n") << "\n";
 }
 
 #ifndef UA_ENABLE_TYPEDESCRIPTION
@@ -121,166 +95,10 @@ memberTypeOf(const UA_DataType *type, const UA_DataTypeMember *m) {
 #endif
 }
 
-UA_UInt32
-UA_DataType_getStructMemberExt(const UA_DataType *type, const char *memberName,
-                            size_t *outOffset, const UA_DataType **outMemberType,
-                            UA_Boolean *outIsArray, UA_Boolean *outIsOptional) {
-
-    size_t offset = 0;
-    switch(type->typeKind) {
-    case UA_DATATYPEKIND_STRUCTURE:
-    case UA_DATATYPEKIND_OPTSTRUCT:
-    case UA_DATATYPEKIND_UNION:
-        for(UA_UInt32 i = 0; i < type->membersSize; ++i) {
-            const UA_DataTypeMember *m = &type->members[i];
-            const UA_DataType *mt = memberTypeOf(type, m);
-            offset += m->padding;
-
-            if(strcmp(memberName, m->memberName) == 0) {
-                *outOffset = offset;
-                *outMemberType = mt;
-                *outIsArray = m->isArray;
-                *outIsOptional = m->isOptional;
-                return i+1;
-            }
-
-            if (type->typeKind == UA_DATATYPEKIND_UNION) {
-                offset = 0;
-            } else if(!m->isOptional) {
-                if(!m->isArray) {
-                    offset += mt->memSize;
-                } else {
-                    offset += sizeof(size_t);
-                    offset += sizeof(void*);
-                }
-            } else { /* field is optional */
-                if(!m->isArray) {
-                    offset += sizeof(void *);
-                } else {
-                    offset += sizeof(size_t);
-                    offset += sizeof(void *);
-                }
-            }
-        }
-        break;
-    case UA_DATATYPEKIND_LOCALIZEDTEXT:
-        *outMemberType = &UA_TYPES[UA_TYPES_STRING];
-        *outIsArray = 0;
-        *outIsOptional = 0;
-        if (strcmp(memberName, "locale") == 0) {
-            *outOffset = offsetof(UA_LocalizedText, locale);
-            return 1;
-        }
-        if (strcmp(memberName, "text") == 0) {
-            *outOffset = offsetof(UA_LocalizedText, text);
-            return 2;
-        }
-        break;
-    case UA_DATATYPEKIND_QUALIFIEDNAME:
-        *outIsArray = 0;
-        *outIsOptional = 0;
-        if (strcmp(memberName, "namespaceIndex") == 0) {
-            *outMemberType = &UA_TYPES[UA_DATATYPEKIND_UINT16];
-            *outOffset = offsetof(UA_QualifiedName, namespaceIndex);
-            return 1;
-        }
-        if (strcmp(memberName, "name") == 0) {
-            *outMemberType = &UA_TYPES[UA_TYPES_STRING];
-            *outOffset = offsetof(UA_QualifiedName, name);
-            return 2;
-        }
-        break;
-    }
-    return 0;
-}
-
-void
-DataElementOpen62541::createMap(const UA_DataType *type,
-                                const std::string *timefrom)
-{
-    if (debug() >= 5)
-        std::cout << " ** creating index-to-element map for child elements" << std::endl;
-
-    switch (typeKindOf(type)) {
-    case UA_DATATYPEKIND_STRUCTURE:
-    case UA_DATATYPEKIND_OPTSTRUCT:
-    case UA_DATATYPEKIND_UNION:
-    case UA_DATATYPEKIND_LOCALIZEDTEXT:
-    case UA_DATATYPEKIND_QUALIFIEDNAME:
-        if (timefrom) {
-            const UA_DataType *timeMemberType;
-            UA_Boolean timeIsArray;
-            UA_Boolean timeIsOptional;
-            size_t timeOffset;
-
-            if (UA_DataType_getStructMemberExt(type, timefrom->c_str(),
-                            &timeOffset,
-                            &timeMemberType,
-                            &timeIsArray,
-                            &timeIsOptional)) {
-                if (typeKindOf(timeMemberType) != UA_TYPES_DATETIME || timeIsArray) {
-                    errlogPrintf("%s: timestamp element %s has invalid type %s%s - using "
-                                 "source timestamp\n",
-                                 pitem->recConnector->getRecordName(),
-                                 timefrom->c_str(),
-                                 typeKindName(typeKindOf(timeMemberType)),
-                                 timeIsArray ? "[]" : "");
-                } else
-                    timesrc = timeOffset;
-            } else {
-                errlogPrintf(
-                    "%s: timestamp element %s not found - using source timestamp\n",
-                    pitem->recConnector->getRecordName(),
-                    timefrom->c_str());
-            }
-        }
-
-        for (auto &it : elements) {
-            auto pelem = it.lock();
-            if ((pelem->index = UA_DataType_getStructMemberExt(type, pelem->name.c_str(),
-                            &pelem->offset,
-                            &pelem->memberType,
-                            &pelem->isArray,
-                            &pelem->isOptional))) {
-                if (debug() >= 5)
-                    std::cout << typeKindName(typeKindOf(type))
-                              << " " << pelem
-                              << " index=" << pelem->index
-                              << " offset=" << pelem->offset
-                              << " type=" << variantTypeString(pelem->memberType)
-                              << (pelem->isArray ? "[]" : "")
-                              << (pelem->isOptional ? " optional" : "")
-                              << std::endl;
-                if (typeKindOf(pelem->memberType) == UA_DATATYPEKIND_ENUM) {
-                    pelem->enumChoices = pitem->session->getEnumChoices(&pelem->memberType->typeId);
-                }
-            } else {
-                std::cerr << "Item " << pitem
-                          << ": element " << pelem->name
-                          << " not found in " << variantTypeString(type)
-                          << std::endl;
-            }
-        }
-        if (debug() >= 5)
-            std::cout << " ** " << elements.size()
-                      << " child elements mapped to "
-                      << variantTypeString(type)
-                      << " of " << type->membersSize << " elements" << std::endl;
-        break;
-    default:
-        std::cerr << "Error: " << this
-                  << " is no structured data but a " << typeKindName(typeKindOf(type))
-                  << std::endl;
-    }
-    mapped = true;
-}
-
 // Getting the timestamp and status information from the Item assumes that only one thread
 // is pushing data into the Item's DataElement structure at any time.
 void
-DataElementOpen62541::setIncomingData (const UA_Variant &value,
-                                       ProcessReason reason,
-                                       const std::string *timefrom)
+DataElementOpen62541Leaf::setIncomingData (const UA_Variant &value, ProcessReason reason, const std::string *timefrom)
 {
     // Cache this element. We can make a shallow copy because
     // ItemOpen62541::setIncomingData marks the original response data as "ours".
@@ -288,254 +106,64 @@ DataElementOpen62541::setIncomingData (const UA_Variant &value,
     UA_Variant_clear(&incomingData);
     incomingData = value;
 
-    if (isLeaf()) {
-        if (pconnector->state() == ConnectionStatus::initialRead && typeKindOf(value) == UA_DATATYPEKIND_ENUM) {
-            enumChoices = pitem->session->getEnumChoices(&value.type->typeId);
-        }
-        if ((pconnector->state() == ConnectionStatus::initialRead
-             && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
-            || (pconnector->state() == ConnectionStatus::up)) {
-
-            Guard(pconnector->lock);
-            bool wasFirst = false;
-            // Make a copy of the value for this element and put it on the queue
-            UA_Variant *valuecopy (new UA_Variant);
-            UA_Variant_copy(&value, valuecopy); // As a non-C++ object, UA_Variant has no copy constructor
-            UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason, std::unique_ptr<UA_Variant>(valuecopy), getIncomingReadStatus()));
-            incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
-            if (debug() >= 5)
-                std::cout << "Item " << pitem
-                          << " element " << name
-                          << " set data (" << processReasonString(reason)
-                          << ") for record " << pconnector->getRecordName()
-                          << " (queue use " << incomingQueue.size()
-                          << "/" << incomingQueue.capacity() << ")"
-                          << std::endl;
-            if (wasFirst)
-                pconnector->requestRecordProcessing(reason);
-        }
-    } else {
-        if (UA_Variant_isEmpty(&value))
-            return;
-
-        if (debug() >= 5)
-            std::cout << "Item " << pitem
-                      << " element " << name
-                      << " splitting structured data to "
-                      << elements.size() << " child elements"
-                      << std::endl;
-
-        const UA_DataType *type = value.type;
-        char* container = static_cast<char*>(value.data);
-        if (typeKindOf(type) == UA_DATATYPEKIND_EXTENSIONOBJECT) {
-            UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
-            if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
-                // Access content of decoded extension objects
-                type = extensionObject.content.decoded.type;
-                container = static_cast<char*>(extensionObject.content.decoded.data);
-            } else {
-                std::cerr << "Cannot get a structure definition for item " << pitem
-                          << " because binaryEncodingId " << extensionObject.content.encoded.typeId
-                          << " is not in the type dictionary." << std::endl;
-                return;
-            }
-        }
-
-        if (!mapped)
-            createMap(type, timefrom);
-
-        if (timesrc >= 0)
-            pitem->tsData = ItemOpen62541::uaToEpicsTime(*reinterpret_cast<UA_DateTime*>(container + timesrc), 0);
-        else
-            pitem->tsData = pitem->tsSource;
-
-        for (auto &it : elements) {
-            auto pelem = it.lock();
-            const UA_DataType* memberType = pelem->memberType;
-            char* memberData = container + pelem->offset;
-            UA_Variant memberValue;
-            size_t arrayLength = 0; // default to scalar
-            if (pelem->isArray) {
-                arrayLength = *reinterpret_cast<size_t*>(memberData);
-                memberData = *reinterpret_cast<char**>(memberData + sizeof(size_t));
-            } else if (pelem->isOptional) {
-                /* optional scalar stored through pointer like an array */
-                memberData = *reinterpret_cast<char**>(memberData);
-            }
-            if (type->typeKind == UA_DATATYPEKIND_UNION &&
-                    pelem->index != *reinterpret_cast<UA_UInt32*>(container)) {
-                // union option not taken
-                memberData = nullptr;
-            }
-            UA_Variant_setArray(&memberValue, memberData, arrayLength, memberType);
-            memberValue.storageType = UA_VARIANT_DATA_NODELETE; // Keep ownership of data
-            if (debug() && !memberData) {
-                std::cerr << pitem->recConnector->getRecordName()
-                          << " " << pelem
-                          << (type->typeKind == UA_DATATYPEKIND_UNION ? " not taken choice " : " absent optional ")
-                          << variantTypeString(memberType)
-                          << (pelem->isArray ? " array" : " scalar" )
-                          << std::endl;
-            }
-            pelem->setIncomingData(memberValue, memberData ? reason : ProcessReason::readFailure);
-        }
+    if (pconnector->state() == ConnectionStatus::initialRead && typeKindOf(value) == UA_DATATYPEKIND_ENUM) {
+        enumChoices = pitem->session->getEnumChoices(&value.type->typeId);
     }
-}
-
-void
-DataElementOpen62541::setIncomingEvent (ProcessReason reason)
-{
-    if (isLeaf()) {
+    if ((pconnector->state() == ConnectionStatus::initialRead
+         && (reason == ProcessReason::readComplete || reason == ProcessReason::readFailure))
+        || (pconnector->state() == ConnectionStatus::up)) {
         Guard(pconnector->lock);
-        if (reason == ProcessReason::connectionLoss && enumChoices)
-            enumChoices = nullptr;
         bool wasFirst = false;
-        // Put the event on the queue
-        UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
+        // Make a copy of the value for this element and put it on the queue
+        UA_Variant *valuecopy(new UA_Variant);
+        UA_Variant_copy(&value, valuecopy); // As a non-C++ object, UA_Variant has no copy constructor
+        UpdateOpen62541 *u(new UpdateOpen62541(
+            getIncomingTimeStamp(), reason, std::unique_ptr<UA_Variant>(valuecopy), getIncomingReadStatus()));
         incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
         if (debug() >= 5)
-            std::cout << "Element " << name << " set event ("
-                      << processReasonString(reason)
-                      << ") for record " << pconnector->getRecordName()
-                      << " (queue use " << incomingQueue.size()
-                      << "/" << incomingQueue.capacity() << ")"
-                      << std::endl;
+            std::cout << "Item " << pitem << " element " << name << " set data (" << processReasonString(reason)
+                      << ") for record " << pconnector->getRecordName() << " (queue use " << incomingQueue.size() << "/"
+                      << incomingQueue.capacity() << ")" << std::endl;
         if (wasFirst)
             pconnector->requestRecordProcessing(reason);
-    } else {
-        for (auto &it : elements) {
-            auto pelem = it.lock();
-            pelem->setIncomingEvent(reason);
-        }
     }
 }
 
 void
-DataElementOpen62541::setState(const ConnectionStatus state)
+DataElementOpen62541Leaf::setIncomingEvent (ProcessReason reason)
 {
-    if (isLeaf()) {
-        Guard(pconnector->lock);
-        pconnector->setState(state);
-    } else {
-        for (auto &it : elements) {
-            auto pelem = it.lock();
-            pelem->setState(state);
-        }
-    }
+    Guard(pconnector->lock);
+    if (reason == ProcessReason::connectionLoss && enumChoices)
+        enumChoices = nullptr;
+    bool wasFirst = false;
+    // Put the event on the queue
+    UpdateOpen62541 *u(new UpdateOpen62541(getIncomingTimeStamp(), reason));
+    incomingQueue.pushUpdate(std::shared_ptr<UpdateOpen62541>(u), &wasFirst);
+    if (debug() >= 5)
+        std::cout << "Element " << name << " set event (" << processReasonString(reason) << ") for record "
+                  << pconnector->getRecordName() << " (queue use " << incomingQueue.size() << "/"
+                  << incomingQueue.capacity() << ")" << std::endl;
+    if (wasFirst)
+        pconnector->requestRecordProcessing(reason);
 }
 
-// Helper to update one data structure element from pointer to child
-bool
-DataElementOpen62541::updateDataInStruct(void* container,
-                                         std::shared_ptr<DataElementOpen62541> pelem)
+void
+DataElementOpen62541Leaf::setState (const ConnectionStatus state)
 {
-    bool updated = false;
-    { // Scope of Guard G
-        Guard G(pelem->outgoingLock);
-        if (pelem->isDirty()) {
-            char* memberData = static_cast<char*>(container) + pelem->offset;
-            const UA_Variant& elementData = pelem->getOutgoingData();
-            const UA_DataType* memberType = pelem->memberType;
-            assert(memberType == elementData.type ||
-                (typeKindOf(memberType) == UA_DATATYPEKIND_ENUM &&
-                 typeKindOf(elementData.type) == UA_DATATYPEKIND_INT32));
-            if (!pelem->isArray && !pelem->isOptional) {
-                // mandatory scalar: shallow copy
-                UA_clear(memberData, memberType);
-                void* data = pelem->moveOutgoingData();
-                if (typeKindOf(outgoingData) == UA_DATATYPEKIND_UNION) {
-                    *reinterpret_cast<UA_UInt32*>(container) = pelem->index;
-                }
-                memcpy(memberData, data, memberType->memSize);
-                UA_free(data);
-            } else {
-                // array or optional scalar: move content
-                void **memberDataPtr;
-                if (pelem->isArray) /* mandatory or optional array stored as length and pointer */ {
-                    size_t& arrayLength = *reinterpret_cast<size_t*>(memberData);
-                    memberDataPtr = reinterpret_cast<void**>(memberData + sizeof(size_t));
-                    UA_Array_delete(*memberDataPtr, arrayLength, memberType);
-                    arrayLength = elementData.arrayLength;
-                } else /* optional scalar stored through pointer */ {
-                    memberDataPtr = reinterpret_cast<void**>(memberData);
-                    if (*memberDataPtr) /* absent optional has nullptr here */
-                        UA_Array_delete(*memberDataPtr, 1, memberType);
-                }
-                *memberDataPtr = pelem->moveOutgoingData();
-            }
-            pelem->isdirty = false;
-            updated = true;
-        }
-    }
-    if (debug() >= 4) {
-        if (updated) {
-            std::cout << "Data from child element " << pelem->name
-                      << " inserted into data structure" << std::endl;
-        } else {
-            std::cout << "Data from child element " << pelem->name
-                      << " ignored (not dirty)" << std::endl;
-        }
-    }
-    return updated;
+    Guard(pconnector->lock);
+    pconnector->setState(state);
 }
-
 
 const UA_Variant &
-DataElementOpen62541::getOutgoingData ()
+DataElementOpen62541Leaf::getOutgoingData ()
 {
-    if (!isLeaf()) {
-        if (debug() >= 4)
-            std::cout << "Item " << pitem
-                      << " element " << name
-                      << " updating structured data from "
-                      << elements.size() << " child elements"
-                      << std::endl;
-
-        UA_Variant_clear(&outgoingData);
-        UA_Variant_copy(&incomingData, &outgoingData);
-        isdirty = false;
-        const UA_DataType *type = outgoingData.type;
-        void* container = outgoingData.data;
-
-        if (typeKindOf(type) == UA_DATATYPEKIND_EXTENSIONOBJECT) {
-            UA_ExtensionObject &extensionObject = *reinterpret_cast<UA_ExtensionObject *>(container);
-            if (extensionObject.encoding >= UA_EXTENSIONOBJECT_DECODED) {
-                // Access content decoded extension objects
-                type = extensionObject.content.decoded.type;
-                container = extensionObject.content.decoded.data;
-            } else {
-                std::cerr << "Cannot get a structure definition for item " << pitem
-                          << " because binaryEncodingId " << extensionObject.content.encoded.typeId
-                          << " is not in the type dictionary." << std::endl;
-                return outgoingData;
-            }
-        }
-
-        if (!mapped)
-            createMap(type);
-
-        for (auto &it : elements) {
-            auto pelem = it.lock();
-            if (updateDataInStruct(container, pelem))
-               isdirty = true;
-        }
-        if (isdirty) {
-            if (debug() >= 4)
-                std::cout << "Encoding changed data structure to outgoingData of element " << name
-                          << std::endl;
-        } else {
-            if (debug() >= 4)
-                std::cout << "Returning unchanged outgoingData of element " << name
-                          << std::endl;
-        }
-    }
     return outgoingData;
 }
 
 void
-DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
-                                 const std::string &targetTypeName,
-                                 const size_t targetSize) const
+DataElementOpen62541Leaf::dbgReadScalar (const UpdateOpen62541 *upd,
+                                         const std::string &targetTypeName,
+                                         const size_t targetSize) const
 {
     if (isLeaf() && debug()) {
         char time_buf[40];
@@ -563,7 +191,7 @@ DataElementOpen62541::dbgReadScalar (const UpdateOpen62541 *upd,
 }
 
 long
-DataElementOpen62541::readScalar (epicsInt32 *value,
+DataElementOpen62541Leaf::readScalar (epicsInt32 *value,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
@@ -574,7 +202,7 @@ DataElementOpen62541::readScalar (epicsInt32 *value,
 }
 
 long
-DataElementOpen62541::readScalar (epicsInt64 *value,
+DataElementOpen62541Leaf::readScalar (epicsInt64 *value,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
@@ -585,7 +213,7 @@ DataElementOpen62541::readScalar (epicsInt64 *value,
 }
 
 long
-DataElementOpen62541::readScalar (epicsUInt32 *value,
+DataElementOpen62541Leaf::readScalar (epicsUInt32 *value,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
@@ -596,7 +224,7 @@ DataElementOpen62541::readScalar (epicsUInt32 *value,
 }
 
 long
-DataElementOpen62541::readScalar (epicsFloat64 *value,
+DataElementOpen62541Leaf::readScalar (epicsFloat64 *value,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *statusCode,
@@ -662,7 +290,7 @@ static int parseByteString(UA_ByteString& byteString, const char* encoded, int l
 
 // CString type needs specialization
 long
-DataElementOpen62541::readScalar (char *value, const epicsUInt32 len,
+DataElementOpen62541Leaf::readScalar (char *value, const epicsUInt32 len,
                               dbCommon *prec,
                               ProcessReason *nextReason,
                               epicsUInt32 *lenRead,
@@ -819,7 +447,7 @@ DataElementOpen62541::readScalar (char *value, const epicsUInt32 len,
 }
 
 void
-DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
+DataElementOpen62541Leaf::dbgReadArray (const UpdateOpen62541 *upd,
                                 const epicsUInt32 targetSize,
                                 const std::string &targetTypeName) const
 {
@@ -849,7 +477,7 @@ DataElementOpen62541::dbgReadArray (const UpdateOpen62541 *upd,
 
 // Read array for EPICS String / UA_String
 long int
-DataElementOpen62541::readArray (char *value, epicsUInt32 len,
+DataElementOpen62541Leaf::readArray (char *value, epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              const UA_DataType *expectedType,
@@ -970,7 +598,7 @@ DataElementOpen62541::readArray (char *value, epicsUInt32 len,
 // CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
 template<>
 long
-DataElementOpen62541::readArray<epicsUInt8> (epicsUInt8 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray<epicsUInt8> (epicsUInt8 *value, const epicsUInt32 num,
                                              epicsUInt32 *numRead,
                                              const UA_DataType *expectedType,
                                              dbCommon *prec,
@@ -1060,7 +688,7 @@ DataElementOpen62541::readArray<epicsUInt8> (epicsUInt8 *value, const epicsUInt3
 }
 
 long
-DataElementOpen62541::readArray (epicsInt8 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsInt8 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1072,7 +700,7 @@ DataElementOpen62541::readArray (epicsInt8 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsUInt8 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsUInt8 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1084,7 +712,7 @@ DataElementOpen62541::readArray (epicsUInt8 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsInt16 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsInt16 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1096,7 +724,7 @@ DataElementOpen62541::readArray (epicsInt16 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsUInt16 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsUInt16 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1108,7 +736,7 @@ DataElementOpen62541::readArray (epicsUInt16 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsInt32 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsInt32 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1120,7 +748,7 @@ DataElementOpen62541::readArray (epicsInt32 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsUInt32 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsUInt32 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1132,7 +760,7 @@ DataElementOpen62541::readArray (epicsUInt32 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsInt64 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsInt64 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1144,7 +772,7 @@ DataElementOpen62541::readArray (epicsInt64 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsUInt64 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsUInt64 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1156,7 +784,7 @@ DataElementOpen62541::readArray (epicsUInt64 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsFloat32 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsFloat32 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1168,7 +796,7 @@ DataElementOpen62541::readArray (epicsFloat32 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (epicsFloat64 *value, const epicsUInt32 num,
+DataElementOpen62541Leaf::readArray (epicsFloat64 *value, const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
                              ProcessReason *nextReason,
@@ -1180,7 +808,7 @@ DataElementOpen62541::readArray (epicsFloat64 *value, const epicsUInt32 num,
 }
 
 long
-DataElementOpen62541::readArray (char *value, epicsUInt32 len,
+DataElementOpen62541Leaf::readArray (char *value, epicsUInt32 len,
                              const epicsUInt32 num,
                              epicsUInt32 *numRead,
                              dbCommon *prec,
@@ -1194,7 +822,7 @@ DataElementOpen62541::readArray (char *value, epicsUInt32 len,
 
 inline
 void
-DataElementOpen62541::dbgWriteScalar () const
+DataElementOpen62541Leaf::dbgWriteScalar () const
 {
     if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName()
@@ -1204,31 +832,31 @@ DataElementOpen62541::dbgWriteScalar () const
 }
 
 long
-DataElementOpen62541::writeScalar (const epicsInt32 &value, dbCommon *prec)
+DataElementOpen62541Leaf::writeScalar (const epicsInt32 &value, dbCommon *prec)
 {
     return writeScalar<epicsInt32>(value, prec);
 }
 
 long
-DataElementOpen62541::writeScalar (const epicsUInt32 &value, dbCommon *prec)
+DataElementOpen62541Leaf::writeScalar (const epicsUInt32 &value, dbCommon *prec)
 {
     return writeScalar<epicsUInt32>(value, prec);
 }
 
 long
-DataElementOpen62541::writeScalar (const epicsInt64 &value, dbCommon *prec)
+DataElementOpen62541Leaf::writeScalar (const epicsInt64 &value, dbCommon *prec)
 {
     return writeScalar<epicsInt64>(value, prec);
 }
 
 long
-DataElementOpen62541::writeScalar (const epicsFloat64 &value, dbCommon *prec)
+DataElementOpen62541Leaf::writeScalar (const epicsFloat64 &value, dbCommon *prec)
 {
     return writeScalar<epicsFloat64>(value, prec);
 }
 
 long
-DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon *prec)
+DataElementOpen62541Leaf::writeScalar (const char *value, epicsUInt32 len, dbCommon *prec)
 {
     long ret = 1;
     UA_StatusCode status = UA_STATUSCODE_BADUNEXPECTEDERROR;
@@ -1377,7 +1005,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
             if (enumChoices) {
                 // first test enum strings then numeric values
                 // in case a string starts with a number but means a different value
-                for (auto it: *enumChoices)
+                for (const auto &it: *enumChoices)
                     if (it.second == value) {
                         l = static_cast<long>(it.first);
                         ret = 0;
@@ -1385,7 +1013,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
                         break;
                     }
                 if (ret != 0 && end != value)
-                    for (auto it: *enumChoices)
+                    for (const auto &it: *enumChoices)
                         if (l == it.first) {
                             ret = 0;
                             break;
@@ -1476,7 +1104,7 @@ DataElementOpen62541::writeScalar (const char *value, epicsUInt32 len, dbCommon 
 
 inline
 void
-DataElementOpen62541::dbgWriteArray (const epicsUInt32 targetSize, const std::string &targetTypeName) const
+DataElementOpen62541Leaf::dbgWriteArray (const epicsUInt32 targetSize, const std::string &targetTypeName) const
 {
     if (isLeaf() && debug()) {
         std::cout << pconnector->getRecordName() << ": writing array of "
@@ -1498,7 +1126,7 @@ UA_String UA_StringNCopy(const char *src, size_t maxlength)
 
 // Write array for EPICS String / UA_String
 long
-DataElementOpen62541::writeArray (const char *value, epicsUInt32 len,
+DataElementOpen62541Leaf::writeArray (const char *value, epicsUInt32 len,
                               const epicsUInt32 num,
                               const UA_DataType *targetType,
                               dbCommon *prec)
@@ -1592,7 +1220,7 @@ DataElementOpen62541::writeArray (const char *value, epicsUInt32 len,
 // CAVEAT: changes in the template (in DataElementOpen62541.h) must be reflected here
 template<>
 long
-DataElementOpen62541::writeArray<epicsUInt8>(const epicsUInt8 *value,
+DataElementOpen62541Leaf::writeArray<epicsUInt8>(const epicsUInt8 *value,
                                              const epicsUInt32 num,
                                              const UA_DataType *targetType,
                                              dbCommon *prec)
@@ -1642,82 +1270,75 @@ DataElementOpen62541::writeArray<epicsUInt8>(const epicsUInt8 *value,
 }
 
 long
-DataElementOpen62541::writeArray (const epicsInt8 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsInt8 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsInt8>(value, num, &UA_TYPES[UA_TYPES_SBYTE], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsUInt8 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsUInt8 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsUInt8>(value, num, &UA_TYPES[UA_TYPES_BYTE], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsInt16 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsInt16 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsInt16>(value, num, &UA_TYPES[UA_TYPES_INT16], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsUInt16 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsUInt16 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsUInt16>(value, num, &UA_TYPES[UA_TYPES_UINT16], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsInt32 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsInt32 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsInt32>(value, num, &UA_TYPES[UA_TYPES_INT32], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsUInt32 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsUInt32 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsUInt32>(value, num, &UA_TYPES[UA_TYPES_UINT32], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsInt64 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsInt64 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsInt64>(value, num, &UA_TYPES[UA_TYPES_INT64], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsUInt64 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsUInt64 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsUInt64>(value, num, &UA_TYPES[UA_TYPES_UINT64], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsFloat32 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsFloat32 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsFloat32>(value, num, &UA_TYPES[UA_TYPES_FLOAT], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const epicsFloat64 *value, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const epicsFloat64 *value, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray<epicsFloat64>(value, num, &UA_TYPES[UA_TYPES_DOUBLE], prec);
 }
 
 long
-DataElementOpen62541::writeArray (const char *value, epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
+DataElementOpen62541Leaf::writeArray (const char *value, epicsUInt32 len, const epicsUInt32 num, dbCommon *prec)
 {
     return writeArray(value, len, num, &UA_TYPES[UA_TYPES_STRING], prec);
 }
 
 void
-DataElementOpen62541::requestRecordProcessing (const ProcessReason reason) const
+DataElementOpen62541Leaf::requestRecordProcessing (const ProcessReason reason) const
 {
-    if (isLeaf()) {
-        pconnector->requestRecordProcessing(reason);
-    } else {
-        for (auto &it : elementMap) {
-            auto pelem = it.second.lock();
-            pelem->requestRecordProcessing(reason);
-        }
-    }
+    pconnector->requestRecordProcessing(reason);
 }
 
 } // namespace DevOpcua

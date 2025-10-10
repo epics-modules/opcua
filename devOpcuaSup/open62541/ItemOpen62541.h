@@ -19,7 +19,9 @@
 
 namespace DevOpcua {
 
+class SubscriptionOpen62541;
 class DataElementOpen62541;
+class DataElementOpen62541Node;
 
 /**
  * @brief The ItemOpen62541 inplementation of an OPC UA item.
@@ -29,6 +31,8 @@ class DataElementOpen62541;
 class ItemOpen62541 : public Item
 {
     friend class DataElementOpen62541;
+    friend class DataElementOpen62541Node;
+    friend class DataElementOpen62541Leaf;
 
 public:
     /**
@@ -206,7 +210,7 @@ private:
     bool registered;                       /**< flag for registration status */
     UA_Double revisedSamplingInterval;     /**< server-revised sampling interval */
     UA_UInt32 revisedQueueSize;            /**< server-revised queue size */
-    ElementTree<DataElementOpen62541, ItemOpen62541> dataTree; /**< data element tree */
+    ElementTree<DataElementOpen62541Node, DataElementOpen62541, ItemOpen62541> dataTree; /**< data element tree */
     epicsMutex dataTreeWriteLock;          /**< lock for dirty flag */
     bool dataTreeDirty;                    /**< true if any element has been modified */
     UA_StatusCode lastStatus;              /**< status code of most recent service */
