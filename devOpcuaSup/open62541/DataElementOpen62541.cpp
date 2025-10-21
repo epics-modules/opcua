@@ -863,7 +863,8 @@ DataElementOpen62541::readArray (char *value, epicsUInt32 len,
     epicsUInt32 elemsWritten = 0;
 
     // clear *old* array content
-    memset(value, 0, *numRead * len);
+    if (value)
+        memset(value, 0, *numRead * len);
 
     if (incomingQueue.empty()) {
         errlogPrintf("%s : incoming data queue empty\n", prec->name);
