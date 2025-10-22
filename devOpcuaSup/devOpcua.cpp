@@ -807,9 +807,9 @@ opcua_write_enum (REC *prec)
         } else {
             epicsUInt32 *rval = useReadValue(pcon) ? &prec->rval : nullptr;
             ret = pcon->readScalar(rval, &nextReason);
+            updateEnumInfos (prec, pcon);
             if (ret == 0 && rval) {
                 recGblResetAlarms(prec); // get mbbo out of SOFT alarm after val was out of range
-                updateEnumInfos (prec, pcon);
                 *rval &= prec->mask;
                 if (prec->shft)
                     *rval >>= prec->shft;
