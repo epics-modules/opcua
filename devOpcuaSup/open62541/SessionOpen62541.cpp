@@ -2510,6 +2510,11 @@ SessionOpen62541::connectionStatusChanged (
                 // status needs to be updated before requests are being issued
                 sessionState = newSessionState;
                 reader.pushRequest(cargo, menuPriorityHIGH);
+                // Wait for initial read to finish
+                while (!reader.empty(menuPriorityHIGH)) {
+                    epicsThreadSleep(.1);
+                }
+                epicsThreadSleep(.1);
                 addAllMonitoredItems();
                 break;
             }

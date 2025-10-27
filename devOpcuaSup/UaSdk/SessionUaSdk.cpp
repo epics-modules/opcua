@@ -1195,7 +1195,11 @@ void SessionUaSdk::connectionStatusChanged (
             // status needs to be updated before requests are being issued
             serverConnectionStatus = serverStatus;
             reader.pushRequest(cargo, menuPriorityHIGH);
-            epicsThreadSleep(0.01); // Don't know how to wait for initial read to complete
+            // Wait for initial read to finish
+            while (!reader.empty(menuPriorityHIGH)) {
+                epicsThreadSleep(.1);
+            }
+            epicsThreadSleep(.1);
             addAllMonitoredItems();
         }
         break;
