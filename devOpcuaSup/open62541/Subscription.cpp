@@ -16,7 +16,6 @@
 #include <epicsEvent.h>
 
 #define epicsExportSharedSymbols
-#include "Session.h"
 #include "Subscription.h"
 #include "SessionOpen62541.h"
 #include "SubscriptionOpen62541.h"

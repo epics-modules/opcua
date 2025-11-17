@@ -12,6 +12,7 @@
 
 #define epicsExportSharedSymbols
 #include "SubscriptionOpen62541.h"
+#include "SessionOpen62541.h"
 #include "ItemOpen62541.h"
 #include "RecordConnector.h"
 #include "Registry.h"

@@ -16,9 +16,7 @@
 #include <epicsEvent.h>
 
 #define epicsExportSharedSymbols
-#include "Session.h"
 #include "Subscription.h"
-#include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
 
 namespace DevOpcua {

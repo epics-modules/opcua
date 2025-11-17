@@ -13,7 +13,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <fstream>
 #include <string>
 #include <map>
 #include <algorithm>
@@ -52,7 +51,6 @@
 #include "RequestQueueBatcher.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
-#include "DataElementUaSdkNode.h"
 #include "ItemUaSdk.h"
 
 namespace DevOpcua {

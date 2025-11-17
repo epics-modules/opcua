@@ -32,7 +32,6 @@
 #define epicsExportSharedSymbols
 #include "SubscriptionUaSdk.h"
 #include "RecordConnector.h"
-#include "ItemUaSdk.h"
 #include "DataElementUaSdk.h"
 #include "Registry.h"
 #include "devOpcua.h"

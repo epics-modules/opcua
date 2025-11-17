@@ -15,7 +15,6 @@
 #include "SessionOpen62541.h"
 #include "SubscriptionOpen62541.h"
 #include "DataElementOpen62541.h"
-#include "ItemOpen62541.h"
 #include "linkParser.h"
 
 #ifdef HAS_XMLPARSER
@@ -47,8 +46,6 @@
 #include <map>
 #include <algorithm>
 #include <utility>
-#include <limits>
-#include <functional>
 #include <cstdio>
 
 /* loadFile helper from open62541 examples */
