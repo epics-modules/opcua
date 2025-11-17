@@ -3,8 +3,12 @@
 ## Status
 
 :warning:
-This module is stable, with some expected development to be happening.
-Please contact the author [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
+This module is stable,
+with some expected development still to be happening.
+
+Please contact the authors
+[Dirk Zimoch](mailto:dirk.zimoch@psi.ch) and
+[Ralph Lange](mailto:ralph.lange@gmx.de) for details.
 :warning:
 
 ## Prerequisites

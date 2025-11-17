@@ -3,14 +3,14 @@
 ## Status
 
 :warning:
-This module is under development and still experimental.
+This module is relatively new (2014),
+but gaining popularity
+and getting more and more hours of production use.
 
-**Structured OPC UA data types are not supported at this time.**
-
-:warning:
 Please contact the authors
 [Dirk Zimoch](mailto:dirk.zimoch@psi.ch) and
 [Ralph Lange](mailto:ralph.lange@gmx.de) for details.
+:warning:
 
 ## Prerequisites
 
