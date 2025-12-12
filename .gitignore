@@ -22,6 +22,7 @@ envPaths
 /*Top/configure/*.local
 
 O.*/
+.iocsh_history
 /QtC-*
 /.qtc_*
 .idea/
