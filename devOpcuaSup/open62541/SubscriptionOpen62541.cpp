@@ -12,8 +12,8 @@
 
 #define epicsExportSharedSymbols
 #include "SubscriptionOpen62541.h"
-#include "DataElementOpen62541.h"
 #include "ItemOpen62541.h"
+#include "RecordConnector.h"
 #include "Registry.h"
 #include "devOpcua.h"
 

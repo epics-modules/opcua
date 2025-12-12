@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
-#include <limits>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,7 +52,7 @@
 #include "RequestQueueBatcher.h"
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
-#include "DataElementUaSdk.h"
+#include "DataElementUaSdkNode.h"
 #include "ItemUaSdk.h"
 
 namespace DevOpcua {

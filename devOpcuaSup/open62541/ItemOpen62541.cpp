@@ -12,6 +12,7 @@
 
 #define epicsExportSharedSymbols
 #include "ItemOpen62541.h"
+#include "RecordConnector.h"
 #include "SubscriptionOpen62541.h"
 #include "SessionOpen62541.h"
 #include "DataElementOpen62541.h"
@@ -41,7 +42,6 @@ ItemOpen62541::ItemOpen62541(const linkInfo &info)
     , registered(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
-    , dataTree(this)
     , dataTreeDirty(false)
     , lastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED)
     , lastReason(ProcessReason::connectionLoss)

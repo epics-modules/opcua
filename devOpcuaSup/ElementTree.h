@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2020-2021 ITER Organization.
+* Copyright (c) 2020-2025 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -41,35 +41,28 @@ namespace DevOpcua {
  * The template types used (all specific to the implementation) and their
  * constraints:
  *
- * E is the Element class
- *    with a constructor   E::E(const std::string &name, I *item)
- *    and methods          void E::setParent(std::shared_ptr<E> parent);
- *                         void E::addChild(std::weak_ptr<E> child);
- *                         std::shared_ptr<E> findChild(const std::string &name)
- *                         bool E::isLeaf();
- *    and a public         const std::string E::name;
+ * NE is the Node Element class
+ *    with a constructor   NE::NE(const std::string &name, I *item)
+ *    and methods          void NE::setParent(std::shared_ptr<NE> parent);
+ *                         void NE::addChild(std::weak_ptr<NE> child);
+ *                         std::shared_ptr<NE> findChild(const std::string &name)
  *
- * I is the Item class.
+ * E is the common base class of Node Element (NE) and Leaf Element
+ *    with the method      void E::setParent(std::shared_ptr<E> parent);
+ *
+ * I is the Item class
  */
 
-template<typename E, typename I>
+template<typename NE, typename E, typename I>
 class ElementTree
 {
 public:
-    ElementTree(I *i)
-        : item(i)
-    {}
-
     /**
      * @brief Return root element
      *
      * @return  weak_ptr to root element
      */
-    std::weak_ptr<E>
-    root() const
-    {
-        return rootElement;
-    }
+    std::weak_ptr<E> root() const { return rootElement; }
 
     /* Allow testing as 'if (tree) ...' */
     explicit operator bool() const { return !rootElement.expired(); }
@@ -82,8 +75,7 @@ public:
      *
      * @return shared_ptr to the nearest existing node in the tree, shared_ptr<>() if no overlap
      */
-    std::shared_ptr<E>
-    nearestNode(std::list<std::string> &path)
+    std::shared_ptr<E> nearestNode(std::list<std::string> &path)
     {
         bool found;
 
@@ -97,7 +89,7 @@ public:
         do {
             auto part = path.begin();
             found = false;
-            if (elem) {
+            if (elem && !elem->isLeaf()) {
                 auto nextelem = elem->findChild(*part);
                 if (nextelem) {
                     found = true;
@@ -107,10 +99,7 @@ public:
             }
         } while (found && !path.empty());
 
-        if (elem)
-            return elem;
-        else
-            return std::shared_ptr<E>();
+        return elem;
     }
 
     /**
@@ -120,17 +109,17 @@ public:
      * @param path  full path of the leaf
      *
      * @throws runtime_error when trying to add elements to a leaf node
+     *                       when adding with empty path but [ROOT] exists
      */
-    void
-    addLeaf(std::shared_ptr<E> leaf, const std::list<std::string> &fullpath)
+    void addLeaf (std::shared_ptr<E> leaf, const std::list<std::string> &fullpath, I *item)
     {
         std::shared_ptr<E> elem(leaf);
         std::list<std::string> path(fullpath);
 
         auto branch = nearestNode(path);
+
         if (branch && branch->isLeaf())
-            throw std::runtime_error(SB()
-                                     << "can't add leaf to existing leaf " << branch->name);
+            throw std::runtime_error(SB() << "can't add leaf to existing leaf " << branch->name);
         if (path.empty()) {
             if (rootElement.lock())
                 throw std::runtime_error(SB() << "root node does already exist");
@@ -138,7 +127,7 @@ public:
         } else {
             path.pop_back(); // remove the leaf name
             for (auto rit = path.crbegin(); rit != path.crend(); ++rit) {
-                auto node = std::make_shared<E>(*rit, item);
+                auto node = std::make_shared<NE>(*rit, item);
                 node->addChild(elem);
                 elem->setParent(node);
                 elem = std::move(node);
@@ -147,7 +136,7 @@ public:
                 branch->addChild(elem);
                 elem->setParent(branch);
             } else {
-                auto node = std::make_shared<E>("[ROOT]", item);
+                auto node = std::make_shared<NE>("[ROOT]", item);
                 node->addChild(elem);
                 elem->setParent(node);
                 rootElement = std::move(node);
@@ -155,9 +144,11 @@ public:
         }
     }
 
+public:
+    void setRoot(std::shared_ptr<E> root) { rootElement = root; }
+
 private:
     std::weak_ptr<E> rootElement;
-    I *item;
 };
 
 } // namespace DevOpcua

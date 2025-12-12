@@ -14,9 +14,6 @@
 #define DEVOPCUA_DATAELEMENT_H
 
 #include <map>
-#include <vector>
-#include <memory>
-#include <cstring>
 
 #include <epicsTypes.h>
 #include <epicsTime.h>
@@ -62,13 +59,6 @@ public:
     static void addElementToTree(Item *item,
                                  RecordConnector *pconnector,
                                  const std::list<std::string> &elementPath);
-
-    /**
-     * @brief Get the type of element (inside a structure).
-     *
-     * @return true if element is a leaf (has no child elements)
-     */
-    bool isLeaf() const { return isleaf; }
 
     /**
      * @brief Setter to create a (bidirectional) link to a RecordConnector.
@@ -799,35 +789,10 @@ public:
      */
     virtual void requestRecordProcessing(const ProcessReason reason) const = 0;
 
-    const std::string name;                     /**< element name */
     const EnumChoices* enumChoices = nullptr;   /**< enum definition if this element is an enum */
 
 protected:
-    /**
-     * @brief Constructor for node DataElement, to be used by implementations.
-     *
-     * @param name  structure element name (empty otherwise)
-     */
-    DataElement(const std::string &name = "")
-        : name(name)
-        , pconnector(nullptr)
-        , isleaf(false)
-    {}
-
-    /**
-     * @brief Constructor for leaf DataElement, to be used by implementations.
-     *
-     * @param name  structure element name (empty otherwise)
-     * @param connector
-     */
-    DataElement(RecordConnector *pconnector, const std::string &name = "")
-        : name(name)
-        , pconnector(pconnector)
-        , isleaf(true)
-    {}
-
-    RecordConnector *pconnector;                /**< pointer to connector (if leaf) */
-    const bool isleaf;                          /**< flag for leaf property */
+    RecordConnector *pconnector = nullptr;
 };
 
 } // namespace DevOpcua
