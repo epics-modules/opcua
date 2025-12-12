@@ -16,11 +16,6 @@
 #include "Update.h"
 #include "ItemOpen62541.h"
 
-#include <errlog.h>
-#include <recGbl.h>
-#include <alarm.h>
-#include <epicsTypes.h>
-
 #include <open62541/client.h>
 #ifndef UA_STATUSCODE_BAD  // Not yet defined in open62541 version 1.2
 #define UA_STATUSCODE_BAD 0x80000000

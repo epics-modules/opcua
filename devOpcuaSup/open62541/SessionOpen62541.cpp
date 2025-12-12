@@ -45,6 +45,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include <functional>
 #include <utility>
 #include <cstdio>
 

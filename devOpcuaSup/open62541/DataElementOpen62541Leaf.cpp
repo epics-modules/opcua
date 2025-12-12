@@ -12,6 +12,7 @@
 
 #define epicsExportSharedSymbols
 #include "DataElementOpen62541Leaf.h"
+#include "DataElementOpen62541Node.h"
 #include "ItemOpen62541.h"
 #include "RecordConnector.h"
 

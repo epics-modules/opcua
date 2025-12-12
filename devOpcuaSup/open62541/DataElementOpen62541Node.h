@@ -15,22 +15,6 @@
 
 #include "DataElementOpen62541.h"
 
-#include <errlog.h>
-#include <recGbl.h>
-#include <alarm.h>
-#include <epicsTypes.h>
-
-#include <open62541/client.h>
-#ifndef UA_STATUSCODE_BAD  // Not yet defined in open62541 version 1.2
-#define UA_STATUSCODE_BAD 0x80000000
-#endif
-#define UA_STATUS_IS_BAD(status) (((status)&UA_STATUSCODE_BAD)!=0)
-
-#ifndef UA_STATUSCODE_UNCERTAIN
-#define UA_STATUSCODE_UNCERTAIN 0x40000000
-#endif
-#define UA_STATUS_IS_UNCERTAIN(status) (((status)&UA_STATUSCODE_UNCERTAIN)!=0)
-
 namespace DevOpcua {
 
 class DataElementOpen62541Node : public DataElementOpen62541

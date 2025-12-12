@@ -17,6 +17,8 @@
 #include "ElementTree.h"
 #include "SessionOpen62541.h"
 
+#include <open62541/client.h>
+
 namespace DevOpcua {
 
 class SubscriptionOpen62541;
