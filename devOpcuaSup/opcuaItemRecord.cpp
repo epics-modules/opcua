@@ -203,6 +203,7 @@ rset opcuaItemRSET = {
     get_control_double,
     get_alarm_double
 };
-extern "C" { epicsExportAddress(rset, opcuaItemRSET); }
 
 } // namespace
+
+extern "C" { epicsExportAddress(rset, opcuaItemRSET); }
