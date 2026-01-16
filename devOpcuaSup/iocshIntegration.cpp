@@ -1106,8 +1106,6 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaShowDataFuncDef, opcuaShowDataCallFunc);
 }
 
-extern "C" {
-epicsExportRegistrar(opcuaIocshRegister);
-}
-
 } // namespace
+
+extern "C" { epicsExportRegistrar(opcuaIocshRegister); }
