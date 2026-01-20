@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2025 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -27,8 +27,8 @@ namespace DevOpcua {
 class DataElementUaSdkNode : public DataElementUaSdk
 {
 public:
-    DataElementUaSdkNode(const std::string &name, class ItemUaSdk *item);
-    virtual ~DataElementUaSdkNode () override {}
+    DataElementUaSdkNode(const std::string &name, class ItemUaSdk *pitem);
+    virtual ~DataElementUaSdkNode () override;
 
     /* ElementTree node interface methods */
     virtual bool isLeaf() const override { return false; }

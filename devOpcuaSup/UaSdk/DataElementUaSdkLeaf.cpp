@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2025 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -39,11 +39,19 @@ namespace DevOpcua
 {
 
 DataElementUaSdkLeaf::DataElementUaSdkLeaf (const std::string &name,
-                                            class ItemUaSdk *pitem,
+                                            class ItemUaSdk *item,
                                             class RecordConnector *pconnector)
-    : DataElementUaSdk(name, pitem)
+    : DataElementUaSdk(name, item)
     , incomingQueue(pconnector->plinkinfo->clientQueueSize, pconnector->plinkinfo->discardOldest)
-{}
+{
+    item->dataTreeNoOfLeafs++;
+}
+
+DataElementUaSdkLeaf::~DataElementUaSdkLeaf()
+{
+    delete enumChoices;
+    pitem->dataTreeNoOfLeafs--;
+}
 
 /* Explicitly implement the destructor here (allows the compiler to place the vtable) */
 DataElementUaSdk::~DataElementUaSdk() = default;

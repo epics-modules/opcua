@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2025 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -241,8 +241,8 @@ public:
      * @param pitem       pointer to corresponding ItemUaSdk
      * @param pconnector  pointer to record connector to link to
      */
-    DataElementUaSdkLeaf(const std::string &name, ItemUaSdk *pitem, RecordConnector *pconnector);
-    virtual ~DataElementUaSdkLeaf () override { delete enumChoices; }
+    DataElementUaSdkLeaf(const std::string &name, ItemUaSdk *item, RecordConnector *pconnector);
+    virtual ~DataElementUaSdkLeaf () override;
 
     /* ElementTree node interface methods */
     virtual bool isLeaf () const override { return true; }

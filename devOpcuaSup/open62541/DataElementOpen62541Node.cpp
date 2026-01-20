@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2023 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -125,9 +125,13 @@ DataElementOpen62541Node::DataElementOpen62541Node (const std::string &name, Ite
 {
     UA_Variant_init(&incomingData);
     UA_Variant_init(&outgoingData);
+    item->dataTreeNoOfNodes++;
 }
 
-DataElementOpen62541Node::~DataElementOpen62541Node() = default;
+DataElementOpen62541Node::~DataElementOpen62541Node()
+{
+    pitem->dataTreeNoOfNodes--;
+}
 
 void
 DataElementOpen62541Node::createMap (const UA_DataType *type, const std::string *timefrom)

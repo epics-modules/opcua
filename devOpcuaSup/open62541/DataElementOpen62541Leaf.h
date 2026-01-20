@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2023 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -207,7 +207,7 @@ public:
      * @param pconnector  pointer to record connector to link to
      */
     DataElementOpen62541Leaf(const std::string &name, ItemOpen62541 *pitem, RecordConnector *pconnector);
-    virtual ~DataElementOpen62541Leaf() override { delete enumChoices; }
+    virtual ~DataElementOpen62541Leaf() override;
 
     /* ElementTree node interface methods */
     virtual bool isLeaf () const override { return true; }

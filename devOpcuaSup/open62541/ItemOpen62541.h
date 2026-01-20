@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2023 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -215,6 +215,8 @@ private:
     ElementTree<DataElementOpen62541Node, DataElementOpen62541, ItemOpen62541> dataTree; /**< data element tree */
     epicsMutex dataTreeWriteLock;          /**< lock for dirty flag */
     bool dataTreeDirty;                    /**< true if any element has been modified */
+    unsigned int dataTreeNoOfNodes;        /**< number of nodes */
+    unsigned int dataTreeNoOfLeafs;        /**< number of leafs */
     UA_StatusCode lastStatus;              /**< status code of most recent service */
     ProcessReason lastReason;              /**< most recent processing reason */
     epicsTime tsClient;                    /**< client (local) time stamp */

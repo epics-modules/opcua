@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2021 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -47,6 +47,8 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
     , dataTreeDirty(false)
+    , dataTreeNoOfNodes(0)
+    , dataTreeNoOfLeafs(0)
     , lastStatus(OpcUa_BadServerNotConnected)
     , lastReason(ProcessReason::connectionLoss)
 {
@@ -112,7 +114,10 @@ ItemUaSdk::show (int level) const
     std::cout << " bini=" << linkOptionBiniString(linkinfo.bini) << " output=" << (linkinfo.isOutput ? "y" : "n")
               << " monitor=" << (linkinfo.monitor ? "y" : "n")
               << " registered=" << (registered ? nodeid->toString().toUtf8() : "-") << "("
-              << (linkinfo.registerNode ? "y" : "n") << ")" << std::endl;
+              << (linkinfo.registerNode ? "y" : "n") << ")";
+    if (!(dataTreeNoOfNodes == 0 && dataTreeNoOfLeafs == 1))
+        std::cout << " dataNodes=" << dataTreeNoOfNodes << " dataLeafs=" << dataTreeNoOfLeafs;
+    std::cout << std::endl;
 
     if (level >= 1) {
         if (auto re = dataTree.root().lock()) {

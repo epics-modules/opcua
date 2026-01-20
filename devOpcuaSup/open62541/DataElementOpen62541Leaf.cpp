@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2023 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -36,6 +36,13 @@ DataElementOpen62541Leaf::DataElementOpen62541Leaf (const std::string &name,
 {
     UA_Variant_init(&incomingData);
     UA_Variant_init(&outgoingData);
+    item->dataTreeNoOfLeafs++;
+}
+
+DataElementOpen62541Leaf::~DataElementOpen62541Leaf()
+{
+    delete enumChoices;
+    pitem->dataTreeNoOfLeafs--;
 }
 
 /* Explicitly implement the destructor here (allows the compiler to place the vtable) */

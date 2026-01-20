@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2023 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -43,6 +43,8 @@ ItemOpen62541::ItemOpen62541(const linkInfo &info)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
     , dataTreeDirty(false)
+    , dataTreeNoOfNodes(0)
+    , dataTreeNoOfLeafs(0)
     , lastStatus(UA_STATUSCODE_BADSERVERNOTCONNECTED)
     , lastReason(ProcessReason::connectionLoss)
 {
@@ -117,9 +119,12 @@ ItemOpen62541::show (int level) const
               << " registered=";
     if (registered)
         std::cout << nodeId;
-        else std::cout << "-";
-    std::cout << "(" << (linkinfo.registerNode ? "y" : "n") << ")"
-              << std::endl;
+    else
+        std::cout << "-";
+    std::cout << "(" << (linkinfo.registerNode ? "y" : "n") << ")";
+    if (!(dataTreeNoOfNodes == 0 && dataTreeNoOfLeafs == 1))
+        std::cout << " dataNodes=" << dataTreeNoOfNodes << " dataLeafs=" << dataTreeNoOfLeafs;
+    std::cout << std::endl;
 
     if (level >= 1) {
         if (auto re = dataTree.root().lock()) {

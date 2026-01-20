@@ -1,5 +1,5 @@
 /*************************************************************************\
-* Copyright (c) 2018-2025 ITER Organization.
+* Copyright (c) 2018-2026 ITER Organization.
 * This module is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
@@ -34,11 +34,18 @@
 
 namespace DevOpcua {
 
-DataElementUaSdkNode::DataElementUaSdkNode (const std::string &name, class ItemUaSdk *item)
-    : DataElementUaSdk(name, item)
+DataElementUaSdkNode::DataElementUaSdkNode (const std::string &name, class ItemUaSdk *pitem)
+    : DataElementUaSdk(name, pitem)
     , timesrc(-1)
     , mapped(false)
-{}
+{
+    pitem->dataTreeNoOfNodes++;
+}
+
+DataElementUaSdkNode::~DataElementUaSdkNode()
+{
+    pitem->dataTreeNoOfNodes--;
+}
 
 void
 DataElementUaSdkNode::addChild (std::weak_ptr<DataElementUaSdk> elem)
