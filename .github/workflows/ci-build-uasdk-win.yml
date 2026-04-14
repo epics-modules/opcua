@@ -59,7 +59,7 @@ jobs:
             name: "7.0 Win2022 v1.6.3 VS2022 DLL"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
     - name: Download and install UASDK client

@@ -89,7 +89,7 @@ jobs:
             name: "7.0 Ub-22 v1.2.10"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
     - name: Download and compile open62541 client

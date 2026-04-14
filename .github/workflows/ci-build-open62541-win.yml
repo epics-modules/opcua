@@ -60,7 +60,7 @@ jobs:
             name: "7.0 Win2022 v1.3.15 VS2022 DLL"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
     # Install gendef.exe
@@ -134,7 +134,7 @@ jobs:
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-python
         pacboy: openssl:p
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
     - name: Download and compile open62541 client
