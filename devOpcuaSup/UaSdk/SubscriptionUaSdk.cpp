@@ -30,10 +30,10 @@
 #include <epicsEvent.h>
 
 #define epicsExportSharedSymbols
-#include "SubscriptionUaSdk.h"
-#include "RecordConnector.h"
 #include "DataElementUaSdk.h"
-#include "Registry.h"
+#include "OpcuaRegistry.h"
+#include "RecordConnector.h"
+#include "SubscriptionUaSdk.h"
 #include "devOpcua.h"
 
 namespace DevOpcua {

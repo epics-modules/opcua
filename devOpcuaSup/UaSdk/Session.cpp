@@ -25,9 +25,9 @@
 #include <errlog.h>
 
 #define epicsExportSharedSymbols
+#include "OpcuaRegistry.h"
 #include "Session.h"
 #include "SessionUaSdk.h"
-#include "Registry.h"
 
 #define st(s) #s
 #define str(s) st(s)

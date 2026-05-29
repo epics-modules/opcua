@@ -8,8 +8,8 @@
  *  Author: Ralph Lange <ralph.lange@gmx.de>
  */
 
-#ifndef DEVOPCUA_REGISTRY_H
-#define DEVOPCUA_REGISTRY_H
+#ifndef DEVOPCUA_OPCUAREGISTRY_H
+#define DEVOPCUA_OPCUAREGISTRY_H
 
 #include <set>
 #include <map>
@@ -158,4 +158,4 @@ private:
 
 } // namespace DevOpcua
 
-#endif // DEVOPCUA_REGISTRY_H
+#endif // DEVOPCUA_OPCUAREGISTRY_H

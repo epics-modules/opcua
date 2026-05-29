@@ -14,7 +14,7 @@
 #include <epicsMutex.h>
 #include <epicsGuard.h>
 
-#include "Registry.h"
+#include "OpcuaRegistry.h"
 
 namespace {
 

@@ -30,10 +30,10 @@
 #include <epicsTypes.h>
 #include <initHooks.h>
 
+#include "DataElement.h"
+#include "OpcuaRegistry.h"
 #include "RequestQueueBatcher.h"
 #include "Session.h"
-#include "Registry.h"
-#include "DataElement.h"
 
 namespace DevOpcua {
 
