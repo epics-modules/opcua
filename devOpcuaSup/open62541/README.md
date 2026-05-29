@@ -18,7 +18,7 @@ Please contact the authors
     (v1.2 and v1.3 series have been tested; their system packages should also work.
     open62541 v1.4 changed the header file structure and does not work yet.)
     
-*   Cmake (3.x) if you're building Open62541 from sources.
+*   cmake (3.x) if you're building Open62541 from sources.
 
 *   For OPC UA security support (authentication/encryption), we suggest using the openssl plugin for Open62541. For that to work, you need openssl on your system - both when compiling the client library and when generating any binaries (IOCs).
     On Linux, the name of the package you have to install depends on the distribution: development packages are called `openssl-devel` on RedHat/CentOS/Fedora and `libssl-dev` on Debian/Ubuntu, runtime packages are called `openssl` on RedHat/CentOS/Fedora and `libssl` on Debian/Ubuntu, respectively.
@@ -32,10 +32,24 @@ The Open62541 project is focused on the server implementation of OPC UA.
 The client functionality is fully supported, complete and usable,
 but it does not get the attention that the server parts get.
 
+### On Linux
+
+#### Using the Install Script
+
+You can use the `install_open62541.sh` script to automate the build of the open62541 library.
+The script will:
+
+1. Download an appropiate version of the `open62541` source code
+2. Build `open62541` as a static library with security support
+3. Create the corresponding `CONFIG_SITE.local` configuration
+
+**Please note**: This requires `curl`, `cmake` and the `openssl-devel`/`libssl-dev` library to be present. For support of structures also `libxml2-devel` / `libxml2-dev`
+is required.
+
+#### Manual Way
+
 Do *not* use the download link on the open62541 web site.
 Use their GitHub Release Page instead.
-
-### On Linux
 
 *   Unpack the open62541 distribution. Create a build directory on the top level and `cd` into it. We'll use the usual convention of calling it `build` .
     
@@ -135,7 +149,8 @@ See the [Windows Installation How-To][windows-howto] for an overview and introdu
 
 Inside the `configure` subdirectory or one level above the TOP location, create a file `RELEASE.local` that sets `EPICS_BASE` to the absolute path of your EPICS installation.
 
-Inside the `configure` subdirectory or one level above the TOP location, create a file `CONFIG_SITE.local` that sets the absolute path of your Open62541 installation as well as its build and deploy features if necessary.
+If you have not used the install script, 
+inside the `configure` subdirectory or one level above the TOP location, create a file `CONFIG_SITE.local` that sets the absolute path of your Open62541 installation as well as its build and deploy features if necessary.
 You also need to configure the locations of the other dependencies that you installed.
 
 ```Makefile
