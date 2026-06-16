@@ -1,0 +1,250 @@
+# Configuring EPICS Records for OPC UA
+
+This guide shows how to configure EPICS records
+for various OPC UA data exchange scenarios.
+
+## Single Scalar Values
+
+Individual variables (OPC UA Items),
+mapped to single EPICS records.
+
+### General INP/OUT Link Field Format
+
+`@<session_name> ns=<namespace_index>;<identifier_type>=<identifier>
+[<option>=<value>...]`
+
+*   `<session_name>`:
+    Name of the OPC UA Session.
+*   `<namespace_index>`:
+    Numerical namespace index.
+*   `<identifier_type>`:
+    `s` for string identifier, `i` for numerical identifier.
+*   `<identifier>`:
+    The string or numerical ID of the OPC UA Node.
+
+    ```{note}
+    **Escape quotation marks** (`\"`)
+    if the identifier string contains them
+    (e.g., `"dataBlock"."myItem"` becomes `\"dataBlock\".\"myItem\"`).
+    ```
+
+### Example: Output Records with Monitor (Bidirectional Mode)
+
+These are output records (`bo`, `ao`, `longout`, `mbbo`,...)
+that send data to a single scalar variable (Item) on the OPC UA server
+and also monitor it,
+updating the record if the value changes.
+They require an OPC UA Subscription.
+
+```
+# Boolean Output
+record(bo, "$(P)FOO:BOOL") {
+    field(DTYP, "OPCUA")
+    field(OUT, "@SLOW ns=3;s=\"FOO\".\"BOOL\"")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+# Analog Output
+record(ao, "$(P)FOO:REALA") {
+    field(DTYP, "OPCUA")
+    field(OUT, "@SLOW ns=3;s=\"FOO\".\"REALA\"")
+    field(DRVH, "100.0")
+    field(DRVL, "0.0")
+    field(HOPR, "90.0")
+    field(LOPR, "10.0")
+}
+```
+*   `@SLOW`:
+    The name of the Subscription to which the Item belongs.
+    The Session is implicitly defined by the Subscription.
+*   `monitor=y` is the default for all records
+    expecting updates from the OPC UA server, so it is often omitted.
+*   The `SCAN` should be `Passive`,
+    as usual with output records,
+    which is the default, so it is often omitted.
+
+### Example: Unmonitored Output Records
+
+These are output records (`bo`, `ao`, `longout`, `mbbo`,...)
+that send data to a single scalar variable (Item) on the OPC UA server,
+but don't require monitoring of the remote value.
+
+```
+# Boolean Output (unmonitored)
+record(bo, "$(P)BAR:BOOL") {
+    field(DTYP, "OPCUA")
+    field(OUT, "@PLC0 ns=3;s=\"BAR\".\"BOOL\" monitor=n")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+# Analog Output (unmonitored)
+record(ao, "$(P)BAR:REALA") {
+    field(DTYP, "OPCUA")
+    field(OUT, "@PLC0 ns=3;s=\"BAR\".\"REALA\" monitor=n")
+    field(DRVH, "100.0")
+    field(DRVL, "0.0")
+    field(HOPR, "90.0")
+    field(LOPR, "10.0")
+}
+```
+*   `@PLC0`:
+    The name of the Session to which the Item belongs.
+    Without monitoring, there is no Subscription necessary.
+*   `monitor=n`:
+    Explicitly disables monitoring for these unmonitored variables.
+
+### Example: Input Records with Monitor
+
+These are input records (`bi`, `ai`, `longin`, `mbbi`,...)
+pointing to a single scalar variable (Item) on the OPC UA server
+that get updated when the value changes.
+They require an OPC UA Subscription and should be `I/O Intr` scanned.
+
+```
+# Binary Input
+record(bi, "$(P)BAZ:BOOL") {
+    field(DTYP, "OPCUA")
+    field(INP, "@SLOW ns=3;s=\"BAZ\".\"BOOL\"")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+# Analog Input
+record(ai, "$(P)BAZ:REALA") {
+    field(DTYP, "OPCUA")
+    field(INP, "@SLOW ns=3;s=\"BAZ\".\"REALA\"")
+    field(SCAN, "I/O Intr")
+    field(HOPR, "90.0")
+    field(LOPR, "10.0")
+}
+```
+*   `@SLOW`:
+    The name of the Subscription to which the Item belongs.
+    The Session is implicitly defined by the Subscription.
+*   `monitor=y` is the default for all records
+    expecting updates from the OPC UA server, so it is often omitted.
+*   The `SCAN` should be set to `I/O Intr`
+    as usual for input records
+    that process on data changes received from the device.
+
+### Example: Unmonitored Input Records
+
+These are input records (`bi`, `ai`, `longin`, `mbbi`,...)
+pointing to a single scalar variable (Item) on the OPC UA server,
+but don't require monitoring of the remote value.
+
+```
+# Binary Input (unmonitored)
+record(bi, "$(P)QUX:BOOL") {
+    field(DTYP, "OPCUA")
+    field(INP, "@PLC0 ns=3;s=\"QUX\".\"BOOL\" monitor=n")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+# Analog Input (unmonitored)
+record(ai, "$(P)QUX:REALA") {
+    field(DTYP, "OPCUA")
+    field(INP, "@PLC0 ns=3;s=\"QUX\".\"REALA\" monitor=n")
+    field(SCAN, "I/O Intr")
+    field(HOPR, "90.0")
+    field(LOPR, "10.0")
+}
+```
+*   `@PLC0`:
+    The name of the Session to which the Item belongs.
+    Without monitoring, there is no Subscription necessary.
+*   `monitor=n`:
+    Explicitly disables monitoring for these unmonitored variables.
+
+Without a subscription,
+these records will only update (doing an OPC UA read operation)
+when they are processed.
+
+Setting a periodic `SCAN` rate is inefficient and should be avoided;
+use monitored Items on subscriptions instead.
+
+A valid use case for this type of connection are static status variables,
+which do not change during a session
+(e.g., server information: name, vendor, version, start date/time, ...).
+They only get updated once after the connection is established.
+
+## Structured Data
+
+```{versionadded} 0.3
+The `opcuaItem` record type and support for structured data.
+```
+
+Exchanging entire data structures between the IOC and OPC UA server
+using the `opcuaItem` record type.
+
+### `opcuaItem` Record Configuration
+
+The `opcuaItem` record connects to a structured variable (Item)
+on the OPC UA server.
+It requires an OPC UA subscription.
+
+```
+record(opcuaItem, "$(P)FOO:OPCUA-ITEM") {
+    field(DTYP, "OPCUA")
+    field(INP, "@SLOW ns=3;s=\"FOO\".\"STRUCT\"")
+    field(SCAN, "I/O Intr")
+    field(DEFACTN
+    # Optional: configure write-on-change behavior (WOC)
+    # field(WOC, "manual") # default
+    # field(WOC, "immediate")
+}
+```
+*   `@SLOW`:
+    The subscription name.
+*   `ns=3;s=\"QUX\".\"STRUCT\""`:
+    Points to the structured OPC UA Item.
+*   `SCAN, "I/O Intr"`:
+    Ensures the record processes when the structured data changes.
+*   `WOC` controls the writing behavior
+    when single elements of the structure are changed.
+    `manual` (default)
+    requires explicit processing of the record to write the structure.
+    `immediate`
+    processes the record (writes the structure)
+    as soon as an element changes .
+
+### Linking Element Records to `opcuaItem`
+
+Individual elements within the structured item are accessed by other input/output records.
+
+#### INP/OUT Link Field Format for Elements
+
+`@<opcuaItem_record_name> [element=<element_name>] [<option>=<value>...]`
+
+*   `<opcuaItem_record_name>`:
+    The name of the `opcuaItem` record managing the structured data.
+*   `element=<element_name>`:
+    The path to the specific element within the structure.
+    Use `.` as a hierarchy separator.
+    **No quotation marks or backslashes** for the element path.
+
+#### Example: Input Records for Elements of `STST:OPCUA-ITEM`
+
+```
+# Binary Input for a boolean element
+record(bi, "$(P)STST:BOOL") {
+    field(DTYP, "OPCUA")
+    field(INP, "@$(P)STST:OPCUA-ITEM element=STRUCT.BOOL")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+# Analog Input for a real element
+record(ai, "$(P)STST:REALA") {
+    field(DTYP, "OPCUA")
+    field(INP, "@$(P)STST:OPCUA-ITEM element=STRUCT.REAL")
+    field(SCAN, "I/O Intr")
+}
+```
+*   `element=STRUCT.BOOL`:
+    Refers to the `BOOL` element inside the `STRUCT` defined in the PLC.
