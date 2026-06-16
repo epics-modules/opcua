@@ -10,10 +10,16 @@ extensions = [
     'myst_parser',
     'sphinx.ext.napoleon',
     'sphinx_rtd_theme',
+    'breathe',
 ]
 
+breathe_projects = {
+    "opcua": "build/xml"
+}
+breathe_default_project = "opcua"
+
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = ['build']
 
 # -- Options for HTML output -------------------------------------------------
 
