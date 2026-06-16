@@ -32,12 +32,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
+          sudo apt-get update && sudo apt-get install -y doxygen
           python -m pip install --upgrade pip
-          pip install sphinx sphinx-rtd-theme myst-parser
+          pip install "sphinx<8" "docutils<0.21" sphinx-rtd-theme myst-parser breathe
+
+      - name: Run Doxygen
+        run: doxygen documentation/Doxyfile
 
       - name: Build HTML
         run: sphinx-build -b html documentation documentation/build/html
