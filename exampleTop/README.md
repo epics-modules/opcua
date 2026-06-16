@@ -75,13 +75,9 @@ when creating example databases for a new OPC UA device.
 
 ## OPC UA Device Support Documentation
 
-The documentation folder of the Device Support module contains the
-[Requirements Specification (SRS)][requirements.pdf] giving an introduction
-and the list of requirements that should convey a good idea of the planned
-features.
-
-The [Cheat Sheet][cheatsheet.pdf] explains the configuration in the startup
-script and the database links.
+The [**Documentation**](https://epics-modules.github.io/opcua)
+has all the things you should know
+when using the OPC UA Device Support module.
 
 ## Feedback / Reporting issues
 
@@ -106,7 +102,3 @@ An example for a new OPC UA device should contain:
 This example application is part of the OPC UA Device Support module
 that is distributed subject to a Software License Agreement found
 in file LICENSE that is included with its distribution.
-
-<!-- Links -->
-[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
-[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
