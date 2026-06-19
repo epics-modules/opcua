@@ -29,6 +29,7 @@ O.*/
 .idea/
 *.orig
 *.log
+*.autosave
 /devOpcuaSup/.vs/devOpcuaSup/v16
 /devOpcuaSup/x64
 *.sln
