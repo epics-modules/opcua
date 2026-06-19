@@ -21,10 +21,10 @@ Linux and Windows native builds are supported.
 - [Source Code](https://github.com/epics-modules/opcua) -
   everything you never wanted to know
 - [OPC UA Room on EPICS Chat](https://matrix.to/#/#opcua:epics-controls.org) -
-  quick help and discussions
+  new quick help and discussion thing
 - [Usage / FAQ (Wiki)](https://github.com/epics-modules/opcua/wiki) -
-  hints & experiences with specific servers
-- [Issue Tracker](https://github.com/epics-modules/opcua/issues>) -
+  specific things to watch out for, usually server-related
+- [Issue Tracker](https://github.com/epics-modules/opcua/issues) -
   when things don't work
 
 ## License
