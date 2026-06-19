@@ -25,20 +25,20 @@ OPC UA integrates all functionality of the individual specifications
 of the former OPC Classic protocol into one extensible framework,
 providing:
 
-*   _Functional equivalence_: 
-    all COM OPC Classic specifications are mapped to UA
+* _Functional equivalence_: 
+  all COM OPC Classic specifications are mapped to UA
 
-*   _Platform independence_:
-    from embedded to cloud-based infrastructure
+* _Platform independence_:
+  from embedded to cloud-based infrastructure
 
-*   _Security_:
-    encryption, authentication, and auditing
+* _Security_:
+  encryption, authentication, and auditing
 
-*   _Extensibility_:
-    ability to add new features without affecting existing applications
+* _Extensibility_:
+  ability to add new features without affecting existing applications
 
-*   _Information modelling_:
-    for defining complex information
+* _Information modelling_:
+  for defining complex information
 
 OPC UA is designed for exchanging information in an object-oriented manner,
 rather than as isolated data points.
@@ -64,9 +64,10 @@ such as attributes, references, methods, types, ...
 
 A _NodeID_ is an identifier for a node, e.g., for a particular OPC UA item.
 A Node ID consists of:
-*   a namespace index number
-*   an identifier type
-*   an identifier
+
+* a namespace index number
+* an identifier type
+* an identifier.
 
 The identifier can be either a string identifier, consisting of a name string,
 or a numerical identifier, consisting of an integer.

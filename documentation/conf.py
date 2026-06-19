@@ -1,7 +1,7 @@
 # Configuration file for the Sphinx documentation builder.
 
 project = 'EPICS OPC UA Device Support'
-copyright = '2025, Ralph Lange'
+project_copyright = '2025, Ralph Lange'
 author = 'Ralph Lange'
 
 # -- General configuration ---------------------------------------------------

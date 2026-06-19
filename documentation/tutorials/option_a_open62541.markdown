@@ -20,28 +20,28 @@ Please contact the authors
 
 ## Prerequisites
 
-*   [open62541](https://www.open62541.org/) SDK / C library
-    (v1.2 and v1.3 series have been tested;
-    their system packages should also work.
-    open62541 v1.4 changed the header file structure and does not work yet.)
+* [open62541](https://www.open62541.org/) SDK / C library
+  (v1.2 and v1.3 series have been tested;
+  their system packages should also work.
+  open62541 v1.4 changed the header file structure and does not work yet.)
 
-*   Cmake (3.x) if you're building open62541 from sources.
+* Cmake (3.x) if you're building open62541 from sources.
 
-*   For OPC UA security support (authentication/encryption),
-    we suggest using the openssl plugin for open62541.
-    For that to work,
-    you need openssl on your system -
-    both when compiling the client library
-    and when generating any binaries (IOCs).
-    On Linux, the name of the package you have to install
-    depends on the distribution:
-    development packages are called `openssl-devel` on RedHat/CentOS/Fedora
-    and `libssl-dev` on Debian/Ubuntu,
-    runtime packages are called `openssl` on RedHat/CentOS/Fedora
-    and `libssl` on Debian/Ubuntu, respectively.
-    See below for Windows instructions.
-    In your `CONFIG_SITE.local` file (see below),
-    enable the OPC UA Security option.
+* For OPC UA security support (authentication/encryption),
+  we suggest using the openssl plugin for open62541.
+  For that to work,
+  you need openssl on your system -
+  both when compiling the client library
+  and when generating any binaries (IOCs).
+  On Linux, the name of the package you have to install
+  depends on the distribution:
+  development packages are called `openssl-devel` on RedHat/CentOS/Fedora
+  and `libssl-dev` on Debian/Ubuntu,
+  runtime packages are called `openssl` on RedHat/CentOS/Fedora
+  and `libssl` on Debian/Ubuntu, respectively.
+  See below for Windows instructions.
+  In your `CONFIG_SITE.local` file (see below),
+  enable the OPC UA Security option.
 
 ## Building Open62541
 
@@ -58,83 +58,83 @@ Use their GitHub Release Page instead.
 
 ## On Linux
 
-*   Unpack the open62541 distribution.
-    Create a build directory on the top level and `cd` into it.
-    We'll go with the usual convention of calling it `build` .
+* Unpack the open62541 distribution.
+  Create a build directory on the top level and `cd` into it.
+  We'll go with the usual convention of calling it `build` .
 
-*   The cmake build of Open62541 creates a static library by default.
-    This type of library is needed
-    for the EMBED type of Device Support build (see below).
+* The cmake build of Open62541 creates a static library by default.
+  This type of library is needed
+  for the EMBED type of Device Support build (see below).
 
-    To create shared libraries, build the Open62541 library
-    setting the cmake option `BUILD_SHARED_LIBS=ON`.
+  To create shared libraries, build the Open62541 library
+  setting the cmake option `BUILD_SHARED_LIBS=ON`.
 
-    ```Shell
-    cmake .. -DBUILD_SHARED_LIBS=ON [...]
-    ```
+  ```Shell
+  cmake .. -DBUILD_SHARED_LIBS=ON [...]
+  ```
 
-    You can create both types
-    by running two builds with different configurations
-    in the same build directory.
-    Remove the CMakeCache between the builds to get clean configurations.
+  You can create both types
+  by running two builds with different configurations
+  in the same build directory.
+  Remove the CMakeCache between the builds to get clean configurations.
 
-*   Open62541 supports multiple low-level libraries
-    to implement OPC UA Security.
-    The most widely used option
-    (that also keeps things simple by staying in line with the UA SDK client)
-    is based on openssl.
-    We suggest to select that
-    by setting the cmake option `UA_ENABLE_ENCRYPTION=OPENSSL`.
+* Open62541 supports multiple low-level libraries
+  to implement OPC UA Security.
+  The most widely used option
+  (that also keeps things simple by staying in line with the UA SDK client)
+  is based on openssl.
+  We suggest to select that
+  by setting the cmake option `UA_ENABLE_ENCRYPTION=OPENSSL`.
 
-*   Given all the above, for a Linux build,
-    a reasonable option setting would be:
+* Given all the above, for a Linux build,
+  a reasonable option setting would be:
 
-    ```shell
-    cmake .. -DBUILD_SHARED_LIBS=ON \
-             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-             -DUA_ENABLE_ENCRYPTION=OPENSSL
-    ```
+  ```shell
+  cmake .. -DBUILD_SHARED_LIBS=ON \
+           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+           -DUA_ENABLE_ENCRYPTION=OPENSSL
+  ```
 
-    to create a shared library, and
+  to create a shared library, and
 
-    ```shell
-    cmake .. -DBUILD_SHARED_LIBS=OFF \
-             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
-             -DUA_ENABLE_ENCRYPTION=OPENSSL
-    ```
+  ```shell
+  cmake .. -DBUILD_SHARED_LIBS=OFF \
+           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+           -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
+           -DUA_ENABLE_ENCRYPTION=OPENSSL
+  ```
 
-    to create the static variant.
+  to create the static variant.
 
-    There are a lot of other options available,
-    but most of them affect only the server part
-    and are not relevant for use of the client.
+  There are a lot of other options available,
+  but most of them affect only the server part
+  and are not relevant for use of the client.
 
-    For Open62541 version 1.2,
-    set `UA_ENABLE_ENCRYPTION_OPENSSL=ON`
-    instead of the OPENSSL setting shown above.
-    You may also have to explicitly set the open62541 version string
-    in file `CMakeLists.txt`,
-    as the auto-detection doesn't work when you're not working under git.
+  For Open62541 version 1.2,
+  set `UA_ENABLE_ENCRYPTION_OPENSSL=ON`
+  instead of the OPENSSL setting shown above.
+  You may also have to explicitly set the open62541 version string
+  in file `CMakeLists.txt`,
+  as the auto-detection doesn't work when you're not working under git.
 
-*   The default installation location is below `/usr/local`.
-    Normally, this is a system location,
-    so that the deploy mode setting (see below) would be `SYSTEM`.
-    If you want to install into a different location,
-    set the option `CMAKE_INSTALL_PREFIX=/other/location`.
-    In that case,
-    the deploy mode setting (see below) would be `PROVIDED`
-    and the library location needs to be set.
-    The same is true
-    if you want to use the Open62541 library
-    in its build location (not recommended).
-    The library location (set in `CONFIG_SITE.local`)
-    would be `$(OPEN62541)/build/bin` or `$(OPEN62541)/build/bin/Release`
-    or something different,
-    depending on your installation, OS and choice of build directory name.
+* The default installation location is below `/usr/local`.
+  Normally, this is a system location,
+  so that the deploy mode setting (see below) would be `SYSTEM`.
+  If you want to install into a different location,
+  set the option `CMAKE_INSTALL_PREFIX=/other/location`.
+  In that case,
+  the deploy mode setting (see below) would be `PROVIDED`
+  and the library location needs to be set.
+  The same is true
+  if you want to use the Open62541 library
+  in its build location (not recommended).
+  The library location (set in `CONFIG_SITE.local`)
+  would be `$(OPEN62541)/build/bin` or `$(OPEN62541)/build/bin/Release`
+  or something different,
+  depending on your installation, OS and choice of build directory name.
 
-*   After running `cmake`, run `make` followed by `make install`.
-    Installation into a system location will need root permission.
+* After running `cmake`, run `make` followed by `make install`.
+  Installation into a system location will need root permission.
 
 ## On Windows
 
@@ -144,66 +144,66 @@ under Windows.
 
 ### Using MSYS2/MinGW
 
-*   Install the necessary tools and dependencies
-    using the `pacman` system package manager.
-    You will need `mingw-w64-x86_64-cmake`,
-    `mingw-w64-x86_64-libxml2`
-    and `mingw-w64-x86_64-openssl`.
+* Install the necessary tools and dependencies
+  using the `pacman` system package manager.
+  You will need `mingw-w64-x86_64-cmake`,
+  `mingw-w64-x86_64-libxml2`
+  and `mingw-w64-x86_64-openssl`.
 
-*   Unpack the open62541 distribution.
-    Create a build directory on the top level and `cd` into it.
-    We'll go with the usual convention of calling it `build` .
+* Unpack the open62541 distribution.
+  Create a build directory on the top level and `cd` into it.
+  We'll go with the usual convention of calling it `build` .
 
-*   A reasonable option setting for running `cmake`
-    would look similar to the Linux variant:
+* A reasonable option setting for running `cmake`
+  would look similar to the Linux variant:
 
-    ```shell
-    cmake .. -G "MinGW Makefiles" \
-             -DBUILD_SHARED_LIBS=ON \
-             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-             -DUA_ENABLE_ENCRYPTION=OPENSSL
-    ```
+  ```shell
+  cmake .. -G "MinGW Makefiles" \
+           -DBUILD_SHARED_LIBS=ON \
+           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+           -DUA_ENABLE_ENCRYPTION=OPENSSL
+  ```
 
-*   Run `mingw32-make` followed by `mingw32-make install`.
+* Run `mingw32-make` followed by `mingw32-make install`.
 
 ### Using MSVC
 
-*   Get the necessary prerequisites and install them:
-    Python version 3 can be found [here][python].
-    `libml2` and `iconv` binaries for Windows
-    can be found [here][libxml2-mhils]
-    or [here][libxml2-xmlsoft].
-    Install them in an appropriate location.
-    You might have to rename `.dll.a` DLL export stubs
-    to `.lib` to work properly with the EPICS build system.
-    `openssl` can be found [here][openssl.slpro].
-    The installer makes sure
-    that MSVC finds it (without explicit configuration).
+* Get the necessary prerequisites and install them:
+  Python version 3 can be found [here][python].
+  `libml2` and `iconv` binaries for Windows
+  can be found [here][libxml2-mhils]
+  or [here][libxml2-xmlsoft].
+  Install them in an appropriate location.
+  You might have to rename `.dll.a` DLL export stubs
+  to `.lib` to work properly with the EPICS build system.
+  `openssl` can be found [here][openssl.slpro].
+  The installer makes sure
+  that MSVC finds it (without explicit configuration).
 
-*   Unpack the open62541 distribution.
-    Create a build directory on the top level and `cd` into it.
-    We'll go with the usual convention of calling it `build` .
+* Unpack the open62541 distribution.
+  Create a build directory on the top level and `cd` into it.
+  We'll go with the usual convention of calling it `build` .
 
-*   A reasonable option setting for running `cmake` would look like this:
+* A reasonable option setting for running `cmake` would look like this:
 
-    ```shell
-    cmake .. -DBUILD_SHARED_LIBS=ON \
-             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-             -DUA_ENABLE_ENCRYPTION=OPENSSL
-    ```
+  ```shell
+  cmake .. -DBUILD_SHARED_LIBS=ON \
+           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+           -DUA_ENABLE_ENCRYPTION=OPENSSL
+  ```
 
-    plus `-DCMAKE_INSTALL_PREFIX=/other/location`
-    if you want to select where things are installed.
+  plus `-DCMAKE_INSTALL_PREFIX=/other/location`
+  if you want to select where things are installed.
 
-    The cmake configuration seems to have a bug (seen on 1.3.6)
-    that always selects `Release` for the path of the library to install.
-    The easiest fix is to replace that string
-    with the appropriate path (`Debug`)
-    in two places in the block
-    between lines 35 and 55 of the file `cmake_install.cmake`.
+  The cmake configuration seems to have a bug (seen on 1.3.6)
+  that always selects `Release` for the path of the library to install.
+  The easiest fix is to replace that string
+  with the appropriate path (`Debug`)
+  in two places in the block
+  between lines 35 and 55 of the file `cmake_install.cmake`.
 
-*   Run `cmake --build .` followed by `cmake --install .`
-    to build and install the library.
+* Run `cmake --build .` followed by `cmake --install .`
+  to build and install the library.
 
 (devsup-conf-open62541)=
 ## Configure the Device Support Module
@@ -219,7 +219,7 @@ as well as its build and deploy features if necessary.
 You also need to configure the locations
 of the other dependencies that you installed.
 
-```Makefile
+```makefile
 # Path to the Open62541 C++ installation
 OPEN62541 = /other/location
 
@@ -249,7 +249,7 @@ This ensures that the configuration is always consistent.
 All paths in EPICS build configuration files
 must use Windows "short names" where needed, e.g.
 
-```Makefile
+```makefile
 OPEN62541 = C:/PROGRA~2/open62541-1.3.6-MinGW/
 ```
 

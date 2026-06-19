@@ -24,20 +24,20 @@ of single scalar variables.
 `@<session_name> ns=<namespace_index>;<identifier_type>=<identifier>
 [<option>=<value>...]`
 
-*   `<session_name>`:
-    Name of the OPC UA Session.
-*   `<namespace_index>`:
-    Numerical namespace index.
-*   `<identifier_type>`:
-    `s` for string identifier, `i` for numerical identifier.
-*   `<identifier>`:
-    The string or numerical ID of the OPC UA Node.
+* `<session_name>`:
+  Name of the OPC UA Session.
+* `<namespace_index>`:
+  Numerical namespace index.
+* `<identifier_type>`:
+  `s` for string identifier, `i` for numerical identifier.
+* `<identifier>`:
+  The string or numerical ID of the OPC UA Node.
 
-    :::{note}
-    **Escape quotation marks** (`\"`)
-    if the identifier string contains them
-    (e.g., `"dataBlock"."myItem"` becomes `\"dataBlock\".\"myItem\"`).
-    :::
+  :::{note}
+  **Escape quotation marks** (`\"`)
+  if the identifier string contains them
+  (e.g., `"dataBlock"."myItem"` becomes `\"dataBlock\".\"myItem\"`).
+  :::
 
 ### Available Options
 
@@ -93,24 +93,25 @@ record(opcuaItem, "$(P)FOO:OPCUA-ITEM") {
     field(WOC, "immediate")
 }
 ```
-*   `@SLOW`:
-    The subscription name.
-*   `ns=3;s=\"DB1\".\"FOO\""`:
-    Points to the structured OPC UA Item.
-*   `SCAN, "I/O Intr"`:
-    Ensures the record processes when the structured data changes.
-*   `DEFACTN` specifies the default action
-    when the record is processed: `read` or `write`.
-*   `WOC` controls the writing behavior
-    when single elements of the structure are changed.
-    `manual` (default)
-    requires explicit processing of the record to write the structure.
-    `immediate`
-    processes the record (writes the structure)
-    as soon as an element changes.
-    This can be used to avoid writing inconsistent data
-    while multiple elements of the structure are written in a transactional fashion,
-    e.g., when restoring a snapshot or loading a configuration.
+
+* `@SLOW`:
+  The subscription name.
+* `ns=3;s=\"DB1\".\"FOO\""`:
+  Points to the structured OPC UA Item.
+* `SCAN, "I/O Intr"`:
+  Ensures the record processes when the structured data changes.
+* `DEFACTN` specifies the default action
+  when the record is processed: `read` or `write`.
+* `WOC` controls the writing behavior
+  when single elements of the structure are changed.
+  `manual` (default)
+  requires explicit processing of the record to write the structure.
+  `immediate`
+  processes the record (writes the structure)
+  as soon as an element changes.
+  This can be used to avoid writing inconsistent data
+  while multiple elements of the structure are written in a transactional fashion,
+  e.g., when restoring a snapshot or loading a configuration.
 
 ## Linking Element Records to `opcuaItem`
 
@@ -121,11 +122,11 @@ are accessed by other regular input/output records.
 
 `@<opcuaItem_record_name> [element=<element_name>] [<option>=<value>...]`
 
-*   `<opcuaItem_record_name>`:
-    The name of the `opcuaItem` record managing the structured data.
-*   `element=<element_name>`:
-    The path to the specific element within the structure.
-    Use `.` as a hierarchy separator.
+* `<opcuaItem_record_name>`:
+  The name of the `opcuaItem` record managing the structured data.
+* `element=<element_name>`:
+  The path to the specific element within the structure.
+  Use `.` as a hierarchy separator.
 
 ### Available Options
 
@@ -169,6 +170,7 @@ record(ai, "$(P)FOO:REALA") {
     field(SCAN, "I/O Intr")
 }
 ```
-*   `element=STRUCT.BOOL`:
-    Refers to the `BOOL` sub-element inside the `STRUCT` element
-    of the structure that the `opcuaItem` record points to.
+
+* `element=STRUCT.BOOL`:
+  Refers to the `BOOL` sub-element inside the `STRUCT` element
+  of the structure that the `opcuaItem` record points to.

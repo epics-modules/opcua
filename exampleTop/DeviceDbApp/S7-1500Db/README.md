@@ -57,24 +57,21 @@ things were fixed.
 
 Known issues:
 
-*   Firmware V2.6.0 is needed for subscriptions on registered items to work.
+* Firmware V2.6.0 is needed for subscriptions on registered items to work.
 
-*   All known firmware versions have a limit of 1000 items per low-level
-    OPC UA service call. To enforce this limit in the client IOC, call
-    ```sh
-    opcuaSetOption <session_name> batch-nodes 1000
-    ```
-    for every S7-1500 session that you want to use for more than 1000 items.
+* All known firmware versions have a limit of 1000 items per low-level
+  OPC UA service call. To enforce this limit in the client IOC, call
+
+  ```shell
+  opcuaSetOption <session_name> batch-nodes 1000
+  ```
+
+  for every S7-1500 session that you want to use for more than 1000 items.
 
 ## OPC UA Device Support Documentation
 
-The documentation folder of the Device Support module contains the
-[Requirements Specification (SRS)][requirements.pdf] giving an introduction
-and the list of requirements that should convey a good idea of the planned
-features.
-
-The [Cheat Sheet][cheatsheet.pdf] explains the configuration in the startup
-script and the database links.
+Check the on-line [documentation](https://epics-modules.github.io/opcua)
+for everything you should know when using this Device Support.
 
 ## Feedback / Reporting issues
 
@@ -88,7 +85,5 @@ that is distributed subject to a Software License Agreement found
 in file LICENSE that is included with its distribution.
 
 <!-- Links -->
-[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/_static/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
-[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/_static/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
 [uaexpert]: https://www.unified-automation.com/products/development-tools/uaexpert.html
 [release_notes_1500]: https://support.industry.siemens.com/cs/document/109478459/firmware-update-s7-1500-cpus-incl-displays-and-et200-cpus-(et200sp-et200pro)?dti=0&lc=en-WW

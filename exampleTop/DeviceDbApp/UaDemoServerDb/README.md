@@ -32,13 +32,8 @@ is located under the same `bin` subdirectory inside `pkiuser`.
 
 ## OPC UA Device Support Documentation
 
-The documentation folder of the Device Support module contains the
-[Requirements Specification (SRS)][requirements.pdf] giving an introduction
-and the list of requirements that should convey a good idea of the planned
-features.
-
-The [Cheat Sheet][cheatsheet.pdf] explains the configuration in the startup
-script and the database links.
+Check the on-line [documentation](https://epics-modules.github.io/opcua)
+for everything you should know when using this Device Support.
 
 ## Feedback / Reporting issues
 
@@ -52,6 +47,4 @@ that is distributed subject to a Software License Agreement found
 in file LICENSE that is included with its distribution.
 
 <!-- Links -->
-[requirements.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/_static/EPICS%20Support%20for%20OPC%20UA%20-%20SRS.pdf
-[cheatsheet.pdf]: https://docs.google.com/viewer?url=https://raw.githubusercontent.com/epics-modules/opcua/master/documentation/_static/EPICS%20Support%20for%20OPC%20UA%20-%20Cheat%20Sheet.pdf
 [uaexpert]: https://www.unified-automation.com/products/development-tools/uaexpert.html

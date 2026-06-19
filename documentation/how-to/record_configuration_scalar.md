@@ -8,20 +8,20 @@ for accessing individual single scalar variables on the OPC UA server.
 `@<session_name> ns=<namespace_index>;<identifier_type>=<identifier>
 [<option>=<value>...]`
 
-*   `<session_name>`:
-    Name of the OPC UA Session.
-*   `<namespace_index>`:
-    Numerical namespace index.
-*   `<identifier_type>`:
-    `s` for string identifier, `i` for numerical identifier.
-*   `<identifier>`:
-    The string or numerical ID of the OPC UA Node.
+* `<session_name>`:
+  Name of the OPC UA Session.
+* `<namespace_index>`:
+  Numerical namespace index.
+* `<identifier_type>`:
+  `s` for string identifier, `i` for numerical identifier.
+* `<identifier>`:
+  The string or numerical ID of the OPC UA Node.
 
-    :::{note}
-    **Escape quotation marks** (`\"`)
-    if the identifier string contains them
-    (e.g., `"dataBlock"."myItem"` becomes `\"dataBlock\".\"myItem\"`).
-    :::
+  :::{note}
+  **Escape quotation marks** (`\"`)
+  if the identifier string contains them
+  (e.g., `"dataBlock"."myItem"` becomes `\"dataBlock\".\"myItem\"`).
+  :::
 
 ## Available Options
 
@@ -88,14 +88,15 @@ record(ao, "$(P)FOO:REALA") {
     field(LOPR, "10.0")
 }
 ```
-*   `@SLOW`:
-    The name of the Subscription to which the Item belongs.
-    The Session is implicitly defined by the Subscription.
-*   `monitor=y` is the default for all records
-    expecting updates from the OPC UA server, so it is often omitted.
-*   The `SCAN` should be `Passive`,
-    as usual with output records,
-    which is the default, so it is often omitted.
+
+* `@SLOW`:
+  The name of the Subscription to which the Item belongs.
+  The Session is implicitly defined by the Subscription.
+* `monitor=y` is the default for all records
+  expecting updates from the OPC UA server, so it is often omitted.
+* The `SCAN` should be `Passive`,
+  as usual with output records,
+  which is the default, so it is often omitted.
 
 ## Example: Unmonitored Output Records
 
@@ -122,11 +123,12 @@ record(ao, "$(P)BAR:REALA") {
     field(LOPR, "10.0")
 }
 ```
-*   `@PLC0`:
-    The name of the Session to which the Item belongs.
-    Without monitoring, there is no Subscription necessary.
-*   `monitor=n`:
-    Explicitly disables monitoring for these unmonitored variables.
+
+* `@PLC0`:
+  The name of the Session to which the Item belongs.
+  Without monitoring, there is no Subscription necessary.
+* `monitor=n`:
+  Explicitly disables monitoring for these unmonitored variables.
 
 ## Example: Input Records with Monitor
 
@@ -154,14 +156,15 @@ record(ai, "$(P)BAZ:REALA") {
     field(LOPR, "10.0")
 }
 ```
-*   `@SLOW`:
-    The name of the Subscription to which the Item belongs.
-    The Session is implicitly defined by the Subscription.
-*   `monitor=y` is the default for all records
-    expecting updates from the OPC UA server, so it is often omitted.
-*   The `SCAN` should be set to `I/O Intr`
-    as usual for input records
-    that process on data changes received from the device.
+
+* `@SLOW`:
+  The name of the Subscription to which the Item belongs.
+  The Session is implicitly defined by the Subscription.
+* `monitor=y` is the default for all records
+  expecting updates from the OPC UA server, so it is often omitted.
+* The `SCAN` should be set to `I/O Intr`
+  as usual for input records
+  that process on data changes received from the device.
 
 ## Example: Unmonitored Input Records
 
@@ -187,11 +190,12 @@ record(ai, "$(P)QUX:REALA") {
     field(LOPR, "10.0")
 }
 ```
-*   `@PLC0`:
-    The name of the Session to which the Item belongs.
-    Without monitoring, there is no Subscription necessary.
-*   `monitor=n`:
-    Explicitly disables monitoring for these unmonitored variables.
+
+* `@PLC0`:
+  The name of the Session to which the Item belongs.
+  Without monitoring, there is no Subscription necessary.
+* `monitor=n`:
+  Explicitly disables monitoring for these unmonitored variables.
 
 Without a subscription,
 these records will only update (doing an OPC UA read operation)

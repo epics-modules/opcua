@@ -17,5 +17,6 @@ The following standard EPICS record types are supported:
 | `waveform` / `aai` / `aao`  | Array data |
 
 ## Custom Record Types
-*   `opcuaItem`:
-    Used for structured data *(added in v0.3.0)*.
+
+* `opcuaItem`:
+  Used for structured data *(added in v0.3.0)*.

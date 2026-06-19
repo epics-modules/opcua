@@ -20,68 +20,70 @@ Please contact the authors
 
 ## Prerequisites
 
-*   Unified Automation C++ Based [OPC UA Client SDK][uasdk]
-    (1.5/1.6/1.7 are supported, as well as their evaluation bundles).
+* Unified Automation C++ Based [OPC UA Client SDK][uasdk]
+  (1.5/1.6/1.7 are supported,
+  as well as their [evaluation bundles][uasdk-eval]).
 
-*   Windows and Linux builds are supported.
+* Windows and Linux builds are supported.
 
-*   The evaluation binary bundles by Unified Automation
-    (free download) are supported.
-    However, the EVAL bundle contains a shared library (DLL),
-    namely the stack component, see below,
-    so only shared builds of the Device Support will work.
+* The evaluation binary bundles by Unified Automation
+  (free download) are supported.
+  However, the EVAL bundle contains a shared library (DLL),
+  namely the stack component, see below,
+  so only shared builds of the Device Support will work.
 
 ## On Linux
 
-*   For OPC UA security support (authentication/encryption),
-    you need `libcrypto` on your system -
-    both when compiling the SDK and when generating any binaries (IOCs).
-    The name of the package you have to install
-    depends on the Linux distribution:
-    `openssl-devel` on RedHat/CentOS/Fedora,
-    `libssl-dev` on Debian/Ubuntu.
+* For OPC UA security support (authentication/encryption),
+  you need `libcrypto` on your system -
+  both when compiling the SDK and when generating any binaries (IOCs).
+  The name of the package you have to install
+  depends on the Linux distribution:
+  `openssl-devel` on RedHat/CentOS/Fedora,
+  `libssl-dev` on Debian/Ubuntu.
 
-*   The UA Client SDK sets `BUILD_SHARED_LIBS=OFF` as default.
-    To create shared SDK libraries, build the SDK using
+* The UA Client SDK sets `BUILD_SHARED_LIBS=OFF` as default.
+  To create shared SDK libraries, build the SDK using
 
-    ```Shell
-    ./buildSdk.sh -s ON
-    ```
-    In many versions of the SDK,
-    the `buildSdk.sh` build script does not apply the `-s ON` setting
-    to the stack component.
-    To fix this and create a complete shared library set of the SDK,
-    apply the following patch (shown for 1.5.5):
+  ```Shell
+  ./buildSdk.sh -s ON
+  ```
 
-    ```Diff
-    --- buildSdk.sh
-    +++ buildSdk.sh
-    @@ -95,7 +95,7 @@
-         cd $UASDKDIR/build$config || { echo "cd $UASDKDIR/build$config failed."; exit 1; }
-         # create the Makefile using CMake
-         # Just create only the SDK Makefiles
-    -    cmake "$TOOLCHAIN" "$OPTION" -DBUILD_EXAMPLES=off -DBUILD_UACLIENTCPP_APP=off -DBUILD_UASERVERCPP_APP=off -DENABLE_GCC_FORTIFY_SOURCE=off -DCMAKE_BUILD_TYPE=$config -DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX $UASDKDIR
-    +    cmake "$TOOLCHAIN" "$OPTION" -DBUILD_EXAMPLES=off -DBUILD_UACLIENTCPP_APP=off -DBUILD_UASERVERCPP_APP=off -DENABLE_GCC_FORTIFY_SOURCE=off -DCMAKE_BUILD_TYPE=$config -DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS -DBUILD_SHARED_STACK=$BUILD_SHARED_LIBS -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX $UASDKDIR
-         # build
-         make "$JOBS" || { echo "make failed."; exit 1; }
-         # install
-    ```
+  In many versions of the SDK,
+  the `buildSdk.sh` build script does not apply the `-s ON` setting
+  to the stack component.
+  To fix this and create a complete shared library set of the SDK,
+  apply the following patch (shown for 1.5.5):
 
-    You can build the shared and the static versions of the SDK
-    in the same location (there are no artifact conflicts).
-    This allows full flexibility for the Device Support module
-    and your IOC applications, i.e., static and shared builds.
+  ```Diff
+  --- buildSdk.sh
+  +++ buildSdk.sh
+  @@ -95,7 +95,7 @@
+       cd $UASDKDIR/build$config || { echo "cd $UASDKDIR/build$config failed."; exit 1; }
+       # create the Makefile using CMake
+       # Just create only the SDK Makefiles
+  -    cmake "$TOOLCHAIN" "$OPTION" -DBUILD_EXAMPLES=off -DBUILD_UACLIENTCPP_APP=off -DBUILD_UASERVERCPP_APP=off -DENABLE_GCC_FORTIFY_SOURCE=off -DCMAKE_BUILD_TYPE=$config -DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX $UASDKDIR
+  +    cmake "$TOOLCHAIN" "$OPTION" -DBUILD_EXAMPLES=off -DBUILD_UACLIENTCPP_APP=off -DBUILD_UASERVERCPP_APP=off -DENABLE_GCC_FORTIFY_SOURCE=off -DCMAKE_BUILD_TYPE=$config -DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS -DBUILD_SHARED_STACK=$BUILD_SHARED_LIBS -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX $UASDKDIR
+       # build
+       make "$JOBS" || { echo "make failed."; exit 1; }
+       # install
+  ```
+
+  You can build the shared and the static versions of the SDK
+  in the same location (there are no artifact conflicts).
+  This allows full flexibility for the Device Support module
+  and your IOC applications, i.e., static and shared builds.
 
 ## On Windows
 
-*   Extract the SDK to a known location,
-    e.g., `/opt/unifiedautomation/UaSdkCppBundle`
-    or `C:\Program Files\UnifiedAutomation\UaSdkCppBundle`.
-    This is where the Makefile variable `UASDK`
-    should point to (see below).
-*   Binary libraries (DLLs and headers) of matching versions
-    for openssl and libxml2 are provided
-    under the `third-party` directory of the SDK bundle.
+* Extract the SDK to a known location,
+  e.g., `/opt/unifiedautomation/UaSdkCppBundle`
+  or `C:\Program Files\UnifiedAutomation\UaSdkCppBundle`.
+  This is where the Makefile variable `UASDK`
+  should point to (see below).
+* Binary libraries (DLLs and headers) of matching versions
+  for openssl and libxml2 are provided
+  under the `third-party` directory of the SDK bundle.
 
 (devsup-conf-uasdk)=
 ## Configure the Device Support Module
@@ -95,7 +97,7 @@ create a file `CONFIG_SITE.local`
 that sets the absolute path of your SDK installation
 as well as the SDK build and deploy features if necessary.
 
-```Makefile
+```makefile
 # Path to the Unified Automation OPC UA C++ SDK
 UASDK = /usr/local/opcua/uasdkcppclient-v1.5.3-346/sdk
 
@@ -132,7 +134,8 @@ and set `UASDK` to the location of the Unified Automation bundle.
 
 All paths in EPICS build configuration files
 must use Windows "short names" where needed, e.g.
-```Makefile
+
+```makefile
 UASDK = C:/PROGRA~2/UnifiedAutomation/UaSdkCppBundleEval
 ```
 

@@ -96,8 +96,7 @@ credits.md
 license.md
 :::
 
-Indices and tables
-==================
+## Indices and Tables
 
 * {ref}`genindex`
 * {ref}`search`

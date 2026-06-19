@@ -69,17 +69,17 @@ identified their unique URIs:
 * - Security Policy
   - URI
 * - None
-  - http://opcfoundation.org/UA/SecurityPolicy#None
+  - `http://opcfoundation.org/UA/SecurityPolicy#None`
 * - Basic128Rsa15 *(obsolete)*
-  - http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15
+  - `http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15`
 * - Basic256
-  - http://opcfoundation.org/UA/SecurityPolicy#Basic256
+  - `http://opcfoundation.org/UA/SecurityPolicy#Basic256`
 * - Basic256Sha256
-  - http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256
+  - `http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256`
 * - Aes128_Sha256_RsaOaep
-  - http://opcfoundation.org/UA/SecurityPolicy#Aes128_Sha256_RsaOaep
+  - `http://opcfoundation.org/UA/SecurityPolicy#Aes128_Sha256_RsaOaep`
 * - Aes256_Sha256_RsaPss
-  - http://opcfoundation.org/UA/SecurityPolicy#Aes256_Sha256_RsaPss
+  - `http://opcfoundation.org/UA/SecurityPolicy#Aes256_Sha256_RsaPss`
 :::
 
 ## Client Authentication (Identity)
