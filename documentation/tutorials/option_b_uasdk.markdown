@@ -102,6 +102,7 @@ as well as the SDK build and deploy features if necessary.
 UASDK = /usr/local/opcua/uasdkcppclient-v1.5.3-346/sdk
 
 # How the Unified Automation SDK shared libraries are deployed
+# (See the Reference for more details and recommendations)
 #   SYSTEM = shared libs are in a system location
 #   PROVIDED = shared libs are in $(UASDK_SHRLIB_DIR)
 #   INSTALL = shared libs are installed (copied) into this module
@@ -114,6 +115,8 @@ UASDK_SHRLIB_DIR = $(UASDK_LIB_DIR)
 UASDK_USE_CRYPTO = YES
 UASDK_USE_XMLPARSER = YES
 ```
+
+See [Deployment Modes](deployment-modes) for details and recommendations on which mode to choose for your platform and situation.
 
 This SDK related configuration is only needed in the Device Support module.
 During the build,
