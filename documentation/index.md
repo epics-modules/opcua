@@ -73,6 +73,7 @@ how-to/security_configuration.md
 :maxdepth: 2
 :caption: Reference
 
+reference/deployment_modes.md
 reference/iocsh_commands.md
 reference/cheat_sheet.md
 reference/record_types.md

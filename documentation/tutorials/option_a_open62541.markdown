@@ -224,6 +224,7 @@ of the other dependencies that you installed.
 OPEN62541 = /other/location
 
 # How the Open62541 shared libraries are deployed
+# (See the Reference for more details and recommendations)
 #   SYSTEM = shared libs are in a system location
 #   PROVIDED = shared libs are in $(OPEN62541_SHRLIB_DIR)
 #   INSTALL = shared libs are installed (copied) into this module
@@ -236,6 +237,8 @@ OPEN62541_SHRLIB_DIR = $(OPEN62541_LIB_DIR)
 OPEN62541_USE_CRYPTO = YES
 OPEN62541_USE_XMLPARSER = YES
 ```
+
+See [Deployment Modes](deployment-modes) for details and recommendations on which mode to choose for your platform and situation.
 
 This open62541 related configuration
 is only needed in the Device Support module.
