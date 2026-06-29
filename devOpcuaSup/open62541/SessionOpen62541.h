@@ -207,7 +207,11 @@ public:
     /**
      * @brief Get pointer to enumChoices if typeId refers to enum type, else nullptr
      */
+#ifdef HAS_XMLPARSER
     const EnumChoices* getEnumChoices(const UA_NodeId* typeId);
+#else
+    const EnumChoices* getEnumChoices(const UA_NodeId*) { return nullptr; }
+#endif
 
     /**
      * @brief Request a beginRead service for an item
