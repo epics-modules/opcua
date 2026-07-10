@@ -124,6 +124,13 @@ SubscriptionOpen62541::getSessionOpen62541 () const
 void
 SubscriptionOpen62541::create ()
 {
+    if (debug) {
+        std::cerr << "Subscription " << name
+                  << ": creating with interval=" << requestedSettings.requestedPublishingInterval
+                  << " lifetime=" << requestedSettings.requestedLifetimeCount
+                  << " keepalive=" << requestedSettings.requestedMaxKeepAliveCount
+                  << std::endl;
+    }
     subscriptionSettings = UA_Client_Subscriptions_create(session.client,
         requestedSettings, this, [] (UA_Client *client, UA_UInt32 subscriptionId,
             void *context, UA_StatusChangeNotification *notification) {
