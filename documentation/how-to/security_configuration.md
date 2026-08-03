@@ -144,14 +144,15 @@ using the `openssl` command line utility, e.g.:
 ```bash
 openssl req -x509 -newkey rsa:2048 -keyout private_key.pem -out cert.pem -sha256 -days 365 -nodes -addext "subjectAltName=URI:urn:<IOC>@<HOST>:EPICS:IOC,IP:<IP>"
 ```
-Depending on you openssl configuration the above command may not set all the required attributes and may also set `CA:TRUE`, you can display the certificate using
+Depending on you openssl configuration the above command may not set all the required attributes and may also set `CA:TRUE`.
+You can display the contents of a certificate using
 ```bash
 openssl x509 -in cert.pem -noout -text
 ```
 and check the `X509v3 extensions` section.
 
 To control setting attributes you can create a `opcua_cert.conf` configuration file as follows after editing the `< >` parts of the `[ dn ]` section
-```
+```ini
 [ req ]
 default_bits = 2048
 encrypt_key = no
