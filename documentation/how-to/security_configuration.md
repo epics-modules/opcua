@@ -116,6 +116,9 @@ PEM format requires `.pem` extension.
 
 ### Creating Application Instance Certificates
 
+**NOTE:** open62541 version 1.3 does not support using a client certificate,
+you need to use 1.4 or higher.
+
 Creating a self-signed certificate for OPC UA use is pretty straight-forward.
 Follow the documented procedure,
 giving your certificate/key pair the following properties:
@@ -141,3 +144,38 @@ using the `openssl` command line utility, e.g.:
 ```bash
 openssl req -x509 -newkey rsa:2048 -keyout private_key.pem -out cert.pem -sha256 -days 365 -nodes -addext "subjectAltName=URI:urn:<IOC>@<HOST>:EPICS:IOC,IP:<IP>"
 ```
+Depending on you openssl configuration the above command may not set all the required attributes and may also set `CA:TRUE`, you can display the certificate using
+```bash
+openssl x509 -in cert.pem -noout -text
+```
+and check the `X509v3 extensions` section.
+
+To control setting attributes you can create a `opcua_cert.conf` configuration file as follows after editing the `< >` parts of the `[ dn ]` section
+```
+[ req ]
+default_bits = 2048
+encrypt_key = no
+distinguished_name = dn
+x509_extensions = ext_x509
+default_md = sha256
+prompt = no
+
+[ dn ]
+CN = ${ENV::HOST}
+emailAddress = <email address>
+O = <Organisation>
+OU = <Organisation Unit>
+ST = <State/Province/County>
+C = <Country abbreviation>
+
+[ ext_x509 ]
+basicConstraints = critical, CA:FALSE
+keyUsage = critical, digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyCertSign
+extendedKeyUsage = critical, serverAuth, clientAuth
+subjectAltName = URI:urn:${ENV::IOC}@${ENV::HOST}:EPICS:IOC,IP:${ENV::IP}
+```
+You can then use this file with the openssl command
+```bash
+env IP=<IP> HOST=<HOST> IOC=<IOC> openssl req -x509 -config opcua_cert.conf -newkey rsa:2048 -keyout client_private_key.pem -out client_certificate.pem -days 365
+```
+where `<IP>`, `<HOST>` and `<IOC>` have the same meaning as described earlier
