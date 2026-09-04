@@ -106,8 +106,10 @@ jobs:
       run: python .ci/cue.py test-results
     - name: Install end2end test dependencies
       if: startsWith(matrix.base, '7') || startsWith(matrix.base, 'R7')
+      with:
+        python-version: '3.11'
       run: |
-        python3 -m pip install pytest asyncua p4p run-iocsh
+        python -m pip install pytest asyncua p4p run-iocsh
     - name: Run end2end tests
       if: startsWith(matrix.base, '7') || startsWith(matrix.base, 'R7')
       run: |

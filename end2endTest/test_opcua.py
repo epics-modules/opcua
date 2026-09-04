@@ -16,13 +16,8 @@ def test_inst() -> Generator[tuple[OpcuaTestServer, IOC, Context]]:
     script = Path(__file__).parent / "ioc" / "st.cmd"
     script = script.resolve()
     REPO_ROOT = Path(__file__).resolve().parents[1]
-
-    OPCUA_TEST_IOC = (
-        REPO_ROOT
-        / "bin"
-        / "linux-x86_64"
-        / "opcuaTestIoc"
-    )
+    host_arch = os.environ["EPICS_HOST_ARCH"]
+    OPCUA_TEST_IOC = REPO_ROOT / "bin" / host_arch / "opcuaTestIoc"
     
     with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc, Context("pva") as ctxt:
         ioc.wait_for_output("OPC UA session")
@@ -153,7 +148,8 @@ class TestVariable:
     def test_bini(self, test_inst) -> None:
         server, ioc, ctxt = test_inst
         assert ctxt.get("VarCheckInt16NoBini") == 0
-        assert ctxt.get("VarCheckInt16WriteBini") == 7
+        assert server.read_server_value(f"ns={server.idx};s=Sim.VarCheckInt16NoBini") == 112
+        assert server.read_server_value(f"ns={server.idx};s=Sim.VarCheckInt16WriteBini") == 7
         
 class TestPerformance:
     @pytest.mark.skipif(os.environ.get("CI") == "true", reason="Skipped in CI")
