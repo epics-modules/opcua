@@ -16,6 +16,8 @@ endif
 CONFIG = $(RULES)/configure
 include $(CONFIG)/CONFIG
 include $(TOP)/configure/CONFIG_OPCUA_VERSION
+# Load generated OPC UA client configuration
+-include $(TOP)/cfg/CONFIG_OPCUA
 
 # Override the Base definition:
 INSTALL_LOCATION = $(TOP)

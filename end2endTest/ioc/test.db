@@ -2,14 +2,12 @@ record(ai, "TstRamp") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestRamp")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(bi, "VarCheckBool") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarBool")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(bo, "VarCheckBoolOut") {
@@ -21,7 +19,6 @@ record(ai, "VarCheckSByte") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarSByte")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckSByteOut") {
@@ -33,7 +30,6 @@ record(ai, "VarCheckByte") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarByte")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckByteOut") {
@@ -45,7 +41,6 @@ record(ai, "VarCheckUInt16") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarUInt16")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckUInt16Out") {
@@ -57,7 +52,6 @@ record(ai, "VarCheckInt16") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarInt16")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckInt16Out") {
@@ -65,11 +59,36 @@ record(ao, "VarCheckInt16Out") {
     field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarInt16")
 }
 
+record(ao, "VarCheckInt16OutNoWrite") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarInt16NoWrite")
+}
+
+record(ao, "VarCheckInt16OutNoMonitor") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.VarCheckInt16NoMonitor monitor=n")
+}
+
+record(ao, "VarCheckInt16OutMonitor") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.VarCheckInt16Monitor monitor=y")
+}
+
+record(ao, "VarCheckInt16NoBini") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.VarCheckInt16NoBini bini=ignore monitor=n")
+}
+
+record(ao, "VarCheckInt16WriteBini") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.VarCheckInt16WriteBini bini=write")
+    field( VAL, "7")
+}
+
 record(ai, "VarCheckUInt32") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarUInt32")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckUInt32Out") {
@@ -81,7 +100,6 @@ record(ai, "VarCheckInt32") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarInt32")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckInt32Out") {
@@ -93,7 +111,6 @@ record(ai, "VarCheckUInt64") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarUInt64")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckUInt64Out") {
@@ -105,7 +122,6 @@ record(ai, "VarCheckInt64") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarInt64")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckInt64Out") {
@@ -117,7 +133,6 @@ record(stringin, "VarCheckString") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarString")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(stringout, "VarCheckStringOut") {
@@ -129,7 +144,6 @@ record(ai, "VarCheckFloat") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarFloat")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckFloatOut") {
@@ -141,10 +155,53 @@ record(ai, "VarCheckDouble") {
     field(DTYP, "OPCUA")
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarDouble")
     field(SCAN, "I/O Intr")
-    field( TSE, "-2")
 }
 
 record(ao, "VarCheckDoubleOut") {
     field(DTYP, "OPCUA")
     field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarDouble")
+}
+
+record(aai, "VarCheckUInt64Array") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarUInt64Array")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "UINT64")
+    field(NELM, "3")
+}
+
+record(opcuaItem, "VarCheckStructNode") {
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarEUInformation")
+    field(SCAN, "I/O Intr")
+}
+
+record(stringin, "VarCheckStructNodeNamespaceUri") {
+    field(DTYP, "OPCUA")
+    field( INP, "@VarCheckStructNode element=NamespaceUri")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "VarCheckStructNodeUnitId") {
+    field(DTYP, "OPCUA")
+    field( INP, "@VarCheckStructNode element=UnitId")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "VarCheckStaticTimeStamp") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestStaticTimestamp")
+    field(SCAN, "I/O Intr")
+    field( TSE, "-2")
+}
+
+record(ai, "BadVarName") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.BadVarName")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "VarNotBoolean") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarFloat")
+    field(SCAN, "I/O Intr")
 }
