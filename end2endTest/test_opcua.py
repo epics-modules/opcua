@@ -79,7 +79,7 @@ class opcuaTestHarness:
         self.putTimeout = self.timeout
         self.getTimeout = self.timeout
 
-        # test sleep time ins seconds
+        # test sleep time in seconds
         self.sleepTime = 3
 
         # Test server
@@ -664,7 +664,7 @@ class TestPerformanceTests:
             writeperrun = 5000
 
             # Run test 10 times
-            for j in range(1, testruns):
+            for j in range(testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_THREAD)
@@ -727,7 +727,7 @@ class TestPerformanceTests:
             writeperrun = 5000
 
             # Run test 10 times
-            for j in range(1, testruns):
+            for j in range(testruns):
 
                 # Get time and memory conspumtion before test
                 r0 = resource.getrusage(resource.RUSAGE_SELF)

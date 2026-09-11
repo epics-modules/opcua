@@ -156,10 +156,11 @@ public:
     void addMonitoredItems();
 
     /**
-     * @brief Clear connection to driver level.
+     * @brief Delete the subscription on the server.
      *
-     * Clears the internal pointer to the driver level subscription that was
-     * created through the create() method.
+     * Deletes the subscription that was created through the create() method
+     * on the server side and invalidates the local subscription id.
+     * Requires the session to be still active.
      */
     void clear();
 

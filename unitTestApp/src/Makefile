@@ -10,7 +10,8 @@ include $(TOP)/configure/CONFIG
 # and the test executables are not linked against libopcua.
 
 # Windows builds define NOMINMAX (macros min, max clash with numeric_limits<>)
-USR_CXXFLAGS_WIN32 += -DNOMINMAX
+# and CALLBACK (clashes with EPICS callback.h)
+USR_CXXFLAGS_WIN32 += -DNOMINMAX -DEPICS_NO_CALLBACK
 
 DEVSUP_SRC = $(TOP)/devOpcuaSup
 

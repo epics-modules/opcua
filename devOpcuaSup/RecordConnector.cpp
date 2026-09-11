@@ -182,6 +182,17 @@ RecordConnector::RecordConnector (dbCommon *prec)
 void
 RecordConnector::requestRecordProcessing (const ProcessReason reason)
 {
+    // While the IOC is shutting down, the sessions are already closed but the
+    // database is still running. Discard instead of flooding the callback
+    // queues with processing requests that cannot do anything useful.
+    if (Session::isShuttingDown()) {
+        if (debug() > 5)
+            std::cout << "Discarding processing request for record " << getRecordName()
+                      << " (" << processReasonString(reason) << ") - IOC is shutting down"
+                      << std::endl;
+        return;
+    }
+
     if (debug() > 5)
         std::cout << "Registering record " << getRecordName() << " for processing"
                   << " (" << processReasonString(reason) << ")" << std::endl;

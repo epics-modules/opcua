@@ -30,6 +30,7 @@ namespace DevOpcua {
 
 epicsThreadOnceId Session::onceId = EPICS_THREAD_ONCE_INIT;
 epicsTimerQueueActive *Session::queue = nullptr;
+bool Session::shuttingDown = false;
 
 RegistryKeyNamespace RegistryKeyNamespace::global;
 

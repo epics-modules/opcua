@@ -385,6 +385,9 @@ SessionUaSdk::isConnected() const
 void
 SessionUaSdk::requestRead (ItemUaSdk &item)
 {
+    if (isShuttingDown())
+        return;
+
     auto cargo = std::make_shared<ReadRequest>();
     cargo->item = &item;
     reader.pushRequest(cargo, item.recConnector->getRecordPriority());
@@ -394,7 +397,7 @@ SessionUaSdk::requestRead (ItemUaSdk &item)
 void
 SessionUaSdk::processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
-    if (!isConnected())
+    if (!isConnected() || isShuttingDown())
         return;
 
     UaStatus status;
@@ -446,6 +449,9 @@ SessionUaSdk::processRequests(std::vector<std::shared_ptr<ReadRequest>> &batch)
 void
 SessionUaSdk::requestWrite (ItemUaSdk &item)
 {
+    if (isShuttingDown())
+        return;
+
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
     item.copyAndClearOutgoingData(cargo->wvalue);
@@ -456,7 +462,7 @@ SessionUaSdk::requestWrite (ItemUaSdk &item)
 void
 SessionUaSdk::processRequests(std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
-    if (!isConnected())
+    if (!isConnected() || isShuttingDown())
         return;
 
     UaStatus status;
@@ -1010,9 +1016,13 @@ SessionUaSdk::markConnectionLoss()
 {
     reader.clear();
     writer.clear();
+    // No point in telling the records about the connection loss while the IOC
+    // is shutting down - they will not be processed anymore.
+    const bool notifyRecords = !isShuttingDown();
     for (auto it : items) {
         it->setState(ConnectionStatus::down);
-        it->setIncomingEvent(ProcessReason::connectionLoss);
+        if (notifyRecords)
+            it->setIncomingEvent(ProcessReason::connectionLoss);
     }
 }
 
@@ -1405,6 +1415,12 @@ void
 SessionUaSdk::atExit (void *junk)
 {
     (void)junk;
+    // The EPICS database is still running at this point (Base registers the
+    // handler that stops the scan and callback threads during iocInit, i.e.
+    // before this one, and atExit handlers run in reverse order).
+    // Announce the shutdown first, so that everything the closing sessions and
+    // the still processing records produce from now on is discarded quietly.
+    announceShutdown();
     errlogPrintf("OPC UA: Disconnecting sessions\n");
     for (auto &it : sessions) {
         SessionUaSdk *session = it.second;

@@ -154,8 +154,9 @@ inline static std::ostream&
 operator << (std::ostream& os, UA_SecureChannelState channelState)
 {
     switch (channelState) {
+#if UA_OPEN62541_VER_MAJOR*100+UA_OPEN62541_VER_MINOR < 104
         case UA_SECURECHANNELSTATE_FRESH:               return os << "Fresh";
-#if UA_OPEN62541_VER_MAJOR*100+UA_OPEN62541_VER_MINOR >= 104
+#else
         case UA_SECURECHANNELSTATE_REVERSE_LISTENING:   return os << "ReverseListening";
         case UA_SECURECHANNELSTATE_CONNECTING:          return os << "Connecting";
         case UA_SECURECHANNELSTATE_CONNECTED:           return os << "Connected";
@@ -344,6 +345,9 @@ SessionOpen62541::SessionOpen62541 (const std::string &name,
     , channelState(UA_SECURECHANNELSTATE_CLOSED)
     , sessionState(UA_SESSIONSTATE_CLOSED)
     , connectStatus(UA_STATUSCODE_BADINVALIDSTATE)
+    , needsInit(false)
+    , MaxNodesPerRead(0)
+    , MaxNodesPerWrite(0)
     , workerThread(nullptr)
 {
     sessions.insert({name, this});
@@ -408,12 +412,18 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
         debug = ul;
         UA_ClientConfig *config = UA_Client_getConfig(client);
         if (config) {
-            // Loglevels:  0:trace, 1:debug, 2:info, 3:warning, 4:error, 5:fatal (and higher)
-            // Our debug=0 shall only print fatal errors.
-            // After that, the higher debug the lower UA_LogLevel, down to 0.
+            // Starting from v1.4, the UA_LogLevel enum has changed numerical values
+            UA_LogLevel loglevel = static_cast<UA_LogLevel>(std::max(
+                UA_LOGLEVEL_TRACE,
+                static_cast<UA_LogLevel>(UA_LOGLEVEL_FATAL - (UA_LOGLEVEL_DEBUG - UA_LOGLEVEL_TRACE) * debug)));
+#if UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR < 104
             if (config->logger.clear)
-                config->logger.clear(config->logger.context); // Use context as opaque handle only!
-            config->logger = UA_Log_Stdout_withLevel(static_cast<UA_LogLevel>(std::max(0, 5-debug)));
+                config->logger.clear(config->logger.context);
+            config->logger = UA_Log_Stdout_withLevel(loglevel);
+#else
+            if (config->logging)
+                *(config->logging) = UA_Log_Stdout_withLevel(loglevel);
+#endif
         }
     } else if (name == "batch-nodes") {
         errlogPrintf("DEPRECATED: option 'batch-nodes'; use 'nodes-max' instead\n");
@@ -478,6 +488,7 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
 long
 SessionOpen62541::connect (bool manual)
 {
+    Guard G(clientlock);
     if (isConnected()) {
         if (debug || manual)
             std::cerr << "Session " << name
@@ -486,9 +497,6 @@ SessionOpen62541::connect (bool manual)
                     << std::endl;
         return 0;
     }
-
-    if (client)
-        disconnect(); // Do a proper disconnection before attempting to reconnect
 
     setupClientSecurityInfo(securityInfo, &name, debug);
 
@@ -501,19 +509,29 @@ SessionOpen62541::connect (bool manual)
             return -1;
         }
     }
+    // client is guaranteed to be non-NULL at this point, same for config
     UA_ClientConfig *config = UA_Client_getConfig(client);
-    if (debug < 5) {
-        if (config->logger.clear)
-            config->logger.clear(config->logger.context);
-        config->logger = UA_Log_Stdout_withLevel(static_cast<UA_LogLevel>(std::max(0, 5-debug)));
-    }
+
+    // Starting from v1.4, the UA_LogLevel enum has changed numerical values
+    UA_LogLevel loglevel = static_cast<UA_LogLevel>(
+        std::max(UA_LOGLEVEL_TRACE,
+                 static_cast<UA_LogLevel>(UA_LOGLEVEL_FATAL - (UA_LOGLEVEL_DEBUG - UA_LOGLEVEL_TRACE) * debug)));
+#if UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR < 104
+    if (config->logger.clear)
+        config->logger.clear(config->logger.context);
+    config->logger = UA_Log_Stdout_withLevel(loglevel);
+#else
+    if (config->logging)
+        *(config->logging) = UA_Log_Stdout_withLevel(loglevel);
+#endif
+
 #ifdef HAS_SECURITY
     // We need the client certificate before UA_ClientConfig_setDefaultEncryption
     UA_ClientConfig_setDefaultEncryption(config,
         securityInfo.clientCertificate, securityInfo.privateKey,
         NULL, 0, NULL, 0);
 
-#ifdef __linux__ /* UA_CertificateVerification_CertFolders supported only for Linux so far */
+    #ifdef __linux__ /* UA_CertificateVerification_CertFolders supported only for Linux so far */
     if (securityCertificateTrustListDir.length() ||
         securityIssuersCertificatesDir.length()) {
         if (debug) {
@@ -530,10 +548,11 @@ SessionOpen62541::connect (bool manual)
             errlogPrintf("OPC UA session %s: setting up PKI context failed with status %s\n",
                          name.c_str(), UA_StatusCode_name(status));
     }
-#endif // #ifdef __linux__
+    #endif // #ifdef __linux__
 #else // #ifdef HAS_SECURITY
     UA_ClientConfig_setDefault(config);
 #endif
+
     config->clientDescription.applicationType = UA_APPLICATIONTYPE_CLIENT;
     config->clientDescription.applicationName = UA_LOCALIZEDTEXT_ALLOC("en-US", "EPICS IOC");
     config->clientDescription.productUri = UA_STRING_ALLOC("urn:EPICS:IOC");
@@ -604,26 +623,36 @@ SessionOpen62541::connect (bool manual)
 long
 SessionOpen62541::disconnect ()
 {
-    if (!client) {
-        if (debug)
-            std::cerr << "Session " << name
-                    << " already disconnected"
-                    << std::endl;
-        return 0;
-    }
     {
         Guard G(clientlock);
-        if(!client) return 0;
-        clearCustomTypeDictionaries();
-        UA_Client_delete(client); // This also deletes all open62541 subscriptions
-        client = nullptr;
+        if (client) {
+            clearCustomTypeDictionaries();
+            // Delete the subscriptions while the session is still alive.
+            // Closing the session implicitly deletes them on the server, but
+            // leaves the publish requests that are queued there orphaned -
+            // the server logs an error for each of them.
+            if (isConnected())
+                deleteAllSubscriptions();
+            UA_Client_disconnect(client);
+            UA_Client_delete(client); // This also deletes all open62541 subscriptions
+            client = nullptr;
+        }
+        sessionState = UA_SESSIONSTATE_CLOSED;
+        channelState = UA_SECURECHANNELSTATE_CLOSED;
+        markConnectionLoss();
     }
+
     // Worker thread terminates when client was destroyed
     if (workerThread) {
-        workerThread->exitWait();
-        delete workerThread;
-        workerThread = nullptr;
+        if (epicsThreadGetIdSelf() != workerThread->getId()) {
+            workerThread->exitWait();
+            delete workerThread;
+            workerThread = nullptr;
+        } else {
+            // Called from worker thread itself: it will exit by itself
+        }
     }
+
     return 0;
 }
 
@@ -636,6 +665,9 @@ SessionOpen62541::isConnected () const
 void
 SessionOpen62541::requestRead (ItemOpen62541 &item)
 {
+    if (isShuttingDown())
+        return;
+
     auto cargo = std::make_shared<ReadRequest>();
     cargo->item = &item;
     reader.pushRequest(cargo, item.recConnector->getRecordPriority());
@@ -645,7 +677,7 @@ SessionOpen62541::requestRead (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
-    if (!isConnected())
+    if (!isConnected() || isShuttingDown())
         return;
 
     UA_StatusCode status;
@@ -714,6 +746,9 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
 void
 SessionOpen62541::requestWrite (ItemOpen62541 &item)
 {
+    if (isShuttingDown())
+        return;
+
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
     item.copyAndClearOutgoingData(cargo->wvalue);
@@ -729,7 +764,7 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
-    if (!isConnected())
+    if (!isConnected() || isShuttingDown())
         return;
 
     UA_StatusCode status;
@@ -793,6 +828,14 @@ SessionOpen62541::createAllSubscriptions ()
 {
     for (auto &it : subscriptions) {
         it.second->create();
+    }
+}
+
+void
+SessionOpen62541::deleteAllSubscriptions ()
+{
+    for (auto &it : subscriptions) {
+        it.second->clear();
     }
 }
 
@@ -1323,9 +1366,13 @@ SessionOpen62541::markConnectionLoss()
 {
     reader.clear();
     writer.clear();
+    // No point in telling the records about the connection loss while the IOC
+    // is shutting down - they will not be processed anymore.
+    const bool notifyRecords = !isShuttingDown();
     for (auto it : items) {
         it->setState(ConnectionStatus::down);
-        it->setIncomingEvent(ProcessReason::connectionLoss);
+        if (notifyRecords)
+            it->setIncomingEvent(ProcessReason::connectionLoss);
     }
 }
 
@@ -1409,7 +1456,12 @@ SessionOpen62541::setupIdentity()
                                 name.c_str());
                 } else {
                     UA_StatusCode status = config->certificateVerification.verifyCertificate(
-                        config->certificateVerification.context, &cert);
+#if UA_OPEN62541_VER_MAJOR*100+UA_OPEN62541_VER_MINOR < 104
+                        config->certificateVerification.context,
+#else
+                        &config->certificateVerification,
+#endif
+                        &cert);
                     if (UA_STATUS_IS_BAD(connectStatus)) {
                         errlogPrintf("OPC UA session %s: identity certificate is not valid: %s\n",
                                     name.c_str(), UA_StatusCode_name(status));
@@ -1477,6 +1529,10 @@ SessionOpen62541::run ()
             return;
         }
         status = UA_Client_run_iterate(client, 1);
+        if (needsInit) {
+            initializeSession();
+            needsInit = false;
+        }
         {
             UnGuard U(G);
             epicsThreadSleep(0.01); // give other threads a chance to execute
@@ -2394,13 +2450,9 @@ SessionOpen62541::connectionStatusChanged (
                 // Deactivated by user or server shut down
                 markConnectionLoss();
                 registeredItemsNo = 0;
-                break;
-            case UA_SECURECHANNELSTATE_FRESH:
-                if (sessionState == UA_SESSIONSTATE_CREATED) {
-                    // The server has shut down
-                    if (autoConnect)
-                        autoConnector.start();
-                }
+                // The server has shut down
+                if (autoConnect)
+                    autoConnector.start();
                 break;
             case UA_SECURECHANNELSTATE_OPEN: {
                 // Connection to server has been established
@@ -2423,103 +2475,21 @@ SessionOpen62541::connectionStatusChanged (
 
             case UA_SESSIONSTATE_ACTIVATED:
             {
-                UA_ClientConfig *config = UA_Client_getConfig(client);
-                config->connectivityCheckInterval = 1000; // 1 sec
+                needsInit = true;
+                break;
+            }
 
-                std::string token;
-                auto type = config->userIdentityToken.content.decoded.type;
-                if (type == &UA_TYPES[UA_TYPES_USERNAMEIDENTITYTOKEN])
-                    token = " (username token)";
-                if (type == &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN])
-                    token = " (certificate token)";
-                std::ostringstream buf;
-                buf << "OPC UA session " << name << ": connected as '" << securityUserName << "'"
-                    << token << " with security level " << securityLevel
-                    << " (mode=" << config->securityMode
-                    << "; policy=" << securityPolicyString(config->securityPolicyUri) << ")"
-                    << std::endl;
-                errlogPrintf("%s", buf.str().c_str());
-                if (config->securityMode == UA_MESSAGESECURITYMODE_NONE) {
-                    errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
-                                 name.c_str());
-                }
-
-                // read some settings from server
-                UA_Variant value;
-                UA_StatusCode status;
-                unsigned int max;
-
-                UA_Variant_init(&value);
-
-                // max nodes per read request
-                status = UA_Client_readValueAttribute(client,
-                    UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERCAPABILITIES_OPERATIONLIMITS_MAXNODESPERREAD)
-                    , &value);
-                if (status == UA_STATUSCODE_GOOD && UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_UINT32]))
-                    MaxNodesPerRead = *static_cast<UA_UInt32*>(value.data);
-                UA_Variant_clear(&value);
-                if (MaxNodesPerRead > 0 && readNodesMax > 0)
-                    max = std::min<unsigned int>(MaxNodesPerRead, readNodesMax);
-                else
-                    max = MaxNodesPerRead + readNodesMax;
-                if (max != readNodesMax)
-                    reader.setParams(max, readTimeoutMin, readTimeoutMax);
-
-                // max nodes per write request
-                status = UA_Client_readValueAttribute(client,
-                    UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERCAPABILITIES_OPERATIONLIMITS_MAXNODESPERWRITE)
-                    , &value);
-                if (status == UA_STATUSCODE_GOOD && UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_UINT32]))
-                    MaxNodesPerWrite = *static_cast<UA_UInt32*>(value.data);
-                UA_Variant_clear(&value);
-                if (MaxNodesPerWrite > 0 && writeNodesMax > 0)
-                    max = std::min<unsigned int>(MaxNodesPerWrite, writeNodesMax);
-                else
-                    max = MaxNodesPerWrite + writeNodesMax;
-                if (max != writeNodesMax)
-                    writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
-
-                // namespaces
-                status = UA_Client_readValueAttribute(client,
-                    UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_NAMESPACEARRAY)
-                    , &value);
-                if (status == UA_STATUSCODE_GOOD && UA_Variant_hasArrayType(&value, &UA_TYPES[UA_TYPES_STRING]))
-                    updateNamespaceMap(static_cast<UA_String*>(value.data), static_cast<UA_UInt16>(value.arrayLength));
-                UA_Variant_clear(&value);
-
-                readCustomTypeDictionaries();
-                rebuildNodeIds();
-                registerNodes();
-                createAllSubscriptions();
-                if (debug) {
-                    std::cout << "Session " << name
-                              << ": triggering initial read for all "
-                              << items.size() << " items"
-                              << std::endl;
-                }
-                auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
-                unsigned int i = 0;
-                for (auto it : items) {
-                    it->setState(ConnectionStatus::initialRead);
-                    cargo[i] = std::make_shared<ReadRequest>();
-                    cargo[i]->item = it;
-                    i++;
-                }
-                // status needs to be updated before requests are being issued
-                sessionState = newSessionState;
-                reader.pushRequest(cargo, menuPriorityHIGH);
-                // Wait for initial read to finish
-                while (!reader.empty(menuPriorityHIGH)) {
-                    epicsThreadSleep(.1);
-                }
-                epicsThreadSleep(.1);
-                addAllMonitoredItems();
+            case UA_SESSIONSTATE_CLOSED:
+            case UA_SESSIONSTATE_CLOSING:
+            {
+                needsInit = false;
                 break;
             }
 
             case UA_SESSIONSTATE_CREATED: {
                 if (sessionState == UA_SESSIONSTATE_ACTIVATED)
                     errlogPrintf("OPC UA session %s: disconnected\n", name.c_str());
+                needsInit = false;
                 clearCustomTypeDictionaries();
                 break;
             }
@@ -2713,13 +2683,106 @@ SessionOpen62541::initHook (initHookState state)
 void
 SessionOpen62541::atExit (void *)
 {
+    // The EPICS database is still running at this point (Base registers the
+    // handler that stops the scan and callback threads during iocInit, i.e.
+    // before this one, and atExit handlers run in reverse order).
+    // Announce the shutdown first, so that everything the closing sessions and
+    // the still processing records produce from now on is discarded quietly.
+    announceShutdown();
     errlogPrintf("OPC UA: Disconnecting sessions\n");
     for (auto &it : sessions) {
         it.second->disconnect();
-        SessionOpen62541 *session = it.second;
-        if (session->isConnected())
-            session->disconnect();
     }
+}
+
+void
+SessionOpen62541::initializeSession ()
+{
+    if (!client) return;
+    UA_ClientConfig *config = UA_Client_getConfig(client);
+    config->connectivityCheckInterval = 1000; // 1 sec
+
+    std::string token;
+    auto type = config->userIdentityToken.content.decoded.type;
+    if (type == &UA_TYPES[UA_TYPES_USERNAMEIDENTITYTOKEN])
+        token = " (username token)";
+    if (type == &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN])
+        token = " (certificate token)";
+    std::ostringstream buf;
+    buf << "OPC UA session " << name << ": connected as '" << securityUserName << "'"
+        << token << " with security level " << securityLevel
+        << " (mode=" << config->securityMode
+        << "; policy=" << securityPolicyString(config->securityPolicyUri) << ")"
+        << std::endl;
+    errlogPrintf("%s", buf.str().c_str());
+    if (config->securityMode == UA_MESSAGESECURITYMODE_NONE) {
+        errlogPrintf("OPC UA session %s: WARNING - this session uses *** NO SECURITY ***\n",
+                        name.c_str());
+    }
+
+    // read some settings from server
+    UA_Variant value;
+    UA_StatusCode status;
+    unsigned int max;
+
+    UA_Variant_init(&value);
+
+    // max nodes per read request
+    status = UA_Client_readValueAttribute(client,
+        UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERCAPABILITIES_OPERATIONLIMITS_MAXNODESPERREAD)
+        , &value);
+    if (status == UA_STATUSCODE_GOOD && UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_UINT32]))
+        MaxNodesPerRead = *static_cast<UA_UInt32*>(value.data);
+    UA_Variant_clear(&value);
+    if (MaxNodesPerRead > 0 && readNodesMax > 0)
+        max = std::min<unsigned int>(MaxNodesPerRead, readNodesMax);
+    else
+        max = MaxNodesPerRead + readNodesMax;
+    if (max != readNodesMax)
+        reader.setParams(max, readTimeoutMin, readTimeoutMax);
+
+    // max nodes per write request
+    status = UA_Client_readValueAttribute(client,
+        UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERCAPABILITIES_OPERATIONLIMITS_MAXNODESPERWRITE)
+        , &value);
+    if (status == UA_STATUSCODE_GOOD && UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_UINT32]))
+        MaxNodesPerWrite = *static_cast<UA_UInt32*>(value.data);
+    UA_Variant_clear(&value);
+    if (MaxNodesPerWrite > 0 && writeNodesMax > 0)
+        max = std::min<unsigned int>(MaxNodesPerWrite, writeNodesMax);
+    else
+        max = MaxNodesPerWrite + writeNodesMax;
+    if (max != writeNodesMax)
+        writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
+
+    // namespaces
+    status = UA_Client_readValueAttribute(client,
+        UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_NAMESPACEARRAY)
+        , &value);
+    if (status == UA_STATUSCODE_GOOD && UA_Variant_hasArrayType(&value, &UA_TYPES[UA_TYPES_STRING]))
+        updateNamespaceMap(static_cast<UA_String*>(value.data), static_cast<UA_UInt16>(value.arrayLength));
+    UA_Variant_clear(&value);
+
+    readCustomTypeDictionaries();
+    rebuildNodeIds();
+    registerNodes();
+    createAllSubscriptions();
+    if (debug) {
+        std::cout << "Session " << name
+                    << ": triggering initial read for all "
+                    << items.size() << " items"
+                    << std::endl;
+    }
+    auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
+    unsigned int i = 0;
+    for (auto it : items) {
+        it->setState(ConnectionStatus::initialRead);
+        cargo[i] = std::make_shared<ReadRequest>();
+        cargo[i]->item = it;
+        i++;
+    }
+    reader.pushRequest(cargo, menuPriorityHIGH);
+    addAllMonitoredItems();
 }
 
 } // namespace DevOpcua

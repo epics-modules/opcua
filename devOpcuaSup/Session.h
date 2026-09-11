@@ -225,6 +225,31 @@ public:
      */
     static void saveRejected(const std::string &location = "");
 
+    /**
+     * @brief Announce that the IOC is shutting down.
+     *
+     * Called by the atExit handler before the sessions are disconnected.
+     *
+     * From this moment on, all OPC UA activity is silently discarded:
+     * no new service requests are sent, incoming data and connection
+     * events are dropped instead of being turned into record processing
+     * requests, and the reconnect timers stop reconnecting.
+     *
+     * This is necessary because the EPICS database is still running when
+     * the sessions are closed: the atExit handlers are called in reverse
+     * order of their registration, so this module's handler (registered at
+     * initHookAfterIocRunning) runs before the one that Base registers
+     * during iocInit to stop the scan and callback threads.
+     */
+    static void announceShutdown() { shuttingDown = true; }
+
+    /**
+     * @brief Return true if the IOC is shutting down.
+     *
+     * See DevOpcua::Session::announceShutdown.
+     */
+    static bool isShuttingDown() { return shuttingDown; }
+
     static const char optionUsage[]; /**< option info for the specific implementation */
 
     int debug; /**< debug verbosity level */
@@ -337,9 +362,10 @@ protected:
             , delay(delay)
         {}
         virtual ~AutoConnect() override { timer.destroy(); }
-        void start() { timer.start(*this, delay); }
+        void start() { if (!Session::isShuttingDown()) timer.start(*this, delay); }
         virtual expireStatus expire(const epicsTime &/*currentTime*/) override {
-            client.connect(false);
+            if (!Session::isShuttingDown())
+                client.connect(false);
             return expireStatus(noRestart); // client.connect() starts the timer on failure
         }
     private:
@@ -349,6 +375,7 @@ protected:
     };
 
     static epicsTimerQueueActive *queue;   /**< timer queue for session reconnects */
+    static bool shuttingDown;              /**< flag: IOC is shutting down */
 
     const std::string name;                /**< unique session name */
     AutoConnect autoConnector;             /**< reconnection timer */
