@@ -644,6 +644,12 @@ SessionOpen62541::disconnect ()
         Guard G(clientlock);
         if (client) {
             clearCustomTypeDictionaries();
+            // Delete the subscriptions while the session is still alive.
+            // Closing the session implicitly deletes them on the server, but
+            // leaves the publish requests that are queued there orphaned -
+            // the server logs an error for each of them.
+            if (isConnected())
+                deleteAllSubscriptions();
             UA_Client_disconnect(client);
             UA_Client_delete(client); // This also deletes all open62541 subscriptions
             client = nullptr;
@@ -676,6 +682,9 @@ SessionOpen62541::isConnected () const
 void
 SessionOpen62541::requestRead (ItemOpen62541 &item)
 {
+    if (isShuttingDown())
+        return;
+
     auto cargo = std::make_shared<ReadRequest>();
     cargo->item = &item;
     reader.pushRequest(cargo, item.recConnector->getRecordPriority());
@@ -690,7 +699,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
         if (c->initialRead)
             initialReads++;
 
-    if (!isConnected()) {
+    if (!isConnected() || isShuttingDown()) {
         if (initialReads) {
             Guard G(clientlock);
             initialReadsDone(initialReads);
@@ -769,6 +778,9 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
 void
 SessionOpen62541::requestWrite (ItemOpen62541 &item)
 {
+    if (isShuttingDown())
+        return;
+
     auto cargo = std::make_shared<WriteRequest>();
     cargo->item = &item;
     item.copyAndClearOutgoingData(cargo->wvalue);
@@ -784,7 +796,7 @@ SessionOpen62541::requestWrite (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<WriteRequest>> &batch)
 {
-    if (!isConnected())
+    if (!isConnected() || isShuttingDown())
         return;
 
     UA_StatusCode status;
@@ -848,6 +860,14 @@ SessionOpen62541::createAllSubscriptions ()
 {
     for (auto &it : subscriptions) {
         it.second->create();
+    }
+}
+
+void
+SessionOpen62541::deleteAllSubscriptions ()
+{
+    for (auto &it : subscriptions) {
+        it.second->clear();
     }
 }
 
@@ -1398,9 +1418,13 @@ SessionOpen62541::markConnectionLoss()
 {
     reader.clear();
     writer.clear();
+    // No point in telling the records about the connection loss while the IOC
+    // is shutting down - they will not be processed anymore.
+    const bool notifyRecords = !isShuttingDown();
     for (auto it : items) {
         it->setState(ConnectionStatus::down);
-        it->setIncomingEvent(ProcessReason::connectionLoss);
+        if (notifyRecords)
+            it->setIncomingEvent(ProcessReason::connectionLoss);
     }
 }
 
@@ -2732,6 +2756,12 @@ SessionOpen62541::initHook (initHookState state)
 void
 SessionOpen62541::atExit (void *)
 {
+    // The EPICS database is still running at this point (Base registers the
+    // handler that stops the scan and callback threads during iocInit, i.e.
+    // before this one, and atExit handlers run in reverse order).
+    // Announce the shutdown first, so that everything the closing sessions and
+    // the still processing records produce from now on is discarded quietly.
+    announceShutdown();
     errlogPrintf("OPC UA: Disconnecting sessions\n");
     // Stop all reconnects first (waits for running connect attempts,
     // which run the connection handler on the reconnect timer thread)

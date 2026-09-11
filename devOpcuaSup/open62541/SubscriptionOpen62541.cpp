@@ -216,8 +216,17 @@ SubscriptionOpen62541::addMonitoredItems ()
 void
 SubscriptionOpen62541::clear ()
 {
-    if(session.client)
-        UA_Client_Subscriptions_deleteSingle(session.client, subscriptionSettings.subscriptionId);
+    if (session.client) {
+        UA_StatusCode status = UA_Client_Subscriptions_deleteSingle(
+            session.client, subscriptionSettings.subscriptionId);
+        if (debug)
+            std::cerr << "Subscription " << name
+                      << "@" << session.getName()
+                      << ": (clear) deleting subscription " << subscriptionSettings.subscriptionId
+                      << " (" << UA_StatusCode_name(status) << ")"
+                      << std::endl;
+    }
+    subscriptionSettings.subscriptionId = 0;
 }
 
 void

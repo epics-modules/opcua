@@ -233,6 +233,16 @@ public:
     void createAllSubscriptions();
 
     /**
+     * @brief Delete all subscriptions related to this session on the server.
+     *
+     * Must be called (with the session still active) before the session is
+     * closed: the server would otherwise be left with publish requests of a
+     * subscription whose session has just gone away, and log an error for
+     * each of them.
+     */
+    void deleteAllSubscriptions();
+
+    /**
      * @brief Add all monitored items to subscriptions related to this session.
      */
     void addAllMonitoredItems();
