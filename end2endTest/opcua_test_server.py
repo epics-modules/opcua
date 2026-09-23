@@ -13,11 +13,11 @@ RAMP_UPDATE_PERIOD_S = 1
 
 
 class OpcuaTestServer(Server):
-    def __init__(
+    def __init__( # noqa: D107
         self,
         endpoint: str = "opc.tcp://0.0.0.0:4840",
         server_name: str = "EPICS OPCUA asyncua test server",
-    ) -> None:
+    ) -> None: 
         self.fixed_time = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         self.loop = None
@@ -31,7 +31,7 @@ class OpcuaTestServer(Server):
         self.set_endpoint(endpoint)
         self.set_server_name(server_name)
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> Self: # noqa: D105
         self.ready.clear()
         self.exception = None
 
@@ -56,7 +56,7 @@ class OpcuaTestServer(Server):
         return self
 
 
-    def __exit__(
+    def __exit__( # noqa: D105
         self,
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
