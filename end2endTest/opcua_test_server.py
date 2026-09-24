@@ -17,7 +17,7 @@ class OpcuaTestServer(Server):
         self,
         endpoint: str = "opc.tcp://0.0.0.0:4840",
         server_name: str = "EPICS OPCUA asyncua test server",
-    ) -> None: 
+    ) -> None:
         self.fixed_time = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         self.loop = None

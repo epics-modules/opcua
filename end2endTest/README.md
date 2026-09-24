@@ -1,6 +1,7 @@
+<!-- markdownlint-disable MD013 -->
 # End-to-End Test Setup - opcua
 
-This directory contains the end-to-end test suite for the EPICS OPC UA module.
+This directory contains the end-to-end test suite for the EPICS OPCUA module.
 
 ## Prerequisites
 
@@ -14,7 +15,7 @@ export EPICS_HOST_ARCH=$($EPICS_BASE/startup/EpicsHostArch)
 Required Python packages:
 
 ```shell
-python3 -m pip install pytest asyncua p4p run-iocsh
+python3 -m pip install pytest asyncua pyepics run-iocsh
 ```
 
 Build the standalone test IOC:
@@ -45,8 +46,6 @@ The tests cover:
 
 * Connection, disconnection and reconnection
 * Reading and writing supported OPC UA datatypes
-* PVAccess access using `p4p`
-* Monitoring behaviour
 * Arrays
 * OPC UA timestamps
 * BINI read, write and ignore behaviour
@@ -54,7 +53,6 @@ The tests cover:
 * Performance and repeated access
 
 `run-iocsh` is used to start and stop the standalone IOC.
-
 `asyncua` is used both for the test server and for direct inspection of server-side values.
 
 ## Running the Tests
@@ -66,29 +64,10 @@ make
 make -C end2endTest/ioc
 pytest -v end2endTest
 ```
-
-To display IOC and server output:
-
-```shell
-pytest -v -s end2endTest
-```
-
-Run a subset of tests:
-
-```shell
-pytest -v end2endTest -k TestConnectionTests
-```
-
-Run an individual test:
-
-```shell
-pytest -v end2endTest -k test_stop_and_restart_server
-```
-
 ## References
 
 * [asyncua](https://github.com/FreeOpcUa/opcua-asyncio)
 * [pytest](https://docs.pytest.org/en/stable/)
 * [run-iocsh](https://e3.pages.ess.eu/run-iocsh/)
-* [p4p](https://github.com/epics-base/p4p)
+
 

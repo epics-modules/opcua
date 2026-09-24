@@ -19,7 +19,7 @@ def test_inst() -> Generator[tuple[OpcuaTestServer, IOC]]:
     REPO_ROOT = Path(__file__).resolve().parents[1]
     host_arch = os.environ["EPICS_HOST_ARCH"]
     OPCUA_TEST_IOC = REPO_ROOT / "bin" / host_arch / "opcuaTestIoc"
-    
+
     with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc:
         ioc.wait_for_output("OPC UA session")
         sleep(5)  # Allow for initial record processing
@@ -100,10 +100,9 @@ class TestVariable:
         # Variable on the OPCUA server increments by 1 each second
         pv_name = "TstRamp"
         capture_len = 5
-        capture_incr = 5
 
         prev = caget(pv_name)
-        for i in range(capture_len):
+        for _ in range(capture_len):
             now = wait_for_change(pv_name, prev)
             assert now - prev == 1
             prev = now
@@ -179,7 +178,7 @@ class TestVariable:
         assert caget("VarCheckInt16OutNoMonitor") == -5
 
     def test_bini(self, test_inst) -> None:
-        server, ioc = test_inst
+        server, _ = test_inst
         assert caget("VarCheckInt16NoBini") == 0
         assert server.read_server_value(f"ns={server.idx};s=Sim.VarCheckInt16NoBini") == 112
         assert server.read_server_value(f"ns={server.idx};s=Sim.VarCheckInt16WriteBini") == 7
