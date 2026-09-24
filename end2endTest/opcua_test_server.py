@@ -298,6 +298,13 @@ class OpcuaTestServer(Server):
                 False,
                 False,
             ),
+            (
+                "Sim.LastPVLiveCheck",
+                sim,
+                ua.Variant(42, ua.VariantType.UInt32),
+                True,
+                False,
+            ),
         ]
 
         for name, parent, value, writable, fixed_time in variable_nodes:

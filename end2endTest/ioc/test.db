@@ -205,3 +205,9 @@ record(bi, "VarNotBoolean") {
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarFloat")
     field(SCAN, "I/O Intr")
 }
+
+record(ai, "LastPVLiveCheck") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.LastPVLiveCheck")
+    field(SCAN, "I/O Intr")
+}

@@ -22,7 +22,7 @@ def test_inst() -> Generator[tuple[OpcuaTestServer, IOC]]:
 
     with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc:
         ioc.wait_for_output("OPC UA session")
-        sleep(5)  # Allow for initial record processing
+        wait_for_value("LastPVLiveCheck", 42)
         yield server, ioc
 
 def wait_for_change(pv_name, previous, timeout=2.0):
