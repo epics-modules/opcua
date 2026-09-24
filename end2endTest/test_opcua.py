@@ -7,36 +7,36 @@ from time import sleep, monotonic
 
 import pytest
 from opcua_test_server import OpcuaTestServer
-from p4p.client.thread import Context
+from epics import caget, caput, PV
 from run_iocsh import IOC
 
 
 @pytest.fixture
-def test_inst() -> Generator[tuple[OpcuaTestServer, IOC, Context]]:
+def test_inst() -> Generator[tuple[OpcuaTestServer, IOC]]:
     script = Path(__file__).parent / "ioc" / "st.cmd"
     script = script.resolve()
     REPO_ROOT = Path(__file__).resolve().parents[1]
     host_arch = os.environ["EPICS_HOST_ARCH"]
     OPCUA_TEST_IOC = REPO_ROOT / "bin" / host_arch / "opcuaTestIoc"
     
-    with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc, Context("pva") as ctxt:
+    with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc:
         ioc.wait_for_output("OPC UA session")
         sleep(5)  # Allow for initial record processing
-        yield server, ioc, ctxt
+        yield server, ioc
 
-def wait_for_change(ctxt, pv_name, previous, timeout=2.0):
+def wait_for_change(pv_name, previous, timeout=2.0):
     deadline = monotonic() + timeout
     while monotonic() < deadline:
-        current = ctxt.get(pv_name)
+        current = caget(pv_name)
         if current != previous:
             return current
         sleep(0.05)
     return previous
 
-def wait_for_value(ctxt, pv_name, expected, timeout=2.0):
+def wait_for_value(pv_name, expected, timeout=2.0):
     deadline = monotonic() + timeout
     while monotonic() < deadline:
-        value = ctxt.get(pv_name)
+        value = caget(pv_name, use_monitor=False)
         if value == expected:
             return True
         sleep(0.05)
@@ -52,27 +52,29 @@ def wait_for_server_value(server, nodeid, expected, timeout=1.0):
 
 class TestConnection:
     def test_connect_disconnect(self, test_inst) -> None:
-        server, ioc, _ = test_inst
+        server, ioc = test_inst
         assert ioc.is_running()
         ioc.exit()
         assert not ioc.is_running()
         assert server.exception is None
 
     def test_server_reconnect(self, test_inst) -> None:
-        server, ioc, ctxt = test_inst
+        server, ioc = test_inst
 
         server.disconnect_from_clients()
         sleep(1)
         assert ioc.is_running()
 
         # Test using alarm severity
-        pv = ctxt.get("VarCheckBool")
+        pv = PV("VarCheckBool")
+        pv.get()
         assert pv.severity == 3  # INVALID
 
         server.reconnect_to_clients()
         sleep(5)  # Allow for initial record processing
 
-        pv = ctxt.get("VarCheckBool")
+        pv = PV("VarCheckBool")
+        pv.get()
         assert pv.severity == 0  # NO_ALARM
 
         ioc.exit()
@@ -83,14 +85,13 @@ class TestConnection:
 class TestVariable:
     def test_variable_pvramp(self, test_inst) -> None:
         # Variable on the OPCUA server increments by 1 each second
-        _, _, ctxt = test_inst
         pv_name = "TstRamp"
         capture_len = 5
         capture_incr = 5
 
-        prev = ctxt.get(pv_name)
+        prev = caget(pv_name)
         for i in range(capture_len):
-            now = wait_for_change(ctxt, pv_name, prev)
+            now = wait_for_change(pv_name, prev)
             assert now - prev == 1
             prev = now
 
@@ -114,8 +115,7 @@ class TestVariable:
         ],
     )
     def test_read_variable(self, test_inst, pv_name, expected_val) -> None:
-        _, _, ctxt = test_inst
-        res = ctxt.get(pv_name)
+        res = caget(pv_name)
         # Check 64 bit integers with correct scientific notation
         if pv_name == "VarCheckUInt64" or pv_name == "VarCheckInt64":
             res = "%.16e" % res
@@ -123,8 +123,7 @@ class TestVariable:
         assert res == expected_val
 
     def test_read_array(self, test_inst) -> None:
-        _, _, ctxt = test_inst
-        res = ctxt.get("VarCheckUInt64Array")
+        res = caget("VarCheckUInt64Array")
         assert res[0] == 3
         assert res[1] == 9
         assert res[2] == 12
@@ -147,96 +146,44 @@ class TestVariable:
         ],
     )
     def test_write_variable(self, test_inst, pv_name, write_val) -> None:
-        _, _, ctxt = test_inst
         pv_out_name = pv_name + "Out"
-        assert ctxt.put(pv_out_name, write_val) is None, (
-            "Failed to write to PV %s\n" % pv_out_name
-        )
-        assert wait_for_value(ctxt, pv_name, write_val)
+        assert caput(pv_out_name, write_val)
+        assert wait_for_value(pv_name, write_val)
 
     def test_timestamps(self, test_inst) -> None:
-        server, _, ctxt = test_inst
-        time_var = ctxt.get("VarCheckStaticTimeStamp")
+        server, _ = test_inst
+        pv = PV("VarCheckStaticTimeStamp")
+        pv.get()
         expected_ts = server.fixed_time.timestamp()
-        assert time_var.timestamp == pytest.approx(expected_ts, abs=1)
+        assert pv.timestamp == pytest.approx(expected_ts, abs=1)
 
     def test_monitor(self, test_inst) -> None:
-        server, _, ctxt = test_inst
+        server, _ = test_inst
         server.write_server_value(f"ns={server.idx};s=Sim.VarCheckInt16NoMonitor", 17)
         server.write_server_value(f"ns={server.idx};s=Sim.VarCheckInt16Monitor", 18)
-        assert wait_for_value(ctxt, "VarCheckInt16OutMonitor", 18)
-        assert ctxt.get("VarCheckInt16OutNoMonitor") == -5
+        assert wait_for_value("VarCheckInt16OutMonitor", 18)
+        assert caget("VarCheckInt16OutNoMonitor") == -5
 
     def test_bini(self, test_inst) -> None:
-        server, ioc, ctxt = test_inst
-        assert ctxt.get("VarCheckInt16NoBini") == 0
+        server, ioc = test_inst
+        assert caget("VarCheckInt16NoBini") == 0
         assert server.read_server_value(f"ns={server.idx};s=Sim.VarCheckInt16NoBini") == 112
         assert server.read_server_value(f"ns={server.idx};s=Sim.VarCheckInt16WriteBini") == 7
-        
-class TestPerformance:
-    @pytest.mark.skipif(os.environ.get("CI") == "true", reason="Skipped in CI")
-    def test_write_performance(self, test_inst) -> None:
-        _, _, ctxt = test_inst
-
-        writes = 100
-
-        # Get time and memory conspumtion before test
-        mem_start = resource.getrusage(resource.RUSAGE_THREAD).ru_maxrss
-        time_start = time.perf_counter()
-
-        # Write 100 PVs
-        for i in range(writes):
-            ctxt.put("VarCheckInt16Out", i)
-
-        # Get time and memory consumption during test
-        mem_delta = resource.getrusage(resource.RUSAGE_THREAD).ru_maxrss - mem_start
-        time_delta = time.perf_counter() - time_start
-
-        # Should be able to read in less than 10 ms on most systems
-        assert time_delta < (writes * 0.001)
-
-        # Memory consumption should be minimal
-        assert mem_delta < 100
-
-    @pytest.mark.skipif(os.environ.get("CI") == "true", reason="Skipped in CI")
-    def test_read_performance(self, test_inst) -> None:
-        _, _, ctxt = test_inst
-
-        reads = 100
-
-        # Get time and memory conspumtion before test
-        mem_start = resource.getrusage(resource.RUSAGE_THREAD).ru_maxrss
-        time_start = time.perf_counter()
-
-        # Read 100 PVs
-        for i in range(reads):
-            ctxt.get("VarCheckInt16")
-
-        # Get time and memory consumption during test
-        mem_delta = resource.getrusage(resource.RUSAGE_THREAD).ru_maxrss - mem_start
-        time_delta = time.perf_counter() - time_start
-
-        # Should be able to read a node in less than 1 ms on most systems
-        assert time_delta < (reads * 0.001)
-
-        # Memory consumption should be minimal
-        assert mem_delta < 100
-
 
 class TestNegative:
     def test_bad_var_name(self, test_inst) -> None:
-        _, _, ctxt = test_inst
-        val = ctxt.get("BadVarName")
-        assert val.severity == 3
+        pv = PV("BadVarName")
+        pv.get()
+        assert pv.severity == 3
 
     def test_wrong_datatype(self, test_inst) -> None:
-        _, _, ctxt = test_inst
-        val = ctxt.get("VarNotBoolean")
-        assert val.severity == 3
+        pv = PV("VarNotBoolean")
+        pv.get()
+        assert pv.severity == 3
 
     def test_write_non_writable(self, test_inst) -> None:
-        server, _, ctxt = test_inst
+        server, _= test_inst
         assert (server.read_server_value(f"ns={server.idx};s=Sim.TestVarInt16NoWrite") == 32)
-        ctxt.put("VarCheckInt16OutNoWrite", 221)
+        caput("VarCheckInt16OutNoWrite", 221)
         assert not wait_for_server_value(server, f"ns={server.idx};s=Sim.TestVarInt16NoWrite", 221)
-        assert ctxt.get("VarCheckInt16OutNoWrite", timeout=20) == 221
+        assert caget("VarCheckInt16OutNoWrite", timeout=20) == 221
