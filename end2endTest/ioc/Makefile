@@ -6,6 +6,11 @@ ifdef T_A
 include $(TOP)/cfg/CONFIG_OPCUA
 endif
 
+ifdef PVA2PVA
+  USR_DBDFLAGS += -I$(PVA2PVA)/dbd
+  USR_LDFLAGS += -L$(PVA2PVA)/lib/$(T_A)
+endif
+
 PROD_IOC += opcuaTestIoc
 
 DBD += opcuaTestIoc.dbd
