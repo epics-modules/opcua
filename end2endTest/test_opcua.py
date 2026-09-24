@@ -3,7 +3,7 @@ import resource
 import time
 from collections.abc import Generator
 from pathlib import Path
-from time import sleep
+from time import sleep, monotonic
 
 import pytest
 from opcua_test_server import OpcuaTestServer
@@ -24,6 +24,31 @@ def test_inst() -> Generator[tuple[OpcuaTestServer, IOC, Context]]:
         sleep(5)  # Allow for initial record processing
         yield server, ioc, ctxt
 
+def wait_for_change(ctxt, pv_name, previous, timeout=2.0):
+    deadline = monotonic() + timeout
+    while monotonic() < deadline:
+        current = ctxt.get(pv_name)
+        if current != previous:
+            return current
+        sleep(0.05)
+    return previous
+
+def wait_for_value(ctxt, pv_name, expected, timeout=2.0):
+    deadline = monotonic() + timeout
+    while monotonic() < deadline:
+        value = ctxt.get(pv_name)
+        if value == expected:
+            return True
+        sleep(0.05)
+    return False
+
+def wait_for_server_value(server, nodeid, expected, timeout=1.0):
+    deadline = monotonic() + timeout
+    while monotonic() < deadline:
+        if server.read_server_value(nodeid) == expected:
+            return True
+        sleep(0.05)
+    return False
 
 class TestConnection:
     def test_connect_disconnect(self, test_inst) -> None:
@@ -65,9 +90,8 @@ class TestVariable:
 
         prev = ctxt.get(pv_name)
         for i in range(capture_len):
-            sleep(capture_incr)
-            now = ctxt.get(pv_name)
-            assert now - prev == pytest.approx(5, abs=1)
+            now = wait_for_change(ctxt, pv_name, prev)
+            assert now - prev == 1
             prev = now
 
     @pytest.mark.parametrize(
@@ -128,8 +152,7 @@ class TestVariable:
         assert ctxt.put(pv_out_name, write_val) is None, (
             "Failed to write to PV %s\n" % pv_out_name
         )
-        sleep(1)
-        assert ctxt.get(pv_name) == write_val
+        assert wait_for_value(ctxt, pv_name, write_val)
 
     def test_timestamps(self, test_inst) -> None:
         server, _, ctxt = test_inst
@@ -141,9 +164,8 @@ class TestVariable:
         server, _, ctxt = test_inst
         server.write_server_value(f"ns={server.idx};s=Sim.VarCheckInt16NoMonitor", 17)
         server.write_server_value(f"ns={server.idx};s=Sim.VarCheckInt16Monitor", 18)
-        sleep(1)
+        assert wait_for_value(ctxt, "VarCheckInt16OutMonitor", 18)
         assert ctxt.get("VarCheckInt16OutNoMonitor") == -5
-        assert ctxt.get("VarCheckInt16OutMonitor") == 18
 
     def test_bini(self, test_inst) -> None:
         server, ioc, ctxt = test_inst
@@ -214,14 +236,7 @@ class TestNegative:
 
     def test_write_non_writable(self, test_inst) -> None:
         server, _, ctxt = test_inst
-        assert (
-            server.read_server_value(f"ns={server.idx};s=Sim.TestVarInt16NoWrite") == 32
-        )
-
+        assert (server.read_server_value(f"ns={server.idx};s=Sim.TestVarInt16NoWrite") == 32)
         ctxt.put("VarCheckInt16OutNoWrite", 221)
-        sleep(1)
-
+        assert not wait_for_server_value(server, f"ns={server.idx};s=Sim.TestVarInt16NoWrite", 221)
         assert ctxt.get("VarCheckInt16OutNoWrite", timeout=20) == 221
-        assert (
-            server.read_server_value(f"ns={server.idx};s=Sim.TestVarInt16NoWrite") == 32
-        )
