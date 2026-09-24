@@ -1,6 +1,7 @@
 import os
 import resource
 import time
+import re
 from collections.abc import Generator
 from pathlib import Path
 from time import sleep, monotonic
@@ -49,6 +50,18 @@ def wait_for_server_value(server, nodeid, expected, timeout=1.0):
             return True
         sleep(0.05)
     return False
+
+def base_supports_int64() -> bool:
+    version_h = Path(os.environ["EPICS_BASE"]) / "include" / "epicsVersion.h"
+    text = version_h.read_text()
+
+    major = int(re.search(r"#define EPICS_VERSION\s+(\d+)", text).group(1))
+    revision = int(re.search(r"#define EPICS_REVISION\s+(\d+)", text).group(1))
+    modification = int(
+        re.search(r"#define EPICS_MODIFICATION\s+(\d+)", text).group(1)
+    )
+
+    return (major, revision, modification) >= (3, 16, 1)
 
 class TestConnection:
     def test_connect_disconnect(self, test_inst) -> None:
@@ -122,6 +135,7 @@ class TestVariable:
         # Compare
         assert res == expected_val
 
+    @pytest.mark.skipif(not base_supports_int64(), reason="64-bit waveform types require EPICS Base >= 3.16.1")
     def test_read_array(self, test_inst) -> None:
         res = caget("VarCheckUInt64Array")
         assert res[0] == 3
