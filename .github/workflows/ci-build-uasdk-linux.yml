@@ -119,14 +119,14 @@ jobs:
     - name: Collect and show test results
       run: python .ci/cue.py test-results
     - uses: actions/setup-python@v5
-      if: startsWith(matrix.base, '7') || startsWith(matrix.base, 'R7')
+      if: matrix.base == 'R7.0.4' || matrix.base == '7.0'
       with:
         python-version: '3.11'
     - name: Install end2end test dependencies
-      if: startsWith(matrix.base, '7') || startsWith(matrix.base, 'R7')
+      if: matrix.base == 'R7.0.4' || matrix.base == '7.0'
       run: python -m pip install pytest asyncua p4p run-iocsh
     - name: Run end2end tests
-      if: startsWith(matrix.base, '7') || startsWith(matrix.base, 'R7')
+      if: matrix.base == 'R7.0.4' || matrix.base == '7.0'
       run: |
         python .ci/cue.py exec make -C end2endTest/ioc
         python .ci/cue.py exec pytest -v end2endTest/test_opcua.py
