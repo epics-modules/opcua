@@ -1,4 +1,6 @@
 <!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD043 -->
+
 # End-to-End Test Setup - opcua
 
 This directory contains the end-to-end test suite for the EPICS OPCUA module.
@@ -11,6 +13,8 @@ The OPC UA module must be built and the EPICS environment configured:
 export EPICS_BASE=/path/to/epics/base
 export EPICS_HOST_ARCH=$($EPICS_BASE/startup/EpicsHostArch)
 ```
+
+Required Python version >= 3.11.
 
 Required Python packages:
 
@@ -64,6 +68,7 @@ make
 make -C end2endTest/ioc
 pytest -v end2endTest
 ```
+
 ## References
 
 * [asyncua](https://github.com/FreeOpcUa/opcua-asyncio)
