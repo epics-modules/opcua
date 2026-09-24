@@ -13,12 +13,13 @@ from run_iocsh import IOC
 
 
 @pytest.fixture
-def test_inst() -> Generator[tuple[OpcuaTestServer, IOC]]:
+def test_inst(monkeypatch) -> Generator[tuple[OpcuaTestServer, IOC]]:
     script = Path(__file__).parent / "ioc" / "st.cmd"
     script = script.resolve()
     REPO_ROOT = Path(__file__).resolve().parents[1]
     host_arch = os.environ["EPICS_HOST_ARCH"]
     OPCUA_TEST_IOC = REPO_ROOT / "bin" / host_arch / "opcuaTestIoc"
+    monkeypatch.setenv("OPCUA_TEST_TOP", str(REPO_ROOT))
 
     with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc:
         ioc.wait_for_output("OPC UA session")

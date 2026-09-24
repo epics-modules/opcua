@@ -1,3 +1,5 @@
+cd "$(OPCUA_TEST_TOP)"
+
 # Load and register IOC support
 dbLoadDatabase("dbd/opcuaTestIoc.dbd")
 opcuaTestIoc_registerRecordDeviceDriver(pdbbase)
