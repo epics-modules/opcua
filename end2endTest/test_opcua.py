@@ -76,20 +76,18 @@ class TestConnection:
         server, ioc = test_inst
 
         server.disconnect_from_clients()
-        sleep(1)
         assert ioc.is_running()
 
-        # Test using alarm severity
-        pv = PV("VarCheckBool")
-        pv.get()
-        assert pv.severity == 3  # INVALID
+        # Test using alarm severity.
+        # Connection loss detection time depends on the client library
+        # (UA SDK only reports it after its watchdog times out), so poll.
+        assert wait_for_value("VarCheckBool.SEVR", 3, timeout=20.0)  # INVALID
+        assert ioc.is_running()
 
         server.reconnect_to_clients()
-        sleep(5)  # Allow for initial record processing
 
-        pv = PV("VarCheckBool")
-        pv.get()
-        assert pv.severity == 0  # NO_ALARM
+        # Allow for reconnect and initial record processing
+        assert wait_for_value("VarCheckBool.SEVR", 0, timeout=20.0)  # NO_ALARM
 
         ioc.exit()
         assert not ioc.is_running()
