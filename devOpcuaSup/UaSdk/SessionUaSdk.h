@@ -25,6 +25,11 @@
 #include <uasession.h>
 #include <uaenumdefinition.h>
 
+// Security needs the SDK to be built with OpenSSL PKI support
+#if defined(HAS_SECURITY) && !OPCUA_SUPPORT_PKI_OPENSSL
+#  error "UA SDK built without OpenSSL PKI support - set UASDK_USE_CRYPTO = NO in CONFIG_SITE.local or use an SDK built with crypto"
+#endif
+
 #include <epicsString.h>
 #include <epicsMutex.h>
 #include <epicsTypes.h>
