@@ -198,8 +198,10 @@ record(bi, "VarNotBoolean") {
     field(SCAN, "I/O Intr")
 }
 
-record(ai, "LastPVLiveCheck") {
+# Readiness check for the test fixture:
+# bini=ignore skips the initial read, so the value only arrives
+# through the monitored item, i.e. once the subscription is delivering
+record(ao, "LastPVLiveCheck") {
     field(DTYP, "OPCUA")
-    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.LastPVLiveCheck")
-    field(SCAN, "I/O Intr")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.LastPVLiveCheck bini=ignore monitor=y")
 }
