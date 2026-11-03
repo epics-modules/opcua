@@ -28,7 +28,7 @@ env:
   BASE_HOOK: ".ci-local/base.patch"
   BASE_RECURSIVE: NO
   encrypted_178ee45b7f75_pass: ${{ secrets.encrypted_178ee45b7f75_pass }}
-  
+
 jobs:
   build-linux:
     name: ${{ matrix.name }}
@@ -118,7 +118,7 @@ jobs:
       run: python .ci/cue.py test
     - name: Collect and show test results
       run: python .ci/cue.py test-results
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v7
       with:
         python-version: '3.11'
     - name: Build and install end2end test dependencies
