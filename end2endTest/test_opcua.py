@@ -1,5 +1,8 @@
 import os
 import resource
+import shutil
+import subprocess
+import threading
 import time
 import re
 from collections.abc import Generator
@@ -12,6 +15,51 @@ from epics import caget, caput, PV
 from run_iocsh import IOC
 
 
+def dump_threads(pid: int) -> None:
+    """Print backtraces of all threads of a (hanging) process using gdb."""
+    gdb = shutil.which("gdb")
+    if gdb is None:
+        print(f"=== cannot dump threads of IOC (pid {pid}): gdb not found")
+        return
+    cmd = [gdb, "-p", str(pid), "-batch", "-nx",
+           "-ex", "set pagination off", "-ex", "thread apply all bt"]
+    # Attaching to a non-child process needs privileges (ptrace_scope)
+    attempts = [cmd]
+    if os.geteuid() != 0 and shutil.which("sudo"):
+        attempts.insert(0, ["sudo", "-n", *cmd])
+    res = None
+    for attempt in attempts:
+        try:
+            res = subprocess.run(attempt, capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            print(f"=== thread dump with '{attempt[0]}' failed: {exc}")
+            continue
+        if "Thread" in res.stdout:
+            print(f"=== IOC (pid {pid}) is hanging, backtraces of all threads:")
+            print(res.stdout)
+            return
+    print(f"=== cannot dump threads of IOC (pid {pid}):\n{res.stderr if res else ''}")
+
+
+class DiagIOC(IOC):
+    """IOC that dumps its threads if it does not exit in time."""
+
+    def exit(self) -> None:
+        watchdog = None
+        if self.is_running() and self.exit_timeout:
+            # Dump before run-iocsh kills the IOC at exit_timeout
+            watchdog = threading.Timer(max(self.exit_timeout - 4.0, 1.0),
+                                       lambda pid=self.proc.pid:
+                                       self.is_running() and dump_threads(pid))
+            watchdog.start()
+        try:
+            super().exit()
+        finally:
+            if watchdog is not None:
+                watchdog.cancel()
+                watchdog.join()
+
+
 @pytest.fixture
 def test_inst(monkeypatch) -> Generator[tuple[OpcuaTestServer, IOC]]:
     script = Path(__file__).parent / "ioc" / "st.cmd"
@@ -22,14 +70,22 @@ def test_inst(monkeypatch) -> Generator[tuple[OpcuaTestServer, IOC]]:
     monkeypatch.setenv("OPCUA_TEST_TOP", str(REPO_ROOT))
     # Comment out loading the 64-bit array records on Base < 3.16.1
     monkeypatch.setenv("NO_INT64", "" if base_supports_int64() else "#")
+    # Session debug output (only shown for failing tests)
+    monkeypatch.setenv("OPCUA_DEBUG", os.environ.get("OPCUA_DEBUG", "1"))
 
-    with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc:
-        ioc.wait_for_output("OPC UA session")
-        # LastPVLiveCheck only gets its value through the subscription (bini=ignore),
-        # so this also waits for the monitored items to be established
-        assert wait_for_value("LastPVLiveCheck", 42, timeout=20.0), \
-            "IOC not ready: no subscription update for LastPVLiveCheck"
-        yield server, ioc
+    ioc = DiagIOC(str(script), executable=str(OPCUA_TEST_IOC))
+    try:
+        with OpcuaTestServer() as server, ioc:
+            ioc.wait_for_output("OPC UA session")
+            # LastPVLiveCheck only gets its value through the subscription (bini=ignore),
+            # so this also waits for the monitored items to be established
+            assert wait_for_value("LastPVLiveCheck", 42, timeout=20.0), \
+                "IOC not ready: no subscription update for LastPVLiveCheck"
+            yield server, ioc
+    finally:
+        # pytest only shows this for failing tests
+        print("=== IOC output:")
+        print(ioc.output)
 
 def wait_for_change(pv_name, previous, timeout=2.0):
     deadline = monotonic() + timeout
