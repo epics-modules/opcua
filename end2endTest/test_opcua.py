@@ -25,7 +25,10 @@ def test_inst(monkeypatch) -> Generator[tuple[OpcuaTestServer, IOC]]:
 
     with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc:
         ioc.wait_for_output("OPC UA session")
-        wait_for_value("LastPVLiveCheck", 42)
+        # LastPVLiveCheck only gets its value through the subscription (bini=ignore),
+        # so this also waits for the monitored items to be established
+        assert wait_for_value("LastPVLiveCheck", 42, timeout=20.0), \
+            "IOC not ready: no subscription update for LastPVLiveCheck"
         yield server, ioc
 
 def wait_for_change(pv_name, previous, timeout=2.0):
