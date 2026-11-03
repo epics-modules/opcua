@@ -233,6 +233,24 @@ public:
     void addAllMonitoredItems();
 
     /**
+     * @brief Add the monitored items once all initial reads are done.
+     *
+     * Called by the worker thread (holding clientlock) between iterations.
+     * After a (re)connect, the monitored items must only be created after
+     * the initial read of all items has completed.
+     */
+    void addMonitoredItemsAfterInitialRead();
+
+    /**
+     * @brief Account for completed (or failed) initial reads.
+     *
+     * Caller must hold clientlock.
+     *
+     * @param n  number of initial reads that are done
+     */
+    void initialReadsDone(unsigned int n);
+
+    /**
      * @brief Print configuration and status of all sessions on stdout.
      *
      * The verbosity level controls the amount of information:
@@ -418,6 +436,8 @@ private:
     int transactionId;                                            /**< next transaction id */
     /** itemOpen62541 vectors of outstanding read or write operations, indexed by transaction id */
     std::map<UA_UInt32, std::unique_ptr<std::vector<ItemOpen62541 *>>> outstandingOps;
+    /** number of initial reads in outstanding read operations, indexed by transaction id */
+    std::map<UA_UInt32, unsigned int> initialReadOps;
 
     RequestQueueBatcher<WriteRequest> writer;                     /**< batcher for write requests */
     unsigned int writeNodesMax;                                   /**< max number of nodes per write request */
@@ -438,6 +458,8 @@ private:
     unsigned int MaxNodesPerRead;                                 /**< server max number of nodes per write request */
     unsigned int MaxNodesPerWrite;                                /**< server max number of nodes per write request */
     epicsThread *workerThread;                                    /**< Asynchronous worker thread */
+    unsigned int initialReadsPending;                             /**< initial reads not done yet (clientlock) */
+    bool monitoredItemsPending;                                   /**< monitored items to be added (clientlock) */
 
 #ifdef HAS_XMLPARSER
     /** open62541 type dictionary handling */

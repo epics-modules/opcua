@@ -298,6 +298,7 @@ struct WriteRequest {
 // Cargo structure and batcher for read requests
 struct ReadRequest {
     ItemOpen62541 *item;
+    bool initialRead = false;  // part of the initial read after (re)connect
 };
 
 static
@@ -345,6 +346,8 @@ SessionOpen62541::SessionOpen62541 (const std::string &name,
     , sessionState(UA_SESSIONSTATE_CLOSED)
     , connectStatus(UA_STATUSCODE_BADINVALIDSTATE)
     , workerThread(nullptr)
+    , initialReadsPending(0)
+    , monitoredItemsPending(false)
 {
     sessions.insert({name, this});
     epicsThreadOnce(&session_open62541_ihooks_once, &session_open62541_ihooks_register, nullptr);
@@ -406,6 +409,7 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     } else if (name == "debug") {
         unsigned long ul = std::strtoul(value.c_str(), nullptr, 0);
         debug = ul;
+        Guard G(clientlock);
         UA_ClientConfig *config = UA_Client_getConfig(client);
         if (config) {
             // Loglevels:  0:trace, 1:debug, 2:info, 3:warning, 4:error, 5:fatal (and higher)
@@ -490,8 +494,16 @@ SessionOpen62541::connect (bool manual)
         return 0;
     }
 
+    // Do a proper disconnection before attempting to reconnect
+    // (without holding clientlock: this waits for the worker thread, which needs it)
     if (client)
-        disconnect(); // Do a proper disconnection before attempting to reconnect
+        disconnect();
+
+    // The client is not thread safe: all accesses must hold clientlock.
+    // This includes the state callback (connectionStatusChanged()) that
+    // UA_Client_connect() calls on this thread, which sets up the session
+    // and triggers the reader thread.
+    Guard G(clientlock);
 
     setupClientSecurityInfo(securityInfo, &name, debug);
 
@@ -648,8 +660,18 @@ SessionOpen62541::requestRead (ItemOpen62541 &item)
 void
 SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &batch)
 {
-    if (!isConnected())
+    unsigned int initialReads = 0;
+    for (auto &c : batch)
+        if (c->initialRead)
+            initialReads++;
+
+    if (!isConnected()) {
+        if (initialReads) {
+            Guard G(clientlock);
+            initialReadsDone(initialReads);
+        }
         return;
+    }
 
     UA_StatusCode status;
     std::unique_ptr<std::vector<ItemOpen62541 *>> itemsToRead(new std::vector<ItemOpen62541 *>);
@@ -696,6 +718,7 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
                 for (auto c : batch) {
                     c->item->setIncomingEvent(ProcessReason::readFailure);
                 }
+                initialReadsDone(initialReads);
             } else {
                 if (debug >= 5)
                     std::cout << "Session " << name
@@ -707,7 +730,11 @@ SessionOpen62541::processRequests (std::vector<std::shared_ptr<ReadRequest>> &ba
                 outstandingOps.insert(
                     std::pair<UA_UInt32,
                         std::unique_ptr<std::vector<ItemOpen62541 *>>>(id, std::move(itemsToRead)));
+                if (initialReads)
+                    initialReadOps[id] = initialReads;
             }
+        } else {
+            initialReadsDone(initialReads);
         }
     }
 
@@ -805,6 +832,26 @@ SessionOpen62541::addAllMonitoredItems ()
     for (auto &it : subscriptions) {
         it.second->addMonitoredItems();
     }
+}
+
+void
+SessionOpen62541::initialReadsDone (unsigned int n)
+{
+    initialReadsPending = (n < initialReadsPending) ? initialReadsPending - n : 0;
+}
+
+void
+SessionOpen62541::addMonitoredItemsAfterInitialRead ()
+{
+    if (!monitoredItemsPending || initialReadsPending)
+        return;
+    monitoredItemsPending = false;
+    if (shuttingDown || !isConnected())
+        return;
+    if (debug)
+        std::cout << "Session " << name
+                  << ": initial read done, adding monitored items" << std::endl;
+    addAllMonitoredItems();
 }
 
 void
@@ -1480,6 +1527,7 @@ SessionOpen62541::run ()
             return;
         }
         status = UA_Client_run_iterate(client, 1);
+        addMonitoredItemsAfterInitialRead();
         {
             UnGuard U(G);
             epicsThreadSleep(0.01); // give other threads a chance to execute
@@ -2510,18 +2558,19 @@ SessionOpen62541::connectionStatusChanged (
                     it->setState(ConnectionStatus::initialRead);
                     cargo[i] = std::make_shared<ReadRequest>();
                     cargo[i]->item = it;
+                    cargo[i]->initialRead = true;
                     i++;
                 }
+                // The worker thread adds the monitored items once the initial
+                // reads are done (see addMonitoredItemsAfterInitialRead()).
+                // Must not wait for that here: we are holding clientlock,
+                // which the reader thread needs to send the requests.
+                initialReadOps.clear();
+                initialReadsPending = static_cast<unsigned int>(items.size());
+                monitoredItemsPending = true;
                 // status needs to be updated before requests are being issued
                 sessionState = newSessionState;
                 reader.pushRequest(cargo, menuPriorityHIGH);
-                // Wait for initial read to finish
-                while (!reader.empty(menuPriorityHIGH) && !shuttingDown) {
-                    epicsThreadSleep(.1);
-                }
-                epicsThreadSleep(.1);
-                if (!shuttingDown)
-                    addAllMonitoredItems();
                 break;
             }
 
@@ -2542,6 +2591,12 @@ void
 SessionOpen62541::readComplete (UA_UInt32 transactionId,
                             UA_ReadResponse* response)
 {
+    auto init = initialReadOps.find(transactionId);
+    if (init != initialReadOps.end()) {
+        initialReadsDone(init->second);
+        initialReadOps.erase(init);
+    }
+
     auto it = outstandingOps.find(transactionId);
     if (it == outstandingOps.end()) {
         errlogPrintf("OPC UA session %s: (readComplete) received a callback "
