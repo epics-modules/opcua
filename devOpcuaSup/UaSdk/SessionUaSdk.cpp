@@ -303,6 +303,9 @@ SessionUaSdk::connect(bool manual)
         return -1;
     }
 
+    if (shuttingDown)
+        return -1;
+
     if (isConnected()) {
         if (debug || manual)
             std::cerr << "Session " << name.c_str() << ": already connected ("
@@ -1147,7 +1150,11 @@ void SessionUaSdk::connectionStatusChanged (
         break;
 
         // "The connection to the server is established and is working in normal mode."
-    case UaClient::Connected:
+    case UaClient::Connected: {
+        // Setting up the session may take a while - atExit() must wait for it to finish
+        Guard G(connectHandlerLock);
+        if (shuttingDown)
+            break;
         if (serverConnectionStatus == UaClient::Disconnected
             || serverConnectionStatus == UaClient::ConnectionErrorApiReconnect
             || serverConnectionStatus == UaClient::NewSessionCreated) {
@@ -1193,25 +1200,31 @@ void SessionUaSdk::connectionStatusChanged (
             serverConnectionStatus = serverStatus;
             reader.pushRequest(cargo, menuPriorityHIGH);
             // Wait for initial read to finish
-            while (!reader.empty(menuPriorityHIGH)) {
+            while (!reader.empty(menuPriorityHIGH) && !shuttingDown) {
                 epicsThreadSleep(.1);
             }
             epicsThreadSleep(.1);
-            addAllMonitoredItems();
+            if (!shuttingDown)
+                addAllMonitoredItems();
         }
         break;
+    }
 
         // "The client was not able to reuse the old session
         // and created a new session during reconnect.
         // This requires to redo register nodes for the new session
         // or to read the namespace array."
-    case UaClient::NewSessionCreated:
+    case UaClient::NewSessionCreated: {
+        Guard G(connectHandlerLock);
+        if (shuttingDown)
+            break;
         updateNamespaceMap(puasession->getNamespaceTable());
         rebuildNodeIds();
         registerNodes();
         createAllSubscriptions();
         addAllMonitoredItems();
         break;
+    }
     }
     serverConnectionStatus = serverStatus;
 }
@@ -1406,8 +1419,14 @@ SessionUaSdk::atExit (void *junk)
 {
     (void)junk;
     errlogPrintf("OPC UA: Disconnecting sessions\n");
+    // Stop all reconnects first (waits for running connect attempts)
+    for (auto &it : sessions)
+        it.second->beginShutdown();
     for (auto &it : sessions) {
         SessionUaSdk *session = it.second;
+        // Wait for a running connection handler to finish
+        // (it bails out early as shuttingDown is set)
+        { Guard G(session->connectHandlerLock); }
         // See #130 and reverted commit ab7184ef
         // Make sure low-level session is valid before running disconnect()
         if (session->puasession && session->isConnected())

@@ -13,6 +13,7 @@
 #ifndef DEVOPCUA_SESSION_H
 #define DEVOPCUA_SESSION_H
 
+#include <atomic>
 #include <string>
 #include <set>
 #include <map>
@@ -238,6 +239,7 @@ protected:
         , name(name)
         , autoConnector(*this, opcua_ConnectTimeout, queue)
         , autoConnect(true)
+        , shuttingDown(false)
     {
         char host[HOST_NAME_MAX] = {0};
         int status = gethostname(host, sizeof(host));
@@ -316,6 +318,20 @@ protected:
         }
     }
 
+    /**
+     * @brief Prepare the session for IOC shutdown.
+     *
+     * Sets the shuttingDown flag (makes connect() and the connection
+     * handlers bail out early) and stops the reconnect timer,
+     * waiting for a running (re)connect attempt to finish.
+     * Must not be called from the reconnect timer thread.
+     */
+    void beginShutdown()
+    {
+        shuttingDown = true;
+        autoConnector.stop();
+    }
+
     /** @brief Replace invalid characters in file name with '_' */
     static std::string
     replaceInvalidFilenameChars(const std::string &name)
@@ -335,9 +351,12 @@ protected:
             : timer(queue->createTimer())
             , client(client)
             , delay(delay)
+            , stopped(false)
         {}
         virtual ~AutoConnect() override { timer.destroy(); }
-        void start() { timer.start(*this, delay); }
+        void start() { if (!stopped) timer.start(*this, delay); }
+        /** Disable the timer; if a connect attempt is running, wait for it to finish */
+        void stop() { stopped = true; timer.cancel(); }
         virtual expireStatus expire(const epicsTime &/*currentTime*/) override {
             client.connect(false);
             return expireStatus(noRestart); // client.connect() starts the timer on failure
@@ -346,6 +365,7 @@ protected:
         epicsTimer &timer;
         Session &client;
         const double delay;
+        std::atomic<bool> stopped;
     };
 
     static epicsTimerQueueActive *queue;   /**< timer queue for session reconnects */
@@ -353,6 +373,7 @@ protected:
     const std::string name;                /**< unique session name */
     AutoConnect autoConnector;             /**< reconnection timer */
     bool autoConnect;                      /**< auto (re)connect flag */
+    std::atomic<bool> shuttingDown;        /**< IOC is shutting down: no more (re)connects */
     std::string securityIdentityFile;      /**< full path to file with Identity token settings */
     std::string securityUserName;          /**< user name set in Username token */
 

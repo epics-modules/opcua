@@ -478,6 +478,9 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
 long
 SessionOpen62541::connect (bool manual)
 {
+    if (shuttingDown)
+        return -1;
+
     if (isConnected()) {
         if (debug || manual)
             std::cerr << "Session " << name
@@ -2423,6 +2426,10 @@ SessionOpen62541::connectionStatusChanged (
 
             case UA_SESSIONSTATE_ACTIVATED:
             {
+                // Setting up the session may take a while - atExit() must wait for it to finish
+                Guard G(connectHandlerLock);
+                if (shuttingDown)
+                    break;
                 UA_ClientConfig *config = UA_Client_getConfig(client);
                 config->connectivityCheckInterval = 1000; // 1 sec
 
@@ -2509,11 +2516,12 @@ SessionOpen62541::connectionStatusChanged (
                 sessionState = newSessionState;
                 reader.pushRequest(cargo, menuPriorityHIGH);
                 // Wait for initial read to finish
-                while (!reader.empty(menuPriorityHIGH)) {
+                while (!reader.empty(menuPriorityHIGH) && !shuttingDown) {
                     epicsThreadSleep(.1);
                 }
                 epicsThreadSleep(.1);
-                addAllMonitoredItems();
+                if (!shuttingDown)
+                    addAllMonitoredItems();
                 break;
             }
 
@@ -2714,11 +2722,16 @@ void
 SessionOpen62541::atExit (void *)
 {
     errlogPrintf("OPC UA: Disconnecting sessions\n");
+    // Stop all reconnects first (waits for running connect attempts,
+    // which run the connection handler on the reconnect timer thread)
+    for (auto &it : sessions)
+        it.second->beginShutdown();
     for (auto &it : sessions) {
-        it.second->disconnect();
         SessionOpen62541 *session = it.second;
-        if (session->isConnected())
-            session->disconnect();
+        // Wait for a running connection handler to finish
+        // (it bails out early as shuttingDown is set)
+        { Guard G(session->connectHandlerLock); }
+        session->disconnect();
     }
 }
 
