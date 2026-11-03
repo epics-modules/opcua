@@ -576,6 +576,7 @@ DataElementOpen62541Leaf::readArray (char *value, epicsUInt32 len,
                         errlogPrintf("%s : incoming data type (%s) does not match EPICS array type (%s)\n",
                                      prec->name, variantTypeString(variant), epicsTypeString(value));
                         (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                        elemsWritten = 0;
                         ret = 1;
                     }
                     prec->udf = false;
