@@ -339,6 +339,7 @@ private:
     /** itemUaSdk vectors of outstanding read or write operations, indexed by transaction id */
     std::map<OpcUa_UInt32, std::unique_ptr<std::vector<ItemUaSdk *>>> outstandingOps;
     epicsMutex opslock;                                       /**< lock for outstandingOps map */
+    epicsMutex connectHandlerLock;                            /**< held while setting up a (re)connected session */
 
     RequestQueueBatcher<WriteRequest> writer;                 /**< batcher for write requests */
     unsigned int writeNodesMax;                               /**< max number of nodes per write request */

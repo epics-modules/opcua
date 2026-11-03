@@ -431,6 +431,7 @@ private:
     /** open62541 interfaces */
     UA_Client *client;                                            /**< low level handle for this session */
     epicsMutex clientlock;                                        /**< lock for client implementation */
+    epicsMutex connectHandlerLock;                                /**< held while setting up a (re)connected session */
     UA_SecureChannelState channelState;                           /**< status for this session */
     UA_SessionState sessionState;                                 /**< status for this session */
     UA_StatusCode connectStatus;                                  /**< status for this session */
