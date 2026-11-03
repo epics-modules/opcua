@@ -16,6 +16,8 @@ epicsEnvSet("SUBSCRIPT", "SUB1")
 opcuaSession("$(SESSION)", "opc.tcp://$(OPCSERVER):$(OPCPORT)")
 opcuaSubscription("$(SUBSCRIPT)", "$(SESSION)", 100)
 opcuaOptions("$(SESSION)", "sec-mode=None")
+# Session debug output (the pytest fixture sets OPCUA_DEBUG=1)
+opcuaOptions("$(SESSION)", "debug=$(OPCUA_DEBUG=0)")
 
 # Test database
 dbLoadRecords("end2endTest/ioc/test.db", "OPCSUB=$(SUBSCRIPT),NS=$(OPCNAMESPACE)")
