@@ -1,0 +1,10 @@
+# Records using 64-bit array types (FTVL INT64/UINT64)
+# Require EPICS Base >= 3.16.1
+
+record(aai, "VarCheckUInt64Array") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarUInt64Array")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "UINT64")
+    field(NELM, "3")
+}

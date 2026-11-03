@@ -20,6 +20,8 @@ def test_inst(monkeypatch) -> Generator[tuple[OpcuaTestServer, IOC]]:
     host_arch = os.environ["EPICS_HOST_ARCH"]
     OPCUA_TEST_IOC = REPO_ROOT / "bin" / host_arch / "opcuaTestIoc"
     monkeypatch.setenv("OPCUA_TEST_TOP", str(REPO_ROOT))
+    # Comment out loading the 64-bit array records on Base < 3.16.1
+    monkeypatch.setenv("NO_INT64", "" if base_supports_int64() else "#")
 
     with OpcuaTestServer() as server, IOC(str(script), executable=str(OPCUA_TEST_IOC)) as ioc:
         ioc.wait_for_output("OPC UA session")

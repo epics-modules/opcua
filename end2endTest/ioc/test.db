@@ -162,14 +162,6 @@ record(ao, "VarCheckDoubleOut") {
     field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarDouble")
 }
 
-record(aai, "VarCheckUInt64Array") {
-    field(DTYP, "OPCUA")
-    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarUInt64Array")
-    field(SCAN, "I/O Intr")
-    field(FTVL, "UINT64")
-    field(NELM, "3")
-}
-
 record(opcuaItem, "VarCheckStructNode") {
     field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarEUInformation")
     field(SCAN, "I/O Intr")

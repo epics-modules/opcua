@@ -19,5 +19,7 @@ opcuaOptions("$(SESSION)", "sec-mode=None")
 
 # Test database
 dbLoadRecords("end2endTest/ioc/test.db", "OPCSUB=$(SUBSCRIPT),NS=$(OPCNAMESPACE)")
+# 64-bit array types require EPICS Base >= 3.16.1 (set NO_INT64="#" to skip)
+$(NO_INT64=)dbLoadRecords("end2endTest/ioc/test_int64.db", "OPCSUB=$(SUBSCRIPT),NS=$(OPCNAMESPACE)")
 
 iocInit()
