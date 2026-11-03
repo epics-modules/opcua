@@ -10,7 +10,8 @@ import fileinput
 import subprocess as sp
 import re
 
-gendef = 'C:/msys64/mingw64/bin/gendef'
+# gendef.exe is provided by the MSYS2 environment set up in the workflow
+gendef = 'C:/msys64/{0}/bin/gendef'.format(os.environ.get('MSYSTEM', 'UCRT64').lower())
 lib = 'C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/HostX64/x64/lib.exe'
 
 curdir = os.getcwd()

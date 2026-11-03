@@ -67,9 +67,9 @@ jobs:
     - uses: msys2/setup-msys2@v2
       with:
         release: false
-        msystem: mingw64
+        msystem: UCRT64
         install: >-
-          mingw-w64-x86_64-tools-git
+          mingw-w64-ucrt-x86_64-tools
     - name: Download and compile open62541 client
       run: |
         python3 .ci-local/install-open62541.py
@@ -125,14 +125,14 @@ jobs:
     - uses: msys2/setup-msys2@v2
       with:
         release: false
-        msystem: mingw64
+        msystem: UCRT64
         install: >-
           git
           make
           patch
-          mingw-w64-x86_64-toolchain
-          mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-python
+          mingw-w64-ucrt-x86_64-toolchain
+          mingw-w64-ucrt-x86_64-cmake
+          mingw-w64-ucrt-x86_64-python
         pacboy: openssl:p
     - uses: actions/checkout@v6
       with:
