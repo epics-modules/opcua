@@ -94,6 +94,32 @@ class TestConnection:
         # Allow for reconnect and initial record processing
         assert wait_for_value("VarCheckBool.SEVR", 0, timeout=20.0)  # NO_ALARM
 
+        # The initial read finishes before the monitored items are re-created.
+        # Wait for subscription updates (TstRamp changes every second on the server;
+        # the first change might still come from the initial read) so that the
+        # session is fully re-established before exiting.
+        prev = caget("TstRamp")
+        for _ in range(2):
+            now = wait_for_change("TstRamp", prev, timeout=10.0)
+            assert now != prev, "no subscription updates after reconnect"
+            prev = now
+
+        ioc.exit()
+        assert not ioc.is_running()
+        assert server.exception is None
+
+    def test_exit_during_reconnect(self, test_inst) -> None:
+        server, ioc = test_inst
+
+        server.disconnect_from_clients()
+        assert wait_for_value("VarCheckBool.SEVR", 3, timeout=20.0)  # INVALID
+
+        server.reconnect_to_clients()
+
+        # Exit as soon as the initial read is done, i.e. while the session
+        # is (most likely) still re-creating its monitored items.
+        # The IOC must shut down cleanly (no hang, no crash).
+        assert wait_for_value("VarCheckBool.SEVR", 0, timeout=20.0)  # NO_ALARM
         ioc.exit()
         assert not ioc.is_running()
         assert server.exception is None
