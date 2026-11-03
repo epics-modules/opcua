@@ -9,10 +9,21 @@ from collections.abc import Generator
 from pathlib import Path
 from time import sleep, monotonic
 
+import epics
 import pytest
 from opcua_test_server import OpcuaTestServer
-from epics import caget, caput, PV
+from epics import caput, PV
 from run_iocsh import IOC
+
+
+def caget(pv_name, **kwargs):
+    """caget that always reads from the IOC.
+
+    pyepics caches PVs (with a monitor) across tests, i.e. across IOC instances,
+    so a plain caget() may return a stale value from a previous test's IOC.
+    """
+    kwargs.setdefault("use_monitor", False)
+    return epics.caget(pv_name, **kwargs)
 
 
 def dump_threads(pid: int) -> None:
@@ -99,7 +110,7 @@ def wait_for_change(pv_name, previous, timeout=2.0):
 def wait_for_value(pv_name, expected, timeout=2.0):
     deadline = monotonic() + timeout
     while monotonic() < deadline:
-        value = caget(pv_name, use_monitor=False)
+        value = caget(pv_name)
         if value == expected:
             return True
         sleep(0.05)
