@@ -87,6 +87,14 @@ class OpcuaTestServer(Server):
 
     async def _disconnect_clients(self) -> None:
         await self.bserver.stop()
+        # Simulate a server restart: also drop all client sessions (and their
+        # subscriptions), so that clients have to create new sessions.
+        # Otherwise asyncua keeps sessions with subscriptions alive for
+        # re-activation on a new connection, which does not work reliably
+        # (e.g. its Republish responses do not follow the spec).
+        sessions = getattr(self.iserver, "_external_sessions", {})
+        for session in list(sessions.values()):
+            await session.close_session(delete_subs=True)
 
     async def _reconnect_clients(self) -> None:
         await self.bserver.start()
