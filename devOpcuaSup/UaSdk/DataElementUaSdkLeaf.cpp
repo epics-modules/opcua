@@ -600,8 +600,10 @@ DataElementUaSdkLeaf::readArray(char *value,
     long ret = 0;
     epicsUInt32 elemsWritten = 0;
 
-           // clear *old* array content
-    memset(value, 0, *numRead * len);
+    // clear *old* array content
+    // (value is nullptr if the record is not using the read value, e.g. on connection loss)
+    if (value)
+        memset(value, 0, *numRead * len);
 
     if (incomingQueue.empty()) {
         errlogPrintf("%s : incoming data queue empty\n", prec->name);
@@ -698,6 +700,7 @@ DataElementUaSdkLeaf::readArray(char *value,
                                      variantTypeString(variant.type()),
                                      epicsTypeString(value));
                         (void) recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                        elemsWritten = 0;
                         ret = 1;
                     }
                     prec->udf = false;
