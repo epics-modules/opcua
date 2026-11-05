@@ -2003,6 +2003,10 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
         if (strcmp(nodeKind, "StructuredType") == 0) {
             UA_UInt32 structureAlignment = 0;
             UA_UInt32 memberSize;
+            // Size of the structure in memory - kept wider than UA_DataType::memSize (16 bit)
+            // to detect structures that are too large for open62541 (instead of wrapping around)
+            size_t structSize = 0;
+            bool valid = true; // false: the type can not be used (error in definition or limits exceeded)
 
             const char* baseType = getProp(node, "BaseType");
             if (baseType && strcmp(baseType, "ua:Union") == 0)
@@ -2044,7 +2048,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     continue;
                 }
 
-                if (customDataType.memSize == 0 &&
+                if (structSize == 0 &&
                     customDataType.typeKind != UA_DATATYPEKIND_UNION &&
                     strcmp(fieldTypeName, "opc:Bit") == 0) {
                     // Bit fields at the beginning of stuctures are part of
@@ -2085,7 +2089,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                                       << ": member type " << fieldTypeName
                                       << " of " << typeName << '.' << fieldName
                                       << " still not found." << std::endl;
-                        customDataType.memSize = 0;
+                        valid = false;
                         break;
                     }
                 }
@@ -2114,7 +2118,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     nullptr : ((field).namespaceZero ? UA_TYPES : customTypes.data()) + (field).memberTypeIndex)
 #endif
 
-                if (customDataType.memSize == 0 &&
+                if (structSize == 0 &&
                     customDataType.typeKind == UA_DATATYPEKIND_UNION)
                 {
                     // First field of a union must be UInt32 switch field,
@@ -2127,10 +2131,11 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                                       << memberType->typeName
                                       << " instead of Unt32"
                                       << std::endl;
+                        valid = false;
                         break;
                     }
                     // It is not added to members but included in padding.
-                    customDataType.memSize = sizeof(UA_UInt32);
+                    structSize = sizeof(UA_UInt32);
                     if (debug >= 4)
                         std::cout << "  # " << memberType->typeName
                                   << " " << fieldName
@@ -2159,7 +2164,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                                           << " has array field " << fieldName
                                           << " not immediately following its length field " << lengthFieldName
                                           << std::endl;
-                            customDataType.memSize = 0;
+                            valid = false;
                             break;
                         }
                         if (memberTypeOf(lengthField) != &UA_TYPES[UA_TYPES_INT32]) {
@@ -2172,17 +2177,17 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                                           << (memberTypeOf(lengthField) ? memberTypeOf(lengthField)->typeName : "Unknown")
                                           << " instead of Int32"
                                           << std::endl;
-                            customDataType.memSize = 0;
+                            valid = false;
                             break;
                         }
-                        customDataType.memSize -= lengthField.padding +
+                        structSize -= lengthField.padding +
                             lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize;
                         if (debug >= 4)
                             std::cout << "  # removed array length field " << memberTypeOf(lengthField)->typeName
                                       << " " << lengthField.memberName
                                       << " memberSize=" << (lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize)
                                       << " padding=" << static_cast<unsigned int>(lengthField.padding)
-                                      << " memSize=" << customDataType.memSize
+                                      << " memSize=" << structSize
                                       << std::endl;
                         free(const_cast<char*>(lengthField.memberName));
                         members.pop_back();
@@ -2229,15 +2234,15 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                 UA_UInt32 memberAlignment = (memberSize-1) & 7; // actually alignment-1
                 if (customDataType.typeKind != UA_DATATYPEKIND_UNION) {
                     // Align this member on top of structure so far.
-                    member.padding = memberAlignment & ~(customDataType.memSize-1);
+                    member.padding = memberAlignment & ~(structSize-1);
                     // Total size is the sum of all member sizes including padding.
-                    customDataType.memSize += member.padding + memberSize;
+                    structSize += member.padding + memberSize;
                 } else {
                     // For unions padding includes the UInt32 switch field.
                     member.padding = sizeof(UA_UInt32) + (memberAlignment & ~(sizeof(UA_UInt32)-1));
                     // Total size is the maximum of all member sizes including padding.
-                    if (member.padding + memberSize > customDataType.memSize)
-                        customDataType.memSize = member.padding + memberSize;
+                    if (member.padding + memberSize > structSize)
+                        structSize = member.padding + memberSize;
                 }
                 // Align structure to largest member alignment.
                 if (memberAlignment > structureAlignment)
@@ -2246,21 +2251,31 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     std::cout << "  # memberSize=" << memberSize
                               << " alignment=" << memberAlignment+1
                               << " padding=" << static_cast<unsigned int>(member.padding)
-                              << " memSize=" << customDataType.memSize
+                              << " memSize=" << structSize
                               << std::endl;
 
                 members.push_back(member);
             }
 
             if (members.size() > 255) {
-                if (debug >= 4)
-                    std::cerr << "Session " << name
-                              << ": type " << typeName
-                              << " has too many members" << std::endl;
-                customDataType.memSize = 0;
+                errlogPrintf("OPC UA session %s: ignoring type %s with %zu members "
+                             "(open62541 supports max. 255)\n",
+                             name.c_str(), typeName, members.size());
+                valid = false;
             }
 
-            if (!customDataType.memSize && members.size()) // Error bail out: Clean up and ignore invalid types.
+            // Pad structure to align with its largest primitive.
+            if (structSize)
+                structSize += (structureAlignment & ~(structSize-1));
+
+            if (valid && structSize > UA_UINT16_MAX) {
+                errlogPrintf("OPC UA session %s: ignoring type %s with an in-memory size of %zu bytes "
+                             "(open62541 supports max. %u)\n",
+                             name.c_str(), typeName, structSize, static_cast<unsigned>(UA_UINT16_MAX));
+                valid = false;
+            }
+
+            if (!valid) // Error bail out: Clean up and ignore invalid types.
             {
                 if (debug >= 5)
                     std::cerr << "# cleaning up invalid type " << typeName << std::endl;
@@ -2274,11 +2289,10 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                 continue;
             }
 
-            // Pad structure to align with its largest primitive.
-            customDataType.memSize += (structureAlignment & ~(customDataType.memSize-1));
+            customDataType.memSize = static_cast<UA_UInt32>(structSize);
             if (debug >= 4)
                 std::cout << "}; # alignment=" << structureAlignment+1
-                          << " memSize=" << customDataType.memSize
+                          << " memSize=" << structSize
                           << " " << members.size() << " members"
                           << std::endl;
 

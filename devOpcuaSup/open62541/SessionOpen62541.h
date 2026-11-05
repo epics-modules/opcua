@@ -157,6 +157,7 @@ class SessionOpen62541
     SessionOpen62541 &operator=(const SessionOpen62541 &) = delete;
 
     friend class SubscriptionOpen62541;
+    friend class SessionOpen62541TestAccess; // unit tests: access to the custom type handling
 
 public:
     /**
