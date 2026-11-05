@@ -2155,8 +2155,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                     // which should be the previous member.
                     // We did not know that it was the length field until now.
                     {
-                        UA_DataTypeMember& lengthField = members.back();
-                        if (members.empty() || strcmp(lengthField.memberName, lengthFieldName) != 0) {
+                        if (members.empty() || strcmp(members.back().memberName, lengthFieldName) != 0) {
                             // previous field was not the length field!
                             if (debug >= 4)
                                 std::cerr << "Session " << name
@@ -2167,6 +2166,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                             valid = false;
                             break;
                         }
+                        UA_DataTypeMember& lengthField = members.back();
                         if (memberTypeOf(lengthField) != &UA_TYPES[UA_TYPES_INT32]) {
                             if (debug >= 4)
                                 std::cerr << "Session " << name

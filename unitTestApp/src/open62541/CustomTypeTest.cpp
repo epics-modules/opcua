@@ -140,6 +140,18 @@ TEST_F(CustomTypeTest, ArrayAfterPaddedLengthField)
     EXPECT_EQ(24u, t->memSize);
 }
 
+TEST_F(CustomTypeTest, ArrayWithoutLengthField)
+{
+    // An array as first field: its length field can not be the previous member
+    auto *s = parse("typesNoLength",
+                    {{"NoLength",
+                      "<opc:StructuredType Name=\"NoLength\">"
+                      "<opc:Field Name=\"Arr\" TypeName=\"opc:Double\" LengthField=\"NoOfArr\"/>"
+                      "</opc:StructuredType>"}});
+    EXPECT_EQ(nullptr, SessionOpen62541TestAccess::findType(*s, "NoLength"))
+        << "type with an array without length field accepted";
+}
+
 TEST_F(CustomTypeTest, InMemorySizeLimit)
 {
     // Inner: 200 doubles = 1600 bytes
