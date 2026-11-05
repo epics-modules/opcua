@@ -2181,7 +2181,7 @@ SessionOpen62541::parseCustomDataTypes(xmlNode* node, UA_UInt16 nsIndex)
                             break;
                         }
                         structSize -= lengthField.padding +
-                            lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize;
+                            (lengthField.isOptional ? sizeof(void*) : memberTypeOf(lengthField)->memSize);
                         if (debug >= 4)
                             std::cout << "  # removed array length field " << memberTypeOf(lengthField)->typeName
                                       << " " << lengthField.memberName

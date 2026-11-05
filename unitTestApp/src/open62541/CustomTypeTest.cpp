@@ -121,6 +121,25 @@ TEST_F(CustomTypeTest, SmallStructure)
     EXPECT_EQ(16u, t->memSize) << "double + int32, padded to 8 byte alignment";
 }
 
+TEST_F(CustomTypeTest, ArrayAfterPaddedLengthField)
+{
+    // The Int32 length field needs 3 bytes padding after the Byte;
+    // removing it must also remove that padding: b @0, Arr {size_t, ptr} @8 -> 24 bytes
+    auto *s = parse("typesArray",
+                    {{"WithArray",
+                      "<opc:StructuredType Name=\"WithArray\">"
+                      "<opc:Field Name=\"b\" TypeName=\"opc:Byte\"/>"
+                      "<opc:Field Name=\"NoOfArr\" TypeName=\"opc:Int32\"/>"
+                      "<opc:Field Name=\"Arr\" TypeName=\"opc:Double\" LengthField=\"NoOfArr\"/>"
+                      "</opc:StructuredType>"}});
+    const UA_DataType *t = SessionOpen62541TestAccess::findType(*s, "WithArray");
+    ASSERT_NE(nullptr, t);
+    ASSERT_EQ(2u, t->membersSize) << "length field not removed";
+    EXPECT_TRUE(t->members[1].isArray);
+    EXPECT_EQ(7u, t->members[1].padding) << "array not aligned after the Byte member";
+    EXPECT_EQ(24u, t->memSize);
+}
+
 TEST_F(CustomTypeTest, InMemorySizeLimit)
 {
     // Inner: 200 doubles = 1600 bytes
