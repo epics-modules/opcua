@@ -31,7 +31,7 @@ Linux and Windows native builds are supported.
 ## _Alternative:_ Binary Distribution for Linux
 
 Please look at the "Assets" sections of specific releases
-on the [release page](https://github.com/epics-modules/opcua/releases)
+on the [release page][opcua-releases]
 for the binary distribution tars.
 
 These tars contain an EPICS module 
@@ -48,3 +48,10 @@ You need to download the binary distribution tar that matches
 your Linux distribution and the exact EPICS Base version,
 else you will not be able to create IOCs.
 (Failures show as linking errors in your application.)
+
+<!-- Links -->
+[open62541]: https://open62541.org/
+[uasdk]: https://www.unified-automation.com/products/client-sdk/c-ua-client-sdk.html
+[epics-base]: https://epics-controls.org/resources-and-support/base/
+[epics-gtest]: https://github.com/epics-modules/gtest/
+[opcua-releases]: https://github.com/epics-modules/opcua/releases/

@@ -1,6 +1,6 @@
 # EPICS OPC UA Device Support
 
-[EPICS](https://epics-controls.org>) Device Support module
+[EPICS](https://epics-controls.org) Device Support module
 for interfacing to controllers and servers
 using the
 [OPC UA](https://opcfoundation.org/about/opc-technologies/opc-ua/) protocol.
@@ -13,7 +13,7 @@ using the
   quick help and discussions
 - [Usage / FAQ (Wiki)](https://github.com/epics-modules/opcua/wiki) -
   hints & experiences with specific servers
-- [Issue Tracker](https://github.com/epics-modules/opcua/issues>) -
+- [Issue Tracker](https://github.com/epics-modules/opcua/issues) -
   when things don't work
 
 The Device Support sits on top of a low-level OPC UA client library.
