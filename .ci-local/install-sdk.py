@@ -25,6 +25,16 @@ if cue.ci['os'] == 'windows':
     sourcedir = sourcedir.replace('\\', '/')
     sdkdir = sdkdir.replace('\\', '/')
 
+if 'UASDK' in os.environ and not os.environ.get('encrypted_178ee45b7f75_pass'):
+    # The decryption key is a repository secret, which is not available
+    # to builds of PRs from forks: skip the UA SDK build cleanly
+    print('::notice::Decryption key for the UA SDK not available (PR from a fork?)'
+          ' - skipping UA SDK build')
+    if 'GITHUB_OUTPUT' in os.environ:
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            f.write('skip=true\n')
+    sys.exit(0)
+
 if 'UASDK' in os.environ:
     with open(os.path.join(curdir, 'configure', 'CONFIG_SITE.local'), 'a') as f:
         f.write('''

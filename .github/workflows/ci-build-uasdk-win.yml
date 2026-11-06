@@ -63,19 +63,25 @@ jobs:
       with:
         submodules: true
     - name: Download and install UASDK client
+      id: install-sdk
       run: |
         python3 .ci-local/install-sdk.py
     - name: Prepare build dependencies
+      if: steps.install-sdk.outputs.skip != 'true'
       run: |
         python3 .ci/cue.py prepare
     - name: Add DLL locations to PATH
+      if: steps.install-sdk.outputs.skip != 'true'
       run: |
         "C:/Users/runneradmin/.source/sdk/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
         "C:/Users/runneradmin/.source/sdk/third-party/win64/vs2015/libxml2/out32dll" | Out-File -FilePath $env:GITHUB_PATH -Append
         "C:/Users/runneradmin/.source/sdk/third-party/win64/vs2015/openssl/out32dll" | Out-File -FilePath $env:GITHUB_PATH -Append
     - name: Build main module
+      if: steps.install-sdk.outputs.skip != 'true'
       run: python3 .ci/cue.py build
     - name: Run main module tests
+      if: steps.install-sdk.outputs.skip != 'true'
       run: python3 .ci/cue.py test
     - name: Collect and show test results
+      if: steps.install-sdk.outputs.skip != 'true'
       run: python3 .ci/cue.py test-results
