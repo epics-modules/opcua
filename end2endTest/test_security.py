@@ -388,9 +388,8 @@ class TestUserAuthentication:
 
     @pytest.mark.xfail(
         CLIENT == "OPEN62541",
-        reason="open62541 client: the identity certificate is checked against a stale "
-               "connect status (and dropped), and open62541 1.3 does not send the "
-               "userTokenSignature (proof of possession of the user's private key)",
+        reason="open62541 client: open62541 1.3 does not send the userTokenSignature "
+               "(proof of possession of the user's private key)",
         strict=False)
     @pytest.mark.parametrize("mode", MODES)
     def test_x509_certificate(self, start_secure, x509_only,
