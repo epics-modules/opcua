@@ -1,7 +1,7 @@
 import os
-import resource
 import shutil
 import subprocess
+import sys
 import threading
 import time
 import re
@@ -9,11 +9,29 @@ from collections.abc import Generator
 from pathlib import Path
 from time import sleep, monotonic
 
+# The test IOC runs on this host: keep Channel Access local (must be set before
+# pyepics creates its CA context; broadcasts to localhost are unreliable on Windows)
+os.environ.setdefault("EPICS_CA_AUTO_ADDR_LIST", "NO")
+os.environ.setdefault("EPICS_CA_ADDR_LIST", "127.0.0.1")
+
 import epics
 import pytest
+import run_iocsh.ioc
 from opcua_test_server import OpcuaTestServer
 from epics import caput, PV
 from run_iocsh import IOC
+
+if sys.platform == "win32":
+    # run-iocsh stops a hanging IOC with os.killpg()/SIGKILL, which do not exist
+    # on Windows. The test IOC spawns no children, so killing the process is enough.
+    def _terminate_process(proc: subprocess.Popen, pgid: int) -> bool:
+        if proc.poll() is not None:
+            return False
+        proc.kill()
+        proc.wait()
+        return True
+
+    run_iocsh.ioc._terminate_group = _terminate_process
 
 
 def caget(pv_name, **kwargs):
@@ -36,7 +54,7 @@ def dump_threads(pid: int) -> None:
            "-ex", "set pagination off", "-ex", "thread apply all bt"]
     # Attaching to a non-child process needs privileges (ptrace_scope)
     attempts = [cmd]
-    if os.geteuid() != 0 and shutil.which("sudo"):
+    if hasattr(os, "geteuid") and os.geteuid() != 0 and shutil.which("sudo"):
         attempts.insert(0, ["sudo", "-n", *cmd])
     res = None
     for attempt in attempts:
@@ -77,8 +95,10 @@ def test_inst(monkeypatch) -> Generator[tuple[OpcuaTestServer, IOC]]:
     script = script.resolve()
     REPO_ROOT = Path(__file__).resolve().parents[1]
     host_arch = os.environ["EPICS_HOST_ARCH"]
-    OPCUA_TEST_IOC = REPO_ROOT / "bin" / host_arch / "opcuaTestIoc"
-    monkeypatch.setenv("OPCUA_TEST_TOP", str(REPO_ROOT))
+    exe_suffix = ".exe" if sys.platform == "win32" else ""
+    OPCUA_TEST_IOC = REPO_ROOT / "bin" / host_arch / f"opcuaTestIoc{exe_suffix}"
+    # iocsh treats backslashes as escapes: use forward slashes (fine on Windows)
+    monkeypatch.setenv("OPCUA_TEST_TOP", REPO_ROOT.as_posix())
     # Comment out loading the 64-bit array records on Base < 3.16.1
     monkeypatch.setenv("NO_INT64", "" if base_supports_int64() else "#")
     # Session debug output (only shown for failing tests)

@@ -8,7 +8,7 @@
 
 # Set the 'name:' properties to values that work for you
 
-name: UA SDK Windows build
+name: UA SDK Windows build and end-to-end test
 
 # Trigger on pushes and PRs to any branch
 on:
@@ -85,3 +85,16 @@ jobs:
     - name: Collect and show test results
       if: steps.install-sdk.outputs.skip != 'true'
       run: python3 .ci/cue.py test-results
+    - uses: actions/setup-python@v7
+      if: steps.install-sdk.outputs.skip != 'true'
+      with:
+        python-version: '3.11'
+    - name: Install end2end test dependencies
+      if: steps.install-sdk.outputs.skip != 'true'
+      run: python -m pip install pytest asyncua pyepics run-iocsh
+    - name: Build end2end test IOC
+      if: steps.install-sdk.outputs.skip != 'true'
+      run: python .ci/cue.py exec make -C end2endTest/ioc
+    - name: Run end2end tests
+      if: steps.install-sdk.outputs.skip != 'true'
+      run: python .ci/cue.py exec pytest -v end2endTest/test_opcua.py

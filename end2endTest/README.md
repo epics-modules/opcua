@@ -69,6 +69,12 @@ make -C end2endTest/ioc
 pytest -v end2endTest
 ```
 
+The tests restrict Channel Access to `127.0.0.1` (unless `EPICS_CA_ADDR_LIST` /
+`EPICS_CA_AUTO_ADDR_LIST` are already set).
+
+On Windows, the DLLs of EPICS Base and of the OPC UA client library
+(and its dependencies) must be found through `PATH`.
+
 ## References
 
 * [asyncua](https://github.com/FreeOpcUa/opcua-asyncio)
