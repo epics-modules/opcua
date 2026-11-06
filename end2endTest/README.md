@@ -44,6 +44,14 @@ opc.tcp://localhost:4840
 
 The server provides variables covering the supported scalar OPC UA types, arrays, timestamps, monitoring, BINI behaviour, writable and read-only nodes, and negative test cases.
 
+For the security tests (`test_security.py`), the server is started with a security configuration
+(see `ServerSecurity` in `opcua_test_server.py`):
+it offers only secure endpoints (modes `Sign` and `SignAndEncrypt`, policies `Basic256Sha256` and `Aes128_Sha256_RsaOaep`),
+trusts only the IOC's client certificate and checks user name/password and X.509 user certificates.
+All certificates are self-signed and created for each test session by `security_certs.py`
+(in pytest's temporary directory), together with the IOC's PKI directory structure.
+The IOC startup script is generated for each test.
+
 ## Tests
 
 The tests cover:
@@ -55,6 +63,16 @@ The tests cover:
 * BINI read, write and ignore behaviour
 * Invalid NodeIds and datatype mismatches
 * Performance and repeated access
+* OPC UA security (`test_security.py`):
+  * Message security modes `Sign` and `SignAndEncrypt` with different security policies,
+    `best` mode, reconnect of a secure session
+  * Rejection of connections without security or with a policy the server does not offer
+  * Certificate trust: untrusted server certificate (IOC side) and untrusted client certificate (server side)
+  * User authentication with user name/password and with an X.509 user certificate,
+    rejection of wrong credentials and of anonymous access
+
+The security tests are skipped if the module was built without crypto support
+(`OPEN62541_USE_CRYPTO`/`UASDK_USE_CRYPTO` not set to `YES`).
 
 `run-iocsh` is used to start and stop the standalone IOC.
 `asyncua` is used both for the test server and for direct inspection of server-side values.
@@ -74,6 +92,12 @@ The tests restrict Channel Access to `127.0.0.1` (unless `EPICS_CA_ADDR_LIST` /
 
 On Windows, the DLLs of EPICS Base and of the OPC UA client library
 (and its dependencies) must be found through `PATH`.
+
+To run only the security tests:
+
+```shell
+pytest -v end2endTest/test_security.py
+```
 
 ## References
 

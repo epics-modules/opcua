@@ -1,15 +1,75 @@
 import asyncio
 import logging
 import threading
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from types import TracebackType
 from typing import Any, Self
 
 from asyncua import Server, ua
+from asyncua.crypto.permission_rules import User, UserRole
+from asyncua.crypto.truststore import TrustStore
+from asyncua.crypto.validator import CertificateValidator, CertificateValidatorOptions
+from asyncua.server.internal_session import SessionState
+from asyncua.server.user_managers import UserManager
 
 NS_URI = "http://epics-controls.org/OpcUa"
 RAMP_MAX_VALUE = 1000
 RAMP_UPDATE_PERIOD_S = 1
+
+
+@dataclass
+class ServerSecurity:
+    """Security configuration of the test server.
+
+    Without it, the server only offers an endpoint without security
+    and accepts any (anonymous) user.
+    """
+
+    certificate: Path  # server application instance certificate (DER)
+    private_key: Path  # matching private key (PEM)
+    application_uri: str  # must match the URI in the server certificate
+    # Offered endpoints (message security mode + security policy)
+    policies: list[ua.SecurityPolicyType] = field(default_factory=lambda: [
+        ua.SecurityPolicyType.Basic256Sha256_Sign,
+        ua.SecurityPolicyType.Basic256Sha256_SignAndEncrypt,
+        ua.SecurityPolicyType.Aes128Sha256RsaOaep_Sign,
+        ua.SecurityPolicyType.Aes128Sha256RsaOaep_SignAndEncrypt,
+    ])
+    # Directory with trusted client certificates
+    # (None: accept any client certificate)
+    trusted_clients: Path | None = None
+    # Offered user identity token types
+    identity_tokens: list[type] = field(default_factory=lambda: [
+        ua.AnonymousIdentityToken, ua.UserNameIdentityToken, ua.X509IdentityToken,
+    ])
+    # Accepted users: username -> password
+    users: dict[str, str] = field(default_factory=dict)
+    # Accepted X.509 user certificates: DER encoded certificate -> username
+    certificate_users: dict[bytes, str] = field(default_factory=dict)
+
+
+class E2EUserManager(UserManager):
+    """Checks user name/password and X.509 user certificates."""
+
+    def __init__(self, security: ServerSecurity) -> None:  # noqa: D107
+        self.security = security
+
+    def get_user(self, iserver: Any, username: str | None = None,
+                 password: str | None = None, certificate: Any = None) -> User | None:
+        if username is not None:
+            if self.security.users.get(username) != password:
+                return None
+            return User(role=UserRole.User, name=username)
+        # asyncua passes the X.509 user certificate for X509IdentityTokens,
+        # but the client's application certificate for all other tokens
+        name = self.security.certificate_users.get(certificate)
+        if name is not None:
+            return User(role=UserRole.User, name=name)
+        if ua.AnonymousIdentityToken in self.security.identity_tokens:
+            return User(role=UserRole.User, name="anonymous")
+        return None
 
 
 class OpcuaTestServer(Server):
@@ -17,7 +77,9 @@ class OpcuaTestServer(Server):
         self,
         endpoint: str = "opc.tcp://0.0.0.0:4840",
         server_name: str = "EPICS OPCUA asyncua test server",
+        security: ServerSecurity | None = None,
     ) -> None:
+        self.security = security
         self.fixed_time = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         self.loop = None
@@ -113,6 +175,42 @@ class OpcuaTestServer(Server):
         )
         return fut.result(timeout=10)
 
+    def client_sessions(self) -> list[dict[str, Any]]:
+        """Security settings and user of all activated client sessions."""
+        async def _sessions():
+            result = []
+            for protocol in list(self.bserver.clients):
+                processor = protocol.processor
+                session = processor.session if processor is not None else None
+                if session is None or session.state != SessionState.Activated:
+                    continue
+                policy = processor._connection.security_policy
+                result.append({
+                    "policy": policy.URI.rsplit("#", 1)[-1],
+                    "mode": policy.Mode,
+                    "user": session.user.name if session.user is not None else None,
+                })
+            return result
+
+        fut = asyncio.run_coroutine_threadsafe(_sessions(), self.loop)
+        return fut.result(timeout=10)
+
+    async def _setup_security(self) -> None:
+        sec = self.security
+        await self.set_application_uri(sec.application_uri)
+        await self.load_certificate(str(sec.certificate))
+        await self.load_private_key(str(sec.private_key))
+        self.set_security_policy(sec.policies)
+        self.set_identity_tokens(sec.identity_tokens)
+        self.iserver.set_user_manager(E2EUserManager(sec))
+        if sec.trusted_clients is not None:
+            trust_store = TrustStore([sec.trusted_clients], [])
+            await trust_store.load()
+            self.set_certificate_validator(CertificateValidator(
+                CertificateValidatorOptions.TRUSTED_VALIDATION
+                | CertificateValidatorOptions.PEER_CLIENT,
+                trust_store))
+
     async def _ramp_loop(self) -> None:
         ramp_node = self.get_node(f"ns={self.idx};s=Sim.TestRamp")
         count = 0
@@ -159,6 +257,8 @@ class OpcuaTestServer(Server):
         logging.basicConfig(level=logging.INFO)
         self.stop_requested = asyncio.Event()
         await self.init()
+        if self.security is not None:
+            await self._setup_security()
 
         self.set_force_server_timestamp(False)
         self.idx = await self.register_namespace(NS_URI)

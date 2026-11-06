@@ -1,0 +1,39 @@
+# Records for the OPC UA security end-to-end tests (test_security.py)
+# Macros: OPCSUB = subscription, NS = namespace index
+
+# Subscription updates (changes every second on the server)
+record(ai, "SecRamp") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestRamp")
+    field(SCAN, "I/O Intr")
+}
+
+# Read and write
+record(ai, "SecInt32") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarInt32")
+    field(SCAN, "I/O Intr")
+}
+
+record(ao, "SecInt32Out") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarInt32")
+}
+
+record(stringin, "SecString") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarString")
+    field(SCAN, "I/O Intr")
+}
+
+record(stringout, "SecStringOut") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.TestVarString")
+}
+
+# Only gets its value through the subscription (bini=ignore):
+# once it is 42, the session is up and the monitored items are established
+record(ao, "SecLiveCheck") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.LastPVLiveCheck bini=ignore monitor=y")
+}
