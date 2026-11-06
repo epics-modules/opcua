@@ -1,11 +1,11 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
 <a target="_blank" href="https://app.codacy.com/gh/epics-modules/opcua/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade">![Codacy grade][badge.codacy]</a>
 
-[![open62541][badge.open62541-linux]](https://github.com/epics-modules/opcua/actions/workflows/ci-build-open62541-linux.yml)
-[![UA SDK][badge.uasdk-linux]](https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-linux.yml)
+[![open62541 Linux build and end-to-end test][badge.open62541-linux]](https://github.com/epics-modules/opcua/actions/workflows/ci-build-open62541-linux.yml)
+[![UA SDK Linux build and end-to-end test][badge.uasdk-linux]](https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-linux.yml)
 
-[![open62541][badge.open62541-win]](https://github.com/epics-modules/opcua/actions/workflows/ci-build-open62541-win.yml)
-[![UA SDK][badge.uasdk-win]](https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-win.yml)
+[![open62541 Windows build and end-to-end test][badge.open62541-win]](https://github.com/epics-modules/opcua/actions/workflows/ci-build-open62541-win.yml)
+[![UA SDK Windows build and end-to-end test][badge.uasdk-win]](https://github.com/epics-modules/opcua/actions/workflows/ci-build-uasdk-win.yml)
 
 # EPICS Device Support for OPC UA
 
