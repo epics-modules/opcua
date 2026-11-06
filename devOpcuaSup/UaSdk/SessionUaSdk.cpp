@@ -295,6 +295,42 @@ SessionUaSdk::setOption (const std::string &name, const std::string &value)
     if (updateWriteBatcher) writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
 }
 
+void
+SessionUaSdk::showOption (const std::string &name) const
+{
+    const bool all = name.empty();
+    bool found = false;
+    auto show = [&](const char *key, const std::string &value) {
+        if (all) {
+            std::string k(key);
+            k.resize(19, ' ');
+            std::cout << "  " << k << value << std::endl;
+        } else if (name == key) {
+            found = true;
+            std::cout << "session=" << this->name << " " << key << "=" << value << std::endl;
+        }
+    };
+
+    if (all)
+        std::cout << "session=" << this->name << " options:" << std::endl;
+
+    show("debug", std::to_string(debug));
+    show("autoconnect", autoConnect ? "y" : "n");
+    show("nodes-max", std::to_string(connectInfo.nMaxOperationsPerServiceCall));
+    show("read-nodes-max", std::to_string(readNodesMax));
+    show("read-timeout-min", std::to_string(readTimeoutMin));
+    show("read-timeout-max", std::to_string(readTimeoutMax));
+    show("write-nodes-max", std::to_string(writeNodesMax));
+    show("write-timeout-min", std::to_string(writeTimeoutMin));
+    show("write-timeout-max", std::to_string(writeTimeoutMax));
+    show("sec-mode", reqSecurityModeString(reqSecurityMode));
+    show("sec-policy", securityPolicyString(reqSecurityPolicyURI.toUtf8()));
+    show("sec-id", securityIdentityFile);
+
+    if (!all && !found)
+        errlogPrintf("unknown option '%s'\n", name.c_str());
+}
+
 long
 SessionUaSdk::connect(bool manual)
 {

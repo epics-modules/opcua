@@ -292,6 +292,11 @@ public:
     virtual void setOption(const std::string &name, const std::string &value) override;
 
     /**
+     * @brief Print the current value of an option. See DevOpcua::Session::showOption
+     */
+    virtual void showOption(const std::string &name) const override;
+
+    /**
      * @brief Add namespace index mapping (local). See DevOpcua::Session::addNamespaceMapping
      */
     virtual void addNamespaceMapping(const unsigned short nsIndex, const std::string &uri) override;

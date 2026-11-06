@@ -48,6 +48,7 @@
 #include <functional>
 #include <utility>
 #include <cstdio>
+#include <sstream>
 
 /* loadFile helper from open62541 examples */
 
@@ -477,6 +478,47 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
         max = MaxNodesPerWrite + writeNodesMax;
     }
     if (updateWriteBatcher) writer.setParams(max, writeTimeoutMin, writeTimeoutMax);
+}
+
+void
+SessionOpen62541::showOption (const std::string &name) const
+{
+    const bool all = name.empty();
+    bool found = false;
+    auto show = [&](const char *key, const std::string &value) {
+        if (all) {
+            std::string k(key);
+            k.resize(19, ' ');
+            std::cout << "  " << k << value << std::endl;
+        } else if (name == key) {
+            found = true;
+            std::cout << "session=" << this->name << " " << key << "=" << value << std::endl;
+        }
+    };
+
+    if (all)
+        std::cout << "session=" << this->name << " options:" << std::endl;
+
+    std::ostringstream secMode;
+    secMode << reqSecurityMode;
+
+    show("debug", std::to_string(debug));
+    show("autoconnect", autoConnect ? "y" : "n");
+    show("nodes-max", readNodesMax == writeNodesMax
+                          ? std::to_string(readNodesMax)
+                          : "(read-nodes-max and write-nodes-max differ)");
+    show("read-nodes-max", std::to_string(readNodesMax));
+    show("read-timeout-min", std::to_string(readTimeoutMin));
+    show("read-timeout-max", std::to_string(readTimeoutMax));
+    show("write-nodes-max", std::to_string(writeNodesMax));
+    show("write-timeout-min", std::to_string(writeTimeoutMin));
+    show("write-timeout-max", std::to_string(writeTimeoutMax));
+    show("sec-mode", secMode.str());
+    show("sec-policy", Session::securityPolicyString(reqSecurityPolicyUri));
+    show("sec-id", securityIdentityFile);
+
+    if (!all && !found)
+        errlogPrintf("unknown option '%s'\n", name.c_str());
 }
 
 long

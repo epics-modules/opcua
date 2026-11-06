@@ -303,6 +303,37 @@ static const iocshFuncDef opcuaOptionsFuncDef = {"opcuaOptions",
 #endif
 };
 
+// Set (key=value) or show (key) options, show all options if no options are given
+template<typename T>
+static void
+applyOptions(const std::set<T *> &targets, const iocshArgBuf &optArgs)
+{
+    if (optArgs.aval.ac <= 1) {
+        for (auto &t : targets)
+            t->showOption("");
+        return;
+    }
+    for (int i = 1; i < optArgs.aval.ac; i++) {
+        auto options = splitString(optArgs.aval.av[i], ':');
+        for (auto &opt : options) {
+            if (opt.empty()) continue;
+            if (opt.find('=') == std::string::npos) {
+                for (auto &t : targets)
+                    t->showOption(opt);
+            } else {
+                auto keyval = splitString(opt, '=');
+                if (keyval.size() != 2) {
+                    errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
+                                 opt.c_str());
+                } else {
+                    for (auto &t : targets)
+                        t->setOption(keyval.front(), keyval.back());
+                }
+            }
+        }
+    }
+}
+
 static void
 opcuaOptionsCallFunc(const iocshArgBuf *args)
 {
@@ -312,50 +343,14 @@ opcuaOptionsCallFunc(const iocshArgBuf *args)
         } else if (strcmp(args[0].sval, "help") == 0) {
             std::cout << opcuaOptionsUsage.c_str() << std::endl;
         } else {
-            if (args[1].aval.ac <= 1) {
-                errlogPrintf("missing argument #2 (options)\n");
+            std::set<Session *> sessions = Session::glob(args[0].sval);
+            if (sessions.size()) {
+                applyOptions(sessions, args[1]);
             } else {
-                bool foundSomething = false;
-                std::set<Session *> sessions = Session::glob(args[0].sval);
-                if (sessions.size()) {
-                    foundSomething = true;
-                    for (int i = 1; i < args[1].aval.ac; i++) {
-                        auto options = splitString(args[1].aval.av[i], ':');
-                        for (auto &opt : options) {
-                            if (opt.empty()) continue;
-                            auto keyval = splitString(opt, '=');
-                            if (keyval.size() != 2) {
-                                errlogPrintf("option '%s' must follow 'key=value' format - ignored\n",
-                                             opt.c_str());
-                            } else {
-                                for (auto &s : sessions)
-                                    s->setOption(keyval.front(), keyval.back());
-                            }
-                        }
-                    }
-                }
-                if (!foundSomething) {
-                    std::set<Subscription *> subscriptions = Subscription::glob(args[0].sval);
-                    if (subscriptions.size()) {
-                        foundSomething = true;
-                        for (int i = 1; i < args[1].aval.ac; i++) {
-                            auto options = splitString(args[1].aval.av[i], ':');
-                            for (auto &opt : options) {
-                                if (opt.empty()) continue;
-                                auto keyval = splitString(opt, '=');
-                                if (keyval.size() != 2) {
-                                    errlogPrintf(
-                                        "option '%s' must follow 'key=value' format - ignored\n",
-                                        opt.c_str());
-                                } else {
-                                    for (auto &s : subscriptions)
-                                        s->setOption(keyval.front(), keyval.back());
-                                }
-                            }
-                        }
-                    }
-                }
-                if (!foundSomething)
+                std::set<Subscription *> subscriptions = Subscription::glob(args[0].sval);
+                if (subscriptions.size())
+                    applyOptions(subscriptions, args[1]);
+                else
                     errlogPrintf("No matches for pattern '%s'\n", args[0].sval);
             }
         }
