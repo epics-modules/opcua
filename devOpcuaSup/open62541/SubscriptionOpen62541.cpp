@@ -124,6 +124,13 @@ SubscriptionOpen62541::getSessionOpen62541 () const
 void
 SubscriptionOpen62541::create ()
 {
+    if (debug) {
+        std::cerr << "Subscription " << name
+                  << ": creating with interval=" << requestedSettings.requestedPublishingInterval
+                  << " lifetime=" << requestedSettings.requestedLifetimeCount
+                  << " keepalive=" << requestedSettings.requestedMaxKeepAliveCount
+                  << std::endl;
+    }
     subscriptionSettings = UA_Client_Subscriptions_create(session.client,
         requestedSettings, this, [] (UA_Client *client, UA_UInt32 subscriptionId,
             void *context, UA_StatusChangeNotification *notification) {
@@ -209,8 +216,17 @@ SubscriptionOpen62541::addMonitoredItems ()
 void
 SubscriptionOpen62541::clear ()
 {
-    if(session.client)
-        UA_Client_Subscriptions_deleteSingle(session.client, subscriptionSettings.subscriptionId);
+    if (session.client) {
+        UA_StatusCode status = UA_Client_Subscriptions_deleteSingle(
+            session.client, subscriptionSettings.subscriptionId);
+        if (debug)
+            std::cerr << "Subscription " << name
+                      << "@" << session.getName()
+                      << ": (clear) deleting subscription " << subscriptionSettings.subscriptionId
+                      << " (" << UA_StatusCode_name(status) << ")"
+                      << std::endl;
+    }
+    subscriptionSettings.subscriptionId = 0;
 }
 
 void
