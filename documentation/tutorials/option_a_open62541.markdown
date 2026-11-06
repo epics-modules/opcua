@@ -301,7 +301,23 @@ consider linking your IOCs statically.
 
 ## Known issues
 
-n/a
+* **Limits for structured data types.**
+  open62541 restricts the size of the type descriptions
+  it uses for structured (custom) data types:
+  a structure can have at most 255 members per structure level,
+  and the in-memory size of a structure
+  (as recorded in its type descriptor) is limited to 64 KiB.
+  The Device Support ignores structured types
+  that exceed these limits.
+  It prints an error message when it loads the type dictionary,
+  and records that use these types will not work.
+
+* **No X.509 user authentication with open62541 v1.3 and older.**
+  With open62541 versions up to and including v1.3,
+  authentication of the client (user) to the server
+  using an X.509 Certificate Identity Token does not work.
+  Username/password authentication and the
+  communication security (signing/encryption) are not affected.
 
 ## Credits
 
