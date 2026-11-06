@@ -61,6 +61,11 @@ public:
     virtual void setOption(const std::string &name, const std::string &value) override;
 
     /**
+     * @brief Print the current value of an option. See DevOpcua::Subscription::showOption
+     */
+    virtual void showOption(const std::string &name) const override;
+
+    /**
      * @brief Print configuration and status. See DevOpcua::Subscription::show
      */
     virtual void show(int level) const override;

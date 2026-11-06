@@ -156,6 +156,13 @@ public:
     virtual void setOption(const std::string &name, const std::string &value) = 0;
 
     /**
+     * @brief Print the current value of an option (or all options) for the session on stdout.
+     *
+     * @param name  option name (empty string = print all options)
+     */
+    virtual void showOption(const std::string &name) const = 0;
+
+    /**
      * @brief Add namespace index mapping (local index -> URI).
      *
      * @param nsIndex  local namespace index
