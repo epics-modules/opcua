@@ -162,9 +162,11 @@ Session::showClientSecurity()
 #endif
 
 const char Session::optionUsage[]
-    = "Sets options for existing OPC UA sessions or subscriptions.\n\n"
+    = "Sets or shows options for existing OPC UA sessions or subscriptions.\n\n"
       "pattern    pattern for session or subscription names (* and ? supported)\n"
-      "[options]  list of options in 'key=value' format\n\n"
+      "[options]  list of options in 'key=value' format to set,\n"
+      "           or option names to show their current values\n"
+      "           (no options: show current values of all options)\n\n"
       "Valid session options are:\n"
       "debug              debug level [default 0 = no debug]\n"
       "autoconnect        automatically connect sessions [default y]\n"
@@ -177,7 +179,7 @@ const char Session::optionUsage[]
       "write-timeout-max  timeout (holdoff) after write service call w/ max elements [ms]\n"
       "sec-mode           requested security mode\n"
       "sec-policy         requested security policy\n"
-      "ident-file         file to read identity credentials from\n\n"
+      "sec-id             file to read identity credentials from\n\n"
       "";
 
 void

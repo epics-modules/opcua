@@ -66,6 +66,13 @@ public:
     virtual void setOption(const std::string &name, const std::string &value) = 0;
 
     /**
+     * @brief Print the current value of an option (or all options) for the subscription on stdout.
+     *
+     * @param name  option name (empty string = print all options)
+     */
+    virtual void showOption(const std::string &name) const = 0;
+
+    /**
      * @brief Print configuration and status of all subscriptions on stdout.
      *
      * The verbosity level controls the amount of information:

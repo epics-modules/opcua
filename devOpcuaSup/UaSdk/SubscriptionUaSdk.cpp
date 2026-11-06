@@ -80,6 +80,32 @@ void SubscriptionUaSdk::setOption(const std::string &name, const std::string &va
 }
 
 void
+SubscriptionUaSdk::showOption (const std::string &name) const
+{
+    const bool all = name.empty();
+    bool found = false;
+    auto show = [&](const char *key, const std::string &value) {
+        if (all) {
+            std::string k(key);
+            k.resize(19, ' ');
+            std::cout << "  " << k << value << std::endl;
+        } else if (name == key) {
+            found = true;
+            std::cout << "subscription=" << this->name << " " << key << "=" << value << std::endl;
+        }
+    };
+
+    if (all)
+        std::cout << "subscription=" << this->name << " options:" << std::endl;
+
+    show("debug", std::to_string(debug));
+    show("priority", std::to_string(static_cast<int>(requestedSettings.priority)));
+
+    if (!all && !found)
+        errlogPrintf("unknown option '%s'\n", name.c_str());
+}
+
+void
 SubscriptionUaSdk::show (int level) const
 {
     std::cout << "subscription=" << name

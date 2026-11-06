@@ -109,7 +109,7 @@ opcuaSubscription <name> <session> <publishing_interval> [<options>]
 
 ### Command `opcuaOptions`
 
-Sets options for existing sessions or subscriptions matching a pattern.
+Sets or shows options for existing sessions or subscriptions matching a pattern.
 
 ```
 opcuaOptions <pattern> [<options>]
@@ -118,7 +118,22 @@ opcuaOptions <pattern> [<options>]
 * `pattern`:
   Session or Subscription name glob pattern.
 * `options`:
-  Key-value pairs (e.g., `autoconnect=n` or `debug=1`).
+  Key-value pairs (e.g., `autoconnect=n` or `debug=1`) to set options,
+  or option names (e.g., `debug`) to show their current values.
+  Both forms can be mixed and are processed in order.
+  Without `options`, the current values of all options are shown.
+
+Example:
+
+```
+epics> opcuaOptions OPC1 nodes-max=100 nodes-max
+session=OPC1 nodes-max=100
+epics> opcuaOptions OPC1
+session=OPC1 options:
+  debug              0
+  autoconnect        y
+  ...
+```
 
 ### Table of Session Options
 
