@@ -793,8 +793,8 @@ SessionUaSdk::setupSecurity ()
                 return ConnectResult::cantConnect;
             }
 
-            OpcUa_Byte selectedSecurityLevel = 0;
-            OpcUa_UInt32 selectedEndpoint = 0;
+            int selectedSecurityLevel = -1;
+            int selectedEndpoint = -1;
             for (OpcUa_UInt32 k = 0; k < endpointDescriptions.length(); k++) {
                 if (std::string(UaString(endpointDescriptions[k].EndpointUrl).toUtf8()).compare(0, 7, "opc.tcp") == 0) {
                     if (reqSecurityMode == RequestedSecurityMode::Best ||
@@ -804,12 +804,12 @@ SessionUaSdk::setupSecurity ()
                             if (endpointDescriptions[k].SecurityLevel > selectedSecurityLevel
                                 && securitySupportedPolicies.count(
                                     UaString(endpointDescriptions[k].SecurityPolicyUri).toUtf8())) {
-                                selectedEndpoint = k;
+                                selectedEndpoint = static_cast<int>(k);
                                 selectedSecurityLevel = endpointDescriptions[k].SecurityLevel;
                             }
                 }
             }
-            if (selectedEndpoint > 0) {
+            if (selectedEndpoint >= 0) {
                 securityInfo.messageSecurityMode = endpointDescriptions[selectedEndpoint].SecurityMode;
                 securityInfo.sSecurityPolicy.attach(&endpointDescriptions[selectedEndpoint].SecurityPolicyUri);
                 OpcUa_String_Initialize(&endpointDescriptions[selectedEndpoint].SecurityPolicyUri);
