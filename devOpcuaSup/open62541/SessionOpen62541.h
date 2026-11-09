@@ -233,6 +233,16 @@ public:
     void createAllSubscriptions();
 
     /**
+     * @brief Delete all subscriptions related to this session on the server.
+     *
+     * Must be called (with the session still active) before the session is
+     * closed: the server would otherwise be left with publish requests of a
+     * subscription whose session has just gone away, and log an error for
+     * each of them.
+     */
+    void deleteAllSubscriptions();
+
+    /**
      * @brief Add all monitored items to subscriptions related to this session.
      */
     void addAllMonitoredItems();
@@ -422,6 +432,11 @@ private:
      */
     virtual void run() override;
 
+    /**
+     * @brief Initialize session after successful activation.
+     */
+    void initializeSession();
+
     // Wrapper for Session::securityPolicyString to match argument type
     static std::string securityPolicyString(const UA_String& policy)
     {
@@ -465,6 +480,7 @@ private:
     UA_SecureChannelState channelState;                           /**< status for this session */
     UA_SessionState sessionState;                                 /**< status for this session */
     UA_StatusCode connectStatus;                                  /**< status for this session */
+    bool needsInit;                                               /**< initialization needed after activation */
     unsigned int MaxNodesPerRead;                                 /**< server max number of nodes per write request */
     unsigned int MaxNodesPerWrite;                                /**< server max number of nodes per write request */
     epicsThread *workerThread;                                    /**< Asynchronous worker thread */
