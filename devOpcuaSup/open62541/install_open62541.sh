@@ -8,7 +8,7 @@
 # If no version is specified, a default version is defined in the script.
 
 # Default version of open62541 to use
-DEFAULT_VERSION="1.3.15"
+DEFAULT_VERSION="1.3.23"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="$SCRIPT_DIR/temp_build"
 LIB_DIR="$SCRIPT_DIR/lib-open62541"
