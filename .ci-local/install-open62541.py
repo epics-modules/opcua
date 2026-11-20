@@ -94,6 +94,10 @@ OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
                   '-DUA_ENABLE_ENCRYPTION_OPENSSL=ON',
                   '-DCMAKE_INSTALL_PREFIX={0}'.format(installdir)]
 
+    # Build against a specific OpenSSL installation (e.g. OpenSSL 3 next to the system's OpenSSL 4)
+    if os.environ.get('OPENSSL_ROOT_DIR'):
+        cmake_args.append('-DOPENSSL_ROOT_DIR={0}'.format(os.environ['OPENSSL_ROOT_DIR']))
+
     if cue.ci['os'] == 'windows' and cue.ci['compiler'] == 'gcc':
         # GCC 16 warns about discarded const qualifiers in the OpenSSL plugin (1.3.x)
         cmake_args.append('-DCMAKE_C_FLAGS=-Wno-error=jump-misses-init -Wno-error=discarded-qualifiers')

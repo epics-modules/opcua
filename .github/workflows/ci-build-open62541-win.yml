@@ -144,6 +144,14 @@ jobs:
           mingw-w64-ucrt-x86_64-cmake
           mingw-w64-ucrt-x86_64-python
         pacboy: openssl:p
+    # open62541 1.3 does not build with OpenSSL 4 (the MSYS2 default since 2026-11),
+    # and the MSYS2 tools need OpenSSL 4: install OpenSSL 3 separately for open62541
+    - name: Install OpenSSL 3 (for open62541)
+      run: |
+        mkdir -p /opt/openssl3
+        curl -fsSL --retry 3 https://repo.msys2.org/mingw/ucrt64/mingw-w64-ucrt-x86_64-openssl-3.6.5-1-any.pkg.tar.zst \
+          | tar --zstd -x -C /opt/openssl3
+        echo "OPENSSL_ROOT_DIR=$(cygpath -m /opt/openssl3/ucrt64)" >> $GITHUB_ENV
     - uses: actions/checkout@v6
       with:
         submodules: true
@@ -155,11 +163,11 @@ jobs:
         python3 .ci/cue.py prepare
     - name: Build main module
       run: |
-        export PATH=$PATH:/c/Users/runneradmin/.cache/open62541/bin
+        export PATH=$PATH:/c/Users/runneradmin/.cache/open62541/bin:/opt/openssl3/ucrt64/bin
         python3 .ci/cue.py build
     - name: Run main module tests
       run: |
-        export PATH=$PATH:/c/Users/runneradmin/.cache/open62541/bin
+        export PATH=$PATH:/c/Users/runneradmin/.cache/open62541/bin:/opt/openssl3/ucrt64/bin
         python3 .ci/cue.py test
     - name: Collect and show test results
       run: python3 .ci/cue.py test-results
