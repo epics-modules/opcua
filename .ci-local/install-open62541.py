@@ -95,7 +95,8 @@ OPEN62541_USE_XMLPARSER = YES'''.format(installdir))
                   '-DCMAKE_INSTALL_PREFIX={0}'.format(installdir)]
 
     if cue.ci['os'] == 'windows' and cue.ci['compiler'] == 'gcc':
-        cmake_args.append('-DCMAKE_C_FLAGS=-Wno-error=jump-misses-init')
+        # GCC 16 warns about discarded const qualifiers in the OpenSSL plugin (1.3.x)
+        cmake_args.append('-DCMAKE_C_FLAGS=-Wno-error=jump-misses-init -Wno-error=discarded-qualifiers')
 
     sp.check_call(cmake_args, cwd=builddir)
 
