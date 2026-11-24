@@ -125,6 +125,17 @@ it creates a `CONFIG_OPCUA` file that is automatically included
 by all downstream (IOC-generating) modules and applications.
 This ensures that the configuration is always consistent.
 
+A debug build of the Device Support module (`HOST_OPT = NO`)
+uses the debug variant of the SDK libraries
+(with a `d` suffix, e.g., `libuaclientcppd.so`).
+The `CONFIG_OPCUA` file fixes this choice for all applications,
+independent of their own `HOST_OPT` setting:
+an application linking the other variant
+would load both variants of the SDK,
+which leads to crashes (e.g., a double free when the IOC exits).
+When changing `HOST_OPT` for the Device Support module,
+run `make clean` first.
+
 :::{caution}
 When using the evaluation bundle of the SDK,
 only regular (shared) builds are supported.

@@ -27,15 +27,11 @@ ifeq ($(UASDK_DEPLOY_MODE),EMBED)
 # Repeated as in CONFIG_OPCUA because in the EMBED case we do *not*
 # want these definitions for users but they are still needed here
 
-# Debug builds need the d-marker to be set
 # Depending on SDK version, C++ modules may have a 'cpp' suffix
-ifeq ($(HOST_OPT),NO)
-D_MARKER = d
-endif
 _UASDK_MODS = $(notdir $(foreach module, $(UASDK_MODULES), \
 $(firstword $(wildcard $(UASDK)/include/$(module)cpp \
 $(UASDK)/include/$(module)))))
-UASDK_LIBS = $(addsuffix $(D_MARKER), $(_UASDK_MODS))
+UASDK_LIBS = $(addsuffix $(UASDK_D_MARKER), $(_UASDK_MODS))
 
 ifeq ($(LIBRARY_IOC),opcua)
 USR_LDFLAGS += -L$(UASDK_LIB_DIR)
@@ -67,5 +63,21 @@ $(INSTALL_SHRLIB)/$(SHRLIB_PREFIX)%$(SHRLIB_SUFFIX_BASE) : $(UASDK_SHRLIB_DIR)/$
 endif # INSTALL
 
 # EXPAND the downstream user configuration
-CONFIG_OPCUA: CONFIG_OPCUA@
+_UASDK_VARIANT = $(if $(UASDK_D_MARKER),debug,release)
+_UASDK_OTHER_VARIANT = $(if $(UASDK_D_MARKER),release,debug)
+
+CONFIG_OPCUA: CONFIG_OPCUA@ uasdk-libs.$(_UASDK_VARIANT)
 	$(EXPAND_TOOL) $(EXPANDFLAGS) $($@_EXPANDFLAGS) $< $@
+
+# TOUCH is not defined in Base 3.15
+TOUCH ?= $(PERL) -MExtUtils::Command -e touch
+
+uasdk-libs.$(_UASDK_VARIANT):
+	$(TOUCH) $@
+
+# Changing the SDK library variant (HOST_OPT) needs a clean rebuild
+ifdef T_A
+ifneq ($(wildcard uasdk-libs.$(_UASDK_OTHER_VARIANT)),)
+$(error HOST_OPT has changed since the last build (SDK libraries: $(_UASDK_OTHER_VARIANT) -> $(_UASDK_VARIANT)) - run 'make clean' first)
+endif
+endif
