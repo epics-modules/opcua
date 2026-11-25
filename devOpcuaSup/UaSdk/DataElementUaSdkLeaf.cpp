@@ -1086,8 +1086,8 @@ DataElementUaSdkLeaf::writeScalar(const char *value, epicsUInt32 len, dbCommon *
         const char *sep = static_cast<const char *>(memchr(value, '|', len));
         if (sep) {
             localizedText.setLocale(UaByteString(static_cast<OpcUa_Int32>(sep - value), (OpcUa_Byte *) value));
-            value = sep + 1;
             len -= static_cast<epicsUInt32>(sep + 1 - value);
+            value = sep + 1;
         } else { // keep the locale
             incomingData.toLocalizedText(localizedText);
         }
@@ -1103,8 +1103,8 @@ DataElementUaSdkLeaf::writeScalar(const char *value, epicsUInt32 len, dbCommon *
         const char *sep = static_cast<const char *>(memchr(value, '|', len));
         if (sep) {
             qualifiedName.setNamespaceIndex(atoi(value));
-            value = sep + 1;
             len -= static_cast<epicsUInt32>(sep + 1 - value);
+            value = sep + 1;
         } else { // keep the namespace
             incomingData.toQualifiedName(qualifiedName);
         }
