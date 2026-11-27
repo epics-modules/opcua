@@ -2487,6 +2487,10 @@ SessionOpen62541::connectionStatusChanged (
                       << " irrecoverably failed: "
                       << UA_StatusCode_name(connectStatus)
                       << std::endl;
+        markConnectionLoss();
+        registeredItemsNo = 0;
+        if (autoConnect)
+            autoConnector.start();
         return;
     }
 
