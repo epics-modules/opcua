@@ -97,10 +97,30 @@ public:
     bool isRegistered() const { return registered; }
 
     /**
+     * @brief Return true if the item is configured through a browse path.
+     */
+    bool hasBrowsePath() const { return !linkinfo.browsePath.empty(); }
+
+    /**
+     * @brief Return true if the item's node id is known (always true for items
+     * configured through a node id, true after successful resolution for items
+     * configured through a browse path).
+     */
+    bool isResolved() const { return resolved; }
+
+    /**
+     * @brief Set the node id that the browse path has been resolved to.
+     * @param id  resolved node id
+     */
+    void setResolvedNodeId(const UA_NodeId &id)
+    { UA_NodeId_clear(&nodeId); UA_NodeId_copy(&id, &nodeId); resolved = true; }
+
+    /**
      * @brief Setter for the node id of this item.
      * @return node id
      */
-    void setRegisteredNodeId(const UA_NodeId &id) { UA_NodeId_copy(&id, &nodeId); registered = true; }
+    void setRegisteredNodeId(const UA_NodeId &id)
+    { UA_NodeId_clear(&nodeId); UA_NodeId_copy(&id, &nodeId); registered = true; }
 
     /**
      * @brief Getter that returns the node id of this item.
@@ -210,6 +230,7 @@ private:
     SessionOpen62541 *session;             /**< raw pointer to session */
     UA_NodeId nodeId;                      /**< node id of this item */
     bool registered;                       /**< flag for registration status */
+    bool resolved;                         /**< node id is known (browse path resolved) */
     UA_Double revisedSamplingInterval;     /**< server-revised sampling interval */
     UA_UInt32 revisedQueueSize;            /**< server-revised queue size */
     ElementTree<DataElementOpen62541Node, DataElementOpen62541, ItemOpen62541> dataTree; /**< data element tree */

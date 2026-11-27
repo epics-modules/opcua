@@ -109,6 +109,24 @@ public:
     bool isRegistered() const { return registered; }
 
     /**
+     * @brief Return true if the item is configured through a browse path.
+     */
+    bool hasBrowsePath() const { return !linkinfo.browsePath.empty(); }
+
+    /**
+     * @brief Return true if the item's node id is known (always true for items
+     * configured through a node id, true after successful resolution for items
+     * configured through a browse path).
+     */
+    bool isResolved() const { return resolved; }
+
+    /**
+     * @brief Set the node id that the browse path has been resolved to.
+     * @param id  resolved node id
+     */
+    void setResolvedNodeId(const UaNodeId &id) { (*nodeid) = id; resolved = true; }
+
+    /**
      * @brief Setter for the node id of this item.
      * @return node id
      */
@@ -222,6 +240,7 @@ private:
     SessionUaSdk *session;                 /**< raw pointer to session */
     std::unique_ptr<UaNodeId> nodeid;      /**< node id of this item */
     bool registered;                       /**< flag for registration status */
+    bool resolved;                         /**< node id is known (browse path resolved) */
     OpcUa_Double revisedSamplingInterval;  /**< server-revised sampling interval */
     OpcUa_UInt32 revisedQueueSize;         /**< server-revised queue size */
     ElementTree<DataElementUaSdkNode, DataElementUaSdk, ItemUaSdk> dataTree; /**< data element tree */

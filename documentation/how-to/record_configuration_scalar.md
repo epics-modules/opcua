@@ -23,6 +23,59 @@ for accessing individual single scalar variables on the OPC UA server.
   (e.g., `"dataBlock"."myItem"` becomes `\"dataBlock\".\"myItem\"`).
   :::
 
+## Identifying Nodes by BrowseName
+
+Some servers use stable BrowseNames but numerical NodeIds
+that may change when the server is recreated or reconfigured.
+For these, a node can be identified through a *browse path*,
+i.e., the sequence of BrowseNames that leads to the node
+along hierarchical references (`Organizes`, `HasComponent`, `HasProperty`, ...).
+
+`@<session_name> [ns=<namespace_index>[;<identifier_type>=<identifier>]]
+bn=<browse_path> [<option>=<value>...]`
+
+* `<browse_path>`:
+  BrowseNames separated by `/` (a leading `/` is optional).
+  Each BrowseName may have a `<namespace_index>:` prefix;
+  without a prefix, the `ns` option's namespace index is used.
+  The ampersand (`&`) escapes the following character,
+  e.g., use `&/` for a `/` that is part of a BrowseName.
+  Namespace indices are mapped like the `ns` option
+  if a namespace mapping is configured for the session.
+* Starting node:
+  The node configured through `ns=...;s=...` or `ns=...;i=...`,
+  or the `Objects` folder if no identifier is configured.
+
+For BrowseNames that are long or contain spaces or other characters
+that are hard to put in a link,
+the browse path can be set through the info item `opcua:BROWSENAME`
+instead of the `bn` link option:
+
+```text
+record(ai, "TEMP") {
+    field(DTYP, "OPCUA")
+    field(INP,  "@SUB ns=3")
+    info(opcua:BROWSENAME, "PLC/Data Block 1/Temperature")
+}
+```
+
+The browse paths are resolved using the TranslateBrowsePathsToNodeIds service
+every time the session (re)connects.
+BrowseNames are not guaranteed to be unique,
+so the browse path must resolve to exactly one node.
+If it resolves to no node or to more than one node,
+an error is printed,
+the node is left unconnected,
+and its records are set to INVALID (`COMM` alarm).
+
+Examples:
+
+```text
+field(INP, "@SUB ns=3 bn=PLC/Temperature")         # from Objects folder
+field(INP, "@SUB bn=/3:PLC/3:Temperature")          # explicit namespace indices
+field(INP, "@SUB ns=3;s=PLC bn=Temperature")        # from node ns=3;s=PLC
+```
+
 ## Available Options
 
 :::{list-table}
@@ -44,6 +97,9 @@ for accessing individual single scalar variables on the OPC UA server.
   - `old`
   - Discard policy on queue overrun:
     [`old`/`new` (drop oldest/drop newest)]
+* - `bn`
+  -
+  - Browse path identifying the node (see above)
 * - `register`
   - `n`
   - Register item with server for performance [`y`/`n`]

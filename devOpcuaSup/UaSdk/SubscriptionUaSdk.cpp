@@ -16,6 +16,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <vector>
 
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -194,14 +195,22 @@ SubscriptionUaSdk::addMonitoredItems ()
     UaMonitoredItemCreateRequests monitoredItemCreateRequests;
     UaMonitoredItemCreateResults monitoredItemCreateResults;
 
-    if (items.size()) {
-        monitoredItemCreateRequests.create(static_cast<OpcUa_UInt32>(items.size()));
-        i = 0;
-        for (auto &it : items) {
+    // Items with unresolved browse paths are not monitored;
+    // the client handle is the index into the items vector
+    std::vector<OpcUa_UInt32> handles;
+    handles.reserve(items.size());
+    for (OpcUa_UInt32 h = 0; h < items.size(); h++)
+        if (items[h]->isResolved())
+            handles.push_back(h);
+
+    if (handles.size()) {
+        monitoredItemCreateRequests.create(static_cast<OpcUa_UInt32>(handles.size()));
+        for (i = 0; i < handles.size(); i++) {
+            ItemUaSdk *it = items[handles[i]];
             it->getNodeId().copyTo(&monitoredItemCreateRequests[i].ItemToMonitor.NodeId);
             monitoredItemCreateRequests[i].ItemToMonitor.AttributeId = OpcUa_Attributes_Value;
             monitoredItemCreateRequests[i].MonitoringMode = OpcUa_MonitoringMode_Reporting;
-            monitoredItemCreateRequests[i].RequestedParameters.ClientHandle = i;
+            monitoredItemCreateRequests[i].RequestedParameters.ClientHandle = handles[i];
             monitoredItemCreateRequests[i].RequestedParameters.SamplingInterval = it->linkinfo.samplingInterval;
             monitoredItemCreateRequests[i].RequestedParameters.QueueSize = it->linkinfo.queueSize;
             monitoredItemCreateRequests[i].RequestedParameters.DiscardOldest = it->linkinfo.discardOldest;
@@ -225,7 +234,6 @@ SubscriptionUaSdk::addMonitoredItems ()
                 }
 #endif
             }
-            i++;
         }
 
         status = puasubscription->createMonitoredItems(
@@ -238,18 +246,19 @@ SubscriptionUaSdk::addMonitoredItems ()
             errlogPrintf("OPC UA subscription %s@%s: createMonitoredItems failed with status %s\n",
                          name.c_str(), psessionuasdk->getName().c_str(), status.toString().toUtf8());
         } else {
-            for (i = 0; i < items.size(); i++) {
-                items[i]->setRevisedSamplingInterval(monitoredItemCreateResults[i].RevisedSamplingInterval);
-                items[i]->setRevisedQueueSize(monitoredItemCreateResults[i].RevisedQueueSize);
+            for (i = 0; i < handles.size() && i < monitoredItemCreateResults.length(); i++) {
+                items[handles[i]]->setRevisedSamplingInterval(monitoredItemCreateResults[i].RevisedSamplingInterval);
+                items[handles[i]]->setRevisedQueueSize(monitoredItemCreateResults[i].RevisedQueueSize);
             }
             if (debug)
                 std::cout << "Subscription " << name << "@" << psessionuasdk->getName()
-                          << ": created " << items.size() << " monitored items ("
+                          << ": created " << handles.size() << " monitored items ("
                           << status.toString().toUtf8() << ")" << std::endl;
-            for (i = 0; i < items.size(); i++) {
+            for (i = 0; i < handles.size() && i < monitoredItemCreateResults.length(); i++) {
+                ItemUaSdk *item = items[handles[i]];
                 if (OpcUa_IsGood(monitoredItemCreateResults[i].StatusCode)) {
                     if (debug >= 5)
-                        std::cout << "** OPC UA record " << items[i]->recConnector->getRecordName()
+                        std::cout << "** OPC UA record " << item->recConnector->getRecordName()
                                   << " monitored item " << UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8()
                                   << " succeeded with id " << monitoredItemCreateResults[i].MonitoredItemId
                                   << " revised sampling interval " << monitoredItemCreateResults[i].RevisedSamplingInterval
@@ -257,10 +266,10 @@ SubscriptionUaSdk::addMonitoredItems ()
                                   << std::endl;
                 } else {
                     errlogPrintf("OPC UA record %s monitored item %s failed with error %s\n",
-                        items[i]->recConnector->getRecordName(),
+                        item->recConnector->getRecordName(),
                         UaNodeId(monitoredItemCreateRequests[i].ItemToMonitor.NodeId).toXmlString().toUtf8(),
                         UaStatus(monitoredItemCreateResults[i].StatusCode).toString().toUtf8());
-                    items[i]->setIncomingEvent(ProcessReason::connectionLoss);
+                    item->setIncomingEvent(ProcessReason::connectionLoss);
                 }
             }
         }
@@ -315,7 +324,9 @@ SubscriptionUaSdk::dataChange (OpcUa_UInt32 clientSubscriptionHandle,
                       << "@" << psessionuasdk->getName()
                       << ": (dataChange) getting data for item " << dataNotifications[i].ClientHandle
                       << " (" << item->getNodeId().toXmlString().toUtf8();
-            if (item->isRegistered() && ! item->linkinfo.identifierIsNumeric)
+            if (item->hasBrowsePath())
+                std::cout << "/" << item->linkinfo.browsePathString;
+            else if (item->isRegistered() && ! item->linkinfo.identifierIsNumeric)
                 std::cout << "/" << item->linkinfo.identifierString;
             std::cout << ")" << std::endl;
         }

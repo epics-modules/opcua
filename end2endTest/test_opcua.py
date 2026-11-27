@@ -317,3 +317,42 @@ class TestNegative:
         caput("VarCheckInt16OutNoWrite", 221)
         assert not wait_for_server_value(server, f"ns={server.idx};s=Sim.TestVarInt16NoWrite", 221)
         assert caget("VarCheckInt16OutNoWrite", timeout=20) == 221
+
+
+class TestBrowsePath:
+    @pytest.mark.parametrize(
+        "pv_name,expected_val",
+        [
+            ("BrowseUnique", 4711),
+            ("BrowseDeep", 3.5),
+            ("BrowseInfoItem", -42),
+        ],
+    )
+    def test_read_browse_path(self, test_inst, pv_name, expected_val) -> None:
+        pv = PV(pv_name)
+        assert pv.get(use_monitor=False) == expected_val
+        assert pv.severity == 0
+
+    def test_write_browse_path(self, test_inst) -> None:
+        server, _ = test_inst
+        assert caput("BrowseUniqueOut", 815)
+        assert wait_for_server_value(server, f"ns={server.idx};i=5001", 815)
+        assert wait_for_value("BrowseUnique", 815)
+
+    @pytest.mark.parametrize("pv_name", ["BrowseDuplicate", "BrowseMissing", "BrowseMissingOut"])
+    def test_unresolved_browse_path(self, test_inst, pv_name) -> None:
+        pv = PV(pv_name)
+        pv.get(use_monitor=False)
+        assert pv.severity == 3
+
+    def test_unresolved_browse_path_messages(self, test_inst) -> None:
+        _, ioc = test_inst
+        assert re.search(r"record BrowseDuplicate: browse path .* is not unique \(2 matching nodes\)",
+                         ioc.output)
+        assert re.search(r"record BrowseMissing: browse path .* not found", ioc.output)
+
+    def test_unresolved_browse_path_write(self, test_inst) -> None:
+        caput("BrowseMissingOut", 1, wait=True)
+        pv = PV("BrowseMissingOut")
+        pv.get(use_monitor=False)
+        assert pv.severity == 3

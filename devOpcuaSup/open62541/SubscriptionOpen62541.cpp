@@ -180,6 +180,8 @@ SubscriptionOpen62541::addMonitoredItems ()
         monitoredItemCreateResult.statusCode = UA_STATUSCODE_GOOD; // suppress compiler warning
         i = 0;
         for (auto &it : items) {
+            if (!it->isResolved())
+                continue;
             UA_MonitoredItemCreateRequest_init(&monitoredItemCreateRequest);
             monitoredItemCreateRequest.itemToMonitor.nodeId = it->getNodeId();
             monitoredItemCreateRequest.itemToMonitor.attributeId = UA_ATTRIBUTEID_VALUE;
@@ -227,7 +229,7 @@ SubscriptionOpen62541::addMonitoredItems ()
         }
         if (debug)
             std::cout << "Subscription " << name << "@" << session.getName()
-                      << ": created " << items.size() << " monitored items ("
+                      << ": created " << i << " monitored items ("
                       << UA_StatusCode_name(monitoredItemCreateResult.statusCode) << ")" << std::endl;
     }
 }
@@ -271,7 +273,9 @@ SubscriptionOpen62541::dataChange (UA_UInt32 monitorId, ItemOpen62541 &item, UA_
                   << "@" << session.getName()
                   << ": (dataChange) getting data for item " << monitorId
                   << " " << item.getNodeId();
-        if (item.isRegistered() && ! item.linkinfo.identifierIsNumeric)
+        if (item.hasBrowsePath())
+            std::cout << "/" << item.linkinfo.browsePathString;
+        else if (item.isRegistered() && ! item.linkinfo.identifierIsNumeric)
             std::cout << "/" << item.linkinfo.identifierString;
         std::cout << " = " << value->value << std::endl;
     }

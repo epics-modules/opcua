@@ -74,6 +74,15 @@ reportPiniAndClear (dbCommon *prec) {
     prec->pini = 0;
 }
 
+/**
+ * @brief One element of a browse path (target BrowseName of a hierarchical reference).
+ */
+struct BrowsePathElement {
+    bool hasNamespace = false;      /**< true if the element has an explicit namespace index */
+    epicsUInt16 namespaceIndex = 0; /**< namespace index of the BrowseName (if hasNamespace) */
+    std::string name;               /**< name part of the BrowseName */
+};
+
 /** @brief Configuration data for a single record instance.
  *
  * This structure holds all configuration data for a single instance of
@@ -94,6 +103,10 @@ typedef struct linkInfo {
     bool identifierIsNumeric = false;
     epicsUInt32 identifierNumber;
     std::string identifierString;
+    bool hasIdentifier = false;        /**< node identifier (s= or i=) has been configured */
+
+    std::string browsePathString;      /**< browse path as configured */
+    std::list<BrowsePathElement> browsePath; /**< parsed browse path (empty: use node id) */
 
     bool registerNode = false;
 

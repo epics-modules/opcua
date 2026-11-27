@@ -25,6 +25,7 @@
 #include "SessionUaSdk.h"
 #include "SubscriptionUaSdk.h"
 #include "devOpcua.h"
+#include "linkParser.h"
 #include "opcuaItemRecord.h"
 
 namespace DevOpcua
@@ -44,6 +45,7 @@ ItemUaSdk::ItemUaSdk (const linkInfo &info)
     , subscription(nullptr)
     , session(nullptr)
     , registered(false)
+    , resolved(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
     , dataTreeDirty(false)
@@ -72,7 +74,11 @@ void
 ItemUaSdk::rebuildNodeId ()
 {
     OpcUa_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
-    if (linkinfo.identifierIsNumeric) {
+    // For browse paths, the node id is the starting node until the path is resolved
+    resolved = !hasBrowsePath();
+    if (hasBrowsePath() && !linkinfo.hasIdentifier) {
+        nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(OpcUaId_ObjectsFolder, 0));
+    } else if (linkinfo.identifierIsNumeric) {
         nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierNumber, ns));
     } else {
         nodeid = std::unique_ptr<UaNodeId>(new UaNodeId(linkinfo.identifierString.c_str(), ns));
@@ -91,16 +97,21 @@ ItemUaSdk::requestWriteIfDirty ()
 void
 ItemUaSdk::show (int level) const
 {
-    std::cout << "item"
-              << " ns=";
-    if (nodeid && (nodeid->namespaceIndex() != linkinfo.namespaceIndex))
-        std::cout << nodeid->namespaceIndex() << "(" << linkinfo.namespaceIndex << ")";
-    else
-        std::cout << linkinfo.namespaceIndex;
-    if (linkinfo.identifierIsNumeric)
-        std::cout << ";i=" << linkinfo.identifierNumber;
-    else
-        std::cout << ";s=" << linkinfo.identifierString;
+    std::cout << "item";
+    if (hasBrowsePath()) {
+        std::cout << " " << nodeSpecString(linkinfo) << " node="
+                  << ((resolved && nodeid) ? nodeid->toString().toUtf8() : "-");
+    } else {
+        std::cout << " ns=";
+        if (nodeid && (nodeid->namespaceIndex() != linkinfo.namespaceIndex))
+            std::cout << nodeid->namespaceIndex() << "(" << linkinfo.namespaceIndex << ")";
+        else
+            std::cout << linkinfo.namespaceIndex;
+        if (linkinfo.identifierIsNumeric)
+            std::cout << ";i=" << linkinfo.identifierNumber;
+        else
+            std::cout << ";s=" << linkinfo.identifierString;
+    }
     std::cout << " record=" << recConnector->getRecordName()
               << " state=" << connectionStatusString(recConnector->state())
               << " status=" << UaStatus(lastStatus).toString().toUtf8() << " dataDirty=" << (dataTreeDirty ? "y" : "n")
@@ -167,13 +178,9 @@ ItemUaSdk::setIncomingData (const OpcUa_DataValue &value, ProcessReason reason, 
     }
     setReason(reason);
     if (getLastStatus() == OpcUa_BadServerNotConnected && value.StatusCode == OpcUa_BadNodeIdUnknown)
-        errlogPrintf("OPC UA session %s: item ns=%d;%s%.*d%s : BadNodeIdUnknown\n",
+        errlogPrintf("OPC UA session %s: item %s : BadNodeIdUnknown\n",
                      session->getName().c_str(),
-                     linkinfo.namespaceIndex,
-                     (linkinfo.identifierIsNumeric ? "i=" : "s="),
-                     (linkinfo.identifierIsNumeric ? 1 : 0),
-                     (linkinfo.identifierIsNumeric ? linkinfo.identifierNumber : 0),
-                     (linkinfo.identifierIsNumeric ? "" : linkinfo.identifierString.c_str()));
+                     nodeSpecString(linkinfo).c_str());
 
     setLastStatus(value.StatusCode);
 

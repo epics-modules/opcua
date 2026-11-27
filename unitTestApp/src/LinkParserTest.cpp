@@ -172,4 +172,80 @@ TEST(LinkParserTest, splitString_endsWithTwoDelimiters) {
     EXPECT_EQ(*it++, "") << "path[2] not empty after splitting '" << s << "'";
 }
 
+/* std::list<BrowsePathElement> parseBrowsePath(const std::string &str);
+ *
+ * @brief Parse a browse path string into a list of BrowsePathElements.
+ */
+
+TEST(LinkParserTest, parseBrowsePath_singleName) {
+    auto path = parseBrowsePath("Temperature");
+    ASSERT_EQ(path.size(), 1u);
+    EXPECT_FALSE(path.front().hasNamespace);
+    EXPECT_EQ(path.front().name, "Temperature");
+}
+
+TEST(LinkParserTest, parseBrowsePath_singleNameWithNamespace) {
+    auto path = parseBrowsePath("3:Temperature");
+    ASSERT_EQ(path.size(), 1u);
+    EXPECT_TRUE(path.front().hasNamespace);
+    EXPECT_EQ(path.front().namespaceIndex, 3u);
+    EXPECT_EQ(path.front().name, "Temperature");
+}
+
+TEST(LinkParserTest, parseBrowsePath_multipleElements) {
+    auto path = parseBrowsePath("/2:PLC/Data Block/4:Sim.Temp");
+    ASSERT_EQ(path.size(), 3u);
+    auto it = path.begin();
+    EXPECT_TRUE(it->hasNamespace);
+    EXPECT_EQ(it->namespaceIndex, 2u);
+    EXPECT_EQ(it->name, "PLC");
+    ++it;
+    EXPECT_FALSE(it->hasNamespace);
+    EXPECT_EQ(it->name, "Data Block");
+    ++it;
+    EXPECT_TRUE(it->hasNamespace);
+    EXPECT_EQ(it->namespaceIndex, 4u);
+    EXPECT_EQ(it->name, "Sim.Temp");
+}
+
+TEST(LinkParserTest, parseBrowsePath_colonNotNamespace) {
+    auto path = parseBrowsePath("a1:b/:c/x:2:y");
+    ASSERT_EQ(path.size(), 3u);
+    auto it = path.begin();
+    EXPECT_FALSE(it->hasNamespace);
+    EXPECT_EQ(it->name, "a1:b");
+    ++it;
+    EXPECT_FALSE(it->hasNamespace);
+    EXPECT_EQ(it->name, ":c");
+    ++it;
+    EXPECT_FALSE(it->hasNamespace);
+    EXPECT_EQ(it->name, "x:2:y");
+}
+
+TEST(LinkParserTest, parseBrowsePath_escapes) {
+    auto path = parseBrowsePath("2&:Foo/a&/b/&&c/1:&3:d");
+    ASSERT_EQ(path.size(), 4u);
+    auto it = path.begin();
+    EXPECT_FALSE(it->hasNamespace);
+    EXPECT_EQ(it->name, "2:Foo");
+    ++it;
+    EXPECT_EQ(it->name, "a/b");
+    ++it;
+    EXPECT_EQ(it->name, "&c");
+    ++it;
+    EXPECT_TRUE(it->hasNamespace);
+    EXPECT_EQ(it->namespaceIndex, 1u);
+    EXPECT_EQ(it->name, "3:d");
+}
+
+TEST(LinkParserTest, parseBrowsePath_errors) {
+    EXPECT_THROW(parseBrowsePath(""), std::runtime_error);
+    EXPECT_THROW(parseBrowsePath("/"), std::runtime_error);
+    EXPECT_THROW(parseBrowsePath("a//b"), std::runtime_error);
+    EXPECT_THROW(parseBrowsePath("a/"), std::runtime_error);
+    EXPECT_THROW(parseBrowsePath("a&"), std::runtime_error);
+    EXPECT_THROW(parseBrowsePath("2:"), std::runtime_error);
+    EXPECT_THROW(parseBrowsePath("70000:a"), std::runtime_error);
+}
+
 } // namespace
