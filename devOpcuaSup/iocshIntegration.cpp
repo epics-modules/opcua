@@ -367,7 +367,8 @@ static const iocshArg *const opcuaShowArg[2] = {&opcuaShowArg0, &opcuaShowArg1};
 const char opcuaShowUsage[]
     = "Prints information about sessions, subscriptions, items and their related data elements.\n\n"
       "pattern    glob pattern (supports * and ?) for session, subscription, record names\n"
-      "verbosity  amount of printed information (default 0 = sparse)\n";
+      "verbosity  amount of printed information (default 0 = one line);\n"
+      "           each level adds one tier: session > subscriptions > items > data elements\n";
 
 static const iocshFuncDef opcuaShowFuncDef = {"opcuaShow",
                                               2,
@@ -409,6 +410,46 @@ opcuaShowCallFunc(const iocshArgBuf *args)
         }
         if (!foundSomething)
             errlogPrintf("No matches for pattern '%s'\n", args[0].sval);
+    }
+}
+
+static const iocshArg opcuaShowTypesArg0 = {"pattern", iocshArgString};
+static const iocshArg opcuaShowTypesArg1 = {"verbosity", iocshArgInt};
+
+static const iocshArg *const opcuaShowTypesArg[2] = {&opcuaShowTypesArg0, &opcuaShowTypesArg1};
+
+const char opcuaShowTypesUsage[]
+    = "Prints the custom data types known to sessions.\n\n"
+      "pattern    glob pattern (supports * and ?) for session names\n"
+      "verbosity  amount of printed information\n"
+      "           (default 0 = one line per type, 1 = also structure members / enum choices)\n";
+
+static const iocshFuncDef opcuaShowTypesFuncDef = {"opcuaShowTypes",
+                                                   2,
+                                                   opcuaShowTypesArg
+#ifdef IOCSHFUNCDEF_HAS_USAGE
+                                                   ,
+                                                   opcuaShowTypesUsage
+#endif
+};
+
+static void
+opcuaShowTypesCallFunc(const iocshArgBuf *args)
+{
+    try {
+        if (args[0].sval == NULL || args[0].sval[0] == '\0') {
+            errlogPrintf("missing argument #1 (pattern for session name)\n");
+        } else {
+            std::set<Session *> sessions = Session::glob(args[0].sval);
+            if (sessions.size()) {
+                for (auto &s : sessions)
+                    s->showTypes(args[1].ival);
+            } else {
+                errlogPrintf("No matches for pattern '%s'\n", args[0].sval);
+            }
+        }
+    } catch (std::exception &e) {
+        std::cerr << "ERROR : " << e.what() << std::endl;
     }
 }
 
@@ -1081,6 +1122,7 @@ void opcuaIocshRegister ()
     iocshRegister(&opcuaSubscriptionFuncDef, opcuaSubscriptionCallFunc);
     iocshRegister(&opcuaOptionsFuncDef, opcuaOptionsCallFunc);
     iocshRegister(&opcuaShowFuncDef, opcuaShowCallFunc);
+    iocshRegister(&opcuaShowTypesFuncDef, opcuaShowTypesCallFunc);
 
     iocshRegister(&opcuaConnectFuncDef, opcuaConnectCallFunc);
     iocshRegister(&opcuaDisconnectFuncDef, opcuaDisconnectCallFunc);

@@ -50,8 +50,10 @@ public:
     /**
      * @brief Print configuration and status on stdout.
      *
-     * The verbosity level controls the amount of information:
+     * Each verbosity level adds one more tier of the subscription's objects:
      * 0 = one line
+     * 1 = subscription line, then one line per item
+     * 2 = ... then one line per data element (below its item)
      *
      * @param level  verbosity level
      */
@@ -77,8 +79,7 @@ public:
      *
      * The verbosity level controls the amount of information:
      * 0 = one summary line
-     * 1 = one line per subscription
-     * 2 = one subscription line, then one line per monitored item
+     * 1 = summary line, then all subscriptions as show(level-1)
      *
      * @param level  verbosity level
      */

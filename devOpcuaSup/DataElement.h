@@ -75,8 +75,9 @@ public:
     /**
      * @brief Print configuration and status on stdout.
      *
-     * The verbosity level controls the amount of information:
-     * 0 = one line
+     * Prints one line for the element; a node element then shows its children
+     * (with increased indentation). The level is passed on to the children
+     * and currently does not change the output.
      *
      * @param level   verbosity level
      * @param indent  indentation level

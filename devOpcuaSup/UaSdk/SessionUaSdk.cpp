@@ -991,7 +991,7 @@ SessionUaSdk::show (const int level) const
               << writer.minHoldOff() << "-" << writer.maxHoldOff() << "ms"
               << std::endl;
 
-    if (level >= 3) {
+    if (level >= 1) {
         if (namespaceMap.size()) {
             std::cout << "Configured Namespace Mapping "
                       << "(local -> Namespace URI -> server)" << std::endl;
@@ -1000,22 +1000,32 @@ SessionUaSdk::show (const int level) const
                           << mapNamespaceIndex(p.second) << std::endl;
             }
         }
-    }
-
-    if (level >= 1) {
         for (auto &it : subscriptions) {
             it.second->show(level-1);
         }
     }
 
     if (level >= 2) {
-        if (items.size() > 0) {
-            std::cerr << "subscription=[none]" << std::endl;
-            for (auto &it : items) {
-                if (!it->isMonitored()) it->show(level-1);
+        // items that are not monitored, shown like the items of a subscription
+        bool header = false;
+        for (auto &it : items) {
+            if (!it->isMonitored()) {
+                if (!header) {
+                    std::cout << "subscription=[none]" << std::endl;
+                    header = true;
+                }
+                it->show(level-2);
             }
         }
     }
+}
+
+void
+SessionUaSdk::showTypes (const int) const
+{
+    std::cout << "session=" << name
+              << " listing custom data types is not supported by the UA SDK back end"
+              << std::endl;
 }
 
 void

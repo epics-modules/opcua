@@ -81,7 +81,7 @@ public:
      *
      * The verbosity level controls the amount of information:
      * 0 = one line
-     * 1 = item line, then one line per data element
+     * 1 = item line, then one line per data element (structure: the element tree)
      *
      * @param level  verbosity level
      */

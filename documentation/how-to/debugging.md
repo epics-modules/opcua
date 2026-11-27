@@ -11,6 +11,10 @@ Several commands are available for inspecting the state of the module:
   Prints information about
   sessions, subscriptions, items, and data elements.
   Supports glob patterns.
+  Each verbosity level adds one tier of objects.
+* `opcuaShowTypes`:
+  Prints the custom data types that a session has read from the server
+  (open62541 only).
 * `opcuaShowSecurity`:
   Prints information about the IOCś security setup
   and discovered endpoints on the remote server.
@@ -22,6 +26,9 @@ Example:
 ```
 opcuaShow OPC* 1
 ```
+
+shows all sessions matching `OPC*` and their subscriptions,
+`opcuaShow OPC* 2` adds the items.
 
 ## Session/Subscription Debugging
 

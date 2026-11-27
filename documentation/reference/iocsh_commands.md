@@ -272,6 +272,39 @@ opcuaShow <pattern>, [<verbosity>]
 ```
 
 * `pattern`:
-  Session or Subscription name glob pattern.
+  Session, subscription, or record name glob pattern.
+  Sessions are tried first, then subscriptions, then records.
 * `verbosity`:
-  Sets amount of printed information.
+  Sets amount of printed information [default: `0` = one line].
+
+Each verbosity level adds one more tier of objects
+below the one that the pattern matched:
+
+| verbosity | session                                  | subscription        | record (item)       |
+|-----------|------------------------------------------|---------------------|---------------------|
+| `0`       | session line                             | subscription line   | item line           |
+| `1`       | + namespace mapping, subscription lines  | + item lines        | + data element tree |
+| `2`       | + item lines                             | + data element tree |                     |
+| `3`       | + data element tree                      |                     |                     |
+
+On a session, items that are not monitored (not in any subscription)
+are listed below a `subscription=[none]` line.
+
+### Command `opcuaShowTypes`
+
+Shows the custom data types (structures and enumerations)
+that a session has read from the server's type dictionaries.
+
+```
+opcuaShowTypes <pattern>, [<verbosity>]
+```
+
+* `pattern`:
+  Session name glob pattern.
+* `verbosity`:
+  `0` (default) prints one line per type,
+  `1` adds the structure members or enumeration choices.
+
+This is supported by the open62541 client library only
+(which needs to be built with XML parser support).
+The UA SDK client library does not provide an API to list the type definitions.

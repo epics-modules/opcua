@@ -112,6 +112,12 @@ public:
     virtual void show(const int level) const override;
 
     /**
+     * @brief Print the custom data types. See DevOpcua::Session::showTypes
+     * @param level
+     */
+    virtual void showTypes(const int level) const override;
+
+    /**
      * @brief Do a discovery and show the available endpoints.
      */
     virtual void showSecurity() override;

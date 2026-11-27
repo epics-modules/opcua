@@ -1345,7 +1345,7 @@ SessionOpen62541::show (const int level) const
               << writer.minHoldOff() << "-" << writer.maxHoldOff() << "ms"
               << std::endl;
 
-    if (level >= 3) {
+    if (level >= 1) {
         if (namespaceMap.size()) {
             std::cout << "Configured Namespace Mapping "
                       << "(local -> Namespace URI -> server)" << std::endl;
@@ -1354,33 +1354,39 @@ SessionOpen62541::show (const int level) const
                           << mapNamespaceIndex(p.second) << std::endl;
             }
         }
-    }
-
-    if (level >= 1) {
         for (auto &it : subscriptions) {
             it.second->show(level-1);
         }
     }
 
     if (level >= 2) {
-        if (items.size() > 0) {
-            std::cerr << "subscription=[none]" << std::endl;
-            for (auto &it : items) {
-                if (!it->isMonitored()) it->show(level-1);
+        // items that are not monitored, shown like the items of a subscription
+        bool header = false;
+        for (auto &it : items) {
+            if (!it->isMonitored()) {
+                if (!header) {
+                    std::cout << "subscription=[none]" << std::endl;
+                    header = true;
+                }
+                it->show(level-2);
             }
         }
     }
+}
+
+void
+SessionOpen62541::showTypes (const int level) const
+{
+    std::cout << "session=" << name;
 #ifdef HAS_XMLPARSER
-    if (level >= 3) {
-        if (customTypes.size() == 0) {
-            std::cout << "No custom data types" << std::endl;
-        } else {
-            std::cout << "Custom data types:" << std::endl;
-            showCustomDataTypes(level-3);
-        }
+    if (customTypes.size() == 0) {
+        std::cout << " no custom data types" << std::endl;
+    } else {
+        std::cout << " custom data types=" << customTypes.size() << std::endl;
+        showCustomDataTypes(level);
     }
 #else
-    std::cout << "No custom data type support" << std::endl;
+    std::cout << " no custom data type support (built without XML parser)" << std::endl;
 #endif
 }
 

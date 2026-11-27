@@ -117,21 +117,34 @@ public:
     /**
      * @brief Print configuration and status on stdout.
      *
-     * The verbosity level controls the amount of information:
+     * Each verbosity level adds one more tier of the session's objects:
      * 0 = one line
-     * 1 = session line, then one line per subscription
+     * 1 = session line, then the configured namespace mapping and one line per subscription
+     * 2 = ... then one line per item (below its subscription; items that are not
+     *     monitored are shown below a "subscription=[none]" line)
+     * 3 = ... then one line per data element (below its item)
      *
      * @param level  verbosity level
      */
     virtual void show(const int level) const = 0;
 
     /**
+     * @brief Print the custom data types known to the session on stdout.
+     *
+     * The verbosity level controls the amount of information:
+     * 0 = one line per type
+     * 1 = type line, then one line per structure member / enum choice
+     *
+     * @param level  verbosity level
+     */
+    virtual void showTypes(const int level) const = 0;
+
+    /**
      * @brief Print configuration and status of all sessions on stdout.
      *
      * The verbosity level controls the amount of information:
-     * 0 = one summary
-     * 1 = one line per session
-     * 2 = one session line, then one line per subscription
+     * 0 = one summary line
+     * 1 = summary line, then all sessions as show(level-1)
      *
      * @param level  verbosity level
      */
