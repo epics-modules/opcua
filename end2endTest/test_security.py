@@ -388,8 +388,8 @@ class TestUserAuthentication:
         assert_not_connected(server, ioc)
 
     @pytest.mark.xfail(
-        CLIENT == "OPEN62541",
-        reason="open62541 client: open62541 1.3 does not send the userTokenSignature "
+        OPEN62541_VERSION is not None and OPEN62541_VERSION < (1, 4),
+        reason="open62541 1.3 and older does not send the userTokenSignature "
                "(proof of possession of the user's private key)",
         strict=False)
     @pytest.mark.parametrize("mode", MODES)

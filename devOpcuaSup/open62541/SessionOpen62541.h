@@ -113,6 +113,7 @@ struct ClientSecurityInfo {
     UA_ByteString clientCertificate;
     UA_ByteString privateKey;
     UA_ExtensionObject userIdentityToken;
+    UA_ByteString identityPrivateKey;   // private key for a certificate identity token (DER)
     UA_String securityPolicyUri;
     UA_MessageSecurityMode securityMode;
     ClientSecurityInfo () {
@@ -120,11 +121,13 @@ struct ClientSecurityInfo {
         clientCertificate = UA_STRING_NULL;
         privateKey = UA_STRING_NULL;
         userIdentityToken = {};
+        identityPrivateKey = UA_STRING_NULL;
         securityPolicyUri = UA_STRING_NULL;
         securityMode = UA_MESSAGESECURITYMODE_NONE;
     }
     ~ClientSecurityInfo () {
         UA_ExtensionObject_clear(&userIdentityToken);
+        UA_ByteString_clear(&identityPrivateKey);
         UA_ByteString_clear(&privateKey);
         UA_ByteString_clear(&clientCertificate);
         UA_ByteString_clear(&serverCertificate);

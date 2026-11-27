@@ -39,6 +39,9 @@
 #include <open62541/client_config_default.h>
 #if UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR < 105
 #include <open62541/plugin/pki_default.h>
+#if UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR >= 104
+#include <open62541/plugin/pki.h>
+#endif
 #else
 #include <open62541/plugin/certificategroup_default.h>
 #endif
@@ -762,6 +765,20 @@ SessionOpen62541::connect (bool manual)
     config->securityMode = securityInfo.securityMode;
     UA_String_copy(&securityInfo.securityPolicyUri, &config->securityPolicyUri);
     UA_copy(&securityInfo.userIdentityToken, &config->userIdentityToken, &UA_TYPES[UA_TYPES_EXTENSIONOBJECT]);
+#if defined(HAS_SECURITY) && UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR >= 104 \
+    && (defined(UA_ENABLE_ENCRYPTION_OPENSSL) || defined(UA_ENABLE_ENCRYPTION_MBEDTLS))
+    // A certificate identity token has to be signed with the user's private key
+    if (securityInfo.userIdentityToken.content.decoded.type == &UA_TYPES[UA_TYPES_X509IDENTITYTOKEN]
+        && securityInfo.identityPrivateKey.length) {
+        const UA_X509IdentityToken *token = static_cast<const UA_X509IdentityToken *>(
+            securityInfo.userIdentityToken.content.decoded.data);
+        UA_StatusCode status = UA_ClientConfig_setAuthenticationCert(config, token->certificateData,
+                                                                     securityInfo.identityPrivateKey);
+        if (UA_STATUS_IS_BAD(status))
+            errlogPrintf("OPC UA session %s: setting up certificate authentication failed with status %s\n",
+                         name.c_str(), UA_StatusCode_name(status));
+    }
+#endif
 
     connectStatus = UA_Client_connect(client, serverURL.c_str());
 
@@ -1591,6 +1608,7 @@ void
 SessionOpen62541::setupIdentity()
 {
     UA_ExtensionObject_clear(&securityInfo.userIdentityToken);
+    UA_ByteString_clear(&securityInfo.identityPrivateKey);
     securityUserName = "Anonymous";
 
 #ifdef HAS_SECURITY
@@ -1681,12 +1699,40 @@ SessionOpen62541::setupIdentity()
                     }
                 }
             }
+#if UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR >= 104
+            // The private key is needed to sign the token (proof of possession)
+            UA_ByteString key = loadFile(keyfile.c_str());
+            if (key.length == 0) {
+                errlogPrintf("OPC UA Session %s: loading identity private key %s failed\n",
+                             name.c_str(), keyfile.c_str());
+                UA_ByteString_clear(&cert);
+                return;
+            }
+            UA_ByteString password = UA_BYTESTRING_NULL;
+            if (pass.length())
+                password = UA_BYTESTRING(const_cast<char *>(pass.c_str()));
+#if UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR < 105
+            UA_StatusCode status = UA_PKI_decryptPrivateKey(key, password,
+                                                            &securityInfo.identityPrivateKey);
+#else
+            UA_StatusCode status = UA_CertificateUtils_decryptPrivateKey(key, password,
+                                                                         &securityInfo.identityPrivateKey);
+#endif
+            UA_ByteString_clear(&key);
+            if (UA_STATUS_IS_BAD(status)) {
+                errlogPrintf("OPC UA Session %s: reading identity private key %s failed: %s\n",
+                             name.c_str(), keyfile.c_str(), UA_StatusCode_name(status));
+                UA_ByteString_clear(&cert);
+                return;
+            }
+#endif
             UA_X509IdentityToken* identityToken = UA_X509IdentityToken_new();
             if (!identityToken) {
                 errlogPrintf(
                     "OPC UA session %s: out of memory",
                     name.c_str());
                 UA_ByteString_clear(&cert);
+                UA_ByteString_clear(&securityInfo.identityPrivateKey);
                 return;
             }
             securityUserName = "Certificate user";
