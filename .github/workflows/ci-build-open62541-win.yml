@@ -69,9 +69,23 @@ jobs:
           - os: windows-2022
             cmp: vs2022
             configuration: default
+            base: "3.15"
+            open62541: "1.5.9"
+            name: "3.15 Win2022 v1.5.9 VS2022 DLL"
+
+          - os: windows-2022
+            cmp: vs2022
+            configuration: default
             base: "7.0"
             open62541: "1.4.17"
             name: "7.0 Win2022 v1.4.17 VS2022 DLL"
+
+          - os: windows-2022
+            cmp: vs2022
+            configuration: default
+            base: "7.0"
+            open62541: "1.5.9"
+            name: "7.0 Win2022 v1.5.9 VS2022 DLL"
 
     steps:
     - uses: actions/checkout@v6
@@ -148,13 +162,25 @@ jobs:
             configuration: default
             base: "3.15"
             open62541: "1.4.17"
-            name: "3.15 Win2022 v1.3.18 MinGW DLL"
+            name: "3.15 Win2022 v1.4.17 MinGW DLL"
+
+          - os: windows-2022
+            configuration: default
+            base: "3.15"
+            open62541: "1.5.9"
+            name: "3.15 Win2022 v1.5.9 MinGW DLL"
 
           - os: windows-2022
             configuration: default
             base: "7.0"
             open62541: "1.4.17"
             name: "7.0 Win2022 v1.4.17 MinGW DLL"
+
+          - os: windows-2022
+            configuration: default
+            base: "7.0"
+            open62541: "1.5.9"
+            name: "7.0 Win2022 v1.5.9 MinGW DLL"
 
 
     steps:

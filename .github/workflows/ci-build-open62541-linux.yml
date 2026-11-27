@@ -49,6 +49,13 @@ jobs:
             cmp: gcc
             configuration: default
             base: "7.0"
+            open62541: "1.5.9"
+            name: "7.0 Ub-22 v1.5.9"
+
+          - os: ubuntu-22.04
+            cmp: gcc
+            configuration: default
+            base: "7.0"
             open62541: "1.4.17"
             name: "7.0 Ub-22 v1.4.17"
 
@@ -67,6 +74,13 @@ jobs:
             name: "7.0 Ub-22 v1.2.10"
 
         # Base 3.15
+          - os: ubuntu-22.04
+            cmp: gcc
+            configuration: default
+            base: "3.15"
+            open62541: "1.5.9"
+            name: "3.15 Ub-22 v1.5.9"
+
           - os: ubuntu-22.04
             cmp: gcc
             configuration: default

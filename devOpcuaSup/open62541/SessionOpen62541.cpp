@@ -37,7 +37,11 @@
 #include <open62541/client_highlevel.h>
 #include <open62541/client_highlevel_async.h>
 #include <open62541/client_config_default.h>
+#if UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR < 105
 #include <open62541/plugin/pki_default.h>
+#else
+#include <open62541/plugin/certificategroup_default.h>
+#endif
 #include <open62541/plugin/log_stdout.h>
 
 #include <iostream>
@@ -49,6 +53,7 @@
 #include <utility>
 #include <cstdio>
 #include <sstream>
+#include <vector>
 
 /* loadFile helper from open62541 examples */
 
@@ -84,6 +89,66 @@ loadFile(const char *const path) {
     return fileContents;
 }
 /* end of included loadFile helper code */
+
+#if defined(HAS_SECURITY) && UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR >= 105
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#endif
+
+/* Read all regular files in a directory (certificates or CRLs, DER or PEM)
+ * and append their contents to a ByteString array.
+ * An empty directory name is not an error (nothing is read).
+ *
+ * @param  dir   directory to read
+ * @param  list  ByteString array to append to
+ * @param  size  size of the ByteString array
+ * @return status code (bad if the directory cannot be read) */
+static UA_StatusCode
+loadDirectory(const std::string &dir, UA_ByteString **list, size_t *size)
+{
+    if (dir.empty())
+        return UA_STATUSCODE_GOOD;
+
+    std::vector<std::string> files;
+#ifdef _WIN32
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA((dir + "\\*").c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE)
+        return UA_STATUSCODE_BADNOTFOUND;
+    do {
+        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            files.push_back(dir + "\\" + fd.cFileName);
+    } while (FindNextFileA(h, &fd));
+    FindClose(h);
+#else
+    DIR *d = opendir(dir.c_str());
+    if (!d)
+        return UA_STATUSCODE_BADNOTFOUND;
+    while (struct dirent *e = readdir(d)) {
+        std::string path = dir + "/" + e->d_name;
+        struct stat st;
+        if (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode))
+            files.push_back(path);
+    }
+    closedir(d);
+#endif
+
+    for (const auto &f : files) {
+        UA_ByteString content = loadFile(f.c_str());
+        if (content.length == 0)
+            continue;
+        UA_StatusCode status = UA_Array_appendCopy(reinterpret_cast<void **>(list), size,
+                                                   &content, &UA_TYPES[UA_TYPES_BYTESTRING]);
+        UA_ByteString_clear(&content);
+        if (UA_STATUS_IS_BAD(status))
+            return status;
+    }
+    return UA_STATUSCODE_GOOD;
+}
+#endif
 
 namespace DevOpcua {
 
@@ -590,6 +655,51 @@ SessionOpen62541::connect (bool manual)
         securityInfo.clientCertificate, securityInfo.privateKey,
         NULL, 0, NULL, 0);
 
+#if UA_OPEN62541_VER_MAJOR * 100 + UA_OPEN62541_VER_MINOR >= 105
+    // v1.5 replaced the folder based PKI provider with certificate groups.
+    // The file based store uses a fixed directory layout below one root directory,
+    // so read the configured directories into a trust list for the memory based store.
+    if (securityCertificateTrustListDir.length() ||
+        securityIssuersCertificatesDir.length()) {
+        if (debug) {
+            std::cout << "Session " << name
+                      << ": (connect) setting up PKI provider"
+                      << std::endl;
+        }
+        UA_TrustListDataType trustList;
+        UA_TrustListDataType_init(&trustList);
+        trustList.specifiedLists = UA_TRUSTLISTMASKS_ALL;
+        const struct {
+            const std::string &dir;
+            UA_ByteString **list;
+            size_t *size;
+        } sources[] = {
+            {securityCertificateTrustListDir, &trustList.trustedCertificates, &trustList.trustedCertificatesSize},
+            {securityCertificateRevocationListDir, &trustList.trustedCrls, &trustList.trustedCrlsSize},
+            {securityIssuersCertificatesDir, &trustList.issuerCertificates, &trustList.issuerCertificatesSize},
+            {securityIssuersRevocationListDir, &trustList.issuerCrls, &trustList.issuerCrlsSize},
+        };
+        UA_StatusCode status = UA_STATUSCODE_GOOD;
+        for (const auto &src : sources) {
+            status = loadDirectory(src.dir, src.list, src.size);
+            if (UA_STATUS_IS_BAD(status)) {
+                errlogPrintf("OPC UA session %s: reading PKI directory %s failed with status %s\n",
+                             name.c_str(), src.dir.c_str(), UA_StatusCode_name(status));
+                break;
+            }
+        }
+        if (status == UA_STATUSCODE_GOOD) {
+            UA_NodeId groupId = UA_NS0ID(SERVERCONFIGURATION_CERTIFICATEGROUPS_DEFAULTAPPLICATIONGROUP);
+            status = UA_CertificateGroup_Memorystore(&config->certificateVerification,
+                                                     &groupId, &trustList,
+                                                     config->logging, nullptr);
+            if (UA_STATUS_IS_BAD(status))
+                errlogPrintf("OPC UA session %s: setting up PKI context failed with status %s\n",
+                             name.c_str(), UA_StatusCode_name(status));
+        }
+        UA_TrustListDataType_clear(&trustList);
+    }
+#else
     #ifdef __linux__ /* UA_CertificateVerification_CertFolders supported only for Linux so far */
     if (securityCertificateTrustListDir.length() ||
         securityIssuersCertificatesDir.length()) {
@@ -608,6 +718,7 @@ SessionOpen62541::connect (bool manual)
                          name.c_str(), UA_StatusCode_name(status));
     }
     #endif // #ifdef __linux__
+#endif // v1.5
 #else // #ifdef HAS_SECURITY
     UA_ClientConfig_setDefault(config);
 #endif
