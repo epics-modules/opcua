@@ -108,7 +108,8 @@ SubscriptionOpen62541::show (int level) const
               << " interval="    << subscriptionSettings.revisedPublishingInterval
               << "("             << requestedSettings.requestedPublishingInterval  << ")"
               << " prio="        << static_cast<int>(requestedSettings.priority)
-              << " enable="    "?" // << (puasubscription ? (puasubscription->publishingEnabled() ? "y" : "n") : "?")
+              << " enable="
+              << (subscriptionSettings.subscriptionId ? (requestedSettings.publishingEnabled ? "y" : "n") : "?")
               << "(" << (enable ? "Y" : "N") << ")"
               << " debug=" << debug
               << " items=" << items.size()
