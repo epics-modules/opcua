@@ -7,6 +7,7 @@ the test server and the IOC with message security and user authentication:
 * the client (IOC) application instance certificate
 * a client certificate that is not trusted by the server
 * the X.509 user identity certificate
+  (its private key also in password-protected versions)
 
 plus the client-side PKI directory structure (trusting the server certificate)
 that is used with ``opcuaSetupPKI``.
@@ -24,6 +25,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 SERVER_URI = "urn:epics-controls.org:OpcUa:e2e-test-server"
+USER_KEY_PASSWORD = "e2e-key-secret"
 IOC_NAME = "opcuaSecTestIoc"
 
 
@@ -49,6 +51,8 @@ class SecurityTestCertificates:
     client: CertPair
     untrusted_client: CertPair
     user: CertPair
+    # user private key protected with USER_KEY_PASSWORD, by PEM format
+    user_encrypted_keys: dict[str, Path]
     client_pki: Path  # trusts the server certificate
     empty_client_pki: Path  # trusts nothing
     server_trusted_clients: Path  # trusted client certificates (server side)
@@ -78,6 +82,24 @@ def _write_pair(directory: Path, name: str, cert: x509.Certificate,
     )
     pair.crl_der.write_bytes(crl.public_bytes(serialization.Encoding.DER))
     return pair
+
+
+def _write_encrypted_keys(pair: CertPair, password: str) -> dict[str, Path]:
+    """Write the private key of a pair, protected with a password, in both PEM formats."""
+    key = serialization.load_pem_private_key(pair.key_pem.read_bytes(), password=None)
+    formats = {
+        "pkcs8": serialization.PrivateFormat.PKCS8,  # BEGIN ENCRYPTED PRIVATE KEY
+        "traditional": serialization.PrivateFormat.TraditionalOpenSSL,  # Proc-Type: 4,ENCRYPTED
+    }
+    keys = {}
+    for name, fmt in formats.items():
+        path = pair.key_pem.with_name(f"{pair.key_pem.stem}_{name}_encrypted.pem")
+        path.write_bytes(key.private_bytes(
+            serialization.Encoding.PEM, fmt,
+            serialization.BestAvailableEncryption(password.encode())))
+        path.chmod(0o600)
+        keys[name] = path
+    return keys
 
 
 def _self_signed(common_name: str, application_uri: str | None,
@@ -149,6 +171,8 @@ def create_test_certificates(directory: Path) -> SecurityTestCertificates:
     user = _write_pair(directory, "user",
                        *_self_signed("e2e-cert-user", None, [ExtendedKeyUsageOID.CLIENT_AUTH]))
 
+    user_encrypted_keys = _write_encrypted_keys(user, USER_KEY_PASSWORD)
+
     # The open62541 client verifies the X.509 identity certificate against its PKI
     client_pki = _make_pki(directory / "pki", [server, user])
     empty_client_pki = _make_pki(directory / "pki_empty", [])
@@ -157,4 +181,4 @@ def create_test_certificates(directory: Path) -> SecurityTestCertificates:
     (server_trusted_clients / client.cert_der.name).write_bytes(client.der_bytes())
 
     return SecurityTestCertificates(server, client, untrusted_client, user,
-                            client_pki, empty_client_pki, server_trusted_clients)
+                            user_encrypted_keys, client_pki, empty_client_pki, server_trusted_clients)

@@ -68,7 +68,8 @@ The tests cover:
     `best` mode, reconnect of a secure session
   * Rejection of connections without security or with a policy the server does not offer
   * Certificate trust: untrusted server certificate (IOC side) and untrusted client certificate (server side)
-  * User authentication with user name/password and with an X.509 user certificate,
+  * User authentication with user name/password and with an X.509 user certificate
+    (also with a password-protected private key),
     rejection of wrong credentials and of anonymous access
 
 The security tests are skipped if the module was built without crypto support

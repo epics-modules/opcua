@@ -23,6 +23,7 @@ from opcua_test_server import OpcuaTestServer, ServerSecurity
 from security_certs import (
     IOC_NAME,
     SERVER_URI,
+    USER_KEY_PASSWORD,
     CertPair,
     SecurityTestCertificates,
     create_test_certificates,
@@ -406,6 +407,42 @@ class TestUserAuthentication:
 
         ioc.exit()
         assert not ioc.is_running()
+
+    @pytest.mark.xfail(
+        OPEN62541_VERSION is not None and OPEN62541_VERSION < (1, 4),
+        reason="open62541 1.3 and older does not send the userTokenSignature "
+               "(proof of possession of the user's private key)",
+        strict=False)
+    @pytest.mark.parametrize("key_format", ["pkcs8", "traditional"])
+    def test_x509_encrypted_key(self, start_secure, x509_only,
+                                default_ioc_security, certs, key_format) -> None:
+        # Password-protected private key, password in the identity file
+        default_ioc_security.identity = {"cert": str(certs.user.cert_der),
+                                         "key": str(certs.user_encrypted_keys[key_format]),
+                                         "pass": USER_KEY_PASSWORD}
+        server, ioc = start_secure(x509_only, default_ioc_security)
+
+        session = wait_until_connected(server)
+        assert session["user"] == CERT_USER_NAME
+        check_read_write_monitor(server)
+
+        ioc.exit()
+        assert not ioc.is_running()
+
+    def test_x509_encrypted_key_wrong_password_rejected(self, start_secure, x509_only,
+                                                        default_ioc_security, certs) -> None:
+        default_ioc_security.identity = {"cert": str(certs.user.cert_der),
+                                         "key": str(certs.user_encrypted_keys["pkcs8"]),
+                                         "pass": "wrong-password"}
+        server, ioc = start_secure(x509_only, default_ioc_security)
+        assert_not_connected(server, ioc)
+
+    def test_x509_encrypted_key_no_password_rejected(self, start_secure, x509_only,
+                                                     default_ioc_security, certs) -> None:
+        default_ioc_security.identity = {"cert": str(certs.user.cert_der),
+                                         "key": str(certs.user_encrypted_keys["pkcs8"])}
+        server, ioc = start_secure(x509_only, default_ioc_security)
+        assert_not_connected(server, ioc)
 
     def test_unknown_x509_certificate_rejected(self, start_secure, x509_only,
                                                default_ioc_security, certs) -> None:
