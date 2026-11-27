@@ -470,7 +470,7 @@ SessionOpen62541::setOption (const std::string &name, const std::string &value)
     } else {
         max = MaxNodesPerRead + readNodesMax;
     }
-    if (updateReadBatcher) reader.setParams(max, readTimeoutMin, readTimeoutMax);
+    if (updateReadBatcher) reader.setParams(max / no_of_properties_read, readTimeoutMin, readTimeoutMax);
 
     if (MaxNodesPerWrite > 0 && writeNodesMax > 0) {
         max = std::min<unsigned int>(MaxNodesPerWrite, writeNodesMax);
