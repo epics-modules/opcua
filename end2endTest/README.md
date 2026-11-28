@@ -48,8 +48,11 @@ For the security tests (`test_security.py`), the server is started with a securi
 (see `ServerSecurity` in `opcua_test_server.py`):
 it offers only secure endpoints (modes `Sign` and `SignAndEncrypt`, policies `Basic256Sha256` and `Aes128_Sha256_RsaOaep`),
 trusts only the IOC's client certificate and checks user name/password and X.509 user certificates.
-All certificates are self-signed and created for each test session by `security_certs.py`
-(in pytest's temporary directory), together with the IOC's PKI directory structure.
+All certificates are created for each test session by `security_certs.py`
+(in pytest's temporary directory), together with the IOC's PKI directory structures:
+self-signed certificates, and CA-signed certificates issued by a root CA, an intermediate CA
+and an unrelated CA (with revocation lists, also revoking the server or client certificate).
+For the CA-signed certificates, both the IOC and the server only trust the root CA.
 The IOC startup script is generated for each test.
 
 ## Tests
@@ -68,6 +71,11 @@ The tests cover:
     `best` mode, reconnect of a secure session
   * Rejection of connections without security or with a policy the server does not offer
   * Certificate trust: untrusted server certificate (IOC side) and untrusted client certificate (server side)
+  * CA-signed server and client certificates: secure session and reconnect with only the root CA trusted,
+    server certificate issued by an intermediate CA (chain built from the PKI's issuers list),
+    rejection of server certificates from an unknown or only-issuer (not trusted) CA,
+    with a missing intermediate CA, or revoked by the CA's CRL,
+    and of client certificates from an untrusted CA or revoked
   * User authentication with user name/password and with an X.509 user certificate
     (also with a password-protected private key),
     rejection of wrong credentials and of anonymous access

@@ -37,9 +37,12 @@ class ServerSecurity:
         ua.SecurityPolicyType.Aes128Sha256RsaOaep_Sign,
         ua.SecurityPolicyType.Aes128Sha256RsaOaep_SignAndEncrypt,
     ])
-    # Directory with trusted client certificates
+    # Directory with trusted client certificates (or CA certificates)
     # (None: accept any client certificate)
     trusted_clients: Path | None = None
+    # Directory with revocation lists (files named *.der or *.pem)
+    # checked for client certificates (only used with trusted_clients)
+    client_crls: Path | None = None
     # Offered user identity token types
     identity_tokens: list[type] = field(default_factory=lambda: [
         ua.AnonymousIdentityToken, ua.UserNameIdentityToken, ua.X509IdentityToken,
@@ -204,7 +207,8 @@ class OpcuaTestServer(Server):
         self.set_identity_tokens(sec.identity_tokens)
         self.iserver.set_user_manager(E2EUserManager(sec))
         if sec.trusted_clients is not None:
-            trust_store = TrustStore([sec.trusted_clients], [])
+            trust_store = TrustStore([sec.trusted_clients],
+                                     [] if sec.client_crls is None else [sec.client_crls])
             await trust_store.load()
             self.set_certificate_validator(CertificateValidator(
                 CertificateValidatorOptions.TRUSTED_VALIDATION

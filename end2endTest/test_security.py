@@ -1,10 +1,11 @@
 """End-to-end tests for OPC UA security.
 
 Message security (modes Sign and SignAndEncrypt with different security
-policies), certificate trust (both directions) and user authentication
+policies), certificate trust (both directions, self-signed and CA-signed
+certificates, incl. intermediate CAs and revocation) and user authentication
 (user name/password and X.509 certificate identity tokens).
 
-All certificates are self-signed and created freshly for the test session.
+All certificates are created freshly for the test session.
 The tests are skipped if the module was built without crypto support.
 """
 
@@ -339,6 +340,114 @@ class TestCertificateTrust:
         # The server does not trust the IOC's client certificate
         default_ioc_security.client_cert = certs.untrusted_client
         server, ioc = start_secure(default_server_security, default_ioc_security)
+        assert_not_connected(server, ioc)
+
+
+class TestCaSignedCertificates:
+    """Server and client certificates issued by a CA; only the CA is trusted."""
+
+    @pytest.fixture
+    def ca_server_security(self, default_server_security, certs) -> ServerSecurity:
+        """Server with a CA-signed certificate, trusting (only) the root CA."""
+        default_server_security.certificate = certs.ca.server.cert_der
+        default_server_security.private_key = certs.ca.server.key_pem
+        default_server_security.trusted_clients = certs.ca.server_trusted
+        default_server_security.client_crls = certs.ca.server_crls
+        return default_server_security
+
+    @pytest.fixture
+    def ca_ioc_security(self, certs) -> IocSecurity:
+        """IOC with a CA-signed client certificate, trusting (only) the root CA."""
+        return IocSecurity(client_cert=certs.ca.client, pki=certs.ca.client_pki)
+
+    @pytest.mark.parametrize("mode", MODES)
+    def test_ca_signed_session(self, start_secure, ca_server_security,
+                               ca_ioc_security, mode) -> None:
+        ca_ioc_security.mode = mode
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
+
+        session = wait_until_connected(server)
+        assert session["mode"] == MODES[mode]
+        check_read_write_monitor(server)
+
+        ioc.exit()
+        assert not ioc.is_running()
+        assert server.exception is None
+
+    def test_reconnect(self, start_secure, ca_server_security, ca_ioc_security) -> None:
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
+        wait_until_connected(server)
+
+        server.disconnect_from_clients()
+        assert wait_for_value("SecInt32.SEVR", 3, timeout=20.0)  # INVALID
+        server.reconnect_to_clients()
+        assert wait_for_value("SecInt32.SEVR", 0, timeout=20.0)  # NO_ALARM
+
+        wait_until_connected(server)
+        prev = caget("SecRamp")
+        assert wait_for_change("SecRamp", prev, timeout=10.0) != prev, \
+            "no subscription updates after reconnect"
+
+        ioc.exit()
+        assert not ioc.is_running()
+
+    def test_server_from_intermediate_ca(self, start_secure, ca_server_security,
+                                         ca_ioc_security, certs) -> None:
+        # The server only sends its own certificate; the IOC builds the chain
+        # using the intermediate CA certificate from the PKI's issuers list
+        ca_server_security.certificate = certs.ca.server_from_intermediate.cert_der
+        ca_server_security.private_key = certs.ca.server_from_intermediate.key_pem
+        ca_ioc_security.pki = certs.ca.client_pki_intermediate
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
+
+        wait_until_connected(server)
+        check_read_write_monitor(server)
+
+        ioc.exit()
+        assert not ioc.is_running()
+
+    def test_server_from_intermediate_ca_without_issuer_rejected(
+            self, start_secure, ca_server_security, ca_ioc_security, certs) -> None:
+        # The IOC trusts the root CA, but cannot build the chain
+        # (intermediate CA certificate missing)
+        ca_server_security.certificate = certs.ca.server_from_intermediate.cert_der
+        ca_server_security.private_key = certs.ca.server_from_intermediate.key_pem
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
+        assert_not_connected(server, ioc)
+
+    def test_server_from_unknown_ca_rejected(self, start_secure, ca_server_security,
+                                             ca_ioc_security, certs) -> None:
+        # The IOC trusts only an unrelated CA
+        ca_ioc_security.pki = certs.ca.client_pki_other_ca
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
+        assert_not_connected(server, ioc)
+
+    def test_server_ca_only_in_issuers_rejected(self, start_secure, ca_server_security,
+                                                ca_ioc_security, certs) -> None:
+        # The root CA is known (issuers list), but not trusted
+        ca_ioc_security.pki = certs.ca.client_pki_issuers_only
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
+        assert_not_connected(server, ioc)
+
+    def test_revoked_server_rejected(self, start_secure, ca_server_security,
+                                     ca_ioc_security, certs) -> None:
+        # The root CA's CRL (in the IOC's PKI) revokes the server certificate
+        ca_ioc_security.pki = certs.ca.client_pki_server_revoked
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
+        assert_not_connected(server, ioc)
+
+    def test_client_from_untrusted_ca_rejected(self, start_secure, ca_server_security,
+                                               ca_ioc_security, certs) -> None:
+        # The IOC's client certificate is issued by a CA the server does not trust
+        ca_ioc_security.client_cert = certs.ca.client_from_other_ca
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
+        assert_not_connected(server, ioc)
+
+    def test_revoked_client_rejected(self, start_secure, ca_server_security,
+                                     ca_ioc_security, certs) -> None:
+        # The root CA's CRL (on the server) revokes the IOC's client certificate
+        ca_server_security.client_crls = certs.ca.server_crls_client_revoked
+        server, ioc = start_secure(ca_server_security, ca_ioc_security)
         assert_not_connected(server, ioc)
 
 
