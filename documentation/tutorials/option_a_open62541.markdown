@@ -58,6 +58,20 @@ Use their GitHub Release Page instead.
 
 ## On Linux
 
+### Using the Linux Install Script
+
+You can use the `devOpcuaSup/open62541/install_open62541.sh` script in the source to automate the build of the open62541 library.
+The script will:
+
+1. Download an appropiate version of the `open62541` source code
+2. Build `open62541` as a static library with security support
+3. Create the corresponding `CONFIG_SITE.local` configuration
+
+**Please note**: This requires `curl`, `cmake` and the `openssl-devel`/`libssl-dev` library to be present. For support of structures also `libxml2-devel` / `libxml2-dev`
+is required.
+
+### Manual Installation
+
 * Unpack the open62541 distribution.
   Create a build directory on the top level and `cd` into it.
   We'll go with the usual convention of calling it `build` .
@@ -176,9 +190,20 @@ under Windows.
   Install them in an appropriate location.
   You might have to rename `.dll.a` DLL export stubs
   to `.lib` to work properly with the EPICS build system.
-  `openssl` can be found [here][openssl.slpro].
+  `openssl` can be found [here][openssl.slpro] (use version 3.6.x).
   The installer makes sure
   that MSVC finds it (without explicit configuration).
+
+#### Using the Windows Install Script
+
+You can use the `devOpcuaSup/open62541/install_open62541.ps1` script in the source to automate the build of the open62541 library.
+The script will:
+
+1. Download an appropiate version of the `open62541` source code
+2. Build `open62541` as a static library with security support
+3. Create the corresponding `CONFIG_SITE.local` configuration
+
+#### Manual Installation
 
 * Unpack the open62541 distribution.
   Create a build directory on the top level and `cd` into it.
