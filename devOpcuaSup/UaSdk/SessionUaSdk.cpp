@@ -32,6 +32,7 @@
 #include <uadiscovery.h>
 #include <uadir.h>
 #include <uaenumdefinition.h>
+#include <uaqualifiedname.h>
 
 #ifdef HAS_SECURITY
 #include <uapkicertificate.h>
@@ -566,7 +567,7 @@ SessionUaSdk::registerNodes ()
     nodesToRegister.create(static_cast<OpcUa_UInt32>(items.size()));
     OpcUa_UInt32 i = 0;
     for (auto &it : items) {
-        if (it->linkinfo.registerNode) {
+        if (it->linkinfo.registerNode && it->isResolved()) {
             it->getNodeId().copyTo(&nodesToRegister[i]);
             i++;
         }
@@ -589,7 +590,8 @@ SessionUaSdk::registerNodes ()
                           << " (" << registeredNodes.length() << " nodes registered)" << std::endl;
             i = 0;
             for (auto &it : items) {
-                if (it->linkinfo.registerNode) {
+                if (it->linkinfo.registerNode && it->isResolved()
+                        && i < registeredNodes.length()) {
                     it->setRegisteredNodeId(registeredNodes[i]);
                     i++;
                 }
@@ -604,6 +606,127 @@ SessionUaSdk::rebuildNodeIds ()
 {
     for (auto &it : items)
         it->rebuildNodeId();
+}
+
+void
+SessionUaSdk::resolveBrowsePaths ()
+{
+    std::vector<ItemUaSdk *> toResolve;
+    for (auto &it : items)
+        if (it->hasBrowsePath())
+            toResolve.push_back(it);
+    if (toResolve.empty())
+        return;
+
+    // Respect the server's operation limit and the session's nodes-max setting (0 = no limit)
+    size_t batchSize = toResolve.size();
+    for (OpcUa_UInt32 limit : { puasession->maxNodesPerTranslateBrowsePathsToNodeIds(),
+                                connectInfo.nMaxOperationsPerServiceCall })
+        if (limit > 0 && limit < batchSize)
+            batchSize = limit;
+
+    if (debug)
+        std::cout << "Session " << name.c_str()
+                  << ": resolving " << toResolve.size() << " browse paths" << std::endl;
+
+    unsigned int failed = 0;
+    for (size_t start = 0; start < toResolve.size(); start += batchSize) {
+        size_t n = std::min(batchSize, toResolve.size() - start);
+        UaStatus status;
+        ServiceSettings serviceSettings;
+        UaBrowsePaths browsePaths;
+        UaBrowsePathResults results;
+        UaDiagnosticInfos diagnosticInfos;
+
+        browsePaths.create(static_cast<OpcUa_UInt32>(n));
+        for (size_t i = 0; i < n; i++) {
+            const ItemUaSdk *item = toResolve[start + i];
+            OpcUa_BrowsePath &path = browsePaths[static_cast<OpcUa_UInt32>(i)];
+            item->getNodeId().copyTo(&path.StartingNode);
+            const auto &elems = item->linkinfo.browsePath;
+            UaRelativePathElements rpes;
+            rpes.create(static_cast<OpcUa_UInt32>(elems.size()));
+            OpcUa_UInt32 j = 0;
+            for (const auto &e : elems) {
+                OpcUa_RelativePathElement &rpe = rpes[j++];
+                UaNodeId(OpcUaId_HierarchicalReferences).copyTo(&rpe.ReferenceTypeId);
+                rpe.IsInverse = OpcUa_False;
+                rpe.IncludeSubtypes = OpcUa_True;
+                UaQualifiedName(UaString(e.name.c_str()),
+                                mapNamespaceIndex(e.hasNamespace ? e.namespaceIndex
+                                                                 : item->linkinfo.namespaceIndex))
+                    .copyTo(&rpe.TargetName);
+            }
+            path.RelativePath.NoOfElements = static_cast<OpcUa_Int32>(rpes.length());
+            path.RelativePath.Elements = rpes.detach();
+        }
+
+        status = puasession->translateBrowsePathsToNodeIds(serviceSettings, browsePaths,
+                                                           results, diagnosticInfos);
+        if (status.isBad() || results.length() != n) {
+            errlogPrintf("OPC UA session %s: (resolveBrowsePaths) translateBrowsePathsToNodeIds "
+                         "service failed with status %s (%u results for %llu paths)\n",
+                         name.c_str(), status.toString().toUtf8(), results.length(),
+                         static_cast<unsigned long long>(n));
+        }
+        for (size_t i = 0; i < n; i++) {
+            ItemUaSdk *item = toResolve[start + i];
+            const char *recName = item->recConnector->getRecordName();
+            if (status.isBad() || i >= results.length()) {
+                failed++;
+                continue;
+            }
+            const OpcUa_BrowsePathResult &result = results[static_cast<OpcUa_UInt32>(i)];
+            // Only count targets in this server that match the complete path
+            const OpcUa_ExpandedNodeId *target = nullptr;
+            unsigned int matches = 0;
+            for (OpcUa_Int32 t = 0; t < result.NoOfTargets; t++) {
+                if (result.Targets[t].RemainingPathIndex == OpcUa_UInt32_Max
+                        && result.Targets[t].TargetId.ServerIndex == 0) {
+                    if (!target)
+                        target = &result.Targets[t].TargetId;
+                    matches++;
+                }
+            }
+            if (OpcUa_IsBad(result.StatusCode) || matches == 0) {
+                errlogPrintf("OPC UA session %s: record %s: browse path '%s' not found (%s)"
+                             " - leaving record unconnected\n",
+                             name.c_str(), recName, nodeSpecString(item->linkinfo).c_str(),
+                             UaStatus(OpcUa_IsBad(result.StatusCode)
+                                      ? result.StatusCode : OpcUa_BadNoMatch).toString().toUtf8());
+                failed++;
+            } else if (matches > 1) {
+                errlogPrintf("OPC UA session %s: record %s: browse path '%s' is not unique"
+                             " (%u matching nodes) - leaving record unconnected\n",
+                             name.c_str(), recName, nodeSpecString(item->linkinfo).c_str(),
+                             matches);
+                failed++;
+            } else {
+                item->setResolvedNodeId(UaNodeId(target->NodeId));
+                if (debug >= 5)
+                    std::cout << "** Session " << name.c_str()
+                              << ": (resolveBrowsePaths) record " << recName
+                              << " browse path '" << nodeSpecString(item->linkinfo)
+                              << "' resolved to " << item->getNodeId().toXmlString().toUtf8()
+                              << std::endl;
+            }
+        }
+    }
+
+    if (failed)
+        errlogPrintf("OPC UA session %s: %u of %llu browse paths could not be resolved\n",
+                     name.c_str(), failed, static_cast<unsigned long long>(toResolve.size()));
+    else if (debug)
+        std::cout << "Session " << name.c_str()
+                  << ": resolved all " << toResolve.size() << " browse paths" << std::endl;
+
+    // Items that could not be resolved are left unconnected
+    for (auto &it : toResolve) {
+        if (!it->isResolved()) {
+            it->setState(ConnectionStatus::down);
+            it->setIncomingEvent(ProcessReason::connectionLoss);
+        }
+    }
 }
 
 /* Add a mapping to the session's map, replacing any existing mappings with the same
@@ -1225,22 +1348,24 @@ void SessionUaSdk::connectionStatusChanged (
         if (serverConnectionStatus == UaClient::Disconnected) {
             updateNamespaceMap(puasession->getNamespaceTable());
             rebuildNodeIds();
+            resolveBrowsePaths();
             registerNodes();
             createAllSubscriptions();
         }
         if (serverConnectionStatus != UaClient::ConnectionWarningWatchdogTimeout) {
+            auto cargo = std::vector<std::shared_ptr<ReadRequest>>();
+            cargo.reserve(items.size());
+            for (auto it : items) {
+                if (!it->isResolved())
+                    continue;
+                it->setState(ConnectionStatus::initialRead);
+                cargo.push_back(std::make_shared<ReadRequest>());
+                cargo.back()->item = it;
+            }
             if (debug) {
                 std::cout << "Session " << name.c_str()
-                          << ": triggering initial read for all "
-                          << items.size() << " items" << std::endl;
-            }
-            auto cargo = std::vector<std::shared_ptr<ReadRequest>>(items.size());
-            unsigned int i = 0;
-            for (auto it : items) {
-                it->setState(ConnectionStatus::initialRead);
-                cargo[i] = std::make_shared<ReadRequest>();
-                cargo[i]->item = it;
-                i++;
+                          << ": triggering initial read for "
+                          << cargo.size() << " of " << items.size() << " items" << std::endl;
             }
             // status needs to be updated before requests are being issued
             serverConnectionStatus = serverStatus;
@@ -1266,6 +1391,7 @@ void SessionUaSdk::connectionStatusChanged (
             break;
         updateNamespaceMap(puasession->getNamespaceTable());
         rebuildNodeIds();
+        resolveBrowsePaths();
         registerNodes();
         createAllSubscriptions();
         addAllMonitoredItems();

@@ -40,6 +40,26 @@ bool getYesNo(const char c);
 std::list<std::string> splitString(const std::string &str,
                                    const char delim = defaultElementDelimiter);
 
+/**
+ * @brief Parse a browse path string into a list of BrowsePathElements.
+ *
+ * Syntax (subset of the OPC UA relative path text format):
+ * elements are separated by '/' (a leading '/' is optional),
+ * each element is a BrowseName with an optional "<nsIndex>:" prefix,
+ * '&' escapes the following character (e.g. "&/", "&:", "&&").
+ *
+ * @param str  browse path string
+ *
+ * @return  list of path elements
+ * @throws std::runtime_error  on syntax errors
+ */
+std::list<BrowsePathElement> parseBrowsePath(const std::string &str);
+
+/**
+ * @brief Return a printable description of the node configuration of a link.
+ */
+std::string nodeSpecString(const linkInfo &info);
+
 std::unique_ptr<linkInfo> parseLink(dbCommon *prec, const DBEntry &ent);
 
 } // namespace DevOpcua

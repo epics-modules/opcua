@@ -430,6 +430,24 @@ class OpcuaTestServer(Server):
                     )
                 )
 
+        # Nodes for browse path tests: numeric node ids, identified by BrowseName
+        browse = await self.nodes.objects.add_object(
+            ua.NodeId("BrowseTest", self.idx, ua.NodeIdType.String), f"{self.idx}:BrowseTest")
+        unique = await browse.add_variable(
+            ua.NodeId(5001, self.idx), f"{self.idx}:Unique", ua.Variant(4711, ua.VariantType.Int32))
+        await unique.set_writable()
+        await browse.add_variable(
+            ua.NodeId(5002, self.idx), f"{self.idx}:Long Name With Spaces/Slash",
+            ua.Variant(-42, ua.VariantType.Int32))
+        sub = await browse.add_object(ua.NodeId(5003, self.idx), f"{self.idx}:Sub")
+        await sub.add_variable(
+            ua.NodeId(5004, self.idx), f"{self.idx}:Deep", ua.Variant(3.5, ua.VariantType.Double))
+        # Two children with the same BrowseName: not unique
+        await browse.add_variable(
+            ua.NodeId(5005, self.idx), f"{self.idx}:Dup", ua.Variant(1, ua.VariantType.Int32))
+        await browse.add_variable(
+            ua.NodeId(5006, self.idx), f"{self.idx}:Dup", ua.Variant(2, ua.VariantType.Int32))
+
         async with self:
             ramp_task = asyncio.create_task(self._ramp_loop())
 

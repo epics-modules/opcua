@@ -39,6 +39,10 @@ of single scalar variables.
   (e.g., `"dataBlock"."myItem"` becomes `\"dataBlock\".\"myItem\"`).
   :::
 
+The node can also be identified through a browse path
+(`bn` option or `opcua:BROWSENAME` info item),
+see [Identifying Nodes by BrowseName](record_configuration_scalar.md#identifying-nodes-by-browsename).
+
 ### Available Options
 
 :::{list-table}

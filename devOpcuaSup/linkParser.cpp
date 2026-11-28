@@ -18,6 +18,7 @@
 #include <cmath>
 #include <list>
 #include <algorithm>
+#include <sstream>
 
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -74,6 +75,82 @@ splitString(const std::string &str, const char delim)
         prev = sep + 1;
     } while (sep < str.length() && prev <= str.length());
     return tokens;
+}
+
+std::list<BrowsePathElement>
+parseBrowsePath (const std::string &str)
+{
+    std::list<BrowsePathElement> path;
+    size_t pos = 0;
+
+    if (str.empty())
+        throw std::runtime_error("empty browse path");
+    if (str[0] == '/')
+        pos = 1;
+
+    while (true) {
+        BrowsePathElement elem;
+        std::string name;
+        bool escaped = false;           // some character of the element was escaped
+        size_t colon = std::string::npos; // position of the first unescaped ':' in name
+        while (pos < str.length() && str[pos] != '/') {
+            if (str[pos] == '&') {
+                if (++pos >= str.length())
+                    throw std::runtime_error(SB() << "browse path '" << str
+                                             << "' ends with escape character '&'");
+                escaped = true;
+            } else if (str[pos] == ':' && colon == std::string::npos && !escaped) {
+                colon = name.length();
+            }
+            name.push_back(str[pos++]);
+        }
+        // "<digits>:" prefix is the namespace index
+        if (colon != std::string::npos && colon > 0
+                && name.find_first_not_of("0123456789") == colon) {
+            if (epicsParseUInt16(name.substr(0, colon).c_str(), &elem.namespaceIndex, 10, nullptr))
+                throw std::runtime_error(SB() << "illegal namespace index in browse path element '"
+                                         << name << "'");
+            elem.hasNamespace = true;
+            name.erase(0, colon + 1);
+        }
+        if (name.empty())
+            throw std::runtime_error(SB() << "browse path '" << str << "' contains an empty element");
+        elem.name = name;
+        path.push_back(elem);
+        if (pos >= str.length())
+            break;
+        pos++; // skip '/'
+        if (pos >= str.length())
+            throw std::runtime_error(SB() << "browse path '" << str << "' ends with '/'");
+    }
+    return path;
+}
+
+std::string
+nodeSpecString (const linkInfo &info)
+{
+    std::ostringstream s;
+    if (info.browsePath.size()) {
+        if (info.hasIdentifier) {
+            s << "ns=" << info.namespaceIndex << ";";
+            if (info.identifierIsNumeric)
+                s << "i=" << info.identifierNumber;
+            else
+                s << "s=" << info.identifierString;
+        } else {
+            s << "Objects";
+            if (info.namespaceIndex)
+                s << "(ns=" << info.namespaceIndex << ")";
+        }
+        s << " bn=" << info.browsePathString;
+    } else {
+        s << "ns=" << info.namespaceIndex << ";";
+        if (info.identifierIsNumeric)
+            s << "i=" << info.identifierNumber;
+        else
+            s << "s=" << info.identifierString;
+    }
+    return s.str();
 }
 
 std::unique_ptr<linkInfo>
@@ -192,6 +269,10 @@ parseLink (dbCommon *prec, const DBEntry &ent)
         pinfo->elementPath = splitString(s);
     }
 
+    std::string browseNameInfo = ent.info("opcua:BROWSENAME", "");
+    if (debug > 19 && browseNameInfo.length())
+        std::cerr << prec->name << " info 'opcua:BROWSENAME'='" << browseNameInfo << "'" << std::endl;
+
     // parse INP/OUT link
     if (!link->value.instio.string)
         throw std::runtime_error(SB() << "INP/OUT not set");
@@ -268,10 +349,17 @@ parseLink (dbCommon *prec, const DBEntry &ent)
         } else if (pinfo->linkedToItem && optname == "s") {
             pinfo->identifierString = optval;
             pinfo->identifierIsNumeric = false;
+            pinfo->hasIdentifier = true;
         } else if (pinfo->linkedToItem && optname == "i") {
             if (epicsParseUInt32(optval.c_str(), &pinfo->identifierNumber, 0, nullptr))
                 throw std::runtime_error(SB() << "error converting '" << optval << "' to UInt32");
             pinfo->identifierIsNumeric = true;
+            pinfo->hasIdentifier = true;
+        } else if (pinfo->linkedToItem && optname == "bn") {
+            if (browseNameInfo.length())
+                throw std::runtime_error("browse path set through both link (bn=) and info item 'opcua:BROWSENAME'");
+            pinfo->browsePathString = optval;
+            pinfo->browsePath = parseBrowsePath(optval);
         } else if (pinfo->linkedToItem && optname == "sampling") {
             if (epicsParseDouble(optval.c_str(), &pinfo->samplingInterval, nullptr))
                 throw std::runtime_error(SB() << "error converting '" << optval << "' to Double");
@@ -336,6 +424,13 @@ parseLink (dbCommon *prec, const DBEntry &ent)
         sep = linkstr.find_first_not_of("; \t", send);
     }
 
+    if (browseNameInfo.length()) {
+        if (!pinfo->linkedToItem)
+            throw std::runtime_error("info item 'opcua:BROWSENAME' requires link to a session or subscription");
+        pinfo->browsePathString = browseNameInfo;
+        pinfo->browsePath = parseBrowsePath(browseNameInfo);
+    }
+
     if (!pinfo->clientQueueSize) {
         pinfo->clientQueueSize = static_cast<epicsUInt32>(ceil(abs(opcua_ClientQueueSizeFactor) * pinfo->queueSize));
         epicsUInt32 mini = static_cast<epicsUInt32>(abs(opcua_MinimumClientQueueSize));
@@ -349,11 +444,7 @@ parseLink (dbCommon *prec, const DBEntry &ent)
                 std::cout << " session=" << pinfo->session;
             else if (pinfo->subscription.length())
                 std::cout << " subscription=" << pinfo->subscription;
-            std::cout << " ns=" << pinfo->namespaceIndex;
-            if (pinfo->identifierIsNumeric)
-                std::cout << " id(i)=" << pinfo->identifierNumber;
-            else
-                std::cout << " id(s)=" << pinfo->identifierString;
+            std::cout << " node=" << nodeSpecString(*pinfo);
             std::cout << " sampling=" << pinfo->samplingInterval
                       << " deadband=" << pinfo->deadband
                       << " qsize=" << pinfo->queueSize

@@ -239,7 +239,11 @@ RecordConnector::glob(const std::string &pattern)
                     if (epicsStrGlobMatch(pname, pattern.c_str())) {
                         match = true;
                     } else if (rc->plinkinfo) {
-                        if (rc->plinkinfo->identifierIsNumeric) {
+                        if (rc->plinkinfo->browsePath.size()
+                                && epicsStrGlobMatch(rc->plinkinfo->browsePathString.c_str(),
+                                                     pattern.c_str())) {
+                            match = true;
+                        } else if (rc->plinkinfo->identifierIsNumeric) {
                             if (epicsStrGlobMatch(std::to_string(rc->plinkinfo->identifierNumber)
                                                       .c_str(),
                                                   pattern.c_str()))

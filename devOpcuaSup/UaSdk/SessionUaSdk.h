@@ -301,6 +301,15 @@ private:
     void rebuildNodeIds();
 
     /**
+     * @brief Resolve the browse paths of all items configured through a browse path.
+     *
+     * Uses the TranslateBrowsePathsToNodeIds service. A browse path must resolve to
+     * exactly one node, else an error is printed and the item is left unconnected
+     * (its records are set to INVALID).
+     */
+    void resolveBrowsePaths();
+
+    /**
      * @brief Rebuild the namespace index map from the server's array.
      */
     void updateNamespaceMap(const UaStringArray &nsArray);

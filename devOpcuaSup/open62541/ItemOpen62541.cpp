@@ -16,6 +16,7 @@
 #include "SubscriptionOpen62541.h"
 #include "SessionOpen62541.h"
 #include "DataElementOpen62541.h"
+#include "linkParser.h"
 
 #include <errlog.h>
 #include <epicsTypes.h>
@@ -40,6 +41,7 @@ ItemOpen62541::ItemOpen62541(const linkInfo &info)
     , subscription(nullptr)
     , session(nullptr)
     , registered(false)
+    , resolved(false)
     , revisedSamplingInterval(0.0)
     , revisedQueueSize(0)
     , dataTreeDirty(false)
@@ -71,7 +73,11 @@ ItemOpen62541::rebuildNodeId ()
 {
     UA_UInt16 ns = session->mapNamespaceIndex(linkinfo.namespaceIndex);
     UA_NodeId_clear(&nodeId);
-    if (linkinfo.identifierIsNumeric) {
+    // For browse paths, the node id is the starting node until the path is resolved
+    resolved = !hasBrowsePath();
+    if (hasBrowsePath() && !linkinfo.hasIdentifier) {
+        nodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
+    } else if (linkinfo.identifierIsNumeric) {
         nodeId = UA_NODEID_NUMERIC(ns, linkinfo.identifierNumber);
     } else {
         nodeId = UA_NODEID_STRING_ALLOC(ns, linkinfo.identifierString.c_str());
@@ -90,16 +96,24 @@ ItemOpen62541::requestWriteIfDirty()
 void
 ItemOpen62541::show (int level) const
 {
-    std::cout << "item"
-              << " ns=";
-    if (nodeId.namespaceIndex != linkinfo.namespaceIndex)
-        std::cout << nodeId.namespaceIndex << "(" << linkinfo.namespaceIndex << ")";
-    else
-        std::cout << linkinfo.namespaceIndex;
-    if (linkinfo.identifierIsNumeric)
-        std::cout << ";i=" << linkinfo.identifierNumber;
-    else
-        std::cout << ";s=" << linkinfo.identifierString;
+    std::cout << "item";
+    if (hasBrowsePath()) {
+        std::cout << " " << nodeSpecString(linkinfo) << " node=";
+        if (resolved)
+            std::cout << nodeId;
+        else
+            std::cout << "-";
+    } else {
+        std::cout << " ns=";
+        if (nodeId.namespaceIndex != linkinfo.namespaceIndex)
+            std::cout << nodeId.namespaceIndex << "(" << linkinfo.namespaceIndex << ")";
+        else
+            std::cout << linkinfo.namespaceIndex;
+        if (linkinfo.identifierIsNumeric)
+            std::cout << ";i=" << linkinfo.identifierNumber;
+        else
+            std::cout << ";s=" << linkinfo.identifierString;
+    }
     std::cout << " record=" << recConnector->getRecordName()
               << " state=" << connectionStatusString(recConnector->state())
               << " status=" << UA_StatusCode_name(lastStatus)
@@ -173,13 +187,9 @@ ItemOpen62541::setIncomingData(UA_DataValue &value, ProcessReason reason)
     }
     setReason(reason);
     if (getLastStatus() == UA_STATUSCODE_BADSERVERNOTCONNECTED && value.status == UA_STATUSCODE_BADNODEIDUNKNOWN)
-        errlogPrintf("OPC UA session %s: item ns=%d;%s%.*d%s : BadNodeIdUnknown\n",
+        errlogPrintf("OPC UA session %s: item %s : BadNodeIdUnknown\n",
                      session->getName().c_str(),
-                     linkinfo.namespaceIndex,
-                     (linkinfo.identifierIsNumeric ? "i=" : "s="),
-                     (linkinfo.identifierIsNumeric ? 1 : 0),
-                     (linkinfo.identifierIsNumeric ? linkinfo.identifierNumber : 0),
-                     (linkinfo.identifierIsNumeric ? "" : linkinfo.identifierString.c_str()));
+                     nodeSpecString(linkinfo).c_str());
 
     setLastStatus(value.status);
 

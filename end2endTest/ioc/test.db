@@ -205,3 +205,46 @@ record(ao, "LastPVLiveCheck") {
     field(DTYP, "OPCUA")
     field( OUT, "@$(OPCSUB) ns=$(NS);s=Sim.LastPVLiveCheck bini=ignore monitor=y")
 }
+# Nodes identified by browse path (BrowseName)
+
+record(ai, "BrowseUnique") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS) bn=BrowseTest/Unique")
+    field(SCAN, "I/O Intr")
+}
+
+record(ao, "BrowseUniqueOut") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) bn=/$(NS):BrowseTest/$(NS):Unique")
+}
+
+record(ai, "BrowseDeep") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS);s=BrowseTest bn=Sub/Deep")
+    field(SCAN, "I/O Intr")
+    field(PREC, "1")
+}
+
+record(ai, "BrowseInfoItem") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS)")
+    field(SCAN, "I/O Intr")
+    info(opcua:BROWSENAME, "BrowseTest/Long Name With Spaces&/Slash")
+}
+
+record(ai, "BrowseDuplicate") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS) bn=BrowseTest/Dup")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "BrowseMissing") {
+    field(DTYP, "OPCUA")
+    field( INP, "@$(OPCSUB) ns=$(NS) bn=BrowseTest/DoesNotExist")
+    field(SCAN, "I/O Intr")
+}
+
+record(ao, "BrowseMissingOut") {
+    field(DTYP, "OPCUA")
+    field( OUT, "@$(OPCSUB) ns=$(NS) bn=BrowseTest/DoesNotExist")
+}
