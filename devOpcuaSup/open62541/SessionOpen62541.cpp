@@ -48,7 +48,18 @@
 #include <functional>
 #include <utility>
 #include <cstdio>
+#include <cctype>
 #include <sstream>
+#include <vector>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <dirent.h>
+#endif
 
 /* loadFile helper from open62541 examples */
 
@@ -84,6 +95,67 @@ loadFile(const char *const path) {
     return fileContents;
 }
 /* end of included loadFile helper code */
+
+#ifdef HAS_SECURITY
+/* Load all files with one of the given extensions (case insensitive) from a folder.
+ * The file contents are appended to 'files' (to be cleared by the caller). */
+static void
+loadFolder(const std::string &folder,
+           const std::vector<std::string> &extensions,
+           std::vector<UA_ByteString> &files)
+{
+    if (folder.empty())
+        return;
+
+    std::vector<std::string> names;
+#ifdef _WIN32
+    WIN32_FIND_DATAA data;
+    HANDLE h = FindFirstFileA((folder + "\\*").c_str(), &data);
+    if (h != INVALID_HANDLE_VALUE) {
+        do {
+            if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+                names.emplace_back(data.cFileName);
+        } while (FindNextFileA(h, &data));
+        FindClose(h);
+    }
+    const char sep = '\\';
+#else
+    DIR *dir = opendir(folder.c_str());
+    if (dir) {
+        while (struct dirent *entry = readdir(dir))
+            names.emplace_back(entry->d_name);
+        closedir(dir);
+    }
+    const char sep = '/';
+#endif
+
+    for (auto &name : names) {
+        size_t dot = name.find_last_of('.');
+        if (dot == std::string::npos)
+            continue;
+        std::string ext = name.substr(dot + 1);
+        std::transform(ext.begin(), ext.end(), ext.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (std::find(extensions.begin(), extensions.end(), ext) == extensions.end())
+            continue;
+        std::string path = folder;
+        if (path.back() != '/' && path.back() != sep)
+            path += sep;
+        path += name;
+        UA_ByteString content = loadFile(path.c_str());
+        if (content.length)
+            files.push_back(content);
+    }
+}
+
+static void
+clearFiles(std::vector<UA_ByteString> &files)
+{
+    for (auto &file : files)
+        UA_ByteString_clear(&file);
+    files.clear();
+}
+#endif // #ifdef HAS_SECURITY
 
 namespace DevOpcua {
 
@@ -570,7 +642,6 @@ SessionOpen62541::connect (bool manual)
         securityInfo.clientCertificate, securityInfo.privateKey,
         NULL, 0, NULL, 0);
 
-#ifdef __linux__ /* UA_CertificateVerification_CertFolders supported only for Linux so far */
     if (securityCertificateTrustListDir.length() ||
         securityIssuersCertificatesDir.length()) {
         if (debug) {
@@ -578,16 +649,39 @@ SessionOpen62541::connect (bool manual)
                       << ": (connect) setting up PKI provider"
                       << std::endl;
         }
-        UA_StatusCode status = UA_CertificateVerification_CertFolders(
+        // The files are (re-)read on every connection attempt.
+        // UA_CertificateVerification_CertFolders() is not used, as it supports
+        // only one revocation list folder (and only on Linux).
+        std::vector<UA_ByteString> trusted, issuers, crls;
+        const std::vector<std::string> certExt = {"der", "pem"};
+        const std::vector<std::string> crlExt = {"crl", "der", "pem"};
+        loadFolder(securityCertificateTrustListDir, certExt, trusted);
+        loadFolder(securityIssuersCertificatesDir, certExt, issuers);
+        loadFolder(securityCertificateRevocationListDir, crlExt, crls);
+        if (securityIssuersRevocationListDir != securityCertificateRevocationListDir)
+            loadFolder(securityIssuersRevocationListDir, crlExt, crls);
+        if (debug) {
+            std::cout << "Session " << name
+                      << ": (connect) PKI has " << trusted.size() << " trusted certificates, "
+                      << issuers.size() << " issuer certificates, "
+                      << crls.size() << " revocation lists"
+                      << std::endl;
+        }
+
+        if (config->certificateVerification.clear)
+            config->certificateVerification.clear(&config->certificateVerification);
+        UA_StatusCode status = UA_CertificateVerification_Trustlist(
             &config->certificateVerification,
-            securityCertificateTrustListDir.c_str(),
-            securityIssuersCertificatesDir.c_str(),
-            securityIssuersRevocationListDir.c_str());
+            trusted.data(), trusted.size(),
+            issuers.data(), issuers.size(),
+            crls.data(), crls.size());
+        clearFiles(trusted);
+        clearFiles(issuers);
+        clearFiles(crls);
         if (UA_STATUS_IS_BAD(status))
             errlogPrintf("OPC UA session %s: setting up PKI context failed with status %s\n",
                          name.c_str(), UA_StatusCode_name(status));
     }
-#endif // #ifdef __linux__
 #else // #ifdef HAS_SECURITY
     UA_ClientConfig_setDefault(config);
 #endif
