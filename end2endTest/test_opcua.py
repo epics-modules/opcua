@@ -90,7 +90,7 @@ class DiagIOC(IOC):
 
 
 @pytest.fixture
-def test_inst(monkeypatch) -> Generator[tuple[OpcuaTestServer, IOC]]:
+def test_inst(monkeypatch, tmp_path) -> Generator[tuple[OpcuaTestServer, IOC]]:
     script = Path(__file__).parent / "ioc" / "st.cmd"
     script = script.resolve()
     REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -101,6 +101,9 @@ def test_inst(monkeypatch) -> Generator[tuple[OpcuaTestServer, IOC]]:
     monkeypatch.setenv("OPCUA_TEST_TOP", REPO_ROOT.as_posix())
     # Comment out loading the 64-bit array records on Base < 3.16.1
     monkeypatch.setenv("NO_INT64", "" if base_supports_int64() else "#")
+    # Fresh iocsh history file for each IOC (with readline, overwriting an
+    # existing history file fails on Windows, and iocsh reports an ERROR)
+    monkeypatch.setenv("EPICS_IOCSH_HISTFILE", (tmp_path / "iocsh_history").as_posix())
     # Session debug output (only shown for failing tests)
     monkeypatch.setenv("OPCUA_DEBUG", os.environ.get("OPCUA_DEBUG", "1"))
 
