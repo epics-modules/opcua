@@ -404,8 +404,11 @@ opcuaShowCallFunc(const iocshArgBuf *args)
             std::set<RecordConnector *> connectors = RecordConnector::glob(args[0].sval);
             if (connectors.size()) {
                 foundSomething = true;
+                // records attached to the same (structured) item share it - show it once
+                std::set<Item *> shown;
                 for (auto &rc : connectors)
-                    rc->pitem->show(args[1].ival);
+                    if (shown.insert(rc->pitem).second)
+                        rc->pitem->show(args[1].ival);
             }
         }
         if (!foundSomething)

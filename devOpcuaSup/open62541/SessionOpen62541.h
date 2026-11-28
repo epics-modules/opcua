@@ -113,6 +113,7 @@ struct ClientSecurityInfo {
     UA_ByteString clientCertificate;
     UA_ByteString privateKey;
     UA_ExtensionObject userIdentityToken;
+    UA_ByteString identityPrivateKey;   // private key for a certificate identity token (DER)
     UA_String securityPolicyUri;
     UA_MessageSecurityMode securityMode;
     ClientSecurityInfo () {
@@ -120,11 +121,13 @@ struct ClientSecurityInfo {
         clientCertificate = UA_STRING_NULL;
         privateKey = UA_STRING_NULL;
         userIdentityToken = {};
+        identityPrivateKey = UA_STRING_NULL;
         securityPolicyUri = UA_STRING_NULL;
         securityMode = UA_MESSAGESECURITYMODE_NONE;
     }
     ~ClientSecurityInfo () {
         UA_ExtensionObject_clear(&userIdentityToken);
+        UA_ByteString_clear(&identityPrivateKey);
         UA_ByteString_clear(&privateKey);
         UA_ByteString_clear(&clientCertificate);
         UA_ByteString_clear(&serverCertificate);
@@ -237,6 +240,16 @@ public:
      * @brief Create all subscriptions related to this session.
      */
     void createAllSubscriptions();
+
+    /**
+     * @brief Delete all subscriptions related to this session on the server.
+     *
+     * Must be called (with the session still active) before the session is
+     * closed: the server would otherwise be left with publish requests of a
+     * subscription whose session has just gone away, and log an error for
+     * each of them.
+     */
+    void deleteAllSubscriptions();
 
     /**
      * @brief Add all monitored items to subscriptions related to this session.
@@ -428,6 +441,11 @@ private:
      */
     virtual void run() override;
 
+    /**
+     * @brief Initialize session after successful activation.
+     */
+    void initializeSession();
+
     // Wrapper for Session::securityPolicyString to match argument type
     static std::string securityPolicyString(const UA_String& policy)
     {
@@ -471,6 +489,7 @@ private:
     UA_SecureChannelState channelState;                           /**< status for this session */
     UA_SessionState sessionState;                                 /**< status for this session */
     UA_StatusCode connectStatus;                                  /**< status for this session */
+    bool needsInit;                                               /**< initialization needed after activation */
     unsigned int MaxNodesPerRead;                                 /**< server max number of nodes per write request */
     unsigned int MaxNodesPerWrite;                                /**< server max number of nodes per write request */
     epicsThread *workerThread;                                    /**< Asynchronous worker thread */

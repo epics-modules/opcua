@@ -21,9 +21,8 @@ Please contact the authors
 ## Prerequisites
 
 * [open62541](https://www.open62541.org/) SDK / C library
-  (v1.2 and v1.3 series have been tested;
-  their system packages should also work.
-  open62541 v1.4 changed the header file structure and does not work yet.)
+  (the v1.2, v1.3, v1.4 and v1.5 series are supported and tested;
+  their system packages should also work.)
 
 * Cmake (3.x) if you're building open62541 from sources.
 
@@ -318,6 +317,13 @@ consider linking your IOCs statically.
   using an X.509 Certificate Identity Token does not work.
   Username/password authentication and the
   communication security (signing/encryption) are not affected.
+
+* **PKI directories with open62541 v1.4 and older.**
+  With open62541 versions up to and including v1.4,
+  the PKI directories set up with `opcuaSetupPKI`
+  are only used on Linux,
+  and the `server_revocation_lists` directory is not used.
+  Starting with v1.5, all four directories are used on all platforms.
 
 ## Credits
 
